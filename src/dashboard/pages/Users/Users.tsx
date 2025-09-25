@@ -1,197 +1,163 @@
 import CustomCard from "@/components/base/CustomCard";
-import { UserStats } from "../../../components/common/UserStats";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
-import { inputStyle, preTableButtonStyle } from "@/components/common/commonStyles";
-import {
-	BlockedUserIcon,
-	EyeIcon,
-	FilterIcon,
-	IconWrapper,
-	// QuickViewIcon,
-	SearchIcon,
-	SuspendUserIcon,
-	ThreeDotsIcon,
-	WarnUserIcon,
-} from "@/assets/icons";
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
-import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationPrevious, PaginationNext } from "@/components/ui/pagination";
-import { useState } from "react";
-import OffcanvasQuickView from "./OffcanvasQuickView";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { FilterIcon, IconWrapper, PlusIcon, ThreeDotsIcon, SearchIcon } from "@/assets/icons";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import PageTitles from "@/components/common/PageTitles";
+import { inputStyle, preTableButtonStyle, tableHeaderRowStyle } from "@/components/common/commonStyles";
 import { Input } from "@/components/ui/input";
+import CompactPagination from "@/components/ui/compact-pagination";
+import React from "react";
+import EmptyData from "@/components/common/EmptyData";
 import { Link } from "react-router";
-import { _router } from "@/routes/_router";
+import { _router } from "../../../routes/_router";
 
-const counts = {
-	"Total Users": 100,
-	"Active Users": 50,
-	"Inactive Users": 30,
-	"Banned/Reported Users": 20,
-};
+const users = [
+	{
+		name: "Kenny Banks James",
+		phone: "+234812345678",
+		role: "Admin",
+		assigned: 0,
+		salary: "500,000",
+	},
+	{
+		name: "Kenny Banks James",
+		phone: "+234812345678",
+		role: "Admin",
+		assigned: 0,
+		salary: "500,000",
+	},
+	{
+		name: "Kenny Banks James",
+		phone: "+234812345678",
+		role: "Sales Person",
+		assigned: 8,
+		salary: "500,000",
+	},
+	{
+		name: "Kenny Banks James",
+		phone: "+234812345678",
+		role: "Sales Person",
+		assigned: 0,
+		salary: "500,000",
+	},
+];
 
 export default function Users() {
-	const [tab, setTab] = useState("Total Users");
-	const [q, setQ] = useState("");
-	const [page, setPage] = useState(1);
-	const [suspendModalOpen, setSuspendModalOpen] = useState(false);
-	const [warnModalOpen, setWarnModalOpen] = useState(false);
-	const [banModalOpen, setBanModalOpen] = useState(false);
-	const [quickOpen, setQuickOpen] = useState(false);
-	const [selectedUser, setSelectedUser] = useState<any | null>(null);
-	const pageData = Array.from({ length: 9 }, (_, i) => ({
-		id: `${i + 1}`,
-		serial_number: `#${i + 1}`,
-		username: "Eddienwaneri",
-		email: "eddienwaneri@example.com",
-		dateJoined: "2/1/2025",
-	}));
-	const pages = Math.ceil(pageData.length / 10);
+	const [isEmpty] = React.useState(false);
+	const [page, setPage] = React.useState(1);
+	const pages = Math.max(1, Math.ceil(users.length / 10));
 
 	return (
-		<div>
-			<UserStats />
-			<CustomCard>
-				<div className="flex flex-col gap-4">
-					<div className="flex flex-col-reverse lg:flex-row xl:items-center justify-between gap-4 mb-4">
-						<Tabs
-							value={tab}
-							onValueChange={(v) => {
-								setTab(v as any);
-								setPage(1);
-							}}>
-							<TabsList className="overflow-x-auto w-full max-w-md md:max-w-xl lg:max-w-fit h-fit rounded-md justify-start">
-								<TabsTrigger value="Total Users">Total Users ({counts["Total Users"]})</TabsTrigger>
-								<TabsTrigger value="Active Users">Active Users ({counts["Active Users"]})</TabsTrigger>
-								<TabsTrigger value="Inactive Users">Inactive Users ({counts["Inactive Users"]})</TabsTrigger>
-								<TabsTrigger value="Banned/Reported Users">Banned/Reported Users ({counts["Banned/Reported Users"]})</TabsTrigger>
-							</TabsList>
-						</Tabs>
+		<div className="flex flex-col gap-y-6">
+			<div className="flex items-center justify-between flex-wrap gap-4 mb-4">
+				<PageTitles title="All Users" description="" />
+				<div className="flex items-center gap-3">
+					<Link
+						to={_router.dashboard.addUser}
+						className="flex items-center gap-2 bg-primary rounded-sm px-8 py-2.5 active-scale transition text-white">
+						<IconWrapper className="text-lg">
+							<PlusIcon />
+						</IconWrapper>
+						<span className="text-sm">Add User</span>
+					</Link>
+				</div>
+			</div>
 
-						<div className="flex items-center gap-2">
-							<div className="relative w-80">
-								<Input
-									placeholder="Search subscription by id, email, subscriber etc"
-									aria-label="search tickets"
-									value={q}
-									onChange={(e) => {
-										setQ(e.target.value);
-										setPage(1);
-									}}
-									className={`max-w-[320px] ${inputStyle} h-10 pl-9`}
-								/>
-								<IconWrapper className="absolute top-1/2 -translate-y-1/2 opacity-50 left-5 -translate-x-1/2">
-									<SearchIcon />
-								</IconWrapper>
+			<div className="min-h-96 flex">
+				{!isEmpty ? (
+					<CustomCard className="bg-white flex-grow w-full rounded-lg p-4 border border-gray-100">
+						<>
+							<div className="w-full">
+								<div className="flex items-center justify-between flex-wrap gap-6">
+									<h2 className="font-semibold">All Users</h2>
+									<div className="flex items-center gap-2">
+										<div className="relative md:w-80">
+											<Input
+												placeholder="Search by name or phone"
+												aria-label="Search by name or phone"
+												className={`max-w-[320px] ${inputStyle} h-10 pl-9`}
+											/>
+											<IconWrapper className="absolute top-1/2 -translate-y-1/2 opacity-50 left-5 -translate-x-1/2">
+												<SearchIcon />
+											</IconWrapper>
+										</div>
+										<button type="button" className={`${preTableButtonStyle} text-white bg-primary ml-auto`}>
+											<IconWrapper className="text-base">
+												<FilterIcon />
+											</IconWrapper>
+											<span className="hidden sm:inline">Filter</span>
+										</button>
+									</div>
+								</div>
+
+								<div className="overflow-x-auto w-full mt-8">
+									<Table>
+										<TableHeader className={tableHeaderRowStyle}>
+											<TableRow className="bg-[#EAF6FF] h-12 overflow-hidden py-4 rounded-lg">
+												<TableHead>Name</TableHead>
+												<TableHead>Phone Number</TableHead>
+												<TableHead>User Role</TableHead>
+												<TableHead>Assigned Customers</TableHead>
+												<TableHead>Salary</TableHead>
+												<TableHead>Action</TableHead>
+											</TableRow>
+										</TableHeader>
+										<TableBody>
+											{users.map((row, idx) => (
+												<TableRow key={idx} className="hover:bg-[#F6FBFF]">
+													<TableCell className="text-[#13121266]">{row.name}</TableCell>
+													<TableCell className="text-[#13121266]">{row.phone}</TableCell>
+													<TableCell className="text-[#13121266]">{row.role}</TableCell>
+													<TableCell className="text-[#13121266]">{row.assigned}</TableCell>
+													<TableCell className="text-[#13121266]">{row.salary}</TableCell>
+													<TableCell className="flex items-center gap-1">
+														<DropdownMenu>
+															<DropdownMenuTrigger asChild>
+																<button type="button" className="p-2 hover:bg-slate-50 rounded-full text-primary">
+																	<IconWrapper className="text-lg">
+																		<ThreeDotsIcon />
+																	</IconWrapper>
+																</button>
+															</DropdownMenuTrigger>
+															<DropdownMenuContent align="end" sideOffset={6} className="w-48">
+																{[
+																	{ key: "view", label: "View Profile", danger: false },
+																	{ key: "edit", label: "Edit Profile", danger: false },
+																	{ key: "deactivate", label: "Deactivate", danger: false },
+																	{ key: "reset", label: "Reset Password", danger: false },
+																	{ key: "delete", label: "Delete", danger: true },
+																].map((it) => (
+																	<DropdownMenuItem
+																		key={it.key}
+																		onSelect={() => {
+																			// TODO: wire actions (navigate / open modal)
+																		}}
+																		className={`cursor-pointer ${it.danger ? "text-red-500" : ""}`}>
+																		{it.label}
+																	</DropdownMenuItem>
+																))}
+															</DropdownMenuContent>
+														</DropdownMenu>
+													</TableCell>
+												</TableRow>
+											))}
+										</TableBody>
+									</Table>
+								</div>
 							</div>
+						</>
 
-							<button type="button" className={`${preTableButtonStyle} bg-primary`}>
-								<IconWrapper className="text-base">
-									<FilterIcon />
-								</IconWrapper>
-								<span className="hidden sm:inline">Filter</span>
-							</button>
+						<div className="mt-8 flex flex-col md:flex-row text-center md:text-start justify-center items-center">
+							<span className="text-sm text-nowrap">Total of (9)</span>
+							<div className="ml-auto">
+								<CompactPagination page={page} pages={pages} onPageChange={setPage} />
+							</div>
 						</div>
-					</div>
-
-					<Table>
-						<TableHeader>
-							<TableRow className="bg-zinc-100 dark:bg-neutral-800">
-								<TableHead>S/N</TableHead>
-								<TableHead>Username</TableHead>
-								<TableHead>Email Address</TableHead>
-								<TableHead>Date joined</TableHead>
-								<TableHead>Action</TableHead>
-							</TableRow>
-						</TableHeader>
-						<TableBody>
-							{pageData.map((row, index) => (
-								<TableRow key={row.id}>
-									<TableCell>{index + 1}</TableCell>
-									<TableCell>{row.username}</TableCell>
-									<TableCell className="text-sm text-gray-500">{row.email}</TableCell>
-									<TableCell>{row.dateJoined}</TableCell>
-									<TableCell>
-										<DropdownMenu>
-											<DropdownMenuTrigger asChild>
-												<Button variant="ghost" size="sm">
-													<IconWrapper>
-														<ThreeDotsIcon />
-													</IconWrapper>
-												</Button>
-											</DropdownMenuTrigger>
-											<DropdownMenuContent align="end">
-												<DropdownMenuItem
-													className="cursor-pointer"
-													onClick={() => {
-														setSelectedUser(row);
-														setQuickOpen(true);
-													}}>
-													{/* <IconWrapper className="text-lg">
-														<QuickViewIcon />
-													</IconWrapper> */}
-													<span>Quick View</span>
-												</DropdownMenuItem>
-												<DropdownMenuItem asChild>
-													<Link to={_router.dashboard.userDetails.replace(":id", row.id)} className="cursor-pointer">
-														<IconWrapper className="text-lg">
-															<EyeIcon />
-														</IconWrapper>
-														<span>View details</span>
-													</Link>
-												</DropdownMenuItem>
-												<DropdownMenuItem className="cursor-pointer" onClick={() => setSuspendModalOpen(true)}>
-													<IconWrapper className="text-lg">
-														<SuspendUserIcon />
-													</IconWrapper>
-													<span>Suspend user</span>
-												</DropdownMenuItem>
-												<DropdownMenuItem className="cursor-pointer" onClick={() => setWarnModalOpen(true)}>
-													<IconWrapper className="text-lg">
-														<WarnUserIcon />
-													</IconWrapper>
-													<span>Warn user</span>
-												</DropdownMenuItem>
-												<DropdownMenuItem className="cursor-pointer" onClick={() => setBanModalOpen(true)}>
-													<IconWrapper className="text-lg">
-														<BlockedUserIcon />
-													</IconWrapper>
-													<span>Ban user</span>
-												</DropdownMenuItem>
-											</DropdownMenuContent>
-										</DropdownMenu>
-									</TableCell>
-								</TableRow>
-							))}
-						</TableBody>
-					</Table>
-				</div>
-				<div className="pt-2">
-					<Pagination aria-label="pagination" className="mt-2 justify-end">
-						<PaginationContent>
-							<PaginationItem>
-								<PaginationPrevious onClick={() => setPage((p) => Math.max(1, p - 1))} />
-							</PaginationItem>
-
-							{Array.from({ length: pages }).map((_, i) => (
-								<PaginationItem key={i}>
-									<PaginationLink isActive={page === i + 1} onClick={() => setPage(i + 1)}>
-										{i + 1}
-									</PaginationLink>
-								</PaginationItem>
-							))}
-
-							<PaginationItem>
-								<PaginationNext onClick={() => setPage((p) => Math.min(pages, p + 1))} />
-							</PaginationItem>
-						</PaginationContent>
-					</Pagination>
-				</div>
-			</CustomCard>
-			{/* <SuspendUserModal open={suspendModalOpen} onOpenChange={setSuspendModalOpen} />
-			<WarnUserModal open={warnModalOpen} onOpenChange={setWarnModalOpen} />
-			<BanUserModal open={banModalOpen} onOpenChange={setBanModalOpen} /> */}
-			<OffcanvasQuickView open={quickOpen} onOpenChange={setQuickOpen} title="Quick user view" user={selectedUser} />
+					</CustomCard>
+				) : (
+					<EmptyData text="No Users at the moment" />
+				)}
+			</div>
 		</div>
 	);
 }

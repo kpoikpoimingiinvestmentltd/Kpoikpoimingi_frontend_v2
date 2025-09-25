@@ -2,10 +2,14 @@ export const _router = {
 	auth: { index: "/auth", login: "/auth/login", forgotpassword: "/auth/forgot-password", resetpassword: "/auth/reset-password" },
 	dashboard: {
 		index: "/dashboard",
+		notifications: "/dashboard/notifications",
 		customers: "/dashboard/customers",
 		customerDetails: "/dashboard/customers/:id",
 		properties: "/dashboard/properties",
+		addProperties: "/dashboard/properties/add",
+		manageCategories: "/dashboard/properties/manage-categories",
 		receipt: "/dashboard/receipt",
+		receiptDetails: "/dashboard/receipt/:id",
 		settings: "/dashboard/settings",
 		contract: "/dashboard/contract",
 		debt: "/dashboard/debt",
@@ -13,6 +17,7 @@ export const _router = {
 		reportAnalytics: "/dashboard/report-analytics",
 		auditAndCompliance: "/dashboard/audit-and-compliance",
 		users: "/dashboard/users",
+		addUser: "/dashboard/users/add",
 		userDetails: "/dashboard/users/:id",
 	},
 };

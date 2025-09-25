@@ -7,8 +7,9 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "../components/ui/dropdown-menu";
-import { IconWrapper, LogoutIcon, MenuIcon, NotificationIcon, SettingIcon, UserIcon } from "@/assets/icons";
+import { IconWrapper, LogoutIcon, MenuIcon, NotificationIcon, ReceiptPlusIcon, SettingIcon, UserIcon } from "@/assets/icons";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { NavLink } from "react-router";
 
 interface AdminDashboardHeaderProps {
 	onSidebarOpen: () => void;
@@ -16,6 +17,7 @@ interface AdminDashboardHeaderProps {
 }
 
 export default function AdminDashboardHeader({ onSidebarOpen, onLogoutOpen }: AdminDashboardHeaderProps) {
+	// prefer NavLink's active state instead of manual checks
 	return (
 		<div className="bg-white border-b border-gray-100 p-4 flex items-center justify-between sticky top-0 z-2">
 			<div className="flex items-center gap-4">
@@ -25,19 +27,39 @@ export default function AdminDashboardHeader({ onSidebarOpen, onLogoutOpen }: Ad
 					</IconWrapper>
 				</button>
 			</div>
-			<div className="flex items-center gap-3">
-				<button className="p-2.5 rounded-full bg-gray-50 hover:bg-gray-100 dark:bg-neutral-800 dark:hover:bg-neutral-700">
+			<div className="flex items-center gap-3.5">
+				<button
+					type="button"
+					className="flex gap-2 items-center bg-gradient-to-t from-[#134DC1] to-[#03B4FA] active-scale text-white rounded-md py-2.5 px-3">
+					<span className="text-sm">Generate Receipt</span>
+					<IconWrapper className="text-xl">
+						<ReceiptPlusIcon />
+					</IconWrapper>
+				</button>
+				<NavLink
+					to={_router.dashboard.settings}
+					className={({ isActive }) =>
+						`p-2.5 rounded-full relative flex bg-gray-50 hover:bg-gray-100 dark:bg-neutral-800 dark:hover:bg-neutral-700 before:content-[''] before:absolute before:-translate-x-1/2 before:translate-y-1.5 before:left-1/2 before:bottom-0 before:h-[2.5px] before:w-1/2 ${
+							isActive ? "before:bg-primary" : "before:bg-transparent"
+						}`
+					}>
 					<IconWrapper className="text-xl">
 						<SettingIcon />
 					</IconWrapper>
-				</button>
+				</NavLink>
 
 				<div className="relative">
-					<button className="p-2.5 rounded-full bg-gray-50 hover:bg-gray-100 dark:bg-neutral-800 dark:hover:bg-neutral-700">
+					<NavLink
+						to={_router.dashboard.notifications}
+						className={({ isActive }) =>
+							`p-2.5 rounded-full relative flex bg-gray-50 hover:bg-gray-100 dark:bg-neutral-800 dark:hover:bg-neutral-700 before:content-[''] before:absolute before:-translate-x-1/2 before:translate-y-1.5 before:left-1/2 before:bottom-0 before:h-[2.5px] before:w-1/2 ${
+								isActive ? "before:bg-primary" : "before:bg-transparent"
+							}`
+						}>
 						<IconWrapper className="text-xl">
 							<NotificationIcon />
 						</IconWrapper>
-					</button>
+					</NavLink>
 					<span className="absolute -top-0.5 -right-0.5 inline-flex items-center justify-center w-4 h-4 text-[0.6rem] font-medium text-white bg-red-500 rounded-full">
 						1
 					</span>

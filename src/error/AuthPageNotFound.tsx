@@ -1,13 +1,8 @@
-import { useNavigate } from "react-router";
 import Image from "../components/base/Image";
-import { preTableButtonStyle } from "../components/common/commonStyles";
 import { media } from "../resources/images";
-import { IconWrapper } from "../assets/icons";
-import { ArrowLeft } from "lucide-react";
 import { BackButton } from "../components/base/Buttons";
 
 export default function AuthPageNotFound() {
-	const navigate = useNavigate();
 	return (
 		<div>
 			<div className="w-full h-full grid place-content-center">

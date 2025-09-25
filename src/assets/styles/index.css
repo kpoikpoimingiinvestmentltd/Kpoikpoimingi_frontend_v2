@@ -169,3 +169,7 @@
 	--dashboard-header-h: 80px;
 	--max-z-index: 50;
 }
+
+.sidebar-links-container::-webkit-scrollbar {
+	width: 0px;
+}

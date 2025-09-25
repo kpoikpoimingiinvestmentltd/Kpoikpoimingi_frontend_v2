@@ -5,7 +5,7 @@ import { preTableButtonStyle } from "@/components/common/commonStyles";
 import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router";
 
-export default function PageNotFound() {
+export default function DashboardPageNotFound() {
 	const navigate = useNavigate();
 
 	return (
@@ -16,7 +16,7 @@ export default function PageNotFound() {
 				<p className="text-sm block leading-6">
 					The page you are trying to get to, unfortunately does not exist. Please check the URL or go back to the previous page.
 				</p>
-				<button type="button" onClick={() => navigate(-1)} className={`${preTableButtonStyle} bg-primary mx-auto mt-2 text-black`}>
+				<button type="button" onClick={() => navigate(-1)} className={`${preTableButtonStyle} bg-primary mx-auto mt-2 text-white`}>
 					<IconWrapper className="text-sm">
 						<ArrowLeft size="1.25em" />
 					</IconWrapper>
