@@ -4,12 +4,12 @@
 @custom-variant dark (&:is(.dark *));
 
 @font-face {
-	font-family: __Inter__;
-	src: url("../fonts/__Inter__.ttf") format("truetype");
+	font-family: __Poppins__;
+	src: url("../fonts/__Poppins__.otf") format("opentype");
 }
 
 :root {
-	--font-primary: __Inter__;
+	--font-primary: __Poppins__;
 	--fallback-fonts: system-ui, Avenir, Helvetica, Arial, sans-serif;
 	font-family: var(--font-primary), var(--fallback-fonts);
 

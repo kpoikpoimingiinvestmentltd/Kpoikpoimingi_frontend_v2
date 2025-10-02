@@ -18,6 +18,7 @@ import Receipt from "../dashboard/pages/Receipt/Receipt";
 import Users from "../dashboard/pages/Users/Users";
 import ReceiptDetails from "../dashboard/pages/Receipt/ReceiptDetails";
 import AddNewUser from "../dashboard/pages/Users/AddNewUser";
+import Setting from "../dashboard/pages/Settings/Setting";
 
 export const appRouter = createBrowserRouter([
 	{
@@ -100,6 +101,10 @@ export const appRouter = createBrowserRouter([
 			{
 				path: _router.dashboard.auditAndCompliance,
 				element: <AuditCompliance />,
+			},
+			{
+				path: _router.dashboard.settings,
+				element: <Setting />,
 			},
 			{
 				path: "*",
