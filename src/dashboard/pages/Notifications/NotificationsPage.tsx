@@ -13,7 +13,7 @@ export default function NotificationsPage() {
 
 			<div className="min-h-96 flex">
 				{!isEmpty ? (
-					<CustomCard className="mt-5 p-6 sm:p-8 w-11/12">
+					<CustomCard className="mt-5 p-6 sm:p-8 md:w-11/12">
 						<div className="flex flex-col gap-y-5">
 							<h3 className="text-lg font-semibold">Today</h3>
 							<div className="flex flex-col gap-3">

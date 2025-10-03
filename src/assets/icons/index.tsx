@@ -611,6 +611,13 @@ export const PrinterIcon = () => (
 	</svg>
 );
 
+export const FileIcon = () => (
+	<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 48 48">
+		<path fill="#90caf9" d="M40 45H8V3h22l10 10z" strokeWidth={1} stroke="#90caf9"></path>
+		<path fill="#e1f5fe" d="M38.5 14H29V4.5z" strokeWidth={1} stroke="#e1f5fe"></path>
+	</svg>
+);
+
 export const PDFIcon = () => (
 	<svg
 		height={64}

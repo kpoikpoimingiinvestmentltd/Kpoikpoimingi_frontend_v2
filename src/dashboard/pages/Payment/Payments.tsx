@@ -5,7 +5,7 @@ import { _router } from "@/routes/_router";
 import Badge from "@/components/base/Badge";
 import PageTitles from "@/components/common/PageTitles";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { inputStyle, preTableButtonStyle, tableHeaderRowStyle } from "@/components/common/commonStyles";
+import { inputStyle, preTableButtonStyle, tableHeaderRowStyle, tabListStyle, tabStyle } from "@/components/common/commonStyles";
 import { Input } from "@/components/ui/input";
 import Image from "@/components/base/Image";
 import { media } from "@/resources/images";
@@ -79,9 +79,13 @@ export default function Payments() {
 								<div className="flex items-center justify-between flex-wrap gap-6">
 									<div className="flex items-center gap-4">
 										<Tabs defaultValue="paid">
-											<TabsList>
-												<TabsTrigger value="paid">Paid</TabsTrigger>
-												<TabsTrigger value="pending">Pending</TabsTrigger>
+											<TabsList className={tabListStyle}>
+												<TabsTrigger className={tabStyle} value="paid">
+													Paid
+												</TabsTrigger>
+												<TabsTrigger className={tabStyle} value="pending">
+													Pending
+												</TabsTrigger>
 											</TabsList>
 										</Tabs>
 									</div>

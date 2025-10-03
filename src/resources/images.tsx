@@ -7,6 +7,10 @@ import empty from "@/assets/images/others/empty.svg";
 import whatsapp from "@/assets/images/others/whatsapp.png";
 import gmail from "@/assets/images/others/gmail.png";
 import verticalCuts from "@/assets/images/others/vertical-edge.svg";
+import alertImage from "@/assets/images/others/7fc5a39ad9923a2a6f9e13d665758b830df5afef.png";
+
+const avatar =
+	"https://images.unsplash.com/photo-1633332755192-727a05c4013d?fm=jpg&q=60&w=3000&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8dXNlcnxlbnwwfHwwfHx8MA%3D%3D";
 
 const logos = {
 	logo,
@@ -20,6 +24,8 @@ const images = {
 	whatsapp,
 	gmail,
 	verticalCuts,
+	alertImage,
+	avatar,
 };
 export const media = {
 	images,

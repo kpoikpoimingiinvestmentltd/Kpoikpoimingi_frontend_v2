@@ -10,6 +10,7 @@ import {
 import { IconWrapper, LogoutIcon, MenuIcon, NotificationIcon, ReceiptPlusIcon, SettingIcon, UserIcon } from "@/assets/icons";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { NavLink } from "react-router";
+import { media } from "../resources/images";
 
 interface AdminDashboardHeaderProps {
 	onSidebarOpen: () => void;
@@ -30,7 +31,7 @@ export default function AdminDashboardHeader({ onSidebarOpen, onLogoutOpen }: Ad
 			<div className="flex items-center gap-3.5">
 				<button
 					type="button"
-					className="flex gap-2 items-center bg-gradient-to-t from-[#134DC1] to-[#03B4FA] active-scale text-white rounded-md py-2.5 px-3">
+					className="gap-2 items-center hidden md:flex bg-gradient-to-t from-[#134DC1] to-[#03B4FA] active-scale text-white rounded-md py-2.5 px-3">
 					<span className="text-sm">Generate Receipt</span>
 					<IconWrapper className="text-xl">
 						<ReceiptPlusIcon />
@@ -67,12 +68,9 @@ export default function AdminDashboardHeader({ onSidebarOpen, onLogoutOpen }: Ad
 
 				<DropdownMenu>
 					<DropdownMenuTrigger asChild>
-						<button className="flex items-center gap-3 p-1.5 rounded-md hover:bg-gray-50">
+						<button className="flex items-center gap-3 p-1 rounded-md hover:bg-gray-50">
 							<Avatar className="w-9 h-9">
-								<AvatarImage
-									src="https://images.unsplash.com/photo-1633332755192-727a05c4013d?fm=jpg&q=60&w=3000&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8dXNlcnxlbnwwfHwwfHx8MA%3D%3D"
-									alt="User avatar"
-								/>
+								<AvatarImage src={media.images.avatar} alt="User avatar" />
 								<AvatarFallback>AJ</AvatarFallback>
 							</Avatar>
 							<div className="flex flex-col items-start">
@@ -82,27 +80,40 @@ export default function AdminDashboardHeader({ onSidebarOpen, onLogoutOpen }: Ad
 						</button>
 					</DropdownMenuTrigger>
 					<DropdownMenuContent align="end" className="w-56">
-						<DropdownMenuLabel>My Account</DropdownMenuLabel>
+						<div className="px-1.5">
+							<DropdownMenuLabel>My Account</DropdownMenuLabel>
+						</div>
+
 						<DropdownMenuSeparator />
-						<DropdownMenuItem className="cursor-pointer hover:bg-gray-50 bg-transparent">
-							<IconWrapper>
-								<UserIcon />
-							</IconWrapper>
-							<span>Profile</span>
-						</DropdownMenuItem>
-						<DropdownMenuItem className="cursor-pointer hover:bg-gray-50 bg-transparent">
-							<IconWrapper>
-								<SettingIcon />
-							</IconWrapper>
-							<span>Settings</span>
-						</DropdownMenuItem>
+						<div className="p-1">
+							<DropdownMenuItem className="cursor-pointer hover:bg-gray-50 bg-transparent">
+								<IconWrapper>
+									<UserIcon />
+								</IconWrapper>
+								<span>Profile</span>
+							</DropdownMenuItem>
+							<DropdownMenuItem className="cursor-pointer hover:bg-gray-50 bg-transparent">
+								<IconWrapper>
+									<SettingIcon />
+								</IconWrapper>
+								<span>Settings</span>
+							</DropdownMenuItem>
+							<DropdownMenuItem className="cursor-pointer bg-transparent  bg-gradient-to-t from-[#134DC1] to-[#03B4FA] active-scale md:hidden hover:text-white text-white rounded-md py-2 px-3">
+								<IconWrapper className="text-xl">
+									<ReceiptPlusIcon />
+								</IconWrapper>
+								<span>Generate Receipt</span>
+							</DropdownMenuItem>
+						</div>
 						<DropdownMenuSeparator />
-						<DropdownMenuItem className="flex items-center gap-2 w-full text-red-600 dark:text-red-400" onSelect={() => onLogoutOpen?.()}>
-							<IconWrapper>
-								<LogoutIcon />
-							</IconWrapper>
-							<span>Logout</span>
-						</DropdownMenuItem>
+						<div className="px-1.5">
+							<DropdownMenuItem className="flex items-center gap-2 w-full text-red-600 dark:text-red-400" onSelect={() => onLogoutOpen?.()}>
+								<IconWrapper>
+									<LogoutIcon />
+								</IconWrapper>
+								<span>Logout</span>
+							</DropdownMenuItem>
+						</div>
 					</DropdownMenuContent>
 				</DropdownMenu>
 			</div>

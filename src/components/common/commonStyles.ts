@@ -14,3 +14,8 @@ export const preTableButtonStyle = "text-sm active-scale font-medium flex py-2 h
 export const smBtnStyle = "bg-primary justify-center items-center text-[.8rem] rounded-sm py-1.5 px-2 text-white leading-tight active-scale flex";
 
 export const tableHeaderRowStyle = "bg-[#EAF6FF] h-12 overflow-hidden py-4 rounded-lg [&_tr]:border-0";
+
+export const tabStyle =
+	"data-[state=active]:text-primary data-[state=active]:shadow-none data-[state=active]:underline underline-offset-4 text-[.9rem] justify-start";
+
+export const tabListStyle = "bg-transparent flex-wrap gap-2 h-auto";
