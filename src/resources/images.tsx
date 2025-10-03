@@ -8,6 +8,9 @@ import whatsapp from "@/assets/images/others/whatsapp.png";
 import gmail from "@/assets/images/others/gmail.png";
 import verticalCuts from "@/assets/images/others/vertical-edge.svg";
 import alertImage from "@/assets/images/others/7fc5a39ad9923a2a6f9e13d665758b830df5afef.png";
+import demoId from "@/assets/images/others/64b87f3da74b33a0fa9231f9fe6a0177bcc42f4a.png";
+import pdfImage from "@/assets/images/others/830f25f9ec6eed85712bfe7d3c24a90b96ab7e0b.png";
+import noDocument from "@/assets/images/others/16976b02c5ab5524c8223459612b6c3df7083bab.png";
 
 const avatar =
 	"https://images.unsplash.com/photo-1633332755192-727a05c4013d?fm=jpg&q=60&w=3000&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8dXNlcnxlbnwwfHwwfHx8MA%3D%3D";
@@ -26,6 +29,9 @@ const images = {
 	verticalCuts,
 	alertImage,
 	avatar,
+	demoId,
+	pdfImage,
+	noDocument,
 };
 export const media = {
 	images,

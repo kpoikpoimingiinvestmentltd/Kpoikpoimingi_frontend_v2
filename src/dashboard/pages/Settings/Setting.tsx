@@ -52,7 +52,7 @@ export default function Setting() {
 				</div>
 			</div>
 
-			<CustomCard className="p-5 sm:p-6 border-0">
+			<CustomCard className="p-5 sm:p-6 mt-8 border-0">
 				<Tabs defaultValue="profile">
 					<TabsList className={tabListStyle}>
 						<TabsTrigger value="profile" className={tabStyle}>

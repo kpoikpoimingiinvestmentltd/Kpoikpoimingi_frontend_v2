@@ -12,10 +12,11 @@ import { media } from "@/resources/images";
 import { Link } from "react-router";
 import CompactPagination from "@/components/ui/compact-pagination";
 import React from "react";
+import DeleteModal from "@/dashboard/pages/Customers/DeleteModal";
 import EmptyData from "../../../components/common/EmptyData";
 
 // Dummy data for demonstration
-const customers = [
+const initialCustomers = [
 	{
 		id: "ID 123456",
 		name: "Tom Doe James",
@@ -56,7 +57,10 @@ const customers = [
 export default function Customers() {
 	const [isEmpty] = React.useState(false);
 	const [page, setPage] = React.useState(1);
-	const pages = Math.max(1, Math.ceil(customers.length / 10));
+	const [customersList, setCustomersList] = React.useState(initialCustomers);
+	const [deleteOpen, setDeleteOpen] = React.useState(false);
+	const [selectedIndex, setSelectedIndex] = React.useState<number | null>(null);
+	const pages = Math.max(1, Math.ceil(customersList.length / 10));
 
 	return (
 		<div className="flex flex-col gap-y-6">
@@ -122,7 +126,7 @@ export default function Customers() {
 											</TableRow>
 										</TableHeader>
 										<TableBody>
-											{customers.map((row, idx) => (
+											{customersList.map((row, idx) => (
 												<TableRow key={idx} className="hover:bg-[#F6FBFF]">
 													<TableCell className="text-[#13121266]">{row.id}</TableCell>
 													<TableCell className="text-[#13121266]">{row.name}</TableCell>
@@ -139,7 +143,13 @@ export default function Customers() {
 																<EditIcon />
 															</IconWrapper>
 														</Link>
-														<button type="button" className="text-red-500">
+														<button
+															type="button"
+															className="text-red-500"
+															onClick={() => {
+																setSelectedIndex(idx);
+																setDeleteOpen(true);
+															}}>
 															<IconWrapper className="text-xl">
 																<TrashIcon />
 															</IconWrapper>
@@ -153,6 +163,18 @@ export default function Customers() {
 							</div>
 						</>
 
+						<DeleteModal
+							open={deleteOpen}
+							onOpenChange={setDeleteOpen}
+							title="Delete customer"
+							description="Are you sure you want to delete this customer? This action cannot be undone."
+							onConfirm={() => {
+								if (selectedIndex !== null) {
+									setCustomersList((prev) => prev.filter((_, i) => i !== selectedIndex));
+									setSelectedIndex(null);
+								}
+							}}
+						/>
 						<div className="mt-8 flex flex-col md:flex-row text-center md:text-start justify-center items-center">
 							<span className="text-sm text-nowrap">
 								Showing <span className="font-medium">1-10</span> of <span className="font-medium">100</span> results

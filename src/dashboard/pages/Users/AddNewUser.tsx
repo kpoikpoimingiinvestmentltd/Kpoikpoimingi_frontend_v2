@@ -35,7 +35,7 @@ export default function AddNewUser() {
 			<CustomCard className="p-8">
 				<div className="max-w-4xl mx-auto">
 					<div className="flex flex-col items-center mb-6">
-						<div className="w-32 h-32 bg-[#FBFBFB] rounded-full border-2 border-dashed border-gray-200 flex items-center justify-center relative overflow-hidden">
+						<div className="w-32 h-32 bg-card rounded-full border-2 border-dashed border-gray-200 flex items-center justify-center relative overflow-hidden">
 							<div className="flex items-center text-center flex-col gap-y-2 absolute justify-center inset-0">
 								<IconWrapper className="text-lg">
 									<UploadCloudIcon />

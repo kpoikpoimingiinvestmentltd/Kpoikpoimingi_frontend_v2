@@ -16,6 +16,6 @@ export const smBtnStyle = "bg-primary justify-center items-center text-[.8rem] r
 export const tableHeaderRowStyle = "bg-[#EAF6FF] h-12 overflow-hidden py-4 rounded-lg [&_tr]:border-0";
 
 export const tabStyle =
-	"data-[state=active]:text-primary data-[state=active]:shadow-none data-[state=active]:underline underline-offset-4 text-[.9rem] justify-start";
+	"data-[state=active]:text-primary data-[state=active]:shadow-none data-[state=active]:underline underline-offset-4 text-[.9rem] justify-start p-0 justify-start";
 
-export const tabListStyle = "bg-transparent flex-wrap gap-2 h-auto";
+export const tabListStyle = "bg-transparent flex-wrap gap-5 p-0 h-auto";

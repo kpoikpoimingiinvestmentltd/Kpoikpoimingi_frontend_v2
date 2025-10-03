@@ -68,7 +68,7 @@ export default function ReceiptTable({
 					</TableHeader>
 					<TableBody>
 						{pageData.map((it, idx) => (
-							<TableRow key={idx} className="hover:bg-[#FBFBFB]">
+							<TableRow key={idx} className="hover:bg-card">
 								<TableCell className="text-sm text-muted-foreground">{it.id}</TableCell>
 								<TableCell className="text-sm text-[#667085]">{it.customer}</TableCell>
 								<TableCell className="text-sm text-[#667085]">{it.property}</TableCell>

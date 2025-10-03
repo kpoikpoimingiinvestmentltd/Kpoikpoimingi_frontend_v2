@@ -1,13 +1,12 @@
-// icons are provided by ReceiptActions
 import CustomCard from "@/components/base/CustomCard";
 import Image from "@/components/base/Image";
-import { media } from "@/resources/images";
 import KeyValueRow from "@/components/common/KeyValueRow";
 import ReceiptWrapper from "@/components/common/ReceiptWrapper";
+import { media } from "@/resources/images";
 
-export default function ReceiptDetails() {
+export default function CustomerReceipt() {
 	return (
-		<ReceiptWrapper emailSubject="Receipt from Kpoikpoimingi" emailBody="Please find attached the receipt.">
+		<ReceiptWrapper shouldPrint={false} emailSubject="Receipt from Kpoikpoimingi" emailBody="Please find attached the receipt.">
 			<header className="grid grid-cols-1 md:grid-cols-2 items-start border-b-2 border-dashed pb-8">
 				<aside className="order-2 md:order-1 flex flex-col items-start gap-y-3">
 					<Image src={media.logos.logo} className="w-40 sm:w-48" />
@@ -38,7 +37,7 @@ export default function ReceiptDetails() {
 
 				<section className="mt-4 flex flex-col gap-y-6">
 					<header className="flex items-center justify-between bg-[#03B4FA33] px-4 md:px-6 py-2.5 rounded-md">
-						<h5 className="text-start">Payment Details</h5>
+						<h5 className="text-start text-base">Payment Details</h5>
 						<span className="text-sm text-end text-slate-700">Payment duration (6 months)</span>
 					</header>
 					<CustomCard className="grid grid-cols-1 gap-y-3 px-4 md:px-6 py-5 bg-card border-0">

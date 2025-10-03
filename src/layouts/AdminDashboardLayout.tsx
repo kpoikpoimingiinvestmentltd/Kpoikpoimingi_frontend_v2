@@ -25,7 +25,7 @@ export default function AdminDashboardLayout() {
 			</aside>
 			<main className="flex-1 flex flex-col min-h-screen w-full xl:ml-76">
 				<AdminDashboardHeader onSidebarOpen={() => setSidebarOpen(true)} onLogoutOpen={() => setLogoutOpen(true)} />
-				<div className="p-5 md:p-6 flex-grow bg-[#FBFBFB]">
+				<div className="p-5 md:p-6 flex-grow bg-card">
 					<Outlet />
 				</div>
 			</main>

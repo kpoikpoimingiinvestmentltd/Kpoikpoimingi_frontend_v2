@@ -5,6 +5,7 @@ export const _router = {
 		notifications: "/dashboard/notifications",
 		customers: "/dashboard/customers",
 		customerDetails: "/dashboard/customers/:id",
+		customerDetailsReceipt: "/dashboard/customers/:id/receipt",
 		properties: "/dashboard/properties",
 		addProperties: "/dashboard/properties/add",
 		manageCategories: "/dashboard/properties/manage-categories",

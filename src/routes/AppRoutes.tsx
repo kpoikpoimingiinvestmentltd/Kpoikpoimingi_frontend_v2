@@ -19,6 +19,7 @@ import Users from "../dashboard/pages/Users/Users";
 import ReceiptDetails from "../dashboard/pages/Receipt/ReceiptDetails";
 import AddNewUser from "../dashboard/pages/Users/AddNewUser";
 import Setting from "../dashboard/pages/Settings/Setting";
+import CustomerReceipt from "../dashboard/pages/Customers/CustomerReceipt";
 
 export const appRouter = createBrowserRouter([
 	{
@@ -53,6 +54,10 @@ export const appRouter = createBrowserRouter([
 			{
 				path: _router.dashboard.customers,
 				element: <Customers />,
+			},
+			{
+				path: _router.dashboard.customerDetailsReceipt,
+				element: <CustomerReceipt />,
 			},
 			{
 				path: _router.dashboard.contract,

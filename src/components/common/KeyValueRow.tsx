@@ -2,6 +2,7 @@ import * as React from "react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router";
 import { FileIcon, IconWrapper } from "../../assets/icons";
+import { twMerge } from "tailwind-merge";
 
 type FileItem = { url: string; label?: string };
 
@@ -19,6 +20,7 @@ type Props = {
 	action?: React.ReactNode;
 	/** when true value is rendered as a subtle link */
 	link?: boolean;
+	href?: string;
 	/** variant: 'text' = simple text, 'action' = show action node, 'files' = show downloadable icons */
 	variant?: "text" | "action" | "files";
 	/** files to render when variant='files' */
@@ -36,6 +38,7 @@ export default function KeyValueRow({
 	leftProps,
 	rightProps,
 	action,
+	href = "",
 	link = false,
 	variant = "text",
 	files,
@@ -44,31 +47,28 @@ export default function KeyValueRow({
 	const handleCopy = async () => {
 		try {
 			if (typeof value === "string") await navigator.clipboard.writeText(value);
-		} catch (e) {
-			/* ignore */
-		}
+		} catch (e) {}
 	};
 
-	// small svg file icon
-
 	return (
-		<div className={`flex items-start justify-between py-2 ${className}`}>
-			<aside {...(leftProps || {})} className={`text-start text-nowrap ${leftClassName || ""}`}>
+		<div className={twMerge(`flex items-start justify-between py-2 gap-4`, className)}>
+			<aside {...(leftProps || {})} className={twMerge(`text-start text-wrap`, leftClassName)}>
 				<p className="text-muted-foreground text-sm">{label}</p>
 			</aside>
 
-			<div {...(rightProps || {})} className={`flex items-center gap-4 justify-end max-w-[120px] ${rightClassName || ""}`}>
+			<aside {...(rightProps || {})} className={twMerge(`flex items-center gap-4 justify-end max-w-[120px]`, rightClassName)}>
 				<div className="flex-1 text-right">
 					{variant === "text" ? (
 						link ? (
-							<a className="text-primary underline-offset-2 hover:underline text-sm">{value}</a>
+							<Link to={href} className="text-primary underline-offset-2 hover:underline text-sm">
+								{value}
+							</Link>
 						) : (
-							<div className="text-sm text-balance">{value}</div>
+							<div className="text-sm text-balance sm:text-nowrap">{value}</div>
 						)
 					) : variant === "action" ? (
 						<div className="text-sm">{value}</div>
 					) : (
-						// files variant has no inline textual value
 						<div />
 					)}
 				</div>
@@ -93,7 +93,7 @@ export default function KeyValueRow({
 						))}
 					</div>
 				) : null}
-			</div>
+			</aside>
 		</div>
 	);
 }
