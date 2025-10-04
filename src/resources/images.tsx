@@ -12,6 +12,12 @@ import demoId from "@/assets/images/others/64b87f3da74b33a0fa9231f9fe6a0177bcc42
 import pdfImage from "@/assets/images/others/830f25f9ec6eed85712bfe7d3c24a90b96ab7e0b.png";
 import noDocument from "@/assets/images/others/16976b02c5ab5524c8223459612b6c3df7083bab.png";
 
+import _product1 from "@/assets/images/others/4043137ced74e177d258a68f79ed4289f738e2fc.png";
+import _product2 from "@/assets/images/others/588c43cec5c66c5d97aaf7c65231fa7b46580a65.png";
+import _product3 from "@/assets/images/others/749be8d4a43aa88acac27962657eec9b85553c02.png";
+import _product4 from "@/assets/images/others/4190605a079b29b14b7a92a8e421c68d4e8280b3.png";
+import _product5 from "@/assets/images/others/b30e256e296f0e0faf3c86e1752b3fe2d402da56.png";
+
 const avatar =
 	"https://images.unsplash.com/photo-1633332755192-727a05c4013d?fm=jpg&q=60&w=3000&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8dXNlcnxlbnwwfHwwfHx8MA%3D%3D";
 
@@ -32,6 +38,11 @@ const images = {
 	demoId,
 	pdfImage,
 	noDocument,
+	_product1,
+	_product2,
+	_product3,
+	_product4,
+	_product5,
 };
 export const media = {
 	images,

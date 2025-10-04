@@ -1,7 +1,7 @@
 import Image from "@/components/base/Image";
 import KeyValueRow from "@/components/common/KeyValueRow";
 import { media } from "@/resources/images";
-import CustomCard from "../../../components/base/CustomCard";
+import CustomCard from "../../components/base/CustomCard";
 
 export default function Profile() {
 	return (

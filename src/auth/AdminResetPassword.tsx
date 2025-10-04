@@ -1,6 +1,6 @@
 import { useState } from "react";
 import AuthSkin from "../../components/common/AuthSkin";
-import { Input } from "@/components/ui/input";
+import CustomInput from "@/components/base/CustomInput";
 import { inputStyle } from "@/components/common/commonStyles";
 import { twMerge } from "tailwind-merge";
 import { IconWrapper } from "@/assets/icons";
@@ -14,7 +14,7 @@ export default function AdminResetPassword() {
 		<AuthSkin title="Reset Password" subtitle="Enter new password">
 			<form className="flex flex-col gap-y-6">
 				<div className="relative">
-					<Input className={twMerge(inputStyle, "h-12 w-full")} type={show.password ? "text" : "password"} placeholder="New password" />
+					<CustomInput className={twMerge(inputStyle, "h-12 w-full")} type={show.password ? "text" : "password"} placeholder="New password" />
 					<button
 						className="absolute top-1/2 right-2 -translate-y-1/2 bg-transparent shadow-none hover:bg-gray-100 flex items-center justify-center p-2 rounded-full"
 						type="button"
@@ -23,7 +23,7 @@ export default function AdminResetPassword() {
 					</button>
 				</div>
 				<div className="relative">
-					<Input className={twMerge(inputStyle, "h-12 w-full")} type={show.confirm ? "text" : "password"} placeholder="Confirm password" />
+					<CustomInput className={twMerge(inputStyle, "h-12 w-full")} type={show.confirm ? "text" : "password"} placeholder="Confirm password" />
 					<button
 						className="absolute top-1/2 right-2 -translate-y-1/2 bg-transparent shadow-none hover:bg-gray-100 flex items-center justify-center p-2 rounded-full"
 						type="button"

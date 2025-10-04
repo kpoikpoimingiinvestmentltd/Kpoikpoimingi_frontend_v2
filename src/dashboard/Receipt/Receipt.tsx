@@ -1,5 +1,5 @@
-import PageTitles from "../../../components/common/PageTitles";
-import ReceiptTable from "@/dashboard/pages/Receipt/ReceiptTable";
+import PageTitles from "../../components/common/PageTitles";
+import ReceiptTable from "@/dashboard/Receipt/ReceiptTable";
 
 export default function Receipt() {
 	return (

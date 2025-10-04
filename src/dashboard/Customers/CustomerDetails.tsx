@@ -1,7 +1,7 @@
 import PageTitles from "@/components/common/PageTitles";
 import CustomCard from "@/components/base/CustomCard";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { tabListStyle, tabStyle } from "../../../components/common/commonStyles";
+import { tabListStyle, tabStyle } from "../../components/common/commonStyles";
 import TabCustomerDetails from "./TabCustomerDetails";
 import TabPaymentHistory from "./TabPaymentHistory";
 import TabReceipt from "./TabReceipt";

@@ -11,7 +11,7 @@ import TermsConditions from "./TermsConditions";
 import LogoutModal from "./LogoutModal";
 import { useNavigate } from "react-router";
 import { _router } from "@/routes/_router";
-import { tabListStyle, tabStyle } from "../../../components/common/commonStyles";
+import { tabListStyle, tabStyle } from "../../components/common/commonStyles";
 
 export default function Setting() {
 	const [editOpen, setEditOpen] = useState(false);

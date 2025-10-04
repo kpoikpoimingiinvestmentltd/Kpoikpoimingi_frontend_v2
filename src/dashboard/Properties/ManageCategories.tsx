@@ -1,15 +1,13 @@
 import CustomCard from "@/components/base/CustomCard";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { EditIcon, FilterIcon, IconWrapper, PlusIcon, SearchIcon, TrashIcon } from "@/assets/icons";
-// import { EyeIcon } from "@/assets/icons";
 import PageTitles from "@/components/common/PageTitles";
 import { inputStyle, preTableButtonStyle } from "@/components/common/commonStyles";
-import { Input } from "@/components/ui/input";
+import CustomInput from "@/components/base/CustomInput";
 import CompactPagination from "@/components/ui/compact-pagination";
 import React from "react";
-import EmptyData from "../../../components/common/EmptyData";
+import EmptyData from "../../components/common/EmptyData";
 import { twMerge } from "tailwind-merge";
-// Button import removed (not used)
 
 // Sample categories data
 const categories = [
@@ -68,17 +66,15 @@ export default function ManageCategories() {
 					<CustomCard className="bg-white flex-grow w-full rounded-lg p-4 border border-gray-100">
 						<div className="w-full">
 							<div className="flex items-center justify-between flex-wrap gap-6">
-								<h2 className="font-semibold">Product Categories</h2>
+								<h2 className="font-medium">Product Categories</h2>
 								<div className="flex items-center gap-2">
 									<div className="relative md:w-80">
-										<Input
+										<CustomInput
 											placeholder="Search categories"
 											aria-label="Search categories"
 											className={twMerge(inputStyle, `max-w-[320px] h-10 pl-9`)}
+											iconLeft={<SearchIcon />}
 										/>
-										<IconWrapper className="absolute top-1/2 -translate-y-1/2 opacity-50 left-5 -translate-x-1/2">
-											<SearchIcon />
-										</IconWrapper>
 									</div>
 									<button type="button" className={`${preTableButtonStyle} text-white bg-primary ml-auto`}>
 										<IconWrapper className="text-base">

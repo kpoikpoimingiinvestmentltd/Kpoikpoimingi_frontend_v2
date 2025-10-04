@@ -1,11 +1,11 @@
 import PageTitles from "@/components/common/PageTitles";
-import { Input } from "@/components/ui/input";
+import CustomInput from "@/components/base/CustomInput";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { inputStyle } from "@/components/common/commonStyles";
 import { twMerge } from "tailwind-merge";
-import { IconWrapper, UploadCloudIcon } from "../../../assets/icons";
+import { IconWrapper, UploadCloudIcon } from "../../assets/icons";
 
 export default function AddProperties() {
 	return (
@@ -31,7 +31,7 @@ export default function AddProperties() {
 					<form className="space-y-5">
 						<div>
 							<label className="block text-sm font-medium text-gray-700 mb-2">Property Name*</label>
-							<Input type="text" className={twMerge(inputStyle)} defaultValue="25kg gas cylinder" />
+							<CustomInput type="text" className={twMerge(inputStyle)} defaultValue="25kg gas cylinder" />
 						</div>
 
 						<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -79,11 +79,11 @@ export default function AddProperties() {
 						<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 							<div>
 								<label className="block text-sm font-medium text-gray-700 mb-2">Price *</label>
-								<Input className={twMerge(inputStyle)} defaultValue="300,000" />
+								<CustomInput className={twMerge(inputStyle)} defaultValue="300,000" />
 							</div>
 							<div>
 								<label className="block text-sm font-medium text-gray-700 mb-2">Quantity*</label>
-								<Input type="number" className={twMerge(inputStyle)} defaultValue={8} />
+								<CustomInput type="number" className={twMerge(inputStyle)} defaultValue={8} />
 							</div>
 						</div>
 

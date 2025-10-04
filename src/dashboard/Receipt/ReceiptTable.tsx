@@ -4,8 +4,8 @@ import { EyeIcon, IconWrapper, ShareIcon } from "@/assets/icons";
 import CompactPagination from "@/components/ui/compact-pagination";
 import React from "react";
 import { Link } from "react-router";
-import { tableHeaderRowStyle } from "../../../components/common/commonStyles";
-import { _router } from "../../../routes/_router";
+import { tableHeaderRowStyle } from "../../components/common/commonStyles";
+import { _router } from "../../routes/_router";
 
 type ReceiptItem = {
 	id: string;

@@ -3,17 +3,16 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { EditIcon, FilterIcon, IconWrapper, PlusIcon, SearchIcon, SendEmailIcon, TrashIcon } from "@/assets/icons";
 import { _router } from "@/routes/_router";
 import Badge from "@/components/base/Badge";
-// import { EyeIcon } from "@/assets/icons";
 import PageTitles from "@/components/common/PageTitles";
 import { inputStyle, preTableButtonStyle, tableHeaderRowStyle } from "@/components/common/commonStyles";
-import { Input } from "@/components/ui/input";
+import CustomInput from "@/components/base/CustomInput";
 import Image from "@/components/base/Image";
 import { media } from "@/resources/images";
 import { Link } from "react-router";
 import CompactPagination from "@/components/ui/compact-pagination";
 import React from "react";
-import DeleteModal from "@/dashboard/pages/Customers/DeleteModal";
-import EmptyData from "../../../components/common/EmptyData";
+import DeleteModal from "@/dashboard/Customers/DeleteModal";
+import EmptyData from "../../components/common/EmptyData";
 
 // Dummy data for demonstration
 const initialCustomers = [
@@ -94,14 +93,12 @@ export default function Customers() {
 									<h2 className="font-semibold">All Customers</h2>
 									<div className="flex items-center gap-2">
 										<div className="relative md:w-80">
-											<Input
+											<CustomInput
 												placeholder="Search by name or property"
 												aria-label="Search by name or property"
 												className={`max-w-[320px] ${inputStyle} h-10 pl-9`}
+												iconLeft={<SearchIcon />}
 											/>
-											<IconWrapper className="absolute top-1/2 -translate-y-1/2 opacity-50 left-5 -translate-x-1/2">
-												<SearchIcon />
-											</IconWrapper>
 										</div>
 										<button type="button" className={`${preTableButtonStyle} text-white bg-primary ml-auto`}>
 											<IconWrapper className="text-base">
@@ -138,7 +135,7 @@ export default function Customers() {
 													<TableCell className="text-[#13121266]">{row.totalPayment}</TableCell>
 													<TableCell className="text-[#13121266]">{row.date}</TableCell>
 													<TableCell className="flex items-center gap-1">
-														<Link to={_router.dashboard.customerDetails.replace(":id", row.id)} className=" p-2 flex items-center">
+														<Link to={_router.dashboard.customerDetails.replace(":id", row.id)} className="p-2 flex items-center">
 															<IconWrapper className="text-xl">
 																<EditIcon />
 															</IconWrapper>

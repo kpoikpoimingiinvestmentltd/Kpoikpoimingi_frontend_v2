@@ -1,4 +1,4 @@
-import { Input } from "@/components/ui/input";
+import CustomInput from "@/components/base/CustomInput";
 import { checkboxStyle, inputStyle } from "@/components/common/commonStyles";
 import { twMerge } from "tailwind-merge";
 import { Button } from "@/components/ui/button";
@@ -18,7 +18,7 @@ export default function AdminLogin() {
 					<Label htmlFor="email" className="mb-2 block font-normal">
 						Email address
 					</Label>
-					<Input className={`${twMerge(inputStyle, "h-11 rounded-sm bg-card")} w-full`} type="email" placeholder="Enter here" />
+					<CustomInput className={`${twMerge(inputStyle, "h-11 rounded-sm bg-card")} w-full`} type="email" placeholder="Enter here" />
 				</div>
 				<div>
 					<div className="relative">
@@ -26,7 +26,7 @@ export default function AdminLogin() {
 							Password
 						</Label>
 						<div className="relative">
-							<Input className={`${twMerge(inputStyle, "h-11 rounded-sm bg-card")} w-full`} type="password" placeholder="Enter here" />
+							<CustomInput className={`${twMerge(inputStyle, "h-11 rounded-sm bg-card")} w-full`} type="password" placeholder="Enter here" />
 							<button
 								className="absolute top-1/2 right-2 -translate-y-1/2 bg-transparent shadow-none hover:bg-gray-100 flex items-center justify-center p-2 rounded-full"
 								type="button">

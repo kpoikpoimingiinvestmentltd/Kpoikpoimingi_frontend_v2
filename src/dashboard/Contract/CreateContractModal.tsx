@@ -1,7 +1,7 @@
 import React from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import CustomInput from "@/components/base/CustomInput";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 // calendar icon not available in icons export; we'll use text placeholder
@@ -49,7 +49,7 @@ export default function CreateContractModal({ open, onOpenChange }: { open: bool
 							<>
 								<div>
 									<Label>Property Name*</Label>
-									<Input defaultValue="25kg gas cylinder" />
+									<CustomInput defaultValue="25kg gas cylinder" />
 								</div>
 								<div>
 									<Label>Payment Interval*</Label>
@@ -75,13 +75,13 @@ export default function CreateContractModal({ open, onOpenChange }: { open: bool
 
 								<div>
 									<Label>Amount available for down payment*</Label>
-									<Input defaultValue="30,000" />
+									<CustomInput defaultValue="30,000" />
 								</div>
 
 								<div>
 									<Label>Start Date*</Label>
 									<div className="relative">
-										<Input defaultValue="12-3-2025" />
+										<CustomInput defaultValue="12-3-2025" />
 										<span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs">📅</span>
 									</div>
 								</div>
@@ -99,16 +99,16 @@ export default function CreateContractModal({ open, onOpenChange }: { open: bool
 							<>
 								<div>
 									<Label>Property Name*</Label>
-									<Input defaultValue="25kg gas cylinder" />
-								</div>
+									<CustomInput defaultValue="25kg gas cylinder" />
+									</div>
 								<div>
 									<Label>Amount Paid*</Label>
-									<Input defaultValue="30,000" />
+									<CustomInput defaultValue="30,000" />
 								</div>
 								<div className="col-span-2">
 									<Label>Start Date*</Label>
 									<div className="relative">
-										<Input defaultValue="12-3-2025" />
+										<CustomInput defaultValue="12-3-2025" />
 										<span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs">📅</span>
 									</div>
 								</div>

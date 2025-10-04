@@ -36,6 +36,7 @@ const statusClassMap: Record<string, string> = {
 	cancelled: "bg-red-100 text-red-800",
 	canceled: "bg-red-100 text-red-800",
 	expired: "bg-orange-100 text-orange-800",
+	primary: "bg-primary/10 text-primary",
 };
 
 // small dot color classes keyed by normalized status
@@ -48,6 +49,7 @@ const statusDotMap: Record<string, string> = {
 	inactive: "bg-gray-400",
 	cancelled: "bg-red-500",
 	canceled: "bg-red-500",
+	primary: "bg-primary",
 	expired: "bg-orange-500",
 };
 

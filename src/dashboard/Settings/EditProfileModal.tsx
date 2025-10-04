@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
+import CustomInput from "@/components/base/CustomInput";
 import { Button } from "@/components/ui/button";
 import Image from "@/components/base/Image";
 import { media } from "@/resources/images";
@@ -33,12 +33,12 @@ export default function EditProfileModal({ open, onOpenChange }: { open: boolean
 					<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 						<div>
 							<label className="block text-sm text-muted-foreground mb-2">User Name*</label>
-							<Input value={name} onChange={(e) => setName(e.target.value)} />
+							<CustomInput value={name} onChange={(e) => setName(e.target.value)} />
 						</div>
 
 						<div>
 							<label className="block text-sm text-muted-foreground mb-2">Email*</label>
-							<Input value={email} onChange={(e) => setEmail(e.target.value)} />
+							<CustomInput value={email} onChange={(e) => setEmail(e.target.value)} />
 						</div>
 					</div>
 

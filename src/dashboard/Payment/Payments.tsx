@@ -6,13 +6,11 @@ import Badge from "@/components/base/Badge";
 import PageTitles from "@/components/common/PageTitles";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { inputStyle, preTableButtonStyle, tableHeaderRowStyle, tabListStyle, tabStyle } from "@/components/common/commonStyles";
-import { Input } from "@/components/ui/input";
-import Image from "@/components/base/Image";
-import { media } from "@/resources/images";
+import CustomInput from "@/components/base/CustomInput";
 import CompactPagination from "@/components/ui/compact-pagination";
 import React from "react";
 import EmptyData from "@/components/common/EmptyData";
-import ExportTrigger from "../../../components/common/ExportTrigger";
+import ExportTrigger from "../../components/common/ExportTrigger";
 
 // Dummy data for demonstration
 const payments = [
@@ -71,10 +69,6 @@ export default function Payments() {
 				{!isEmpty ? (
 					<CustomCard className="bg-white flex-grow w-full rounded-lg p-4 border border-gray-100">
 						<>
-							<div className="flex-grow max-w-sm mx-auto text-center gap-5 hidden flex-col items-center justify-center p-5">
-								<Image src={media.images.empty} alt="Empty Payments" className="w-24" />
-								<p className="text-muted-foreground">You have no payments yet. When you do, they will appear here.</p>
-							</div>
 							<div className="w-full">
 								<div className="flex items-center justify-between flex-wrap gap-6">
 									<div className="flex items-center gap-4">
@@ -91,14 +85,12 @@ export default function Payments() {
 									</div>
 									<div className="flex items-center gap-2">
 										<div className="relative md:w-80">
-											<Input
+											<CustomInput
 												placeholder="Search by id, name or contact"
 												aria-label="Search payments"
 												className={`max-w-[320px] ${inputStyle} h-10 pl-9`}
+												iconLeft={<SearchIcon />}
 											/>
-											<IconWrapper className="absolute top-1/2 -translate-y-1/2 opacity-50 left-5 -translate-x-1/2">
-												<SearchIcon />
-											</IconWrapper>
 										</div>
 										<button type="button" className={`${preTableButtonStyle} text-white bg-primary ml-auto`}>
 											<IconWrapper className="text-base">
@@ -126,17 +118,17 @@ export default function Payments() {
 										<TableBody>
 											{payments.map((row, idx) => (
 												<TableRow key={idx} className="hover:bg-[#F6FBFF]">
-													<TableCell className="text-[#13121266]">{row.id}</TableCell>
-													<TableCell className="text-[#13121266]">{row.name}</TableCell>
-													<TableCell className="text-[#13121266]">0908647532</TableCell>
-													<TableCell className="text-[#13121266]">{row.totalPayment}</TableCell>
-													<TableCell className="text-[#13121266]">
+													<TableCell className="text-[#13121266] py-4">{row.id}</TableCell>
+													<TableCell className="text-[#13121266] py-4">{row.name}</TableCell>
+													<TableCell className="text-[#13121266] py-4">0908647532</TableCell>
+													<TableCell className="text-[#13121266] py-4">{row.totalPayment}</TableCell>
+													<TableCell className="text-[#13121266] py-4">
 														<Badge value={row.status} size="sm" />
 													</TableCell>
-													<TableCell className="text-[#13121266]">500,000</TableCell>
-													<TableCell className="text-[#13121266]">500,000</TableCell>
-													<TableCell className="text-[#13121266]">500,000</TableCell>
-													<TableCell className="text-[#13121266]">{row.date}</TableCell>
+													<TableCell className="text-[#13121266] py-4">500,000</TableCell>
+													<TableCell className="text-[#13121266] py-4">500,000</TableCell>
+													<TableCell className="text-[#13121266] py-4">500,000</TableCell>
+													<TableCell className="text-[#13121266] py-4">{row.date}</TableCell>
 												</TableRow>
 											))}
 										</TableBody>
@@ -148,7 +140,7 @@ export default function Payments() {
 						<CompactPagination page={page} pages={pages} onPageChange={setPage} showRange />
 					</CustomCard>
 				) : (
-					<EmptyData text="No Payments at the moment" />
+					<EmptyData text="ou have no payments yet. When you do, they will appear here." />
 				)}
 			</div>
 		</div>

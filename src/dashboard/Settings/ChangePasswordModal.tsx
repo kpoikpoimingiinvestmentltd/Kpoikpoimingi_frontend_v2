@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
+import CustomInput from "@/components/base/CustomInput";
 import { Button } from "@/components/ui/button";
 import CustomCard from "@/components/base/CustomCard";
 
@@ -24,11 +24,11 @@ export default function ChangePasswordModal({ open, onOpenChange }: { open: bool
 					<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 						<div>
 							<label className="block text-sm text-muted-foreground mb-2">Old Password</label>
-							<Input type="password" value={oldPassword} onChange={(e) => setOldPassword(e.target.value)} />
+							<CustomInput type="password" value={oldPassword} onChange={(e) => setOldPassword(e.target.value)} />
 						</div>
 						<div>
 							<label className="block text-sm text-muted-foreground mb-2">New Password</label>
-							<Input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
+							<CustomInput type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
 						</div>
 					</div>
 

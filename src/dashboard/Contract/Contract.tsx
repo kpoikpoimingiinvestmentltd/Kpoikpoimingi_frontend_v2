@@ -6,7 +6,7 @@ import Badge from "@/components/base/Badge";
 import PageTitles from "@/components/common/PageTitles";
 import CreateContractModal from "./CreateContractModal";
 import { inputStyle, preTableButtonStyle } from "@/components/common/commonStyles";
-import { Input } from "@/components/ui/input";
+import CustomInput from "@/components/base/CustomInput";
 import Image from "@/components/base/Image";
 import { media } from "@/resources/images";
 import { Link } from "react-router";
@@ -48,14 +48,12 @@ export default function Contract() {
 									<h2 className="font-semibold">All Customers</h2>
 									<div className="flex items-center gap-2">
 										<div className="relative md:w-80">
-											<Input
+											<CustomInput
 												placeholder="Search by name, property or contract code"
 												aria-label="Search by name, property or contract code"
 												className={`max-w-[320px] ${inputStyle} h-10 pl-9`}
+												iconLeft={<SearchIcon />}
 											/>
-											<IconWrapper className="absolute top-1/2 -translate-y-1/2 opacity-50 left-5 -translate-x-1/2">
-												<SearchIcon />
-											</IconWrapper>
 										</div>
 										<button type="button" className={`${preTableButtonStyle} text-white bg-primary ml-auto`}>
 											<IconWrapper className="text-base">

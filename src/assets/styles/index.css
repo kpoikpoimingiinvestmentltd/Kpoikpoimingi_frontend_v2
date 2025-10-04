@@ -107,7 +107,7 @@
 }
 
 :root::selection {
-	@apply bg-(--primary-clr)/[0.15];
+	@apply bg-primary/[0.15];
 }
 
 .dark {

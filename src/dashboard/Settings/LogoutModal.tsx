@@ -1,8 +1,8 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import CustomCard from "@/components/base/CustomCard";
-import Image from "../../../components/base/Image";
-import { media } from "../../../resources/images";
+import Image from "../../components/base/Image";
+import { media } from "../../resources/images";
 
 export default function LogoutModal({
 	open,

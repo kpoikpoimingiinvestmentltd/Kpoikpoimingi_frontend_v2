@@ -3,7 +3,7 @@ import PageTitles from "@/components/common/PageTitles";
 import { IconWrapper } from "@/assets/icons";
 import CompactPagination from "@/components/ui/compact-pagination";
 import React from "react";
-import EmptyData from "../../../components/common/EmptyData";
+import EmptyData from "../../components/common/EmptyData";
 
 export default function NotificationsPage() {
 	const [isEmpty] = React.useState(false);

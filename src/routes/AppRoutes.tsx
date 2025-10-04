@@ -4,22 +4,24 @@ import AdminDashboardLayout from "../layouts/AdminDashboardLayout";
 import AdminAuthLayout from "../layouts/AdminAuthLayout";
 import AdminLogin from "../auth/AdminLogin";
 import AuthPageNotFound from "../error/AuthPageNotFound";
-import Dashboard from "../dashboard/pages/Dashboard/Dashboard";
-import Customers from "../dashboard/pages/Customers/Customers";
-import CustomerDetails from "../dashboard/pages/Customers/CustomerDetails";
+import Dashboard from "../dashboard/Dashboard/Dashboard";
+import Customers from "../dashboard/Customers/Customers";
+import CustomerDetails from "../dashboard/Customers/CustomerDetails";
 import DashboardPageNotFound from "../error/DashboardPageNotFound";
-import Contract from "../dashboard/pages/Contract/Contract";
-import NotificationsPage from "../dashboard/pages/Notifications/NotificationsPage";
-import ManageCategories from "../dashboard/pages/Properties/ManageCategories";
-import AddProperties from "../dashboard/pages/Properties/AddProperties";
-import AuditCompliance from "../dashboard/pages/AuditCompliance/AuditCompliance";
-import Payments from "../dashboard/pages/Payment/Payments";
-import Receipt from "../dashboard/pages/Receipt/Receipt";
-import Users from "../dashboard/pages/Users/Users";
-import ReceiptDetails from "../dashboard/pages/Receipt/ReceiptDetails";
-import AddNewUser from "../dashboard/pages/Users/AddNewUser";
-import Setting from "../dashboard/pages/Settings/Setting";
-import CustomerReceipt from "../dashboard/pages/Customers/CustomerReceipt";
+import Contract from "../dashboard/Contract/Contract";
+import NotificationsPage from "../dashboard/Notifications/NotificationsPage";
+import ManageCategories from "../dashboard/Properties/ManageCategories";
+import AddProperties from "../dashboard/Properties/AddProperties";
+import AuditCompliance from "../dashboard/AuditCompliance/AuditCompliance";
+import Payments from "../dashboard/Payment/Payments";
+import Receipt from "../dashboard/Receipt/Receipt";
+import Users from "../dashboard/Users/Users";
+import ReceiptDetails from "../dashboard/Receipt/ReceiptDetails";
+import AddNewUser from "../dashboard/Users/AddNewUser";
+import Setting from "../dashboard/Settings/Setting";
+import CustomerReceipt from "../dashboard/Customers/CustomerReceipt";
+import Properties from "../dashboard/Properties/Properties";
+import UserDetails from "../dashboard/Users/UserDetails";
 
 export const appRouter = createBrowserRouter([
 	{
@@ -69,7 +71,7 @@ export const appRouter = createBrowserRouter([
 			},
 			{
 				path: _router.dashboard.properties,
-				element: <CustomerDetails />,
+				element: <Properties />,
 			},
 			{
 				path: _router.dashboard.addProperties,
@@ -86,6 +88,10 @@ export const appRouter = createBrowserRouter([
 			{
 				path: _router.dashboard.users,
 				element: <Users />,
+			},
+			{
+				path: _router.dashboard.userDetails,
+				element: <UserDetails />,
 			},
 			{
 				path: _router.dashboard.addUser,

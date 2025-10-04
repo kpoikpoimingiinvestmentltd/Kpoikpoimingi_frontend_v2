@@ -4,12 +4,12 @@ import { FilterIcon, IconWrapper, PlusIcon, ThreeDotsIcon, SearchIcon } from "@/
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import PageTitles from "@/components/common/PageTitles";
 import { inputStyle, preTableButtonStyle, tableHeaderRowStyle } from "@/components/common/commonStyles";
-import { Input } from "@/components/ui/input";
+import CustomInput from "@/components/base/CustomInput";
 import CompactPagination from "@/components/ui/compact-pagination";
 import React from "react";
 import EmptyData from "@/components/common/EmptyData";
-import { Link } from "react-router";
-import { _router } from "../../../routes/_router";
+import { Link, useNavigate } from "react-router";
+import { _router } from "../../routes/_router";
 
 const users = [
 	{
@@ -45,12 +45,13 @@ const users = [
 export default function Users() {
 	const [isEmpty] = React.useState(false);
 	const [page, setPage] = React.useState(1);
+	const navigate = useNavigate();
 	const pages = Math.max(1, Math.ceil(users.length / 10));
 
 	return (
 		<div className="flex flex-col gap-y-6">
 			<div className="flex items-center justify-between flex-wrap gap-4 mb-4">
-				<PageTitles title="All Users" description="" />
+				<PageTitles title="Employed Users" description="This are the list of all the employees / users working for Kpoi kpoi mingi investment" />
 				<div className="flex items-center gap-3">
 					<Link
 						to={_router.dashboard.addUser}
@@ -72,14 +73,12 @@ export default function Users() {
 									<h2 className="font-semibold">All Users</h2>
 									<div className="flex items-center gap-2">
 										<div className="relative md:w-80">
-											<Input
+											<CustomInput
 												placeholder="Search by name or phone"
 												aria-label="Search by name or phone"
 												className={`max-w-[320px] ${inputStyle} h-10 pl-9`}
+												iconLeft={<SearchIcon />}
 											/>
-											<IconWrapper className="absolute top-1/2 -translate-y-1/2 opacity-50 left-5 -translate-x-1/2">
-												<SearchIcon />
-											</IconWrapper>
 										</div>
 										<button type="button" className={`${preTableButtonStyle} text-white bg-primary ml-auto`}>
 											<IconWrapper className="text-base">
@@ -121,7 +120,7 @@ export default function Users() {
 															</DropdownMenuTrigger>
 															<DropdownMenuContent align="end" sideOffset={6} className="w-48">
 																{[
-																	{ key: "view", label: "View Profile", danger: false },
+																	{ key: "view", label: "View Profile", danger: false, action: () => navigate(_router.dashboard.userDetails) },
 																	{ key: "edit", label: "Edit Profile", danger: false },
 																	{ key: "deactivate", label: "Deactivate", danger: false },
 																	{ key: "reset", label: "Reset Password", danger: false },
@@ -130,6 +129,7 @@ export default function Users() {
 																	<DropdownMenuItem
 																		key={it.key}
 																		onSelect={() => {
+																			if (it.action) it.action();
 																			// TODO: wire actions (navigate / open modal)
 																		}}
 																		className={`cursor-pointer ${it.danger ? "text-red-500" : ""}`}>

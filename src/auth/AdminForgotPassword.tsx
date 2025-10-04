@@ -1,6 +1,6 @@
 import { useState } from "react";
 import AuthSkin from "@/components/common/AuthSkin";
-import { Input } from "@/components/ui/input";
+import CustomInput from "@/components/base/CustomInput";
 import CodeInputs from "@/components/base/CodeInputs";
 import { twMerge } from "tailwind-merge";
 import { Link } from "react-router";
@@ -24,7 +24,7 @@ export default function AdminForgotPassword() {
 				{stepperLevel === 1 ? (
 					<div className="flex flex-col gap-y-6">
 						<div>
-							<Input className={twMerge(inputStyle, "h-12 w-full")} type="email" placeholder="Your email address" />
+							<CustomInput className={twMerge(inputStyle, "h-12 w-full")} type="email" placeholder="Your email address" />
 							<div className="flex justify-end mt-2">
 								<p className="text-sm">
 									Remember Password?{" "}
