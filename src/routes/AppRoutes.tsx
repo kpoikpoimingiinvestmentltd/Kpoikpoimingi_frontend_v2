@@ -7,6 +7,8 @@ import AuthPageNotFound from "../error/AuthPageNotFound";
 import Dashboard from "../dashboard/Dashboard/Dashboard";
 import Customers from "../dashboard/Customers/Customers";
 import CustomerDetails from "../dashboard/Customers/CustomerDetails";
+import CustomerReceipt from "../dashboard/Customers/CustomerReceipt";
+import AddCustomer from "../dashboard/Users/AddCustomer";
 import DashboardPageNotFound from "../error/DashboardPageNotFound";
 import Contract from "../dashboard/Contract/Contract";
 import NotificationsPage from "../dashboard/Notifications/NotificationsPage";
@@ -19,9 +21,11 @@ import Users from "../dashboard/Users/Users";
 import ReceiptDetails from "../dashboard/Receipt/ReceiptDetails";
 import AddNewUser from "../dashboard/Users/AddNewUser";
 import Setting from "../dashboard/Settings/Setting";
-import CustomerReceipt from "../dashboard/Customers/CustomerReceipt";
 import Properties from "../dashboard/Properties/Properties";
 import UserDetails from "../dashboard/Users/UserDetails";
+import ReportAnalytics from "../dashboard/ReportAnalytics/ReportAnalytics";
+import Debt from "../dashboard/Debt/Debt";
+import ViewDebtDetails from "../dashboard/Debt/ViewDebtDetails";
 
 export const appRouter = createBrowserRouter([
 	{
@@ -56,6 +60,10 @@ export const appRouter = createBrowserRouter([
 			{
 				path: _router.dashboard.customers,
 				element: <Customers />,
+			},
+			{
+				path: _router.dashboard.customerAdd,
+				element: <AddCustomer />,
 			},
 			{
 				path: _router.dashboard.customerDetailsReceipt,
@@ -108,6 +116,18 @@ export const appRouter = createBrowserRouter([
 			{
 				path: _router.dashboard.payment,
 				element: <Payments />,
+			},
+			{
+				path: _router.dashboard.debt,
+				element: <Debt />,
+			},
+			{
+				path: _router.dashboard.debtDetails,
+				element: <ViewDebtDetails />,
+			},
+			{
+				path: _router.dashboard.reportAnalytics,
+				element: <ReportAnalytics />,
 			},
 			{
 				path: _router.dashboard.auditAndCompliance,

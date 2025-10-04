@@ -23,12 +23,22 @@ export default function ChangePasswordModal({ open, onOpenChange }: { open: bool
 				<CustomCard className="border-0 p-0 bg-transparent">
 					<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 						<div>
-							<label className="block text-sm text-muted-foreground mb-2">Old Password</label>
-							<CustomInput type="password" value={oldPassword} onChange={(e) => setOldPassword(e.target.value)} />
+							<CustomInput
+								label="Old Password"
+								labelClassName="block text-sm text-muted-foreground mb-2"
+								type="password"
+								value={oldPassword}
+								onChange={(e) => setOldPassword(e.target.value)}
+							/>
 						</div>
 						<div>
-							<label className="block text-sm text-muted-foreground mb-2">New Password</label>
-							<CustomInput type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
+							<CustomInput
+								label="New Password"
+								labelClassName="block text-sm text-muted-foreground mb-2"
+								type="password"
+								value={newPassword}
+								onChange={(e) => setNewPassword(e.target.value)}
+							/>
 						</div>
 					</div>
 

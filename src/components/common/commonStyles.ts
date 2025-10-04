@@ -1,5 +1,5 @@
 export const inputStyle =
-	"border border-stone-400/50 rounded-md px-3 py-2 h-11 w-full focus:outline-none ring-1 ring-transparent bg-white ring-offset-1 placeholder:text-sm focus-visible:border-stone-400 focus-visible:ring-primary focus-visible:ring-1  bg-[#13121205]";
+	"border border-stone-400/50 text-sm sm:text-[.975rem] rounded-md px-3 py-2 h-11 w-full focus:outline-none ring-1 ring-transparent bg-white ring-offset-1 placeholder:text-sm focus-visible:border-stone-400 focus-visible:ring-primary focus-visible:ring-1  bg-[#13121205]";
 
 export const switchStyle = "data-[state=checked]:bg-primary data-[state=unchecked]:bg-gray-300";
 
@@ -16,6 +16,8 @@ export const smBtnStyle = "bg-primary justify-center items-center text-[.8rem] r
 export const tableHeaderRowStyle = "bg-[#EAF6FF] h-12 overflow-hidden py-4 rounded-lg [&_tr]:border-0";
 
 export const tabStyle =
-	"data-[state=active]:text-primary data-[state=active]:shadow-none data-[state=active]:underline underline-offset-4 text-[.9rem] justify-start p-0 justify-start";
+	"data-[state=active]:text-primary data-[state=active]:shadow-none data-[state=active]:underline underline-offset-[6px] text-[.9rem] justify-start p-0 justify-start";
 
 export const tabListStyle = "bg-transparent flex-wrap gap-5 p-0 h-auto";
+
+export const labelStyle = "text-sm block mb-2 text-slate-800";

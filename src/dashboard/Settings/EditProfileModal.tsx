@@ -32,13 +32,21 @@ export default function EditProfileModal({ open, onOpenChange }: { open: boolean
 
 					<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 						<div>
-							<label className="block text-sm text-muted-foreground mb-2">User Name*</label>
-							<CustomInput value={name} onChange={(e) => setName(e.target.value)} />
+							<CustomInput
+								label="User Name*"
+								labelClassName="block text-sm text-muted-foreground mb-2"
+								value={name}
+								onChange={(e) => setName(e.target.value)}
+							/>
 						</div>
 
 						<div>
-							<label className="block text-sm text-muted-foreground mb-2">Email*</label>
-							<CustomInput value={email} onChange={(e) => setEmail(e.target.value)} />
+							<CustomInput
+								label="Email*"
+								labelClassName="block text-sm text-muted-foreground mb-2"
+								value={email}
+								onChange={(e) => setEmail(e.target.value)}
+							/>
 						</div>
 					</div>
 

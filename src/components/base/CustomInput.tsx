@@ -3,6 +3,7 @@ import { twMerge } from "tailwind-merge";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { IconWrapper } from "../../assets/icons";
+import { inputStyle } from "../common/commonStyles";
 
 type CustomInputProps = React.ComponentProps<typeof Input> & {
 	iconLeft?: React.ReactNode;
@@ -11,13 +12,27 @@ type CustomInputProps = React.ComponentProps<typeof Input> & {
 	suffix?: React.ReactNode; // element displayed inside the input at the far right (like a button or icon)
 	error?: string | boolean;
 	containerClassName?: string;
+	label?: React.ReactNode;
+	labelClassName?: string;
 };
 
-export default function CustomInput({ iconLeft, iconRight, floatingLeft, suffix, error, className, containerClassName, ...props }: CustomInputProps) {
+export default function CustomInput({
+	iconLeft,
+	iconRight,
+	floatingLeft,
+	suffix,
+	error,
+	className,
+	containerClassName,
+	label,
+	labelClassName,
+	...props
+}: CustomInputProps) {
 	const hasSuffix = Boolean(suffix);
 
 	return (
 		<div className={twMerge("relative", containerClassName)}>
+			{label && <label className={twMerge("text-sm block mb-2", labelClassName)}>{label}</label>}
 			{floatingLeft && (
 				<div className="absolute -top-3 left-3 bg-white rounded-full p-1 shadow-sm z-10">
 					<IconWrapper className="text-sm">{floatingLeft}</IconWrapper>
@@ -39,6 +54,7 @@ export default function CustomInput({ iconLeft, iconRight, floatingLeft, suffix,
 							iconLeft ? "pl-10" : "pl-3",
 							hasSuffix ? "pr-14" : "pr-3"
 						),
+						inputStyle,
 						className
 					)}
 				/>

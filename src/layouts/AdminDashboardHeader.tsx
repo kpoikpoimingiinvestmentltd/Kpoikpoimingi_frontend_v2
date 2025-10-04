@@ -9,7 +9,7 @@ import {
 } from "../components/ui/dropdown-menu";
 import { IconWrapper, LogoutIcon, MenuIcon, NotificationIcon, ReceiptPlusIcon, SettingIcon, UserIcon } from "@/assets/icons";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { NavLink } from "react-router";
+import { Link, NavLink } from "react-router";
 import { media } from "../resources/images";
 
 interface AdminDashboardHeaderProps {
@@ -74,7 +74,7 @@ export default function AdminDashboardHeader({ onSidebarOpen, onLogoutOpen }: Ad
 								<AvatarFallback>AJ</AvatarFallback>
 							</Avatar>
 							<div className="flex flex-col items-start">
-								<span className="text-sm font-medium">Amgbara Jake</span>
+								<span className="text-sm font-medium text-nowrap">Amgbara Jake</span>
 								<span className="text-xs text-gray-400">Super admin</span>
 							</div>
 						</button>
@@ -85,20 +85,24 @@ export default function AdminDashboardHeader({ onSidebarOpen, onLogoutOpen }: Ad
 						</div>
 
 						<DropdownMenuSeparator />
-						<div className="p-1">
-							<DropdownMenuItem className="cursor-pointer hover:bg-gray-50 bg-transparent">
-								<IconWrapper>
-									<UserIcon />
-								</IconWrapper>
-								<span>Profile</span>
+						<div className="p-1 flex flex-col gap-y-0.5">
+							<DropdownMenuItem>
+								<Link to={_router.dashboard.settings} className="flex items-center gap-0.5 w-full">
+									<IconWrapper>
+										<UserIcon />
+									</IconWrapper>
+									<span>Profile</span>
+								</Link>
 							</DropdownMenuItem>
-							<DropdownMenuItem className="cursor-pointer hover:bg-gray-50 bg-transparent">
-								<IconWrapper>
-									<SettingIcon />
-								</IconWrapper>
-								<span>Settings</span>
+							<DropdownMenuItem>
+								<Link to={_router.dashboard.settings} className="flex items-center gap-0.5 w-full">
+									<IconWrapper>
+										<SettingIcon />
+									</IconWrapper>
+									<span>Settings</span>
+								</Link>
 							</DropdownMenuItem>
-							<DropdownMenuItem className="cursor-pointer bg-transparent  bg-gradient-to-t from-[#134DC1] to-[#03B4FA] active-scale md:hidden hover:text-white text-white rounded-md py-2 px-3">
+							<DropdownMenuItem className="cursor-pointer bg-transparent  bg-gradient-to-t from-[#134DC1] to-[#03B4FA] active-scale md:hidden hover:!text-white text-white rounded-md py-2 px-3">
 								<IconWrapper className="text-xl">
 									<ReceiptPlusIcon />
 								</IconWrapper>

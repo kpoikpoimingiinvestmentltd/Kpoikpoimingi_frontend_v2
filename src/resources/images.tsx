@@ -17,6 +17,7 @@ import _product2 from "@/assets/images/others/588c43cec5c66c5d97aaf7c65231fa7b46
 import _product3 from "@/assets/images/others/749be8d4a43aa88acac27962657eec9b85553c02.png";
 import _product4 from "@/assets/images/others/4190605a079b29b14b7a92a8e421c68d4e8280b3.png";
 import _product5 from "@/assets/images/others/b30e256e296f0e0faf3c86e1752b3fe2d402da56.png";
+import coin from "@/assets/images/others/9f893334561d69b9c19b1814bf7486d38563fefd.png";
 
 const avatar =
 	"https://images.unsplash.com/photo-1633332755192-727a05c4013d?fm=jpg&q=60&w=3000&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8dXNlcnxlbnwwfHwwfHx8MA%3D%3D";
@@ -43,6 +44,7 @@ const images = {
 	_product3,
 	_product4,
 	_product5,
+	coin,
 };
 export const media = {
 	images,

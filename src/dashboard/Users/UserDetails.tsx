@@ -7,6 +7,7 @@ import Badge from "../../components/base/Badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import UserForm from "./UserForm";
 import { useState } from "react";
+import SuccessModal from "@/components/common/SuccessModal";
 import { media } from "../../resources/images";
 
 export default function UserDetails() {
@@ -22,8 +23,14 @@ export default function UserDetails() {
 	// local UI state: modal handlers
 	const [editOpen, setEditOpen] = useState(false);
 	const openEdit = () => setEditOpen(true);
+	const [resetOpen, setResetOpen] = useState(false);
+	const [generatedPassword, setGeneratedPassword] = useState<string | null>(null);
+
 	const openReset = () => {
-		/* TODO: open reset password modal */
+		// generate a temporary password (simple example)
+		const pwd = `@Root${Math.floor(Math.random() * 900) + 100}`;
+		setGeneratedPassword(pwd);
+		setResetOpen(true);
 	};
 	const openDeactivate = () => {
 		/* TODO: open deactivate modal */
@@ -115,6 +122,35 @@ export default function UserDetails() {
 					<UserForm values={userValues} onChange={() => {}} onSubmit={() => setEditOpen(false)} submitLabel="Save Changes" />
 				</DialogContent>
 			</Dialog>
+
+			{/* Reset password success modal */}
+			<SuccessModal
+				open={resetOpen}
+				onOpenChange={setResetOpen}
+				title="Password Reset"
+				subtitle="Password Reset Successful"
+				fields={
+					generatedPassword
+						? [
+								{
+									label: "Password:",
+									value: <span className="text-primary font-medium">{generatedPassword}</span>,
+									variant: "inline",
+								},
+						  ]
+						: []
+				}
+				actions={[
+					{
+						label: "Copy Password",
+						onClick: () => {
+							if (generatedPassword) navigator.clipboard.writeText(generatedPassword);
+						},
+						variant: "primary",
+						fullWidth: true,
+					},
+				]}
+			/>
 		</div>
 	);
 }

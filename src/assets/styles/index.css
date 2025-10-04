@@ -173,3 +173,25 @@
 .sidebar-links-container::-webkit-scrollbar {
 	width: 0px;
 }
+
+/* Hide native calendar/date-picker icons so we can use a custom icon (keeps layout consistent) */
+/* Chrome, Edge, Safari */
+input[type="date"]::-webkit-inner-spin-button,
+input[type="date"]::-webkit-calendar-picker-indicator {
+	-webkit-appearance: none;
+	display: none;
+	margin: 0;
+}
+
+/* Firefox */
+input[type="date"] {
+	/* appearance control for recent Firefox builds */
+	appearance: textfield;
+	-moz-appearance: textfield;
+}
+
+/* IE/Old Edge fallback - hide clear and reveal buttons if present */
+input[type="date"]::-ms-clear,
+input[type="date"]::-ms-expand {
+	display: none;
+}

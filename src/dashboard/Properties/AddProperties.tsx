@@ -30,8 +30,13 @@ export default function AddProperties() {
 
 					<form className="space-y-5">
 						<div>
-							<label className="block text-sm font-medium text-gray-700 mb-2">Property Name*</label>
-							<CustomInput type="text" className={twMerge(inputStyle)} defaultValue="25kg gas cylinder" />
+							<CustomInput
+								label="Property Name*"
+								labelClassName="block text-sm font-medium text-gray-700 mb-2"
+								type="text"
+								className={twMerge(inputStyle)}
+								defaultValue="25kg gas cylinder"
+							/>
 						</div>
 
 						<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -78,12 +83,21 @@ export default function AddProperties() {
 
 						<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 							<div>
-								<label className="block text-sm font-medium text-gray-700 mb-2">Price *</label>
-								<CustomInput className={twMerge(inputStyle)} defaultValue="300,000" />
+								<CustomInput
+									label="Price *"
+									labelClassName="block text-sm font-medium text-gray-700 mb-2"
+									className={twMerge(inputStyle)}
+									defaultValue="300,000"
+								/>
 							</div>
 							<div>
-								<label className="block text-sm font-medium text-gray-700 mb-2">Quantity*</label>
-								<CustomInput type="number" className={twMerge(inputStyle)} defaultValue={8} />
+								<CustomInput
+									label="Quantity*"
+									labelClassName="block text-sm font-medium text-gray-700 mb-2"
+									type="number"
+									className={twMerge(inputStyle)}
+									defaultValue={8}
+								/>
 							</div>
 						</div>
 

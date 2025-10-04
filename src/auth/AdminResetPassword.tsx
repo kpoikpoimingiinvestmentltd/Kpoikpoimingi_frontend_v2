@@ -1,11 +1,11 @@
 import { useState } from "react";
-import AuthSkin from "../../components/common/AuthSkin";
 import CustomInput from "@/components/base/CustomInput";
 import { inputStyle } from "@/components/common/commonStyles";
 import { twMerge } from "tailwind-merge";
 import { IconWrapper } from "@/assets/icons";
 import { EyeClosed, EyeIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import AuthSkin from "../components/common/AuthSkin";
 
 export default function AdminResetPassword() {
 	const [show, setShow] = useState({ password: false, confirm: false });

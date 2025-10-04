@@ -7,11 +7,11 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import CustomCard from "@/components/base/CustomCard";
 import Profile from "./Profile";
 import VatInterest from "./VatInterest";
-import TermsConditions from "./TermsConditions";
-import LogoutModal from "./LogoutModal";
+import TermsAndConditions from "@/components/common/TermsAndConditions";
 import { useNavigate } from "react-router";
 import { _router } from "@/routes/_router";
 import { tabListStyle, tabStyle } from "../../components/common/commonStyles";
+import LogoutModal from "../../components/common/LogoutModal";
 
 export default function Setting() {
 	const [editOpen, setEditOpen] = useState(false);
@@ -75,7 +75,7 @@ export default function Setting() {
 					</TabsContent>
 
 					<TabsContent value="terms">
-						<TermsConditions />
+						<TermsAndConditions />
 					</TabsContent>
 				</Tabs>
 			</CustomCard>

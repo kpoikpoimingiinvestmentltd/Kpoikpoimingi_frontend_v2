@@ -46,7 +46,17 @@ export default function AddNewUser() {
 						}}
 						submitLabel="Add User"
 					/>
-					<SuccessModal open={userAddedOpen} onOpenChange={setUserAddedOpen} message="User Added" subtitle={`Password: ${generatedPassword}`} />
+					<SuccessModal
+						title="User Added"
+						open={userAddedOpen}
+						onOpenChange={setUserAddedOpen}
+						subtitle="User has been added successfully"
+						fields={
+							generatedPassword
+								? [{ label: "Password:", value: <span className="text-primary font-medium">{generatedPassword}</span>, variant: "inline" }]
+								: []
+						}
+					/>
 				</div>
 			</CustomCard>
 		</div>
