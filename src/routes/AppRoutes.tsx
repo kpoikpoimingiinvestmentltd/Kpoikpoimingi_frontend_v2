@@ -8,11 +8,10 @@ import Dashboard from "../dashboard/Dashboard/Dashboard";
 import Customers from "../dashboard/Customers/Customers";
 import CustomerDetails from "../dashboard/Customers/CustomerDetails";
 import CustomerReceipt from "../dashboard/Customers/CustomerReceipt";
-import AddCustomer from "../dashboard/Users/AddCustomer";
+import AddCustomer from "../dashboard/Customers/AddCustomer";
 import DashboardPageNotFound from "../error/DashboardPageNotFound";
 import Contract from "../dashboard/Contract/Contract";
 import NotificationsPage from "../dashboard/Notifications/NotificationsPage";
-import ManageCategories from "../dashboard/Properties/ManageCategories";
 import AddProperties from "../dashboard/Properties/AddProperties";
 import AuditCompliance from "../dashboard/AuditCompliance/AuditCompliance";
 import Payments from "../dashboard/Payment/Payments";
@@ -26,6 +25,9 @@ import UserDetails from "../dashboard/Users/UserDetails";
 import ReportAnalytics from "../dashboard/ReportAnalytics/ReportAnalytics";
 import Debt from "../dashboard/Debt/Debt";
 import ViewDebtDetails from "../dashboard/Debt/ViewDebtDetails";
+import PropertyDetails from "../dashboard/Properties/PropertyDetails";
+import Categories from "../dashboard/Properties/Categories";
+import ManageCategories from "../dashboard/Properties/ManageCategories";
 
 export const appRouter = createBrowserRouter([
 	{
@@ -82,8 +84,16 @@ export const appRouter = createBrowserRouter([
 				element: <Properties />,
 			},
 			{
+				path: _router.dashboard.propertiesDetails,
+				element: <PropertyDetails />,
+			},
+			{
 				path: _router.dashboard.addProperties,
 				element: <AddProperties />,
+			},
+			{
+				path: _router.dashboard.categories,
+				element: <Categories />,
 			},
 			{
 				path: _router.dashboard.manageCategories,

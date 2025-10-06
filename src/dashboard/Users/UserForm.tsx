@@ -5,6 +5,7 @@ import { inputStyle } from "../../components/common/commonStyles";
 // icons and Image are not needed here; Avatar encapsulates them
 import { media } from "../../resources/images";
 import Avatar from "../../components/base/Avatar";
+import { CalendarIcon, EmailIcon, PhoneIcon } from "../../assets/icons";
 
 type FormShape = {
 	username?: string;
@@ -61,6 +62,7 @@ export default function UserForm({
 						className={twMerge(inputStyle)}
 						value={values.email ?? ""}
 						onChange={(e) => onChange("email", e.target.value)}
+						iconRight={<EmailIcon />}
 					/>
 				</div>
 
@@ -71,6 +73,7 @@ export default function UserForm({
 						className={twMerge(inputStyle)}
 						value={values.phone ?? ""}
 						onChange={(e) => onChange("phone", e.target.value)}
+						iconRight={<PhoneIcon />}
 					/>
 				</div>
 				<div>
@@ -104,6 +107,7 @@ export default function UserForm({
 						type="date"
 						value={values.dob ?? ""}
 						onChange={(e) => onChange("dob", e.target.value)}
+						iconRight={<CalendarIcon />}
 					/>
 				</div>
 

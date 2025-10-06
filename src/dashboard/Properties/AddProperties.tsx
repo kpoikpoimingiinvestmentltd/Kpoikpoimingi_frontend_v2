@@ -4,31 +4,34 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { inputStyle } from "@/components/common/commonStyles";
+import React from "react";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { IconWrapper, CheckIcon } from "@/assets/icons";
 import { twMerge } from "tailwind-merge";
-import { IconWrapper, UploadCloudIcon } from "../../assets/icons";
+import ImageGallery from "@/components/base/ImageGallery";
 
 export default function AddProperties() {
+	const [successOpen, setSuccessOpen] = React.useState(false);
+
+	const handleSubmit = (e: React.FormEvent) => {
+		e.preventDefault();
+		setSuccessOpen(true);
+	};
+
 	return (
 		<div className="max-w-6xl flex flex-col gap-y-5">
 			<PageTitles title="Add Property" description="Fill in the details to add property for sales" />
 			<div className="bg-white max-w-5xl px-4 py-6 lg:py-12 rounded-lg">
 				<div className="w-full lg:w-10/12 mx-auto">
-					<div className="border-2 border-dashed border-gray-200 min-h-36 flex items-center justify-center rounded-md p-6 mb-6 bg-[#f3fbff] relative">
-						<div className="flex items-center justify-center gap-y-3 flex-col text-center text-black">
-							<IconWrapper className="text-2xl rotate-y-180">
-								<UploadCloudIcon />
-							</IconWrapper>
-							<p className="text-sm">Upload Voters card</p>
-						</div>
-						<button className="absolute top-4 right-4 bg-primary text-white px-3 py-1.5 rounded-sm text-sm flex items-center gap-2">
-							<span>Upload</span>
-							<IconWrapper>
-								<UploadCloudIcon />
-							</IconWrapper>
-						</button>
-					</div>
+					<ImageGallery
+						mode="upload"
+						placeholderText="Upload Voters card"
+						uploadButtonText="Upload"
+						className="min-h-36 mb-8"
+						containerBorder="dashed"
+					/>
 
-					<form className="space-y-5">
+					<form className="space-y-5" onSubmit={handleSubmit}>
 						<div>
 							<CustomInput
 								label="Property Name*"
@@ -107,11 +110,31 @@ export default function AddProperties() {
 						</div>
 
 						<div className="flex justify-center mt-16">
-							<Button type="submit" className="w-full md:w-1/2 rounded-md py-3 sm:!py-4 h-auto text-base active-scale">
+							<Button type="submit" className="w-full md:w-1/2 rounded-md py-3 h-auto text-base active-scale">
 								Add Property
 							</Button>
 						</div>
 					</form>
+
+					<Dialog open={successOpen} onOpenChange={setSuccessOpen}>
+						<DialogContent className="max-w-xl">
+							<div className="text-center pt-6">
+								<div>
+									<IconWrapper className="text-5xl text-green-600">
+										<CheckIcon />
+									</IconWrapper>
+								</div>
+								<div className="text-lg font-medium mt-4">Property Added</div>
+								<div className="mt-2 text-sm text-muted-foreground">Property has been added successfully</div>
+							</div>
+
+							<footer className="flex items-center gap-6 justify-center py-4">
+								<button onClick={() => setSuccessOpen(false)} className="bg-primary w-full max-w-36 mx-auto text-white px-8 py-2.5 rounded-md">
+									Ok
+								</button>
+							</footer>
+						</DialogContent>
+					</Dialog>
 				</div>
 			</div>
 		</div>

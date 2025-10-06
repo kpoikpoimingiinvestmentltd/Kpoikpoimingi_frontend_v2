@@ -6,6 +6,7 @@ import UserForm from "./UserForm";
 import React from "react";
 import SuccessModal from "@/components/common/SuccessModal";
 import { useState } from "react";
+import PageWrapper from "../../components/common/PageWrapper";
 
 export default function AddNewUser() {
 	const [form, setForm] = React.useState({
@@ -29,7 +30,7 @@ export default function AddNewUser() {
 	}
 
 	return (
-		<div className="flex flex-col gap-y-6">
+		<PageWrapper>
 			<div className="flex items-center justify-between flex-wrap gap-4 mb-4">
 				<PageTitles title="Add New User" description="Fill in the details to add a new user" />
 			</div>
@@ -59,6 +60,6 @@ export default function AddNewUser() {
 					/>
 				</div>
 			</CustomCard>
-		</div>
+		</PageWrapper>
 	);
 }

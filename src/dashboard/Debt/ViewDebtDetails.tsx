@@ -1,7 +1,8 @@
 import PageTitles from "@/components/common/PageTitles";
 import CustomCard from "@/components/base/CustomCard";
-import Image from "@/components/base/Image";
+import ImageGallery from "@/components/base/ImageGallery";
 import { media } from "@/resources/images";
+import PageWrapper from "../../components/common/PageWrapper";
 
 export default function ViewDebtDetails() {
 	// demo data for the view
@@ -19,15 +20,13 @@ export default function ViewDebtDetails() {
 	};
 
 	return (
-		<div className="flex flex-col gap-6 md:w-11/12">
+		<PageWrapper>
 			<div className="flex items-center justify-between">
 				<PageTitles title="Debt" description="This Contains all customers owing for product they signed to buy on installment" />
 			</div>
 
 			<CustomCard className="p-6">
-				<div className="bg-blue-50 rounded-md p-6 flex items-center justify-center">
-					<Image src={media.images._product1} alt="Property Image" className="w-80 h-auto" />
-				</div>
+				<ImageGallery images={[media.images._product1, media.images._product2, media.images._product3]} />
 
 				<div className="mt-6 border-t pt-6">
 					<div className="grid grid-cols-2 gap-y-3 gap-x-8 text-sm">
@@ -63,6 +62,6 @@ export default function ViewDebtDetails() {
 					</div>
 				</div>
 			</CustomCard>
-		</div>
+		</PageWrapper>
 	);
 }

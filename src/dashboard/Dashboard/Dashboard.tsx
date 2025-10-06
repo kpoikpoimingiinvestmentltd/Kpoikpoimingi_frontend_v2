@@ -3,13 +3,21 @@ import { UserStats } from "@/components/common/UserStats";
 import TableForIndex from "./TableForIndex";
 import { IndexAreaChart, IndexPieChart } from "./Chart";
 import PageTitles from "@/components/common/PageTitles";
+import { Link } from "react-router";
+import { _router } from "../../routes/_router";
+import { IconWrapper, PlusIcon } from "../../assets/icons";
 
 export default function Dashboard() {
 	return (
 		<div className="flex flex-col gap-y-6">
 			<div className="flex items-center flex-wrap justify-between gap-2">
 				<PageTitles title="Overview" description="Overview of major activities" />
-				<button className="text-sm text-white py-2.5 px-4 rounded-sm bg-primary hover:underline">View all</button>
+				<Link to={_router.dashboard.customerAdd} className="text-sm flex items-center gap-2 text-white py-2.5 px-4 rounded-sm bg-primary">
+					<IconWrapper>
+						<PlusIcon />
+					</IconWrapper>
+					<span>Add Customer</span>
+				</Link>
 			</div>
 			<UserStats />
 			<div className="grid grid-cols-7 gap-4">

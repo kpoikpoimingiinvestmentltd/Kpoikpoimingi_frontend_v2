@@ -68,16 +68,18 @@ export default function Customers() {
 				<div className="flex items-center gap-3">
 					<button type="button" className="flex items-center gap-2 bg-primary/10 rounded-sm px-4 py-2.5 active-scale transition text-primary">
 						<span className="text-sm">Send Email</span>
-						<IconWrapper>
+						<IconWrapper className="opacity-50">
 							<SendEmailIcon />
 						</IconWrapper>
 					</button>
-					<button type="button" className="flex items-center gap-2  bg-primary rounded-sm px-4 py-2.5 active-scale transition text-white">
+					<Link
+						to={_router.dashboard.customerAdd}
+						className="flex items-center gap-2  bg-primary rounded-sm px-4 py-2.5 active-scale transition text-white">
 						<IconWrapper className="text-lg">
 							<PlusIcon />
 						</IconWrapper>
 						<span className="text-sm">Add Customer</span>
-					</button>
+					</Link>
 				</div>
 			</div>
 			<div className="min-h-96 flex">

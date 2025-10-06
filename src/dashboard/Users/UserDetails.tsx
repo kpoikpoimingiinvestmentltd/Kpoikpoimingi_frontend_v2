@@ -9,6 +9,7 @@ import UserForm from "./UserForm";
 import { useState } from "react";
 import SuccessModal from "@/components/common/SuccessModal";
 import { media } from "../../resources/images";
+import PageWrapper from "../../components/common/PageWrapper";
 
 export default function UserDetails() {
 	function KeyValueRow({ label, value, children }: { label: ReactNode; value?: ReactNode; children?: ReactNode }) {
@@ -51,7 +52,7 @@ export default function UserDetails() {
 	};
 
 	return (
-		<div className="w-full md:w-11/12">
+		<PageWrapper>
 			<div className="flex items-center justify-between flex-wrap gap-4 mb-4">
 				<PageTitles title="User Profile" description="User profile contains the details of this user" />
 				<div className="flex items-center gap-4 flex-wrap">
@@ -76,7 +77,7 @@ export default function UserDetails() {
 				</div>
 			</div>
 
-			<main className="mt-10">
+			<main>
 				<CustomCard className="md:p-8">
 					{/* Banner + avatar */}
 					<div className="relative">
@@ -115,7 +116,7 @@ export default function UserDetails() {
 
 			{/* Edit modal */}
 			<Dialog open={editOpen} onOpenChange={setEditOpen}>
-				<DialogContent className="overflow-y-auto max-h-[90vh] sm:max-w-2xl w-full">
+				<DialogContent className="overflow-y-auto max-h-[90vh] md:max-w-2xl w-full">
 					<DialogHeader className="text-center flex items-center justify-center mt-5">
 						<DialogTitle className="font-medium">Edit User Details</DialogTitle>
 					</DialogHeader>
@@ -151,6 +152,6 @@ export default function UserDetails() {
 					},
 				]}
 			/>
-		</div>
+		</PageWrapper>
 	);
 }

@@ -101,12 +101,10 @@ export default function AdminDashboardSidebar({ onClose }: { onClose?: () => voi
 											Add Properties
 										</NavLink>
 										<NavLink
-											to={_router.dashboard.manageCategories}
+											to={_router.dashboard.categories}
 											onClick={() => onClose?.()}
 											className={`py-1.5 text-[.9rem] px-3.5 text-white/90 flex rounded ${
-												pathname === _router.dashboard.manageCategories || pathname.startsWith(_router.dashboard.manageCategories + "/")
-													? "bg-[#1312120d]"
-													: ""
+												pathname === _router.dashboard.categories || pathname.startsWith(_router.dashboard.categories + "/") ? "bg-[#1312120d]" : ""
 											}`}>
 											Manage Categories
 										</NavLink>
@@ -196,9 +194,4 @@ const links = [
 		linkname: "Audit & Compliance",
 		path: _router.dashboard.auditAndCompliance,
 	},
-	// {
-	// 	icon: SettingIcon,
-	// 	linkname: "Settings",
-	// 	path: _router.dashboard.settings,
-	// },
 ];

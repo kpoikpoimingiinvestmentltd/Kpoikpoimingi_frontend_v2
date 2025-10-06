@@ -11,6 +11,7 @@ import { SearchIcon, FilterIcon, EyeIcon, IconWrapper } from "@/assets/icons";
 import { Link } from "react-router";
 import { _router } from "@/routes/_router";
 import React from "react";
+import PageWrapper from "../../components/common/PageWrapper";
 
 const demoDebtors = Array.from({ length: 10 }).map((_, i) => ({
 	id: `ID12345${i}`,
@@ -28,7 +29,7 @@ export default function Debt() {
 	const pages = Math.max(1, Math.ceil(rows.length / 10));
 
 	return (
-		<div className="flex flex-col gap-y-6 w-full md:w-11/12">
+		<PageWrapper>
 			<div className="flex items-center justify-between flex-wrap gap-4 mb-4">
 				<PageTitles title="Debt" description="This contains all customers owing for product they signed to buy on installment" />
 				<div className="flex items-center gap-3">
@@ -122,6 +123,6 @@ export default function Debt() {
 					<></>
 				)}
 			</div>
-		</div>
+		</PageWrapper>
 	);
 }

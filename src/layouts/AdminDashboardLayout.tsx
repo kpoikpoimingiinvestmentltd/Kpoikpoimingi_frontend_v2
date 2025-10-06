@@ -3,6 +3,7 @@ import AdminDashboardSidebar from "../components/navigation/AdminDashboardSideba
 import AdminDashboardHeader from "./AdminDashboardHeader";
 import { useState } from "react";
 import LogoutModal from "../components/common/LogoutModal";
+import SimpleCalculator from "@/components/ui/SimpleCalculator";
 
 export default function AdminDashboardLayout() {
 	const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -31,6 +32,7 @@ export default function AdminDashboardLayout() {
 			</main>
 
 			<LogoutModal open={logoutOpen} onOpenChange={setLogoutOpen} />
+			<SimpleCalculator />
 		</div>
 	);
 }

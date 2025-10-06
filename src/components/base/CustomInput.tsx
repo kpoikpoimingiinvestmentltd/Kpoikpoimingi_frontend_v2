@@ -61,7 +61,7 @@ export default function CustomInput({
 
 				{iconRight && (
 					<div className="absolute inset-y-0 right-3 flex items-center z-10 pointer-events-none">
-						<IconWrapper className="text-base">{iconRight}</IconWrapper>
+						<IconWrapper className="text-lg">{iconRight}</IconWrapper>
 					</div>
 				)}
 

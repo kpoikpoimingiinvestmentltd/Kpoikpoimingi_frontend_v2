@@ -1,63 +1,36 @@
 import CustomCard from "@/components/base/CustomCard";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { EditIcon, FilterIcon, IconWrapper, PlusIcon, SearchIcon, TrashIcon } from "@/assets/icons";
-import PageTitles from "@/components/common/PageTitles";
-import { inputStyle, preTableButtonStyle } from "@/components/common/commonStyles";
-import CustomInput from "@/components/base/CustomInput";
-import CompactPagination from "@/components/ui/compact-pagination";
+import PageTitles from "../../components/common/PageTitles";
+import { IconWrapper, PlusIcon } from "@/assets/icons";
 import React from "react";
+import AddCategoryModal from "./AddCategoryModal";
 import EmptyData from "../../components/common/EmptyData";
-import { twMerge } from "tailwind-merge";
+import PageWrapper from "../../components/common/PageWrapper";
 
-// Sample categories data
-const categories = [
-	{
-		id: "electronics",
-		title: "Electronics",
-		subs: "Mobile Phones & Tablets, Laptops & Computers, Televisions, Home Audio & Speakers, Cameras & Drones, Gaming Consoles, Accessories (Chargers, Headphones, Power Banks)",
-		count: 15,
-	},
-	{
-		id: "fashion",
-		title: "Fashion",
-		subs: "Men's Clothing, Women's Clothing, Kids' Clothing, Shoes, Bags & Accessories, Jewelry & Watches",
-		count: 15,
-	},
-	{
-		id: "home",
-		title: "Home & Kitchen",
-		subs: "Furniture, Kitchen Appliances, Cookware & Dining, Home Decor, Bedding, Cleaning & Storage",
-		count: 15,
-	},
-	{
-		id: "beauty",
-		title: "Beauty & Personal Care",
-		subs: "Skincare, Haircare, Makeup, Fragrances, Men's Grooming, Personal Hygiene",
-		count: 15,
-	},
-	{
-		id: "health",
-		title: "Health & Wellness",
-		subs: "Supplements, Medical Equipment, Fitness Equipment, Health Monitors, First Aid",
-		count: 15,
-	},
-];
 export default function ManageCategories() {
 	const [isEmpty] = React.useState(false);
+	const [addOpen, setAddOpen] = React.useState(false);
+	const [editOpen, setEditOpen] = React.useState(false);
+	const [editing, setEditing] = React.useState<{ category?: string; subCategories?: string[] } | null>(null);
+
+	const categories = [
+		{ id: "c1", name: "Electronics", subs: ["Mobile Phones & Tablets", "Laptops & Computers"] },
+		{ id: "c2", name: "Vehicles", subs: ["Cars", "Motorcycles"] },
+		{ id: "c3", name: "Fashion", subs: ["Men", "Women"] },
+	];
 
 	return (
-		<div className="flex flex-col gap-y-6">
+		<PageWrapper>
 			<div className="flex items-center justify-between flex-wrap gap-4 mb-4">
-				<PageTitles title="All Categories" description="" />
+				<PageTitles title="Manage Category" description="Set, delete and edit categories" />
 				<div className="flex items-center gap-3">
-					<button type="button" className="flex items-center gap-2 bg-primary/10 rounded-sm px-4 py-2.5 active-scale transition text-primary">
-						<span className="text-sm">Export</span>
-					</button>
-					<button type="button" className="flex items-center gap-2 bg-primary rounded-sm px-4 py-2.5 active-scale transition text-white">
+					<button
+						type="button"
+						onClick={() => setAddOpen(true)}
+						className="flex items-center gap-2 bg-primary rounded-sm px-4 py-2.5 active-scale transition text-white">
 						<IconWrapper className="text-lg">
 							<PlusIcon />
 						</IconWrapper>
-						<span className="text-sm">Add Category</span>
+						<span className="text-sm">Add New Category</span>
 					</button>
 				</div>
 			</div>
@@ -67,7 +40,7 @@ export default function ManageCategories() {
 						<div className="w-full">
 							<div className="flex items-center justify-between flex-wrap gap-6">
 								<h2 className="font-medium">Product Categories</h2>
-								<div className="flex items-center gap-2">
+								{/* <div className="flex items-center gap-2">
 									<div className="relative md:w-80">
 										<CustomInput
 											placeholder="Search categories"
@@ -82,51 +55,27 @@ export default function ManageCategories() {
 										</IconWrapper>
 										<span className="hidden sm:inline">Filter</span>
 									</button>
-								</div>
+								</div> */}
 							</div>
-							<div className="overflow-x-auto w-full mt-8">
-								<Table>
-									<TableHeader className="[&_tr]:border-0">
-										<TableRow className="bg-[#EAF6FF] h-12 overflow-hidden py-4 rounded-lg">
-											<TableHead>Product Categories</TableHead>
-											<TableHead>Sub Categories</TableHead>
-											<TableHead>Number Of Products</TableHead>
-											<TableHead>Action</TableHead>
-										</TableRow>
-									</TableHeader>
-									<TableBody>
-										{categories.map((row) => (
-											<TableRow key={row.id} className="hover:bg-[#F6FBFF]">
-												<TableCell className="text-[#13121280] align-top">{row.title}</TableCell>
-												<TableCell className="text-[#13121280] align-top">
-													<div className="text-balance w-80">{row.subs}</div>
-												</TableCell>
-												<TableCell className="text-[#13121280] align-top">{row.count}</TableCell>
-												<TableCell className="flex items-center gap-1">
-													<button type="button" className="p-2 flex items-center text-slate-600">
-														<IconWrapper className="text-xl">
-															<EditIcon />
-														</IconWrapper>
-													</button>
-													<button type="button" className="text-red-500 bg-transparent p-2 flex items-center">
-														<IconWrapper>
-															<TrashIcon />
-														</IconWrapper>
-													</button>
-												</TableCell>
-											</TableRow>
-										))}
-									</TableBody>
-								</Table>
-							</div>
-						</div>
-
-						<div className="mt-8 flex flex-col md:flex-row text-center md:text-start justify-center items-center">
-							<span className="text-sm text-nowrap">
-								Showing <span className="font-medium">1-10</span> of <span className="font-medium">100</span> results
-							</span>
-							<div className="ml-4">
-								<CompactPagination page={1} pages={5} onPageChange={() => {}} />
+							<div className="w-full mt-8 rounded-md py-3 bg-gray-50">
+								<ul className="space-y-4">
+									{categories.map((cat) => (
+										<li key={cat.id} className="flex items-center justify-between px-4 rounded-md">
+											<p>{cat.name}</p>
+											<div>
+												<button
+													type="button"
+													onClick={() => {
+														setEditing({ category: cat.name, subCategories: cat.subs });
+														setEditOpen(true);
+													}}
+													className="text-primary">
+													Edit
+												</button>
+											</div>
+										</li>
+									))}
+								</ul>
 							</div>
 						</div>
 					</CustomCard>
@@ -136,6 +85,8 @@ export default function ManageCategories() {
 					</div>
 				)}
 			</div>
-		</div>
+			<AddCategoryModal open={addOpen} onOpenChange={setAddOpen} mode="add" onSave={() => {}} />
+			<AddCategoryModal open={editOpen} onOpenChange={setEditOpen} mode="edit" initial={editing ?? undefined} onSave={() => {}} />
+		</PageWrapper>
 	);
 }
