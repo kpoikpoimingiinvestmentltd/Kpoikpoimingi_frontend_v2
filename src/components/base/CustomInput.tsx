@@ -11,6 +11,7 @@ type CustomInputProps = React.ComponentProps<typeof Input> & {
 	floatingLeft?: React.ReactNode; // small circular floating icon on the left of the label area
 	suffix?: React.ReactNode; // element displayed inside the input at the far right (like a button or icon)
 	error?: string | boolean;
+	required?: boolean;
 	containerClassName?: string;
 	label?: React.ReactNode;
 	labelClassName?: string;
@@ -25,21 +26,27 @@ export default function CustomInput({
 	className,
 	containerClassName,
 	label,
+	required,
 	labelClassName,
 	...props
 }: CustomInputProps) {
 	const hasSuffix = Boolean(suffix);
 
 	return (
-		<div className={twMerge("relative", containerClassName)}>
-			{label && <label className={twMerge("text-sm block mb-2", labelClassName)}>{label}</label>}
+		<div className={twMerge("relative flex flex-col", containerClassName)}>
+			{label && (
+				<label className={twMerge("text-sm block mb-1.5 text-balance", labelClassName)}>
+					{label}
+					{required && <sup>*</sup>}
+				</label>
+			)}
 			{floatingLeft && (
 				<div className="absolute -top-3 left-3 bg-white rounded-full p-1 shadow-sm z-10">
 					<IconWrapper className="text-sm">{floatingLeft}</IconWrapper>
 				</div>
 			)}
 
-			<div className={"relative"}>
+			<div className={"relative mt-auto"}>
 				{iconLeft && (
 					<div className="absolute inset-y-0 left-0 opacity-50 pl-3 flex items-center pointer-events-none z-10">
 						<IconWrapper className="text-base">{iconLeft}</IconWrapper>

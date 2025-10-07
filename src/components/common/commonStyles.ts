@@ -1,3 +1,5 @@
+import { twMerge } from "tailwind-merge";
+
 export const inputStyle =
 	"border border-stone-400/50 text-sm sm:text-[.975rem] rounded-md px-3 py-2 h-11 w-full focus:outline-none ring-1 ring-transparent bg-white ring-offset-1 placeholder:text-sm focus-visible:border-stone-400 focus-visible:ring-primary focus-visible:ring-1  bg-[#13121205]";
 
@@ -9,7 +11,7 @@ export const checkboxStyle =
 export const actionBtnStyle =
 	"h-12 rounded-sm bg-primary w-full p-4 text-white disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] flex items-center justify-center text-[.925rem]";
 
-export const preTableButtonStyle = "text-sm active-scale font-medium flex py-2 h-10 px-3 rounded-sm items-center justify-center gap-1.5 text-black";
+export const preTableButtonStyle = "text-sm active-scale flex py-2 h-10 px-3 rounded-sm items-center justify-center gap-1.5 text-black";
 
 export const smBtnStyle = "bg-primary justify-center items-center text-[.8rem] rounded-sm py-1.5 px-2 text-white leading-tight active-scale flex";
 
@@ -20,4 +22,12 @@ export const tabStyle =
 
 export const tabListStyle = "bg-transparent flex-wrap gap-5 p-0 h-auto";
 
-export const labelStyle = "text-sm block mb-2 text-slate-800";
+// export const labelStyle = "text-sm block mb-2 text-slate-800";
+
+export const labelStyle = (style?: string) => {
+	return twMerge("text-sm block mb-1.5 text-slate-800", style);
+};
+
+export const selectTriggerStyle = (style?: string) => {
+	return twMerge(inputStyle, "min-h-11", style);
+};

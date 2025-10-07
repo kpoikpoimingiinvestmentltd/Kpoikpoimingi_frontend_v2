@@ -13,6 +13,7 @@ import CompactPagination from "@/components/ui/compact-pagination";
 import React from "react";
 import DeleteModal from "@/dashboard/Customers/DeleteModal";
 import EmptyData from "../../components/common/EmptyData";
+import ActionButton from "../../components/base/ActionButton";
 
 // Dummy data for demonstration
 const initialCustomers = [
@@ -66,15 +67,15 @@ export default function Customers() {
 			<div className="flex items-center justify-between flex-wrap gap-4 mb-4">
 				<PageTitles title="Customers" description="List of people who patronize Kpo kpoi mingi investment" />
 				<div className="flex items-center gap-3">
-					<button type="button" className="flex items-center gap-2 bg-primary/10 rounded-sm px-4 py-2.5 active-scale transition text-primary">
+					<ActionButton type="button" className="bg-primary/10 text-primary gap-2 hover:bg-primary/20">
 						<span className="text-sm">Send Email</span>
 						<IconWrapper className="opacity-50">
 							<SendEmailIcon />
 						</IconWrapper>
-					</button>
+					</ActionButton>
 					<Link
 						to={_router.dashboard.customerAdd}
-						className="flex items-center gap-2  bg-primary rounded-sm px-4 py-2.5 active-scale transition text-white">
+						className="flex items-center gap-2 bg-primary rounded-sm px-4 py-2.5 active-scale transition text-white">
 						<IconWrapper className="text-lg">
 							<PlusIcon />
 						</IconWrapper>

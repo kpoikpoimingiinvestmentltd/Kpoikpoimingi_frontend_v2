@@ -6,7 +6,7 @@ import CustomInput from "@/components/base/CustomInput";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { twMerge } from "tailwind-merge";
 
-export default function SimpleCalculator() {
+export default function Calculator() {
 	const [open, setOpen] = React.useState(false);
 	const [principal, setPrincipal] = React.useState(0);
 	const [startAmount, setStartAmount] = React.useState(0);

@@ -1,6 +1,5 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { IconWrapper, CheckIcon } from "@/assets/icons";
-import { Button } from "@/components/ui/button";
 import React from "react";
 import { twMerge } from "tailwind-merge";
 
@@ -59,14 +58,14 @@ export default function SuccessModal({
 		return (
 			<div className="w-full">
 				{label && <div className="text-sm font-medium text-muted-foreground mb-1">{label}</div>}
-				{value && <div className="break-words text-base text-muted-foreground">{value}</div>}
+				{value && <p className="break-words text-wrap text-base text-muted-foreground">{value}</p>}
 			</div>
 		);
 	};
 
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
-			<DialogContent>
+			<DialogContent className="overflow-y-auto max-h-[90vh] md:max-w-2xl w-full">
 				<div className="flex flex-col items-center gap-4 py-6 px-4">
 					{titleBeforeIcon && title && <div className="text-lg font-semibold text-center">{title}</div>}
 
@@ -99,10 +98,14 @@ export default function SuccessModal({
 							<div className="w-full flex gap-3 items-center">
 								{(actions as NonNullable<typeof actions>).map((a: NonNullable<typeof actions>[0], i: number) => {
 									const isPrimary = a.variant === "primary" || (!a.variant && i === 0);
-									const btnBase = a.fullWidth ? "px-16 !py-5 mx-auto" : "flex-1";
-									const merged = twMerge(btnBase, isPrimary ? "bg-primary text-white" : "border");
+									const btnBase = a.fullWidth ? "px-16 py-5 mx-auto" : "px-10";
+									const merged = twMerge(
+										"py-3 rounded-md active-scale",
+										btnBase,
+										isPrimary ? "bg-primary text-white" : "border-2 bg-card border-primary"
+									);
 									return (
-										<Button
+										<button
 											key={i}
 											onClick={() => {
 												if (a.onClick) a.onClick();
@@ -110,14 +113,14 @@ export default function SuccessModal({
 											}}
 											className={merged}>
 											{a.label}
-										</Button>
+										</button>
 									);
 								})}
 							</div>
 						) : (
-							<Button onClick={handlePrimary} className="w-max mx-auto px-16 !py-5 bg-primary text-white">
+							<button onClick={handlePrimary} className="w-max  mx-auto px-16 !py-5 bg-primary text-white">
 								{buttonLabel}
-							</Button>
+							</button>
 						)}
 					</DialogFooter>
 				</div>

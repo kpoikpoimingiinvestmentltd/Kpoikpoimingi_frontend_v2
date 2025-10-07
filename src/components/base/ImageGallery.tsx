@@ -2,8 +2,9 @@ import React from "react";
 import Image from "./Image";
 import { twMerge } from "tailwind-merge";
 import { IconWrapper, UploadCloudIcon } from "../../assets/icons";
+import ActionButton from "./ActionButton";
 
-type ThumbVariant = "dashboard" | "solid" | "none";
+type ThumbVariant = "dashed" | "solid" | "none";
 
 type ContainerBorder = "none" | "solid" | "dashed";
 type UploadButtonPosition = "top-right" | "top-left" | "bottom-right" | "bottom-left" | "center";
@@ -25,7 +26,7 @@ type Props = {
 export default function ImageGallery({
 	images,
 	className = "",
-	thumbVariant = "dashboard",
+	thumbVariant = "dashed",
 	thumbBg = "transparent",
 	mode = "view",
 	containerBorder = "dashed",
@@ -41,11 +42,12 @@ export default function ImageGallery({
 	const borderClass = (i: number) => {
 		if (thumbVariant === "none") return "border-transparent";
 		if (thumbVariant === "solid") return i === selected ? "border-gray-300" : "border-gray-200";
-		return i === selected ? "border-primary" : "border-transparent"; // dashboard
+		return i === selected ? "border-dashed border-2" : "border-dashed border-2"; // dashed
 	};
 
 	// local images state when component manages images internally (demo friendly)
 	const [localImgs, setLocalImgs] = React.useState<string[]>(imgs);
+	const inputRef = React.useRef<HTMLInputElement | null>(null);
 	const effectiveImgs = localImgs.length ? localImgs : imgs;
 
 	const handleFiles = (files?: FileList | null) => {
@@ -75,7 +77,7 @@ export default function ImageGallery({
 		<div className={`${twMerge("flex flex-col gap-4", className)}`}>
 			<div className={twMerge(`rounded-md p-6 flex flex-grow items-center justify-center relative min-h-52`, containerBg, containerBorderClass)}>
 				{effectiveImgs[selected] ? (
-					<Image src={effectiveImgs[selected]} alt={`image-${selected}`} className="w-64" />
+					<Image src={effectiveImgs[selected]} alt={`image-${selected}`} className="w-52" />
 				) : (
 					<div className="flex items-center justify-center gap-y-3 flex-col text-center text-black">
 						<IconWrapper className="text-2xl rotate-y-180">
@@ -98,17 +100,20 @@ export default function ImageGallery({
 								? "bottom-4 left-4"
 								: "inset-0 flex items-center justify-center"
 						}`}>
-						<button
+						{/* hidden file input triggered by the ActionButton */}
+						<input id="kkm-image-upload-input" ref={inputRef} type="file" className="hidden" multiple onChange={(e) => handleFiles(e.target.files)} />
+
+						<ActionButton
 							type="button"
-							className="bg-primary text-white px-3 py-1.5 rounded-sm text-sm flex items-center gap-2 active-scale cursor-pointer"
-							onClick={() => {}}>
+							className="gap-2 font-normal rounded-sm"
+							onClick={() => {
+								inputRef.current?.click();
+							}}>
 							<span>{uploadButtonText}</span>
 							<IconWrapper>
 								<UploadCloudIcon />
 							</IconWrapper>
-
-							<input type="file" className="hidden" multiple onChange={(e) => handleFiles(e.target.files)} />
-						</button>
+						</ActionButton>
 					</div>
 				)}
 			</div>
@@ -122,7 +127,7 @@ export default function ImageGallery({
 								thumbBg === "white" ? "bg-white" : thumbBg === "transparent" ? "bg-transparent" : thumbBg
 							} border ${borderClass(i)} cursor-pointer`}
 							onClick={() => setSelected(i)}>
-							<Image src={s} alt={`thumb-${i}`} className="w-14 h-10 object-contain" />
+							<Image src={s} alt={`thumb-${i}`} className="w-20 h-14 p-2 object-contain" />
 						</div>
 					))}
 				</div>

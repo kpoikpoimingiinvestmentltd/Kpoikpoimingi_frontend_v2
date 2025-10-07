@@ -12,9 +12,10 @@ import EmptyData from "@/components/common/EmptyData";
 import { Link } from "react-router";
 import { _router } from "../../routes/_router";
 import { Tabs, TabsList, TabsTrigger } from "../../components/ui/tabs";
-import { Dialog, DialogContent, DialogFooter } from "../../components/ui/dialog";
+import { Dialog, DialogContent } from "../../components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { twMerge } from "tailwind-merge";
+import ActionButton from "../../components/base/ActionButton";
 
 const propertyItems = [
 	{ id: "p1", title: "25 kg Gas Cylinder", price: "₦ 50,000", img: media.images._product1 },
@@ -194,30 +195,23 @@ export default function Properties() {
 						{/* Confirm delete dialog */}
 						<Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
 							<DialogContent className="max-w-xl">
-								<div className="flex justify-end">
-									<button onClick={() => setConfirmOpen(false)} className="p-2 rounded-full bg-white shadow-sm">
-										<IconWrapper>
-											<CloseIcon />
-										</IconWrapper>
-									</button>
+								<div className="text-center flex flex-col gap-y-2 py-6">
+									<h5 className="text-lg font-medium">Delete</h5>
+									<p className="mt-6 text-sm font-medium">{selectedCount} Selected items</p>
+									<span className="mt-2 text-sm text-muted-foreground">Do you want to delete this items</span>
 								</div>
 
-								<div className="text-center py-6">
-									<div className="text-lg font-medium">Delete</div>
-									<div className="mt-4 text-sm font-medium">{selectedCount} Selected items</div>
-									<div className="mt-2 text-sm text-muted-foreground">Do you want to delete this items</div>
-								</div>
-
-								<DialogFooter>
-									<div className="flex items-center gap-6 justify-center py-4">
-										<button onClick={handleDelete} className="bg-red-600 text-white px-8 py-3 rounded-md">
-											Yes, Delete this
-										</button>
-										<button onClick={() => setConfirmOpen(false)} className="border border-sky-400 text-sky-600 px-8 py-3 rounded-md">
-											Cancel
-										</button>
-									</div>
-								</DialogFooter>
+								<footer className="max-w-sm mx-auto mb-5 grid grid-cols-1 min-[480px]:grid-cols-2 gap-3">
+									<ActionButton variant="danger" onClick={handleDelete} className="bg-red-600 text-sm text-white px-8 py-3 rounded-md">
+										Yes, Delete this
+									</ActionButton>
+									<ActionButton
+										variant="outline"
+										onClick={() => setConfirmOpen(false)}
+										className="border border-primary text-primary px-8 py-3 text-sm rounded-md">
+										Cancel
+									</ActionButton>
+								</footer>
 							</DialogContent>
 						</Dialog>
 					</CustomCard>

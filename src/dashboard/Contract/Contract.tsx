@@ -13,6 +13,8 @@ import { Link } from "react-router";
 import CompactPagination from "@/components/ui/compact-pagination";
 import React from "react";
 import EmptyData from "@/components/common/EmptyData";
+import ActionButton from "../../components/base/ActionButton";
+import ExportTrigger from "../../components/common/ExportTrigger";
 
 export default function Contract() {
 	const [isEmpty] = React.useState(false);
@@ -55,12 +57,12 @@ export default function Contract() {
 												iconLeft={<SearchIcon />}
 											/>
 										</div>
-										<button type="button" className={`${preTableButtonStyle} text-white bg-primary ml-auto`}>
+										<ActionButton type="button" className={`${preTableButtonStyle} text-white bg-primary ml-auto`}>
 											<IconWrapper className="text-base">
 												<FilterIcon />
 											</IconWrapper>
 											<span className="hidden sm:inline">Filter</span>
-										</button>
+										</ActionButton>
 									</div>
 								</div>
 								<div className="overflow-x-auto w-full mt-8">
@@ -93,11 +95,14 @@ export default function Contract() {
 													<TableCell>{row.totalPayment}</TableCell>
 													<TableCell>{row.date}</TableCell>
 													<TableCell>
-														<Link to={_router.dashboard.customerDetails.replace(":id", row.id)} className=" p-2 flex items-center">
-															<IconWrapper>
-																<EditIcon />
-															</IconWrapper>
-														</Link>
+														<div className="flex items-center">
+															<Link to={_router.dashboard.contractDetails.replace(":id", row.id)} className=" p-2 flex items-center">
+																<IconWrapper>
+																	<EditIcon />
+																</IconWrapper>
+															</Link>
+															<ExportTrigger className="text-primary" />
+														</div>
 													</TableCell>
 												</TableRow>
 											))}
@@ -129,7 +134,7 @@ export default function Contract() {
 // Mock data matching the provided image
 const customers = [
 	{
-		id: "ID 123456",
+		id: "123456",
 		name: "Tom Doe James",
 		property: "12 inches HP laptop",
 		paymentType: "Hire purchase",
@@ -138,7 +143,7 @@ const customers = [
 		date: "30-4-2025",
 	},
 	{
-		id: "ID 123456",
+		id: "123456",
 		name: "Tom Doe James",
 		property: "12 inches HP laptop",
 		paymentType: "Hire purchase",
@@ -147,7 +152,7 @@ const customers = [
 		date: "30-4-2025",
 	},
 	{
-		id: "ID 123456",
+		id: "123456",
 		name: "Tom Doe James",
 		property: "12 inches HP laptop",
 		paymentType: "Hire purchase",
@@ -156,7 +161,7 @@ const customers = [
 		date: "30-4-2025",
 	},
 	{
-		id: "ID 123456",
+		id: "123456",
 		name: "Tom Doe James",
 		property: "12 inches HP laptop",
 		paymentType: "Hire purchase",
@@ -165,7 +170,7 @@ const customers = [
 		date: "30-4-2025",
 	},
 	{
-		id: "ID 123456",
+		id: "123456",
 		name: "Tom Doe James",
 		property: "12 inches HP laptop",
 		paymentType: "Hire purchase",
@@ -174,7 +179,7 @@ const customers = [
 		date: "30-4-2025",
 	},
 	{
-		id: "ID 123456",
+		id: "123456",
 		name: "Tom Doe James",
 		property: "12 inches HP laptop",
 		paymentType: "Hire purchase",
@@ -183,7 +188,7 @@ const customers = [
 		date: "30-4-2025",
 	},
 	{
-		id: "ID 123456",
+		id: "123456",
 		name: "Tom Doe James",
 		property: "12 inches HP laptop",
 		paymentType: "Hire purchase",
@@ -192,7 +197,7 @@ const customers = [
 		date: "30-4-2025",
 	},
 	{
-		id: "ID 123456",
+		id: "123456",
 		name: "Tom Doe James",
 		property: "12 inches HP laptop",
 		paymentType: "Hire purchase",
@@ -201,7 +206,7 @@ const customers = [
 		date: "30-4-2025",
 	},
 	{
-		id: "ID 123456",
+		id: "123456",
 		name: "Tom Doe James",
 		property: "12 inches HP laptop",
 		paymentType: "Hire purchase",
@@ -210,7 +215,7 @@ const customers = [
 		date: "30-4-2025",
 	},
 	{
-		id: "ID 123456",
+		id: "123456",
 		name: "Tom Doe James",
 		property: "12 inches HP laptop",
 		paymentType: "Hire purchase",

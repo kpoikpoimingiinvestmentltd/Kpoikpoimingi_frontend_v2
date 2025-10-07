@@ -27,8 +27,10 @@ export default function AddProperties() {
 						mode="upload"
 						placeholderText="Upload Voters card"
 						uploadButtonText="Upload"
-						className="min-h-36 mb-8"
+						className="min-h-28 mb-8"
 						containerBorder="dashed"
+						thumbBg="bg-primary/10"
+						thumbVariant="dashed"
 					/>
 
 					<form className="space-y-5" onSubmit={handleSubmit}>

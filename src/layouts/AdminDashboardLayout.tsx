@@ -3,7 +3,7 @@ import AdminDashboardSidebar from "../components/navigation/AdminDashboardSideba
 import AdminDashboardHeader from "./AdminDashboardHeader";
 import { useState } from "react";
 import LogoutModal from "../components/common/LogoutModal";
-import SimpleCalculator from "@/components/ui/SimpleCalculator";
+import SimpleCalculator from "@/components/common/Calculator";
 
 export default function AdminDashboardLayout() {
 	const [sidebarOpen, setSidebarOpen] = useState(false);

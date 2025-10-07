@@ -1,13 +1,13 @@
 import React from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
+import CheckboxField from "@/components/base/CheckboxField";
 import { Label } from "@/components/ui/label";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
-import { inputStyle } from "../../components/common/commonStyles";
-import SuccessModal from "@/components/common/SuccessModal";
-// calendar icon not available in icons export; we'll use text placeholder
+import { inputStyle, labelStyle, selectTriggerStyle } from "../../components/common/commonStyles";
+import ContractSuccessModal from "./ContractSuccessModal";
+import CustomInput from "../../components/base/CustomInput";
+import { CalendarIcon } from "../../assets/icons";
+import ActionButton from "../../components/base/ActionButton";
 
 export default function CreateContractModal({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
 	const [stepVariant, setStepVariant] = React.useState<"hire" | "full">("hire");
@@ -17,31 +17,33 @@ export default function CreateContractModal({ open, onOpenChange }: { open: bool
 
 	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault();
-		// simulate creation and generate a link
 		const link = "https://docs.google.com/document/d/1y5xRJxMrQ72vCP2nwMff4gXlt-fca5iY_9UH";
 		setGeneratedLink(link);
-		setShowSuccess(true);
+		onOpenChange(false);
+
+		// open the success modal after a short delay so the create dialog closes cleanly
+		setTimeout(() => setShowSuccess(true), 200);
 	};
 
 	return (
 		<>
 			<Dialog open={open} onOpenChange={onOpenChange}>
-				<DialogContent className="overflow-y-auto max-h-[90vh] md:max-w-2xl w-full">
-					<DialogHeader>
+				<DialogContent className="overflow-y-auto max-h-[90vh] md:max-w-3xl w-full">
+					<DialogHeader className="justify-center flex flex-row mt-2 text-center">
 						<DialogTitle>Create Contract</DialogTitle>
 						<DialogClose />
 					</DialogHeader>
 
-					<form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
+					<form onSubmit={handleSubmit} className="grid max-w-2xl mx-auto items-end grid-cols-1 sm:grid-cols-2 gap-4 md:gap-x-8 md:gap-y-5 py-4">
 						<div>
-							<Label>Full name*</Label>
+							<Label className={labelStyle()}>Full name*</Label>
 							<Select onValueChange={(v) => setSelectedCustomer(v)} value={selectedCustomer}>
-								<SelectTrigger className={inputStyle}>
+								<SelectTrigger className={selectTriggerStyle()}>
 									<SelectValue placeholder="Search customer" />
 								</SelectTrigger>
 								<SelectContent>
-									<div className="p-2">
-										<Input placeholder="Search by name" className={inputStyle} />
+									<div className="p-1.5">
+										<CustomInput placeholder="Search by name" className={inputStyle} />
 									</div>
 									<SelectItem value="tom">Tom Doe James</SelectItem>
 									<SelectItem value="thomas">Thomas Doe James</SelectItem>
@@ -51,9 +53,9 @@ export default function CreateContractModal({ open, onOpenChange }: { open: bool
 						</div>
 
 						<div>
-							<Label>Payment Type*</Label>
+							<Label className={labelStyle()}>Payment Type*</Label>
 							<Select onValueChange={(v) => setStepVariant(v as any)} value={stepVariant}>
-								<SelectTrigger className={inputStyle}>
+								<SelectTrigger className={selectTriggerStyle()}>
 									<SelectValue placeholder="Select payment type" />
 								</SelectTrigger>
 								<SelectContent>
@@ -65,14 +67,11 @@ export default function CreateContractModal({ open, onOpenChange }: { open: bool
 
 						{stepVariant !== "full" && (
 							<>
+								<CustomInput label="Property Name" required />
 								<div>
-									<Label>Property Name*</Label>
-									<Input defaultValue="25kg gas cylinder" className={inputStyle} />
-								</div>
-								<div>
-									<Label>Payment Interval*</Label>
+									<Label className={labelStyle()}>Payment Interval*</Label>
 									<Select defaultValue="monthly">
-										<SelectTrigger className={inputStyle}>
+										<SelectTrigger className={selectTriggerStyle()}>
 											<SelectValue placeholder="Select interval" />
 										</SelectTrigger>
 										<SelectContent>
@@ -83,9 +82,9 @@ export default function CreateContractModal({ open, onOpenChange }: { open: bool
 								</div>
 
 								<div>
-									<Label>Payment duration*</Label>
+									<Label className={labelStyle()}>Payment duration*</Label>
 									<Select defaultValue="months">
-										<SelectTrigger className={inputStyle}>
+										<SelectTrigger className={selectTriggerStyle()}>
 											<SelectValue placeholder="Select" />
 										</SelectTrigger>
 										<SelectContent>
@@ -95,9 +94,9 @@ export default function CreateContractModal({ open, onOpenChange }: { open: bool
 								</div>
 
 								<div>
-									<Label>For How Many Months*</Label>
+									<Label className={labelStyle()}>For How Many Months*</Label>
 									<Select defaultValue="12">
-										<SelectTrigger className={inputStyle}>
+										<SelectTrigger className={selectTriggerStyle()}>
 											<SelectValue placeholder="12" />
 										</SelectTrigger>
 										<SelectContent>
@@ -106,86 +105,49 @@ export default function CreateContractModal({ open, onOpenChange }: { open: bool
 									</Select>
 								</div>
 
-								<div>
-									<Label>Amount available for down payment*</Label>
-									<Input defaultValue="30,000" className={inputStyle} />
-								</div>
+								<CustomInput defaultValue="30,000" label="Amount available for down payment" required />
 
-								<div>
-									<Label>Start Date*</Label>
-									<div className="relative">
-										<Input defaultValue="12-3-2025" className={inputStyle} />
-										<span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs">📅</span>
-									</div>
-								</div>
+								<CustomInput type="date" defaultValue="12-3-2025" iconRight={<CalendarIcon />} label="Start Date" />
 
 								<div className="col-span-2 flex items-center gap-4">
-									<Checkbox id="gen" />
-									<Label htmlFor="gen">Generate Payment Link</Label>
-									<Checkbox id="cash" />
-									<Label htmlFor="cash">Cash Payment</Label>
+									{/* Generate link and cash payment checkboxes */}
+									<CheckboxField id="gen" label="Generate Payment Link" wrapperClassName="" />
+									<CheckboxField id="cash" label="Cash Payment" wrapperClassName="" />
 								</div>
 							</>
 						)}
 
 						{stepVariant === "full" && (
 							<>
-								<div>
-									<Label>Property Name*</Label>
-									<Input defaultValue="25kg gas cylinder" className={inputStyle} />
-								</div>
-								<div>
-									<Label>Amount Paid*</Label>
-									<Input defaultValue="30,000" className={inputStyle} />
-								</div>
+								<CustomInput label="Property Name" required />
+								<CustomInput label="Amount Paid" />
+								<CustomInput
+									type="date"
+									containerClassName="col-span-full"
+									defaultValue="12-3-2025"
+									iconRight={<CalendarIcon />}
+									label="Start Date"
+									required
+								/>
+
 								<div className="col-span-2">
-									<Label>Start Date*</Label>
-									<div className="relative">
-										<Input defaultValue="12-3-2025" className={inputStyle} />
-										<span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs">📅</span>
-									</div>
-								</div>
-								<div className="col-span-2">
-									<Checkbox id="gen2" />
-									<Label htmlFor="gen2">Generate Payment Link</Label>
+									<CheckboxField id="gen2" label="Generate Payment Link" wrapperClassName="" />
 								</div>
 							</>
 						)}
 
-						<DialogFooter className="col-span-2">
-							<Button type="submit" className={inputStyle}>
-								Create Contract
-							</Button>
+						<DialogFooter className="col-span-2 mt-5">
+							<ActionButton fullWidth>Create Contract</ActionButton>
 						</DialogFooter>
 					</form>
 				</DialogContent>
 			</Dialog>
 
-			<SuccessModal
+			<ContractSuccessModal
 				open={showSuccess}
 				onOpenChange={setShowSuccess}
-				title="Payment Link Generated"
-				subtitle="Link"
-				fields={[{ label: "Link", value: generatedLink, variant: "block" }]}
-				actions={[
-					{
-						label: "Send Via Email",
-						onClick: () => {
-							// placeholder: implement email sending
-							console.log("send email", generatedLink);
-						},
-						variant: "primary",
-						fullWidth: false,
-					},
-					{
-						label: "Copy Link",
-						onClick: () => {
-							if (generatedLink && navigator?.clipboard) navigator.clipboard.writeText(generatedLink);
-						},
-						variant: "outline",
-						fullWidth: false,
-					},
-				]}
+				link={generatedLink}
+				onSend={(email) => console.log("send-email", email, generatedLink)}
 			/>
 		</>
 	);

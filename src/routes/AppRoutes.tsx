@@ -28,6 +28,7 @@ import ViewDebtDetails from "../dashboard/Debt/ViewDebtDetails";
 import PropertyDetails from "../dashboard/Properties/PropertyDetails";
 import Categories from "../dashboard/Properties/Categories";
 import ManageCategories from "../dashboard/Properties/ManageCategories";
+import ContractDetails from "../dashboard/Contract/ContractDetails";
 
 export const appRouter = createBrowserRouter([
 	{
@@ -64,6 +65,10 @@ export const appRouter = createBrowserRouter([
 				element: <Customers />,
 			},
 			{
+				path: _router.dashboard.customerDetails,
+				element: <CustomerDetails />,
+			},
+			{
 				path: _router.dashboard.customerAdd,
 				element: <AddCustomer />,
 			},
@@ -76,8 +81,8 @@ export const appRouter = createBrowserRouter([
 				element: <Contract />,
 			},
 			{
-				path: _router.dashboard.customerDetails,
-				element: <CustomerDetails />,
+				path: _router.dashboard.contractDetails,
+				element: <ContractDetails />,
 			},
 			{
 				path: _router.dashboard.properties,

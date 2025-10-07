@@ -7,10 +7,11 @@ import TabPaymentHistory from "./TabPaymentHistory";
 import TabReceipt from "./TabReceipt";
 import TabDocument from "./TabDocument";
 import TabContractInfo from "./TabContractInfo";
+import PageWrapper from "../../components/common/PageWrapper";
 
 export default function CustomerDetails() {
 	return (
-		<div className="flex flex-col gap-6">
+		<PageWrapper className="flex flex-col gap-6">
 			<div className="flex items-center justify-between">
 				<PageTitles title="Customer details" description="" />
 			</div>
@@ -54,6 +55,6 @@ export default function CustomerDetails() {
 					</div>
 				</Tabs>
 			</CustomCard>
-		</div>
+		</PageWrapper>
 	);
 }
