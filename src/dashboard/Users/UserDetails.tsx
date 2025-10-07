@@ -10,6 +10,7 @@ import { useState } from "react";
 import SuccessModal from "@/components/common/SuccessModal";
 import { media } from "../../resources/images";
 import PageWrapper from "../../components/common/PageWrapper";
+import { modalContentStyle } from "../../components/common/commonStyles";
 
 export default function UserDetails() {
 	function KeyValueRow({ label, value, children }: { label: ReactNode; value?: ReactNode; children?: ReactNode }) {
@@ -116,7 +117,7 @@ export default function UserDetails() {
 
 			{/* Edit modal */}
 			<Dialog open={editOpen} onOpenChange={setEditOpen}>
-				<DialogContent className="overflow-y-auto max-h-[90vh] md:max-w-2xl w-full">
+				<DialogContent className={modalContentStyle()}>
 					<DialogHeader className="text-center flex items-center justify-center mt-5">
 						<DialogTitle className="font-medium">Edit User Details</DialogTitle>
 					</DialogHeader>

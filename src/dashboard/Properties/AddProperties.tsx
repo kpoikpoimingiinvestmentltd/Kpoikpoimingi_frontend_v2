@@ -12,6 +12,8 @@ import ImageGallery from "@/components/base/ImageGallery";
 
 export default function AddProperties() {
 	const [successOpen, setSuccessOpen] = React.useState(false);
+	const [category, setCategory] = React.useState<string>("electronics");
+	const [subCategory, setSubCategory] = React.useState<string>("mobile");
 
 	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault();
@@ -47,7 +49,7 @@ export default function AddProperties() {
 						<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 							<div>
 								<label className="block text-sm font-medium text-gray-700 mb-2">Property Category*</label>
-								<Select defaultValue="electronics">
+								<Select value={category} onValueChange={(v) => setCategory(v)}>
 									<SelectTrigger className={twMerge(inputStyle, "w-full min-h-11")}>
 										<SelectValue placeholder="Choose Category" />
 									</SelectTrigger>
@@ -69,7 +71,7 @@ export default function AddProperties() {
 							</div>
 							<div>
 								<label className="block text-sm font-medium text-gray-700 mb-2">Sub Category*</label>
-								<Select defaultValue="mobile">
+								<Select value={subCategory} onValueChange={(v) => setSubCategory(v)}>
 									<SelectTrigger className={twMerge(inputStyle, "w-full min-h-11")}>
 										<SelectValue placeholder="Select Sub Category" />
 									</SelectTrigger>
@@ -89,7 +91,8 @@ export default function AddProperties() {
 						<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 							<div>
 								<CustomInput
-									label="Price *"
+									label="Price"
+									required
 									labelClassName="block text-sm font-medium text-gray-700 mb-2"
 									className={twMerge(inputStyle)}
 									defaultValue="300,000"
@@ -97,7 +100,8 @@ export default function AddProperties() {
 							</div>
 							<div>
 								<CustomInput
-									label="Quantity*"
+									label="Quantity"
+									required
 									labelClassName="block text-sm font-medium text-gray-700 mb-2"
 									type="number"
 									className={twMerge(inputStyle)}
@@ -105,6 +109,26 @@ export default function AddProperties() {
 								/>
 							</div>
 						</div>
+
+						{/* vehicle-specific fields */}
+						{category && category.toLowerCase().includes("veh") && (
+							<>
+								<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+									<CustomInput label="Vehicle Make" required className={twMerge(inputStyle)} defaultValue={"Daihatsu"} />{" "}
+									<CustomInput required label="Type" className={twMerge(inputStyle)} defaultValue={"Truck"} />
+								</div>
+
+								<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+									<CustomInput label="Color" required className={twMerge(inputStyle)} defaultValue={"Custom"} />
+									<CustomInput label="Registration Number" required className={twMerge(inputStyle)} defaultValue={"Kano - MJB815XA"} />
+								</div>
+
+								<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+									<CustomInput required label="Chassis Number*" className={twMerge(inputStyle)} defaultValue={"S211P0085561"} />
+									<CustomInput required label="Condition" className={twMerge(inputStyle)} defaultValue={"Foreign Used"} />
+								</div>
+							</>
+						)}
 
 						<div>
 							<label className="block text-sm font-medium text-gray-700 mb-2">Product Description*</label>

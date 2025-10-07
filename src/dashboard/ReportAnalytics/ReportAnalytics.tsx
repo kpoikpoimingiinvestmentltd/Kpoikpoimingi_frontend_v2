@@ -85,7 +85,7 @@ export default function ReportAnalytics() {
 
 			<CustomCard className="flex min-h-96 flex-col gap-y-6 md:p-8">
 				{!isEmpty ? (
-					<div className="flex flex-col">
+					<div className="flex flex-col gap-y-6">
 						<CustomCard className="p-4 border-0 bg-card">
 							<div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
 								{stats.map((s) => (

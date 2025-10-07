@@ -52,8 +52,8 @@ export default function KeyValueRow({
 
 	return (
 		<div className={twMerge(`flex items-start justify-between py-2 gap-4`, className)}>
-			<aside {...(leftProps || {})} className={twMerge(`text-start text-wrap`, leftClassName)}>
-				<p className="text-muted-foreground text-sm">{label}</p>
+			<aside {...(leftProps || {})} className={`text-start text-wrap`}>
+				<p className={twMerge("text-muted-foreground text-sm", leftClassName)}>{label}</p>
 			</aside>
 
 			<aside {...(rightProps || {})} className={twMerge(`flex items-center gap-4 justify-end max-w-[120px]`, rightClassName)}>

@@ -83,11 +83,11 @@ export default function TableForIndex() {
 								<TableCell>{row.date}</TableCell>
 								<TableCell>
 									<div className="flex items-center gap-2">
-										<button className="text-blue-500 hover:bg-blue-100 p-2 rounded-full">
+										<Link to={_router.dashboard.customerDetails} className="text-primary hover:bg-primary/10 p-2 rounded-full">
 											<IconWrapper>
 												<EyeIcon />
 											</IconWrapper>
-										</button>
+										</Link>
 									</div>
 								</TableCell>
 							</TableRow>

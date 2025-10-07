@@ -4,7 +4,7 @@ import { IconWrapper, PlusIcon, MinusIcon } from "@/assets/icons";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import CustomInput from "@/components/base/CustomInput";
 import { twMerge } from "tailwind-merge";
-import { inputStyle } from "@/components/common/commonStyles";
+import { inputStyle, modalContentStyle } from "@/components/common/commonStyles";
 
 type Props = {
 	open: boolean;
@@ -36,7 +36,7 @@ export default function AddCategoryModal({ open, onOpenChange, mode = "add", ini
 
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
-			<DialogContent className="overflow-y-auto max-h-[90vh] md:max-w-2xl w-full">
+			<DialogContent className={modalContentStyle()}>
 				<div className="text-center py-4">
 					<div className="text-lg font-medium">{mode === "edit" ? "Edit Category" : "Add Category"}</div>
 				</div>

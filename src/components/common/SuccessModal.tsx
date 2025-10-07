@@ -2,6 +2,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { IconWrapper, CheckIcon } from "@/assets/icons";
 import React from "react";
 import { twMerge } from "tailwind-merge";
+import { modalContentStyle } from "./commonStyles";
 
 export default function SuccessModal({
 	open,
@@ -65,7 +66,7 @@ export default function SuccessModal({
 
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
-			<DialogContent className="overflow-y-auto max-h-[90vh] md:max-w-2xl w-full">
+			<DialogContent className={modalContentStyle()}>
 				<div className="flex flex-col items-center gap-4 py-6 px-4">
 					{titleBeforeIcon && title && <div className="text-lg font-semibold text-center">{title}</div>}
 

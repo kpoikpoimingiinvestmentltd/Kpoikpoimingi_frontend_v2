@@ -21,6 +21,7 @@ type Props = {
 	onChange?: (files: File[]) => void; // upload handler
 	placeholderText?: string;
 	uploadButtonText?: string;
+	labelText?: string;
 };
 
 export default function ImageGallery({
@@ -35,14 +36,16 @@ export default function ImageGallery({
 	onChange,
 	placeholderText = "Upload Voters card",
 	uploadButtonText = "Upload",
+	labelText = "Property Image",
 }: Props) {
 	const imgs = Array.isArray(images) ? images : images ? [images] : [];
 	const [selected, setSelected] = React.useState(0);
 
-	const borderClass = (i: number) => {
+	const thumbBorderClass = (i: number) => {
 		if (thumbVariant === "none") return "border-transparent";
-		if (thumbVariant === "solid") return i === selected ? "border-gray-300" : "border-gray-200";
-		return i === selected ? "border-dashed border-2" : "border-dashed border-2"; // dashed
+		if (thumbVariant === "solid") return `${i === selected ? "border-primary" : "border-stone-100"} border-2`;
+		// dashed
+		return `${i === selected ? "border-primary" : "border-transparent"} border-dashed border-2`;
 	};
 
 	// local images state when component manages images internally (demo friendly)
@@ -76,6 +79,8 @@ export default function ImageGallery({
 	return (
 		<div className={`${twMerge("flex flex-col gap-4", className)}`}>
 			<div className={twMerge(`rounded-md p-6 flex flex-grow items-center justify-center relative min-h-52`, containerBg, containerBorderClass)}>
+				<div className="absolute top-4 left-4">{mode === "view" && <p className="text-sm text-black">{labelText}</p>}</div>
+
 				{effectiveImgs[selected] ? (
 					<Image src={effectiveImgs[selected]} alt={`image-${selected}`} className="w-52" />
 				) : (
@@ -125,7 +130,7 @@ export default function ImageGallery({
 							key={i}
 							className={`rounded-md p-1 ${
 								thumbBg === "white" ? "bg-white" : thumbBg === "transparent" ? "bg-transparent" : thumbBg
-							} border ${borderClass(i)} cursor-pointer`}
+							} ${thumbBorderClass(i)} cursor-pointer`}
 							onClick={() => setSelected(i)}>
 							<Image src={s} alt={`thumb-${i}`} className="w-20 h-14 p-2 object-contain" />
 						</div>

@@ -1,5 +1,5 @@
 import CustomCard from "@/components/base/CustomCard";
-import { IconWrapper, PlusIcon, SearchIcon, ThreeDotsIcon, EditIcon, TrashIcon, CloseIcon } from "@/assets/icons";
+import { IconWrapper, PlusIcon, SearchIcon, ThreeDotsIcon, EditIcon, TrashIcon, CloseIcon, EyeIcon } from "@/assets/icons";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import Image from "@/components/base/Image";
 import { media } from "@/resources/images";
@@ -8,6 +8,7 @@ import { checkboxStyle, inputStyle, tabListStyle, tabStyle } from "@/components/
 import CustomInput from "@/components/base/CustomInput";
 import CompactPagination from "@/components/ui/compact-pagination";
 import React from "react";
+import EditPropertyDetailsModal from "./EditPropertyDetailsModal";
 import EmptyData from "@/components/common/EmptyData";
 import { Link } from "react-router";
 import { _router } from "../../routes/_router";
@@ -33,6 +34,7 @@ const propertyItems = [
 ];
 
 export default function Properties() {
+	const [editOpen, setEditOpen] = React.useState(false);
 	const [isEmpty] = React.useState(false);
 	const [page, setPage] = React.useState(1);
 	const pages = Math.max(1, Math.ceil(propertyItems.length / 10));
@@ -149,9 +151,9 @@ export default function Properties() {
 														<Image src={prod.img} alt={prod.title} className="max-h-full object-contain" />
 													</div>
 													<div className="mt-3">
-														<div className="text-sm font-medium">{prod.title}</div>
+														<h5 className="text-sm font-medium">{prod.title}</h5>
 														<div className="flex items-center justify-between gap-2">
-															<div className="text-sm mt-1">{prod.price}</div>{" "}
+															<p className="text-sm mt-1">{prod.price}</p>
 															<DropdownMenu>
 																<DropdownMenuTrigger asChild>
 																	<button className="text-primary">
@@ -162,12 +164,20 @@ export default function Properties() {
 																</DropdownMenuTrigger>
 																<DropdownMenuContent align="end" sideOffset={6} className="w-44 shadow-md px-2">
 																	<DropdownMenuItem>
-																		<Link to={_router.dashboard.propertiesDetails} className="flex items-center gap-2 cursor-pointer">
+																		<Link to={_router.dashboard.propertiesDetails} className="flex w-full items-center gap-2 cursor-pointer">
+																			<IconWrapper className="text-base">
+																				<EyeIcon />
+																			</IconWrapper>
+																			<span>View details</span>
+																		</Link>
+																	</DropdownMenuItem>
+																	<DropdownMenuItem>
+																		<button type="button" onClick={() => setEditOpen(true)} className="flex items-center gap-2">
 																			<IconWrapper className="text-base">
 																				<EditIcon />
 																			</IconWrapper>
 																			<span>Edit details</span>
-																		</Link>
+																		</button>
 																	</DropdownMenuItem>
 																	<DropdownMenuItem className="flex items-center gap-2 text-red-600 cursor-pointer">
 																		<IconWrapper className="text-base">
@@ -214,6 +224,23 @@ export default function Properties() {
 								</footer>
 							</DialogContent>
 						</Dialog>
+
+						{/* Edit property modal (reused for editing a single item) */}
+						<EditPropertyDetailsModal
+							open={editOpen}
+							onOpenChange={setEditOpen}
+							initial={{
+								id: "",
+								name: "",
+								price: "",
+								quantity: "",
+								status: "",
+								numberAssigned: "",
+								category: "",
+								addedOn: "",
+								images: [media.images._product1],
+							}}
+						/>
 					</CustomCard>
 				) : (
 					<EmptyData text="No Payments at the moment" />

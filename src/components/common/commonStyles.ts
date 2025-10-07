@@ -22,12 +22,14 @@ export const tabStyle =
 
 export const tabListStyle = "bg-transparent flex-wrap gap-5 p-0 h-auto";
 
-// export const labelStyle = "text-sm block mb-2 text-slate-800";
-
 export const labelStyle = (style?: string) => {
 	return twMerge("text-sm block mb-1.5 text-slate-800", style);
 };
 
 export const selectTriggerStyle = (style?: string) => {
 	return twMerge(inputStyle, "min-h-11", style);
+};
+
+export const modalContentStyle = (style?: string) => {
+	return twMerge("overflow-y-auto max-h-[90vh] md:max-w-2xl w-full", style);
 };
