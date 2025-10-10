@@ -27,7 +27,7 @@ export default function AddProperties() {
 				<div className="w-full lg:w-10/12 mx-auto">
 					<ImageGallery
 						mode="upload"
-						placeholderText="Upload Voters card"
+						placeholderText="Upload Property Image"
 						uploadButtonText="Upload"
 						className="min-h-28 mb-8"
 						containerBorder="dashed"

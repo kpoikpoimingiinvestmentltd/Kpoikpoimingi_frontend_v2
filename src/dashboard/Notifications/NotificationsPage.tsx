@@ -21,13 +21,9 @@ export default function NotificationsPage() {
 									<NotificationItem key={i} {...n} />
 								))}
 							</div>
-							<div className="mt-8 flex flex-col md:flex-row text-center md:text-start justify-center items-center">
-								<span className="text-sm text-nowrap">
-									Showing <span className="font-medium">1-10</span> of <span className="font-medium">100</span> results
-								</span>
-								<div className="ml-4">
-									<CompactPagination page={1} pages={5} onPageChange={() => {}} />
-								</div>
+
+							<div>
+								<CompactPagination page={1} pages={5} onPageChange={() => {}} showRange />
 							</div>
 						</div>
 					</CustomCard>

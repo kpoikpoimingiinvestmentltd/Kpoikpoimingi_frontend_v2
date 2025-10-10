@@ -99,7 +99,7 @@ export default function SuccessModal({
 							<div className="w-full flex gap-3 items-center">
 								{(actions as NonNullable<typeof actions>).map((a: NonNullable<typeof actions>[0], i: number) => {
 									const isPrimary = a.variant === "primary" || (!a.variant && i === 0);
-									const btnBase = a.fullWidth ? "px-16 py-5 mx-auto" : "px-10";
+									const btnBase = a.fullWidth ? "px-16 py-3 mx-auto" : "px-10";
 									const merged = twMerge(
 										"py-3 rounded-md active-scale",
 										btnBase,
@@ -119,7 +119,7 @@ export default function SuccessModal({
 								})}
 							</div>
 						) : (
-							<button onClick={handlePrimary} className="w-max  mx-auto px-16 !py-5 bg-primary text-white">
+							<button onClick={handlePrimary} className="w-max mx-auto px-16 py-3 rounded-md bg-primary text-white">
 								{buttonLabel}
 							</button>
 						)}

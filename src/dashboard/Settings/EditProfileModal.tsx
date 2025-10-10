@@ -2,9 +2,9 @@ import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import CustomInput from "@/components/base/CustomInput";
 import { Button } from "@/components/ui/button";
-import Image from "@/components/base/Image";
 import { media } from "@/resources/images";
 import CustomCard from "@/components/base/CustomCard";
+import Avatar from "../../components/base/Avatar";
 
 export default function EditProfileModal({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
 	const [name, setName] = useState("Amgbara Jake");
@@ -24,9 +24,7 @@ export default function EditProfileModal({ open, onOpenChange }: { open: boolean
 
 				<CustomCard className="border-0 p-0 bg-transparent">
 					<div className="flex flex-col items-center gap-4 py-6">
-						<div className="w-24 h-24 rounded-full overflow-hidden">
-							<Image src={media.images.avatar} alt="avatar" className="w-full h-full object-cover" />
-						</div>
+						<Avatar variant="editable" src={media.images.avatar} />
 						<div className="text-center text-sm text-muted-foreground">Upload Profile</div>
 					</div>
 

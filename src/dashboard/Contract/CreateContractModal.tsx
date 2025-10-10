@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogC
 import CheckboxField from "@/components/base/CheckboxField";
 import { Label } from "@/components/ui/label";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
-import { inputStyle, labelStyle, selectTriggerStyle } from "../../components/common/commonStyles";
+import { inputStyle, labelStyle, modalContentStyle, selectTriggerStyle } from "../../components/common/commonStyles";
 import ContractSuccessModal from "./ContractSuccessModal";
 import CustomInput from "../../components/base/CustomInput";
 import { CalendarIcon } from "../../assets/icons";
@@ -28,7 +28,7 @@ export default function CreateContractModal({ open, onOpenChange }: { open: bool
 	return (
 		<>
 			<Dialog open={open} onOpenChange={onOpenChange}>
-				<DialogContent className="overflow-y-auto max-h-[90vh] md:max-w-3xl w-full">
+				<DialogContent className={modalContentStyle("md:max-w-3xl")}>
 					<DialogHeader className="justify-center flex flex-row mt-2 text-center">
 						<DialogTitle>Create Contract</DialogTitle>
 						<DialogClose />

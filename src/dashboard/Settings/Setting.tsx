@@ -12,6 +12,7 @@ import { useNavigate } from "react-router";
 import { _router } from "@/routes/_router";
 import { tabListStyle, tabStyle } from "../../components/common/commonStyles";
 import LogoutModal from "../../components/common/LogoutModal";
+import PageWrapper from "../../components/common/PageWrapper";
 
 export default function Setting() {
 	const [editOpen, setEditOpen] = useState(false);
@@ -27,7 +28,7 @@ export default function Setting() {
 	};
 
 	return (
-		<div>
+		<PageWrapper>
 			<div className="flex items-center justify-between flex-wrap gap-4 mb-4">
 				<PageTitles title="General Setting" description="This is a place to set up and make changes on kpoi kpoi mingi investment" />
 				<div className="flex items-center gap-4 flex-wrap">
@@ -82,6 +83,6 @@ export default function Setting() {
 			<EditProfileModal open={editOpen} onOpenChange={setEditOpen} />
 			<ChangePasswordModal open={changePassOpen} onOpenChange={setChangePassOpen} />
 			<LogoutModal open={logoutOpen} onOpenChange={setLogoutOpen} onConfirm={handleLogoutConfirm} />
-		</div>
+		</PageWrapper>
 	);
 }

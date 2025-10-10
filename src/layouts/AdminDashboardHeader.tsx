@@ -1,3 +1,4 @@
+import React from "react";
 import { _router } from "@/routes/_router";
 import {
 	DropdownMenu,
@@ -9,6 +10,7 @@ import {
 } from "../components/ui/dropdown-menu";
 import { IconWrapper, LogoutIcon, MenuIcon, NotificationIcon, ReceiptPlusIcon, SettingIcon, UserIcon } from "@/assets/icons";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import GenerateReceiptModal from "@/dashboard/Receipt/GenerateReceiptModal";
 import { Link, NavLink } from "react-router";
 import { media } from "../resources/images";
 
@@ -18,6 +20,7 @@ interface AdminDashboardHeaderProps {
 }
 
 export default function AdminDashboardHeader({ onSidebarOpen, onLogoutOpen }: AdminDashboardHeaderProps) {
+	const [receiptOpen, setReceiptOpen] = React.useState(false);
 	// prefer NavLink's active state instead of manual checks
 	return (
 		<div className="bg-white border-b border-gray-100 p-4 flex items-center justify-between sticky top-0 z-2">
@@ -28,10 +31,11 @@ export default function AdminDashboardHeader({ onSidebarOpen, onLogoutOpen }: Ad
 					</IconWrapper>
 				</button>
 			</div>
-			<div className="flex items-center gap-3.5">
+			<div className="flex items-center gap-3.5 pr-8">
 				<button
 					type="button"
-					className="gap-2 items-center hidden md:flex bg-gradient-to-t from-[#134DC1] to-[#03B4FA] active-scale text-white rounded-md py-2.5 px-3">
+					className="gap-2 items-center hidden md:flex bg-gradient-to-t from-[#134DC1] to-[#03B4FA] active-scale text-white rounded-md py-2.5 px-3"
+					onClick={() => setReceiptOpen(true)}>
 					<span className="text-sm">Generate Receipt</span>
 					<IconWrapper className="text-xl">
 						<ReceiptPlusIcon />
@@ -102,7 +106,9 @@ export default function AdminDashboardHeader({ onSidebarOpen, onLogoutOpen }: Ad
 									<span>Settings</span>
 								</Link>
 							</DropdownMenuItem>
-							<DropdownMenuItem className="cursor-pointer bg-transparent  bg-gradient-to-t from-[#134DC1] to-[#03B4FA] active-scale md:hidden hover:!text-white text-white rounded-md py-2 px-3">
+							<DropdownMenuItem
+								className="cursor-pointer bg-transparent  bg-gradient-to-t from-[#134DC1] to-[#03B4FA] active-scale md:hidden hover:!text-white text-white rounded-md py-2 px-3"
+								onSelect={() => setReceiptOpen(true)}>
 								<IconWrapper className="text-xl">
 									<ReceiptPlusIcon />
 								</IconWrapper>
@@ -120,6 +126,9 @@ export default function AdminDashboardHeader({ onSidebarOpen, onLogoutOpen }: Ad
 						</div>
 					</DropdownMenuContent>
 				</DropdownMenu>
+
+				{/* Generate receipt modal */}
+				<GenerateReceiptModal open={receiptOpen} onOpenChange={setReceiptOpen} />
 			</div>
 		</div>
 	);

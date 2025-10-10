@@ -47,7 +47,7 @@ export default function Contract() {
 							</div>
 							<div className="w-full">
 								<div className="flex items-center justify-between flex-wrap gap-6">
-									<h2 className="font-semibold">All Customers</h2>
+									<h2 className="font-semibold">All Contracts </h2>
 									<div className="flex items-center gap-2">
 										<div className="relative md:w-80">
 											<CustomInput

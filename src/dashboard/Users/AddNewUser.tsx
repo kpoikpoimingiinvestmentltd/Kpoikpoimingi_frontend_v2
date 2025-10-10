@@ -50,6 +50,7 @@ export default function AddNewUser() {
 					<SuccessModal
 						title="User Added"
 						open={userAddedOpen}
+						buttonLabel="Copy password"
 						onOpenChange={setUserAddedOpen}
 						subtitle="User has been added successfully"
 						fields={

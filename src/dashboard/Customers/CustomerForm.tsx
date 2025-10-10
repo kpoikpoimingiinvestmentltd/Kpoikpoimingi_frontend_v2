@@ -2,10 +2,12 @@ import React from "react";
 import CustomInput from "@/components/base/CustomInput";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
-import { inputStyle } from "@/components/common/commonStyles";
+import { inputStyle, labelStyle } from "@/components/common/commonStyles";
 import { twMerge } from "tailwind-merge";
-import ImageGallery from "@/components/base/ImageGallery";
+import UploadBox from "@/components/base/UploadBox";
+import { WhatsappIcon, CalendarIcon, PhoneIcon, EmailIcon } from "../../assets/icons";
+import CheckboxField from "@/components/base/CheckboxField";
+import ActionButton from "../../components/base/ActionButton";
 
 type Props = {
 	onSubmit?: (data: any) => void;
@@ -13,6 +15,8 @@ type Props = {
 };
 
 export default function CustomerForm({ onSubmit, initial }: Props) {
+	const EACH_SECTION_TITLE = "text-lg font-normal";
+	const CENTERED_CONTAINER = "mx-auto w-full md:w-2/3";
 	const [form, setForm] = React.useState(() => ({
 		fullName: initial?.fullName ?? "",
 		email: initial?.email ?? "",
@@ -29,10 +33,31 @@ export default function CustomerForm({ onSubmit, initial }: Props) {
 		paymentDuration: initial?.paymentDuration ?? "",
 		downPayment: initial?.downPayment ?? "",
 		amountAvailable: initial?.amountAvailable ?? "",
-		clarification: initial?.clarification ?? { previousAgreement: false, completedAgreement: false, prevCompany: "" },
+		clarification: initial?.clarification ?? { previousAgreement: false, completedAgreement: false, prevCompany: "", reason: "" },
 		employment: initial?.employment ?? { status: "", employerName: "", employerAddress: "" },
 		guarantors: initial?.guarantors ?? [
-			{ fullName: "", occupation: "", phone: "", email: "", employmentStatus: "", homeAddress: "", businessAddress: "", stateOfOrigin: "" },
+			{
+				fullName: "",
+				occupation: "",
+				phone: "",
+				email: "",
+				employmentStatus: "",
+				homeAddress: "",
+				businessAddress: "",
+				stateOfOrigin: "",
+				votersUploaded: 0,
+			},
+			{
+				fullName: "",
+				occupation: "",
+				phone: "",
+				email: "",
+				employmentStatus: "",
+				homeAddress: "",
+				businessAddress: "",
+				stateOfOrigin: "",
+				votersUploaded: 0,
+			},
 		],
 	}));
 
@@ -45,86 +70,122 @@ export default function CustomerForm({ onSubmit, initial }: Props) {
 
 	return (
 		<form onSubmit={handleSubmit} className="space-y-6">
-			<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-				<div>
-					<label className="block text-sm font-medium mb-2">Full name*</label>
-					<CustomInput value={form.fullName} onChange={(e) => handleChange("fullName", e.target.value)} className={twMerge(inputStyle)} />
+			{/* Personal details - centered half width */}
+			<div className={CENTERED_CONTAINER}>
+				<h3 className={EACH_SECTION_TITLE}>Personal details</h3>
+
+				<div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+					<CustomInput
+						label="Full name"
+						required
+						labelClassName={labelStyle()}
+						value={form.fullName}
+						onChange={(e) => handleChange("fullName", e.target.value)}
+						className={twMerge(inputStyle)}
+					/>
+
+					<CustomInput
+						label="Email"
+						required
+						labelClassName={labelStyle()}
+						value={form.email}
+						onChange={(e) => handleChange("email", e.target.value)}
+						className={twMerge(inputStyle)}
+					/>
 				</div>
-				<div>
-					<label className="block text-sm font-medium mb-2">Email*</label>
-					<CustomInput value={form.email} onChange={(e) => handleChange("email", e.target.value)} className={twMerge(inputStyle)} />
+
+				<div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+					<CustomInput
+						label="Whatsapp number"
+						required
+						labelClassName={labelStyle()}
+						value={form.whatsapp}
+						onChange={(e) => handleChange("whatsapp", e.target.value)}
+						className={twMerge(inputStyle)}
+						iconRight={<WhatsappIcon />}
+					/>
+					<CustomInput
+						label="Date of birth"
+						required
+						labelClassName={labelStyle()}
+						value={form.dob}
+						type="date"
+						onChange={(e) => handleChange("dob", e.target.value)}
+						className={twMerge(inputStyle)}
+						iconRight={<CalendarIcon />}
+					/>
+				</div>
+
+				<div className="mt-4">
+					<label className={labelStyle()}>Home Address*</label>
+					<Textarea
+						value={form.address}
+						onChange={(e) => handleChange("address", e.target.value)}
+						className={twMerge(inputStyle, "h-auto min-h-24")}
+					/>
+				</div>
+				<div className="mt-6">
+					<UploadBox placeholder="Upload Indigene certificate" />
 				</div>
 			</div>
 
-			<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-				<div>
-					<label className="block text-sm font-medium mb-2">Whatsapp number*</label>
-					<CustomInput value={form.whatsapp} onChange={(e) => handleChange("whatsapp", e.target.value)} className={twMerge(inputStyle)} />
-				</div>
-				<div>
-					<label className="block text-sm font-medium mb-2">Date of birth*</label>
-					<CustomInput value={form.dob} onChange={(e) => handleChange("dob", e.target.value)} className={twMerge(inputStyle)} />
-				</div>
-			</div>
-
-			<div>
-				<label className="block text-sm font-medium mb-2">Home Address*</label>
-				<Textarea value={form.address} onChange={(e) => handleChange("address", e.target.value)} className={twMerge(inputStyle, "h-auto min-h-24")} />
-			</div>
+			<hr className="my-6" />
 
 			{/* Identification Document section */}
-			<div>
-				<h3 className="text-lg font-medium">Identification Document</h3>
-				<div className="mt-3 flex items-center gap-4">
+			<div className={CENTERED_CONTAINER}>
+				<h3 className={EACH_SECTION_TITLE}>Identification Document</h3>
+				<div className="mt-4 flex items-center gap-4">
 					<div className="flex items-center gap-2">
 						<label className="text-sm mr-2">Are you a driver?</label>
 						<button
 							type="button"
 							onClick={() => handleChange("isDriver", true)}
-							className={form.isDriver ? "bg-sky-500 text-white px-3 py-1 rounded" : "border px-3 py-1 rounded"}>
+							className={form.isDriver ? "bg-primary text-white px-3 py-1 rounded" : "border px-3 py-1 rounded"}>
 							Yes
 						</button>
 						<button
 							type="button"
 							onClick={() => handleChange("isDriver", false)}
-							className={!form.isDriver ? "bg-gray-100 px-3 py-1 rounded" : "border px-3 py-1 rounded"}>
+							className={!form.isDriver ? "bg-primary text-white px-3 py-1 rounded" : "border px-3 py-1 rounded"}>
 							No
 						</button>
 					</div>
 				</div>
 
+				<hr className="my-6" />
+
 				<div className="mt-4 space-y-4">
-					<ImageGallery mode="upload" containerBorder="dashed" placeholderText="NIN" uploadButtonText="Upload" />
-					<ImageGallery mode="upload" containerBorder="dashed" placeholderText="Drivers license" uploadButtonText="Upload" />
-					<ImageGallery mode="upload" containerBorder="dashed" placeholderText="Signed Contract" uploadButtonText="Upload" />
+					<UploadBox placeholder="Upload NIN or Voters Card" />
+					<UploadBox placeholder="Upload Drivers License" />
+					<UploadBox placeholder="Upload signed contract" />
 				</div>
 			</div>
-
+			<hr className="my-6" />
 			{/* Next of Kin Details */}
-			<div>
-				<h3 className="text-lg font-medium">Next Of Kin Details</h3>
+			<div className={CENTERED_CONTAINER}>
+				<h3 className={EACH_SECTION_TITLE}>Next Of Kin Details</h3>
 				<div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-					<div>
-						<label className="block text-sm font-medium mb-2">Full Name*</label>
-						<CustomInput
-							value={form.nextOfKin.fullName}
-							onChange={(e) => handleChange("nextOfKin", { ...form.nextOfKin, fullName: e.target.value })}
-							className={twMerge(inputStyle)}
-						/>
-					</div>
-					<div>
-						<label className="block text-sm font-medium mb-2">Phone number*</label>
-						<CustomInput
-							value={form.nextOfKin.phone}
-							onChange={(e) => handleChange("nextOfKin", { ...form.nextOfKin, phone: e.target.value })}
-							className={twMerge(inputStyle)}
-						/>
-					</div>
+					<CustomInput
+						label="Full Name"
+						required
+						labelClassName={labelStyle()}
+						value={form.nextOfKin.fullName}
+						onChange={(e) => handleChange("nextOfKin", { ...form.nextOfKin, fullName: e.target.value })}
+						className={twMerge(inputStyle)}
+					/>
+					<CustomInput
+						label="Phone number"
+						required
+						labelClassName={labelStyle()}
+						value={form.nextOfKin.phone}
+						onChange={(e) => handleChange("nextOfKin", { ...form.nextOfKin, phone: e.target.value })}
+						className={twMerge(inputStyle)}
+					/>
 				</div>
 
 				<div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-					<div>
-						<label className="block text-sm font-medium mb-2">Relationship*</label>
+					<div className="col-span-full">
+						<label className={labelStyle()}>Relationship*</label>
 						<Select value={form.nextOfKin.relationship} onValueChange={(v) => handleChange("nextOfKin", { ...form.nextOfKin, relationship: v })}>
 							<SelectTrigger className={twMerge(inputStyle, "w-full min-h-11")}>
 								<SelectValue placeholder="Select relationship" />
@@ -139,8 +200,10 @@ export default function CustomerForm({ onSubmit, initial }: Props) {
 				</div>
 
 				<div className="mt-4">
-					<label className="block text-sm font-medium mb-2">Spouse Name*</label>
 					<CustomInput
+						label="Spouse Name"
+						required
+						labelClassName={labelStyle()}
 						value={form.nextOfKin.spouseName}
 						onChange={(e) => handleChange("nextOfKin", { ...form.nextOfKin, spouseName: e.target.value })}
 						className={twMerge(inputStyle)}
@@ -148,7 +211,7 @@ export default function CustomerForm({ onSubmit, initial }: Props) {
 				</div>
 
 				<div className="mt-4">
-					<label className="block text-sm font-medium mb-2">Address*</label>
+					<label className={labelStyle()}>Address*</label>
 					<Textarea
 						value={form.nextOfKin.address}
 						onChange={(e) => handleChange("nextOfKin", { ...form.nextOfKin, address: e.target.value })}
@@ -157,16 +220,22 @@ export default function CustomerForm({ onSubmit, initial }: Props) {
 				</div>
 			</div>
 
+			<hr className="my-6" />
+
 			{/* Property Details */}
-			<div>
-				<h3 className="text-lg font-medium">Property Details</h3>
+			<div className={CENTERED_CONTAINER}>
+				<h3 className={EACH_SECTION_TITLE}>Property Details</h3>
 				<div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+					<CustomInput
+						label="Property Name"
+						required
+						labelClassName={labelStyle()}
+						value={form.propertyName}
+						onChange={(e) => handleChange("propertyName", e.target.value)}
+						className={twMerge(inputStyle)}
+					/>
 					<div>
-						<label className="block text-sm font-medium mb-2">Property Name*</label>
-						<CustomInput value={form.propertyName} onChange={(e) => handleChange("propertyName", e.target.value)} className={twMerge(inputStyle)} />
-					</div>
-					<div>
-						<label className="block text-sm font-medium mb-2">Payment frequency*</label>
+						<label className={labelStyle()}>Payment frequency*</label>
 						<Select value={form.paymentFrequency} onValueChange={(v) => handleChange("paymentFrequency", v)}>
 							<SelectTrigger className={twMerge(inputStyle, "w-full min-h-11")}>
 								<SelectValue placeholder="Select frequency" />
@@ -180,68 +249,103 @@ export default function CustomerForm({ onSubmit, initial }: Props) {
 				</div>
 
 				<div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-					<div>
-						<label className="block text-sm font-medium mb-2">Payment duration*</label>
-						<CustomInput
-							value={form.paymentDuration}
-							onChange={(e) => handleChange("paymentDuration", e.target.value)}
-							className={twMerge(inputStyle)}
-						/>
-					</div>
-					<div>
-						<label className="block text-sm font-medium mb-2">Down payment amount*</label>
-						<CustomInput value={form.downPayment} onChange={(e) => handleChange("downPayment", e.target.value)} className={twMerge(inputStyle)} />
-					</div>
+					<CustomInput
+						label="Payment duration"
+						required
+						labelClassName={labelStyle()}
+						value={form.paymentDuration}
+						onChange={(e) => handleChange("paymentDuration", e.target.value)}
+						className={twMerge(inputStyle)}
+					/>
+					<CustomInput
+						label="Down payment amount"
+						required
+						labelClassName={labelStyle()}
+						value={form.downPayment}
+						onChange={(e) => handleChange("downPayment", e.target.value)}
+						className={twMerge(inputStyle)}
+					/>
 				</div>
 
 				<div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-					<div>
-						<label className="block text-sm font-medium mb-2">Why do you need this property*</label>
-						<CustomInput
-							value={form.clarification.reason}
-							onChange={(e) => handleChange("clarification", { ...form.clarification, reason: e.target.value })}
-							className={twMerge(inputStyle)}
-						/>
-					</div>
-					<div>
-						<label className="block text-sm font-medium mb-2">Amount available for down payment*</label>
-						<CustomInput
-							value={form.amountAvailable}
-							onChange={(e) => handleChange("amountAvailable", e.target.value)}
-							className={twMerge(inputStyle)}
-						/>
-					</div>
+					<CustomInput
+						label="Why do you need this property"
+						required
+						labelClassName={labelStyle()}
+						value={form.clarification.reason}
+						onChange={(e) => handleChange("clarification", { ...form.clarification, reason: e.target.value })}
+						className={twMerge(inputStyle)}
+					/>
+					<CustomInput
+						label="Amount available for down payment"
+						required
+						labelClassName={labelStyle()}
+						value={form.amountAvailable}
+						onChange={(e) => handleChange("amountAvailable", e.target.value)}
+						className={twMerge(inputStyle)}
+					/>
 				</div>
 			</div>
 
+			<hr className="my-6" />
+
 			{/* Clarification & Employment & Guarantor sections */}
 			<div className="mt-6 space-y-6">
-				<div>
-					<h3 className="text-lg font-medium">Clarification Details</h3>
-					<div className="mt-3 flex items-center gap-4">
+				<div className={CENTERED_CONTAINER}>
+					<h3 className={EACH_SECTION_TITLE}>Clarification Details</h3>
+					<div className="mt-4 flex items-center gap-4">
 						<div className="flex items-center gap-2">
 							<label className="text-sm">Have you previously entered hire purchase agreement?</label>
 							<button
 								type="button"
 								onClick={() => handleChange("clarification", { ...form.clarification, previousAgreement: true })}
-								className={form.clarification.previousAgreement ? "bg-sky-500 text-white px-3 py-1 rounded" : "border px-3 py-1 rounded"}>
+								className={form.clarification.previousAgreement ? "bg-primary text-white px-3 py-1 rounded" : "border px-3 py-1 rounded"}>
 								Yes
 							</button>
 							<button
 								type="button"
 								onClick={() => handleChange("clarification", { ...form.clarification, previousAgreement: false })}
-								className={!form.clarification.previousAgreement ? "bg-gray-100 px-3 py-1 rounded" : "border px-3 py-1 rounded"}>
+								className={!form.clarification.previousAgreement ? "bg-primary text-white px-3 py-1 rounded" : "border px-3 py-1 rounded"}>
 								No
 							</button>
 						</div>
 					</div>
+
+					<div className="my-4 flex items-center gap-4">
+						<div className="flex items-center gap-2">
+							<label className="text-sm">Have you completed that agreement?</label>
+							<button
+								type="button"
+								onClick={() => handleChange("clarification", { ...form.clarification, completedAgreement: true })}
+								className={form.clarification.completedAgreement ? "bg-primary text-white px-3 py-1 rounded" : "border px-3 py-1 rounded"}>
+								Yes
+							</button>
+							<button
+								type="button"
+								onClick={() => handleChange("clarification", { ...form.clarification, completedAgreement: false })}
+								className={!form.clarification.completedAgreement ? "bg-primary text-white px-3 py-1 rounded" : "border px-3 py-1 rounded"}>
+								No
+							</button>
+						</div>
+					</div>
+
+					<CustomInput
+						label="Previous Company"
+						required
+						labelClassName={labelStyle()}
+						value={form.clarification.prevCompany}
+						onChange={(e) => handleChange("clarification", { ...form.clarification, prevCompany: e.target.value })}
+						className={twMerge(inputStyle)}
+					/>
 				</div>
 
-				<div>
-					<h3 className="text-lg font-medium">Employment Details</h3>
+				<hr className="my-6" />
+
+				<div className={CENTERED_CONTAINER}>
+					<h3 className={EACH_SECTION_TITLE}>Employment Details</h3>
 					<div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
 						<div>
-							<label className="block text-sm font-medium mb-2">Employment status*</label>
+							<label className={labelStyle()}>Employment status*</label>
 							<Select value={form.employment.status} onValueChange={(v) => handleChange("employment", { ...form.employment, status: v })}>
 								<SelectTrigger className={twMerge(inputStyle, "w-full min-h-11")}>
 									<SelectValue placeholder="Select status" />
@@ -253,18 +357,18 @@ export default function CustomerForm({ onSubmit, initial }: Props) {
 								</SelectContent>
 							</Select>
 						</div>
-						<div>
-							<label className="block text-sm font-medium mb-2">Employer name *</label>
-							<CustomInput
-								value={form.employment.employerName}
-								onChange={(e) => handleChange("employment", { ...form.employment, employerName: e.target.value })}
-								className={twMerge(inputStyle)}
-							/>
-						</div>
+						<CustomInput
+							label="Employer name"
+							required
+							labelClassName={labelStyle()}
+							value={form.employment.employerName}
+							onChange={(e) => handleChange("employment", { ...form.employment, employerName: e.target.value })}
+							className={twMerge(inputStyle)}
+						/>
 					</div>
 
 					<div className="mt-4">
-						<label className="block text-sm font-medium mb-2">Employer address*</label>
+						<label className={labelStyle()}>Employer address*</label>
 						<Textarea
 							value={form.employment.employerAddress}
 							onChange={(e) => handleChange("employment", { ...form.employment, employerAddress: e.target.value })}
@@ -273,61 +377,180 @@ export default function CustomerForm({ onSubmit, initial }: Props) {
 					</div>
 				</div>
 
-				<div>
-					<h3 className="text-lg font-medium">Guarantor (1)</h3>
-					<div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-						<div>
-							<label className="block text-sm font-medium mb-2">Full name*</label>
-							<CustomInput
-								value={form.guarantors[0].fullName}
-								onChange={(e) => handleChange("guarantors", [{ ...form.guarantors[0], fullName: e.target.value }])}
-								className={twMerge(inputStyle)}
-							/>
-						</div>
-						<div>
-							<label className="block text-sm font-medium mb-2">Occupation *</label>
-							<CustomInput
-								value={form.guarantors[0].occupation}
-								onChange={(e) => handleChange("guarantors", [{ ...form.guarantors[0], occupation: e.target.value }])}
-								className={twMerge(inputStyle)}
-							/>
-						</div>
-					</div>
-
-					<div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-						<div>
-							<label className="block text-sm font-medium mb-2">Phone number*</label>
-							<CustomInput
-								value={form.guarantors[0].phone}
-								onChange={(e) => handleChange("guarantors", [{ ...form.guarantors[0], phone: e.target.value }])}
-								className={twMerge(inputStyle)}
-							/>
-						</div>
-						<div>
-							<label className="block text-sm font-medium mb-2">Email *</label>
-							<CustomInput
-								value={form.guarantors[0].email}
-								onChange={(e) => handleChange("guarantors", [{ ...form.guarantors[0], email: e.target.value }])}
-								className={twMerge(inputStyle)}
-							/>
-						</div>
-					</div>
-
-					<div className="mt-4">
-						<label className="block text-sm font-medium mb-2">Business address*</label>
-						<CustomInput
-							value={form.guarantors[0].businessAddress}
-							onChange={(e) => handleChange("guarantors", [{ ...form.guarantors[0], businessAddress: e.target.value }])}
-							className={twMerge(inputStyle)}
-						/>
-					</div>
+				{/* Guarantors */}
+				<div className={CENTERED_CONTAINER}>
+					<CheckboxField
+						labelClassName="font-normal text-stone-600"
+						wrapperClassName="items-start mb-4 gap-3"
+						id="authorization_agree"
+						label={
+							<span className="text-sm">
+								I hereby authorise <span className="font-medium">Kpoi Kpoi Mingi Investments Ltd</span> to retrieve the electrical appliance from me,
+								or any other person at my or any other place it may be found in the event of my default in paying the Hire Purchase sum as agreed.
+							</span>
+						}
+						labelPosition="right"
+					/>
 				</div>
+				{form.guarantors.map((g: any, idx: number) => (
+					<div key={idx} className={CENTERED_CONTAINER}>
+						<h3 className="text-lg font-medium">Guarantor ({idx + 1})</h3>
+
+						<div className="mt-4">
+							<CheckboxField
+								wrapperClassName="items-start mb-4 gap-3"
+								labelClassName="font-normal text-stone-600"
+								id={`guarantor_agree_${idx}`}
+								label={
+									<div>
+										<span className="text-sm">
+											As a guarantor, I hereby guaranty to pay all sums due under the Hire Purchase Agreement in the event of default by the
+											Applicant.
+										</span>
+										<p className="text-sm mt-3">
+											I accept that messages, notices, processes and other correspondences where necessary, sent to my WhatsApp number as shown herein
+											are properly delivered and served on me.
+										</p>
+									</div>
+								}
+								labelPosition="right"
+							/>
+						</div>
+
+						<div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+							<CustomInput
+								label="Full name"
+								required
+								labelClassName={labelStyle()}
+								value={g.fullName}
+								onChange={(e) => {
+									const next = [...form.guarantors];
+									next[idx] = { ...next[idx], fullName: e.target.value };
+									handleChange("guarantors", next);
+								}}
+								className={twMerge(inputStyle)}
+							/>
+							<CustomInput
+								label="Occupation"
+								required
+								labelClassName={labelStyle()}
+								value={g.occupation}
+								onChange={(e) => {
+									const next = [...form.guarantors];
+									next[idx] = { ...next[idx], occupation: e.target.value };
+									handleChange("guarantors", next);
+								}}
+								className={twMerge(inputStyle)}
+							/>
+						</div>
+
+						<div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+							<CustomInput
+								label="Phone number"
+								required
+								labelClassName={labelStyle()}
+								value={g.phone}
+								onChange={(e) => {
+									const next = [...form.guarantors];
+									next[idx] = { ...next[idx], phone: e.target.value };
+									handleChange("guarantors", next);
+								}}
+								className={twMerge(inputStyle)}
+								iconRight={<PhoneIcon />}
+							/>
+
+							<CustomInput
+								label="Email"
+								required
+								labelClassName={labelStyle()}
+								value={g.email}
+								onChange={(e) => {
+									const next = [...form.guarantors];
+									next[idx] = { ...next[idx], email: e.target.value };
+									handleChange("guarantors", next);
+								}}
+								className={twMerge(inputStyle)}
+								iconRight={<EmailIcon />}
+							/>
+						</div>
+
+						<div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+							<div>
+								<label className={labelStyle()}>Employment status*</label>
+								<Select
+									value={g.employmentStatus}
+									onValueChange={(v) => {
+										const next = [...form.guarantors];
+										next[idx] = { ...next[idx], employmentStatus: v };
+										handleChange("guarantors", next);
+									}}>
+									<SelectTrigger className={twMerge(inputStyle, "w-full min-h-11")}>
+										<SelectValue placeholder="Select status" />
+									</SelectTrigger>
+									<SelectContent>
+										<SelectItem value="Civil servant">Civil servant</SelectItem>
+										<SelectItem value="Self employer">Self employer</SelectItem>
+										<SelectItem value="Unemployed">Unemployed</SelectItem>
+									</SelectContent>
+								</Select>
+							</div>
+
+							<CustomInput
+								label="Home address"
+								required
+								labelClassName={labelStyle()}
+								value={g.homeAddress}
+								onChange={(e) => {
+									const next = [...form.guarantors];
+									next[idx] = { ...next[idx], homeAddress: e.target.value };
+									handleChange("guarantors", next);
+								}}
+								className={twMerge(inputStyle)}
+							/>
+						</div>
+
+						<div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+							<CustomInput
+								label="Business address"
+								required
+								labelClassName={labelStyle()}
+								value={g.businessAddress}
+								onChange={(e) => {
+									const next = [...form.guarantors];
+									next[idx] = { ...next[idx], businessAddress: e.target.value };
+									handleChange("guarantors", next);
+								}}
+								className={twMerge(inputStyle)}
+							/>
+
+							<CustomInput
+								label="State of origin"
+								required
+								labelClassName={labelStyle()}
+								value={g.stateOfOrigin}
+								onChange={(e) => {
+									const next = [...form.guarantors];
+									next[idx] = { ...next[idx], stateOfOrigin: e.target.value };
+									handleChange("guarantors", next);
+								}}
+								className={twMerge(inputStyle)}
+							/>
+						</div>
+
+						<div className="mt-7">
+							<UploadBox
+								placeholder="1 voters card uploaded"
+								hint={g.votersUploaded ? `${g.votersUploaded} voters card uploaded` : "PNG, JPG, PDF Only"}
+							/>
+						</div>
+					</div>
+				))}
 			</div>
 
 			<div className="flex justify-center mt-8">
-				<Button type="submit" className="w-full md:w-1/2 bg-sky-500 text-white py-3">
+				<ActionButton type="submit" className="w-full md:w-2/3 bg-primary text-white py-3">
 					Save Changes
-				</Button>
+				</ActionButton>
 			</div>
 		</form>
 	);

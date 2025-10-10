@@ -63,7 +63,7 @@ export default function ReceiptTable({
 							<TableHead>Payment Type</TableHead>
 							<TableHead>Amount Paid</TableHead>
 							<TableHead>Date</TableHead>
-							<TableHead>Action</TableHead>
+							<TableHead className="text-center">Action</TableHead>
 						</TableRow>
 					</TableHeader>
 					<TableBody>
@@ -76,7 +76,7 @@ export default function ReceiptTable({
 								<TableCell className="text-sm text-[#667085]">{it.amount}</TableCell>
 								<TableCell className="text-sm text-[#667085]">{it.date}</TableCell>
 								<TableCell>
-									<div className="flex items-center gap-1">
+									<div className="flex items-center justify-center gap-1">
 										<Link to={_router.dashboard.receiptDetails} className="p-2 text-primary">
 											<IconWrapper>
 												<EyeIcon />

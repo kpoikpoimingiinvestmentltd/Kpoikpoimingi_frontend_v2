@@ -131,19 +131,12 @@ export const CardIcon = () => (
 );
 
 export const CalculatorIcon = () => (
-	<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
-		<g fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
-			<rect x={6} y={2} width={12} height={20} rx={2} ry={2} />
-			<path d="M9 7h6" />
-		</g>
-		<g fill="currentColor">
-			<rect x={8} y={11} width={2} height={2} rx={0.3} />
-			<rect x={11} y={11} width={2} height={2} rx={0.3} />
-			<rect x={14} y={11} width={2} height={2} rx={0.3} />
-			<rect x={8} y={14} width={2} height={2} rx={0.3} />
-			<rect x={11} y={14} width={2} height={2} rx={0.3} />
-			<rect x={14} y={14} width={2} height={2} rx={0.3} />
-		</g>
+	<svg xmlns="http://www.w3.org/2000/svg" width="0.75em" height="1em" viewBox="0 0 384 512">
+		<path
+			fill="currentColor"
+			d="M64 0C28.7 0 0 28.7 0 64v384c0 35.3 28.7 64 64 64h256c35.3 0 64-28.7 64-64V64c0-35.3-28.7-64-64-64zm32 64h192c17.7 0 32 14.3 32 32v32c0 17.7-14.3 32-32 32H96c-17.7 0-32-14.3-32-32V96c0-17.7 14.3-32 32-32m16 168a24 24 0 1 1-48 0a24 24 0 1 1 48 0m80 24a24 24 0 1 1 0-48a24 24 0 1 1 0 48m128-24a24 24 0 1 1-48 0a24 24 0 1 1 48 0M88 352a24 24 0 1 1 0-48a24 24 0 1 1 0 48m128-24a24 24 0 1 1-48 0a24 24 0 1 1 48 0m80 24a24 24 0 1 1 0-48a24 24 0 1 1 0 48M64 424c0-13.3 10.7-24 24-24h112c13.3 0 24 10.7 24 24s-10.7 24-24 24H88c-13.3 0-24-10.7-24-24m232-24c13.3 0 24 10.7 24 24s-10.7 24-24 24s-24-10.7-24-24s10.7-24 24-24"
+			strokeWidth={13}
+			stroke="currentColor"></path>
 	</svg>
 );
 

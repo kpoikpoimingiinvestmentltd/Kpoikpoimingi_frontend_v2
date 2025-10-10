@@ -30,29 +30,26 @@ export default function CheckboxField({
 	labelPosition = "right",
 }: Props) {
 	return (
-		<div className={twMerge(wrapperClassName)}>
+		<div className={twMerge("flex items-center gap-2", wrapperClassName)}>
 			{labelPosition === "left" && label && (
 				<Label htmlFor={id} className={labelStyle(twMerge("mb-0 cursor-pointer", labelClassName))}>
 					{label}
 				</Label>
 			)}
 
-			<div className="flex items-center gap-2">
-				<Checkbox
-					id={id}
-					className={twMerge(checkboxStyle, checkboxClassName)}
-					checked={checked}
-					defaultChecked={defaultChecked}
-					onCheckedChange={(v: any) => onCheckedChange?.(!!v)}
-					disabled={disabled}
-				/>
-
-				{labelPosition === "right" && label && (
-					<Label htmlFor={id} className={labelStyle(twMerge("mb-0 cursor-pointer", labelClassName))}>
-						{label}
-					</Label>
-				)}
-			</div>
+			<Checkbox
+				id={id}
+				className={twMerge(checkboxStyle, checkboxClassName)}
+				checked={checked}
+				defaultChecked={defaultChecked}
+				onCheckedChange={(v: any) => onCheckedChange?.(!!v)}
+				disabled={disabled}
+			/>
+			{labelPosition === "right" && label && (
+				<Label htmlFor={id} className={labelStyle(twMerge("mb-0 cursor-pointer", labelClassName))}>
+					{label}
+				</Label>
+			)}
 		</div>
 	);
 }

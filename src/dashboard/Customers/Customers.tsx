@@ -74,7 +74,7 @@ export default function Customers() {
 						</IconWrapper>
 					</ActionButton>
 					<Link
-						to={_router.dashboard.customerAdd}
+						to={_router.dashboard.selectCustomerPaymentMethod}
 						className="flex items-center gap-2 bg-primary rounded-sm px-4 py-2.5 active-scale transition text-white">
 						<IconWrapper className="text-lg">
 							<PlusIcon />

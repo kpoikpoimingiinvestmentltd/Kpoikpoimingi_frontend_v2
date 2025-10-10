@@ -11,6 +11,7 @@ import CustomerReceipt from "../dashboard/Customers/CustomerReceipt";
 import AddCustomer from "../dashboard/Customers/AddCustomer";
 import DashboardPageNotFound from "../error/DashboardPageNotFound";
 import Contract from "../dashboard/Contract/Contract";
+import ProductRequest from "../dashboard/ProductRequest/ProductRequest";
 import NotificationsPage from "../dashboard/Notifications/NotificationsPage";
 import AddProperties from "../dashboard/Properties/AddProperties";
 import AuditCompliance from "../dashboard/AuditCompliance/AuditCompliance";
@@ -29,6 +30,9 @@ import PropertyDetails from "../dashboard/Properties/PropertyDetails";
 import Categories from "../dashboard/Properties/Categories";
 import ManageCategories from "../dashboard/Properties/ManageCategories";
 import ContractDetails from "../dashboard/Contract/ContractDetails";
+import ContractReceipt from "../dashboard/Contract/ContractReceipt";
+import ProductRequestDetails from "../dashboard/ProductRequest/ProductRequestDetails";
+import SelectPaymentMethod from "../dashboard/Customers/SelectPaymentMethod";
 
 export const appRouter = createBrowserRouter([
 	{
@@ -65,6 +69,10 @@ export const appRouter = createBrowserRouter([
 				element: <Customers />,
 			},
 			{
+				path: _router.dashboard.selectCustomerPaymentMethod,
+				element: <SelectPaymentMethod />,
+			},
+			{
 				path: _router.dashboard.customerDetails,
 				element: <CustomerDetails />,
 			},
@@ -81,8 +89,20 @@ export const appRouter = createBrowserRouter([
 				element: <Contract />,
 			},
 			{
+				path: _router.dashboard.productRequest,
+				element: <ProductRequest />,
+			},
+			{
+				path: _router.dashboard.productRequestDetails,
+				element: <ProductRequestDetails />,
+			},
+			{
 				path: _router.dashboard.contractDetails,
 				element: <ContractDetails />,
+			},
+			{
+				path: _router.dashboard.contractReceipt,
+				element: <ContractReceipt />,
 			},
 			{
 				path: _router.dashboard.properties,

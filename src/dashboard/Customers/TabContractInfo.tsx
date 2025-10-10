@@ -51,7 +51,9 @@ export default function TabContractInfo() {
 					<div key={c.id} className="flex items-center justify-between bg-[#f8fafc] rounded px-4 py-3">
 						<div className="text-sm">{c.title}</div>
 						<button onClick={() => handleView(c)} className="text-sm text-primary flex items-center gap-2">
-							<EyeIcon />
+							<IconWrapper>
+								<EyeIcon />
+							</IconWrapper>
 							<span>View Contract</span>
 						</button>
 					</div>
