@@ -21,7 +21,6 @@ interface AdminDashboardHeaderProps {
 
 export default function AdminDashboardHeader({ onSidebarOpen, onLogoutOpen }: AdminDashboardHeaderProps) {
 	const [receiptOpen, setReceiptOpen] = React.useState(false);
-	// prefer NavLink's active state instead of manual checks
 	return (
 		<div className="bg-white border-b border-gray-100 p-4 flex items-center justify-between sticky top-0 z-2">
 			<div className="flex items-center gap-4">
@@ -127,7 +126,6 @@ export default function AdminDashboardHeader({ onSidebarOpen, onLogoutOpen }: Ad
 					</DropdownMenuContent>
 				</DropdownMenu>
 
-				{/* Generate receipt modal */}
 				<GenerateReceiptModal open={receiptOpen} onOpenChange={setReceiptOpen} />
 			</div>
 		</div>
