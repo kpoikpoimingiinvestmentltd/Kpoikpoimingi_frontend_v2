@@ -53,7 +53,7 @@ export default function AdminDashboardSidebar({ onClose }: { onClose?: () => voi
 				</button>
 				<Image src={media.logos.logo} className="relative w-40 -mt-4" />
 			</header>
-			<div className="overflow-y-auto relative flex flex-col gap-y-4 mt-2 sidebar-links-container">
+			<div className="overflow-y-auto relative flex flex-col gap-y-4 mt-6 sidebar-links-container">
 				<ul className="flex flex-col items-start gap-y-0.5 w-full">
 					{links.map((link) => {
 						const active = isLinkActive(link.path);

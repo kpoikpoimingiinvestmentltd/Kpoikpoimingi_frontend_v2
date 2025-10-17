@@ -19,8 +19,7 @@ import _product4 from "@/assets/images/others/4190605a079b29b14b7a92a8e421c68d4e
 import _product5 from "@/assets/images/others/b30e256e296f0e0faf3c86e1752b3fe2d402da56.png";
 import coin from "@/assets/images/others/9f893334561d69b9c19b1814bf7486d38563fefd.png";
 
-const avatar =
-	"https://images.unsplash.com/photo-1633332755192-727a05c4013d?fm=jpg&q=60&w=3000&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8dXNlcnxlbnwwfHwwfHx8MA%3D%3D";
+import avatar from "@/assets/images/others/profile-icon.png";
 
 const logos = {
 	logo,

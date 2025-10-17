@@ -169,7 +169,6 @@ export const UpdatePenaltyInterestDto = z.object({
 	interestRate: z.number().min(0).max(1),
 });
 
-// Generate Receipt DTO
 export const GenerateReceiptDto = z.object({
 	contractId: z.string().min(1),
 	customerId: z.string().min(1),

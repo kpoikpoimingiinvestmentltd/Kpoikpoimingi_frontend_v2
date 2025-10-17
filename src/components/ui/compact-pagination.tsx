@@ -79,13 +79,21 @@ export default function CompactPagination({ page, pages, onPageChange, className
 			<Pagination className="md:ml-auto md:mx-0 md:justify-end">
 				<PaginationContent>
 					<PaginationItem>
-						<PaginationPrevious onClick={() => onPageChange(Math.max(1, page - 1))} />
+						<PaginationPrevious
+							className="disabled:cursor-not-allowed disabled:pointer-events-auto"
+							disabled={page <= 1}
+							onClick={() => page > 1 && onPageChange(Math.max(1, page - 1))}
+						/>
 					</PaginationItem>
 
 					{render()}
 
 					<PaginationItem>
-						<PaginationNext onClick={() => onPageChange(Math.min(pages, page + 1))} />
+						<PaginationNext
+							className="disabled:cursor-not-allowed disabled:pointer-events-auto"
+							disabled={page >= pages}
+							onClick={() => page < pages && onPageChange(Math.min(pages, page + 1))}
+						/>
 					</PaginationItem>
 				</PaginationContent>
 			</Pagination>

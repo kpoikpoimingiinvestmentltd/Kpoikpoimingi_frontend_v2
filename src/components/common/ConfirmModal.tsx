@@ -8,7 +8,9 @@ import { media } from "../../resources/images";
 
 type Action = {
 	label: string;
-	onClick?: () => void;
+	onClick?: () => void | boolean | Promise<void | boolean>;
+	closeOnClick?: boolean;
+	loading?: boolean;
 	variant?: "primary" | "ghost" | "outline" | "danger" | "destructive" | "success";
 };
 
@@ -86,10 +88,18 @@ export default function ConfirmModal({
 								key={i}
 								type="button"
 								className={cn(classes, i > 0 ? "ml-2" : undefined)}
-								onClick={() => {
-									act.onClick?.();
+								onClick={async () => {
+									let result: void | boolean | undefined;
+									try {
+										result = await (act.onClick ? act.onClick() : undefined);
+									} catch (e) {
+										result = false;
+									}
+									if (act.closeOnClick === false) return;
+									if (result === false) return;
 									onOpenChange(false);
-								}}>
+								}}
+								disabled={act.loading}>
 								{act.label}
 							</button>
 						);

@@ -9,7 +9,9 @@ import {
 	DropdownMenuTrigger,
 } from "../components/ui/dropdown-menu";
 import { IconWrapper, LogoutIcon, MenuIcon, NotificationIcon, ReceiptPlusIcon, SettingIcon, UserIcon } from "@/assets/icons";
+import { useGetCurrentUser } from "@/api/user";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { AvatarSkeleton, RectangleSkeleton } from "@/components/common/Skeleton";
 import GenerateReceiptModal from "@/dashboard/Receipt/GenerateReceiptModal";
 import { Link, NavLink } from "react-router";
 import { media } from "../resources/images";
@@ -76,10 +78,7 @@ export default function AdminDashboardHeader({ onSidebarOpen, onLogoutOpen }: Ad
 								<AvatarImage src={media.images.avatar} alt="User avatar" />
 								<AvatarFallback>AJ</AvatarFallback>
 							</Avatar>
-							<div className="flex flex-col items-start">
-								<span className="text-sm font-medium text-nowrap">Amgbara Jake</span>
-								<span className="text-xs text-gray-400">Super admin</span>
-							</div>
+							<CurrentHeaderUser />
 						</button>
 					</DropdownMenuTrigger>
 					<DropdownMenuContent align="end" className="w-56">
@@ -128,6 +127,37 @@ export default function AdminDashboardHeader({ onSidebarOpen, onLogoutOpen }: Ad
 
 				<GenerateReceiptModal open={receiptOpen} onOpenChange={setReceiptOpen} />
 			</div>
+		</div>
+	);
+}
+
+function CurrentHeaderUser() {
+	const { data, isLoading } = useGetCurrentUser(true);
+	if (isLoading)
+		return (
+			<div className="flex items-center gap-3">
+				<AvatarSkeleton size={36} />
+				<div className="flex flex-col">
+					<RectangleSkeleton className="w-24 h-4 mb-1" />
+					<RectangleSkeleton className="w-16 h-3" />
+				</div>
+			</div>
+		);
+	if (!data)
+		return (
+			<div className="flex flex-col items-start">
+				<span className="text-sm font-medium text-nowrap">Unknown User</span>
+				<span className="text-xs text-gray-400">—</span>
+			</div>
+		);
+
+	const name = data.fullName ?? data.email ?? data.username ?? "User";
+	const role = typeof data.role === "string" ? data.role : data.role?.role ?? "";
+
+	return (
+		<div className="flex flex-col items-start">
+			<span className="text-sm font-medium text-nowrap">{name}</span>
+			<span className="text-xs text-gray-400">{role}</span>
 		</div>
 	);
 }

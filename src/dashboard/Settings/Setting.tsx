@@ -8,8 +8,6 @@ import CustomCard from "@/components/base/CustomCard";
 import Profile from "./Profile";
 import VatInterest from "./VatInterest";
 import TermsAndConditions from "@/components/common/TermsAndConditions";
-import { useNavigate } from "react-router";
-import { _router } from "@/routes/_router";
 import { tabListStyle, tabStyle } from "../../components/common/commonStyles";
 import LogoutModal from "../../components/common/LogoutModal";
 import PageWrapper from "../../components/common/PageWrapper";
@@ -18,14 +16,6 @@ export default function Setting() {
 	const [editOpen, setEditOpen] = useState(false);
 	const [changePassOpen, setChangePassOpen] = useState(false);
 	const [logoutOpen, setLogoutOpen] = useState(false);
-	const navigate = useNavigate();
-
-	const handleLogoutConfirm = () => {
-		try {
-			localStorage.clear();
-		} catch (e) {}
-		navigate(_router.auth.login);
-	};
 
 	return (
 		<PageWrapper>
@@ -82,7 +72,7 @@ export default function Setting() {
 			</CustomCard>
 			<EditProfileModal open={editOpen} onOpenChange={setEditOpen} />
 			<ChangePasswordModal open={changePassOpen} onOpenChange={setChangePassOpen} />
-			<LogoutModal open={logoutOpen} onOpenChange={setLogoutOpen} onConfirm={handleLogoutConfirm} />
+			<LogoutModal open={logoutOpen} onOpenChange={setLogoutOpen} />
 		</PageWrapper>
 	);
 }

@@ -12,10 +12,9 @@ interface StatCardProps {
 	loading?: boolean;
 	iconColor?: string;
 	badge?: React.ReactNode;
-	/** variant of the stat card. 'income' renders a currency value with a period dropdown */
 	variant?: "default" | "income";
-	/** optional currency symbol to prefix when variant is income */
 	currency?: string;
+	footer?: React.ReactNode;
 }
 
 export default function StatCard({
@@ -28,6 +27,7 @@ export default function StatCard({
 	className = "",
 	variant = "default",
 	currency = "₦",
+	footer,
 }: StatCardProps) {
 	// Income stat variant component
 	function IncomeStat() {
@@ -92,11 +92,15 @@ export default function StatCard({
 					)}
 				</>
 			)}
-			{icon && (
-				<IconWrapper className={`${twMerge(iconColor)} text-3xl ml-auto`}>
-					<span className="ml-2">{icon}</span>
-				</IconWrapper>
-			)}
+			<div className="mt-4 flex items-center">
+				{footer ? footer : null}
+
+				{icon && (
+					<IconWrapper className={`${twMerge(iconColor)} text-3xl ml-auto`}>
+						<span className="ml-2">{icon}</span>
+					</IconWrapper>
+				)}
+			</div>
 		</div>
 	);
 }
