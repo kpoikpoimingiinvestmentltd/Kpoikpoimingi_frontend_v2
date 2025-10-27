@@ -6,38 +6,131 @@ import { inputStyle, preTableButtonStyle } from "@/components/common/commonStyle
 import CustomInput from "@/components/base/CustomInput";
 import CompactPagination from "@/components/ui/compact-pagination";
 import React from "react";
+import { useGetAllCategories, createCategory, updateCategory, deleteCategory } from "@/api/categories";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { useDispatch } from "react-redux";
+import { setCategories as setCategoriesAction } from "@/store/categoriesSlice";
 import AddCategoryModal from "./AddCategoryModal";
 import EmptyData from "../../components/common/EmptyData";
+import ConfirmModal from "@/components/common/ConfirmModal";
 import { twMerge } from "tailwind-merge";
-import { Link } from "react-router";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { _router } from "../../routes/_router";
 
 // (moved into component state)
 
 export default function Categories() {
 	const [isEmpty] = React.useState(false);
-	const [categories, setCategories] = React.useState(() => [
-		{
-			id: "electronics",
-			title: "Electronics",
-			subs: ["Mobile Phones & Tablets", "Laptops & Computers", "Televisions"],
-			count: 15,
+	const [categories, setCategories] = React.useState<any[]>([]);
+	const [query, setQuery] = React.useState("");
+	const [categoryFilter, setCategoryFilter] = React.useState<string | null>(null);
+	const dispatch = useDispatch();
+	const [page, setPage] = React.useState(1);
+	const [limit] = React.useState(10);
+	const { data: fetchedCategories } = useGetAllCategories(page, limit, true);
+	const queryClient = useQueryClient();
+
+	const createMutation = useMutation<any, unknown, { category?: string; subCategories?: string[] }>({
+		mutationFn: (vars: { category?: string; subCategories?: string[] }) =>
+			createCategory({ category: vars.category, description: "", subcategories: vars.subCategories }),
+		onMutate: async (newCat: { category?: string; subCategories?: string[] }) => {
+			await queryClient.cancelQueries({ queryKey: ["categories"] });
+			const prev = categories;
+			const id = (newCat.category || "").toLowerCase().replace(/\s+/g, "-") || `tmp-${Date.now()}`;
+			const optimistic = { id, title: newCat.category || "Untitled", subs: newCat.subCategories || [], count: 0 };
+			setCategories((prevState) => {
+				const next = [...prevState, optimistic];
+				dispatch(setCategoriesAction(next));
+				return next;
+			});
+			return { prev };
 		},
-		{
-			id: "fashion",
-			title: "Fashion",
-			subs: ["Men's Clothing", "Women's Clothing", "Kids' Clothing"],
-			count: 15,
+		onError: (_err: any, _newCat: any, context: any) => {
+			if (context?.prev) {
+				setCategories(context.prev);
+				dispatch(setCategoriesAction(context.prev));
+			}
 		},
-		{
-			id: "home",
-			title: "Home & Kitchen",
-			subs: ["Furniture", "Kitchen Appliances"],
-			count: 15,
+		onSettled: () => {
+			// refetch to get canonical data
+			queryClient.invalidateQueries({ queryKey: ["categories"] });
 		},
-	]);
-	const [editOpen, setEditOpen] = React.useState(false);
+	});
+
+	const updateMutation = useMutation<any, unknown, { id: string; category?: string; subCategories?: string[] }>({
+		mutationFn: (vars: { id: string; category?: string; subCategories?: string[] }) =>
+			updateCategory(vars.id, { category: vars.category, description: "", subcategories: vars.subCategories as any }),
+		onMutate: async ({ id, category }: { id: string; category?: string }) => {
+			await queryClient.cancelQueries({ queryKey: ["categories"] });
+			const prev = categories;
+			setCategories((prevState) => {
+				const next = prevState.map((c) => (c.id === id ? { ...c, title: category ?? c.title } : c));
+				dispatch(setCategoriesAction(next));
+				return next;
+			});
+			return { prev };
+		},
+		onError: (_err: any, _vars: any, context: any) => {
+			if (context?.prev) {
+				setCategories(context.prev);
+				dispatch(setCategoriesAction(context.prev));
+			}
+		},
+		onSettled: () => {
+			queryClient.invalidateQueries({ queryKey: ["categories"] });
+		},
+	});
+
+	React.useEffect(() => {
+		if (!fetchedCategories) return;
+		console.log("fetched categories:", fetchedCategories);
+		const mapped = ((fetchedCategories as any).data as any[]).map((c) => ({
+			id: c.id,
+			title: c.category || c.title || "",
+			subs: Array.isArray(c.children) ? c.children.map((ch: any) => ch.category || ch.title) : [],
+			count: c._count?.properties ?? c.count ?? 0,
+		}));
+		setCategories(mapped);
+		dispatch(setCategoriesAction(mapped));
+	}, [fetchedCategories, dispatch]);
+
+	const [modalOpen, setModalOpen] = React.useState(false);
+	const [modalMode, setModalMode] = React.useState<"add" | "edit">("add");
 	const [editing, setEditing] = React.useState<{ id?: string; title?: string; subs?: string[] } | null>(null);
+
+	// delete confirmation modal state
+	const [confirmOpen, setConfirmOpen] = React.useState(false);
+	const [toDelete, setToDelete] = React.useState<{ id?: string; title?: string } | null>(null);
+
+	const deleteMutation = useMutation<any, unknown, string>({
+		mutationFn: (id: string) => {
+			return deleteCategory(id);
+		},
+		onMutate: async (id: string) => {
+			await queryClient.cancelQueries({ queryKey: ["categories"] });
+			const prev = categories;
+			setCategories((prevState) => {
+				const next = prevState.filter((c) => c.id !== id);
+				dispatch(setCategoriesAction(next));
+				return next;
+			});
+			return { prev };
+		},
+		onError: (_err: any, context: any) => {
+			if (context?.prev) {
+				setCategories(context.prev);
+				dispatch(setCategoriesAction(context.prev));
+			}
+			toast.error("Failed to delete category");
+		},
+		onSuccess: () => {
+			toast.success("Category deleted");
+		},
+		onSettled: () => {
+			queryClient.invalidateQueries({ queryKey: ["categories"] });
+		},
+	});
 
 	return (
 		<div className="flex flex-col gap-y-6">
@@ -47,14 +140,20 @@ export default function Categories() {
 					<button type="button" className="flex items-center gap-2 bg-primary/10 rounded-sm px-4 py-2.5 active-scale transition text-primary">
 						<span className="text-sm">Export</span>
 					</button>
-					<Link
-						to={_router.dashboard.manageCategories}
+
+					<button
+						type="button"
+						onClick={() => {
+							setModalMode("add");
+							setEditing(null);
+							setModalOpen(true);
+						}}
 						className="flex items-center gap-2 bg-primary rounded-sm px-4 py-2.5 active-scale transition text-white">
 						<IconWrapper className="text-lg">
 							<PlusIcon />
 						</IconWrapper>
 						<span className="text-sm">Add Category</span>
-					</Link>
+					</button>
 				</div>
 			</div>
 			<div className="min-h-96 flex">
@@ -70,14 +169,70 @@ export default function Categories() {
 											aria-label="Search categories"
 											className={twMerge(inputStyle, `max-w-[320px] h-10 pl-9`)}
 											iconLeft={<SearchIcon />}
+											value={query}
+											onChange={(e) => setQuery(e.target.value)}
+										/>
+
+										{/* Confirm delete modal */}
+										<ConfirmModal
+											open={confirmOpen}
+											onOpenChange={(o) => {
+												setConfirmOpen(o);
+												if (!o) setToDelete(null);
+											}}
+											title={toDelete ? `Delete ${toDelete.title}?` : "Delete category"}
+											subtitle={toDelete ? `Are you sure you want to delete ${toDelete.title}? This action cannot be undone.` : undefined}
+											actions={[
+												{
+													label: "Cancel",
+													onClick: () => true,
+													variant: "ghost",
+												},
+												{
+													label: deleteMutation.isPending ? "Deleting..." : "Delete",
+													onClick: async () => {
+														if (!toDelete?.id) return false;
+														await deleteMutation.mutateAsync(toDelete.id);
+														return true;
+													},
+													loading: deleteMutation.isPending,
+													variant: "destructive",
+												},
+											]}
 										/>
 									</div>
-									<button type="button" className={`${preTableButtonStyle} text-white bg-primary ml-auto`}>
-										<IconWrapper className="text-base">
-											<FilterIcon />
-										</IconWrapper>
-										<span className="hidden sm:inline">Filter</span>
-									</button>
+									<DropdownMenu>
+										<DropdownMenuTrigger asChild>
+											<button type="button" className={`${preTableButtonStyle} text-white bg-primary ml-auto`}>
+												<IconWrapper className="text-base">
+													<FilterIcon />
+												</IconWrapper>
+												<span className="hidden sm:inline">Filter</span>
+											</button>
+										</DropdownMenuTrigger>
+										<DropdownMenuContent align="start" sideOffset={6} className="w-56">
+											<DropdownMenuItem
+												className="cursor-pointer capitalize"
+												onSelect={() => {
+													setCategoryFilter(null);
+													setPage(1);
+												}}>
+												All
+											</DropdownMenuItem>
+											<div className="h-1" />
+											{categories.map((c) => (
+												<DropdownMenuItem
+													key={c.id}
+													className={"capitalize cursor-pointer"}
+													onSelect={() => {
+														setCategoryFilter(c.title ?? "");
+														setPage(1);
+													}}>
+													{c.title}
+												</DropdownMenuItem>
+											))}
+										</DropdownMenuContent>
+									</DropdownMenu>
 								</div>
 							</div>
 							<div className="overflow-x-auto w-full mt-8">
@@ -91,56 +246,98 @@ export default function Categories() {
 										</TableRow>
 									</TableHeader>
 									<TableBody>
-										{categories.map((row) => (
-											<TableRow key={row.id} className="hover:bg-[#F6FBFF]">
-												<TableCell className="text-[#13121280] align-top">{row.title}</TableCell>
-												<TableCell className="text-[#13121280] align-top">
-													<div className="text-balance w-80">{row.subs.join(", ")}</div>
-												</TableCell>
-												<TableCell className="text-[#13121280] align-top">{row.count}</TableCell>
-												<TableCell className="flex items-center gap-1">
-													<button
-														type="button"
-														className="p-2 flex items-center text-slate-600"
-														onClick={() => {
-															setEditing({ id: row.id, title: row.title, subs: row.subs });
-															setEditOpen(true);
-														}}>
-														<IconWrapper className="text-xl">
-															<EditIcon />
-														</IconWrapper>
-													</button>
-													<button type="button" className="text-red-500 bg-transparent p-2 flex items-center">
-														<IconWrapper>
-															<TrashIcon />
-														</IconWrapper>
-													</button>
-												</TableCell>
-											</TableRow>
-										))}
+										{(() => {
+											// apply search & filter locally
+											const q = String(query ?? "")
+												.trim()
+												.toLowerCase();
+											const filtered = categories.filter((row) => {
+												if (categoryFilter) {
+													if ((row.title || "").toLowerCase() !== categoryFilter.toLowerCase()) return false;
+												}
+												if (!q) return true;
+												if ((row.title || "").toLowerCase().includes(q)) return true;
+												if (Array.isArray(row.subs) && row.subs.join(" ").toLowerCase().includes(q)) return true;
+												return false;
+											});
+											return filtered.map((row) => (
+												<TableRow key={row.id} className="hover:bg-[#F6FBFF]">
+													<TableCell className="text-[#13121280] align-top">{row.title}</TableCell>
+													<TableCell className="text-[#13121280] align-top">
+														<div className="text-balance w-80">{row.subs.join(", ")}</div>
+													</TableCell>
+													<TableCell className="text-[#13121280] align-top">{row.count}</TableCell>
+													<TableCell className="flex items-center gap-1">
+														<button
+															type="button"
+															className="p-2 flex items-center text-slate-600"
+															onClick={() => {
+																setEditing({ id: row.id, title: row.title, subs: row.subs });
+																setModalMode("edit");
+																setModalOpen(true);
+															}}>
+															<IconWrapper className="text-xl">
+																<EditIcon />
+															</IconWrapper>
+														</button>
+														<button
+															type="button"
+															className="text-red-500 bg-transparent p-2 flex items-center"
+															onClick={() => {
+																setToDelete({ id: row.id, title: row.title });
+																setConfirmOpen(true);
+															}}>
+															<IconWrapper>
+																<TrashIcon />
+															</IconWrapper>
+														</button>
+													</TableCell>
+												</TableRow>
+											));
+										})()}
 									</TableBody>
 								</Table>
 							</div>
 
 							<AddCategoryModal
-								open={editOpen}
+								open={modalOpen}
 								onOpenChange={(open) => {
-									setEditOpen(open);
+									setModalOpen(open);
 									if (!open) setEditing(null);
 								}}
-								mode="edit"
+								mode={modalMode}
 								initial={editing ? { category: editing.title, subCategories: editing.subs } : undefined}
-								onSave={(payload) => {
-									if (!editing) return;
-									setCategories((prev) =>
-										prev.map((c) => (c.id === editing.id ? { ...c, title: payload.category ?? c.title, subs: payload.subCategories } : c))
-									);
+								onSave={async (payload) => {
+									try {
+										if (modalMode === "add") {
+											await createMutation.mutateAsync({ category: payload.category, subCategories: payload.subCategories });
+											toast.success("Category added");
+											setModalOpen(false);
+										} else if (modalMode === "edit") {
+											if (!editing) return;
+											await updateMutation.mutateAsync({ id: editing.id!, category: payload.category, subCategories: payload.subCategories });
+											toast.success("Category updated");
+											setModalOpen(false);
+											setEditing(null);
+										}
+									} catch (e: any) {
+										const serverMessage = e?.data?.message || e?.message || String(e);
+										toast.error(serverMessage || "Failed to save category");
+									}
 								}}
+								savingStatus={(modalMode === "add" ? createMutation.status : updateMutation.status) as "idle" | "loading" | "success" | "error"}
 							/>
 						</div>
 
 						<div className="mt-8">
-							<CompactPagination showRange page={1} pages={5} onPageChange={() => {}} />
+							<CompactPagination
+								showRange
+								page={page}
+								pages={(fetchedCategories as any)?.pagination?.totalPages ?? 1}
+								onPageChange={(p) => setPage(p)}
+								total={(fetchedCategories as any)?.pagination?.total}
+								perPage={limit}
+							/>
 						</div>
 					</CustomCard>
 				) : (

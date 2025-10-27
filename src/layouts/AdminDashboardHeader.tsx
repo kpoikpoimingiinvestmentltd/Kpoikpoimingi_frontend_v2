@@ -14,7 +14,6 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { AvatarSkeleton, RectangleSkeleton } from "@/components/common/Skeleton";
 import GenerateReceiptModal from "@/dashboard/Receipt/GenerateReceiptModal";
 import { Link, NavLink } from "react-router";
-import { media } from "../resources/images";
 
 interface AdminDashboardHeaderProps {
 	onSidebarOpen: () => void;
@@ -73,12 +72,8 @@ export default function AdminDashboardHeader({ onSidebarOpen, onLogoutOpen }: Ad
 
 				<DropdownMenu>
 					<DropdownMenuTrigger asChild>
-						<button className="flex items-center gap-3 p-1 rounded-md hover:bg-gray-50">
-							<Avatar className="w-9 h-9">
-								<AvatarImage src={media.images.avatar} alt="User avatar" />
-								<AvatarFallback>AJ</AvatarFallback>
-							</Avatar>
-							<CurrentHeaderUser />
+						<button className="flex items-center gap-3 p-1 rounded-md hover:bg-gray-50 cursor-pointer">
+							<UserAvatarContent />
 						</button>
 					</DropdownMenuTrigger>
 					<DropdownMenuContent align="end" className="w-56">
@@ -131,9 +126,10 @@ export default function AdminDashboardHeader({ onSidebarOpen, onLogoutOpen }: Ad
 	);
 }
 
-function CurrentHeaderUser() {
+function UserAvatarContent() {
 	const { data, isLoading } = useGetCurrentUser(true);
-	if (isLoading)
+
+	if (isLoading) {
 		return (
 			<div className="flex items-center gap-3">
 				<AvatarSkeleton size={36} />
@@ -143,21 +139,41 @@ function CurrentHeaderUser() {
 				</div>
 			</div>
 		);
-	if (!data)
+	}
+
+	if (!data) {
 		return (
-			<div className="flex flex-col items-start">
-				<span className="text-sm font-medium text-nowrap">Unknown User</span>
-				<span className="text-xs text-gray-400">—</span>
+			<div className="flex items-center gap-3">
+				<Avatar className="w-9 h-9">
+					<AvatarFallback>U</AvatarFallback>
+				</Avatar>
+				<div className="flex flex-col items-start">
+					<span className="text-sm font-medium text-nowrap">Unknown User</span>
+					<span className="text-xs text-gray-400">—</span>
+				</div>
 			</div>
 		);
+	}
 
 	const name = data.fullName ?? data.email ?? data.username ?? "User";
 	const role = typeof data.role === "string" ? data.role : data.role?.role ?? "";
+	const initials = name
+		.split(" ")
+		.map((n) => n[0])
+		.join("")
+		.toUpperCase()
+		.slice(0, 2);
 
 	return (
-		<div className="flex flex-col items-start">
-			<span className="text-sm font-medium text-nowrap">{name}</span>
-			<span className="text-xs text-gray-400">{role}</span>
+		<div className="flex items-center gap-3">
+			<Avatar className="w-9 h-9">
+				<AvatarImage src={typeof data.media === "string" ? data.media : undefined} alt={`${name}'s avatar`} />
+				<AvatarFallback>{initials}</AvatarFallback>
+			</Avatar>
+			<div className="flex flex-col items-start">
+				<span className="text-sm font-medium text-nowrap">{name}</span>
+				<span className="text-xs text-gray-400">{role}</span>
+			</div>
 		</div>
 	);
 }

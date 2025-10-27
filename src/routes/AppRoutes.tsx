@@ -28,7 +28,6 @@ import Debt from "../dashboard/Debt/Debt";
 import ViewDebtDetails from "../dashboard/Debt/ViewDebtDetails";
 import PropertyDetails from "../dashboard/Properties/PropertyDetails";
 import Categories from "../dashboard/Properties/Categories";
-import ManageCategories from "../dashboard/Properties/ManageCategories";
 import ContractDetails from "../dashboard/Contract/ContractDetails";
 import ContractReceipt from "../dashboard/Contract/ContractReceipt";
 import ProductRequestDetails from "../dashboard/ProductRequest/ProductRequestDetails";
@@ -119,10 +118,6 @@ export const appRouter = createBrowserRouter([
 			{
 				path: _router.dashboard.categories,
 				element: <Categories />,
-			},
-			{
-				path: _router.dashboard.manageCategories,
-				element: <ManageCategories />,
 			},
 			{
 				path: _router.dashboard.payment,

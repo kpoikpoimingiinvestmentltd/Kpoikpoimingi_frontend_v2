@@ -8,7 +8,7 @@ import { inputStyle, preTableButtonStyle, tableHeaderRowStyle } from "@/componen
 import CustomInput from "@/components/base/CustomInput";
 import CompactPagination from "@/components/ui/compact-pagination";
 import React from "react";
-import { useGetAllUsers, useGetCurrentUser } from "@/api/user";
+import { useGetAllUsers } from "@/api/user";
 import { TableSkeleton } from "@/components/common/Skeleton";
 import { useDispatch, useSelector } from "react-redux";
 import type { RootState } from "@/store";
@@ -105,8 +105,6 @@ export default function Users() {
 								<div className="w-full">
 									<div className="flex items-center justify-between flex-wrap gap-6">
 										<h2 className="font-semibold">All Users</h2>
-										{/* show current user's name if available */}
-										<CurrentUserDisplay />
 										<div className="flex items-center gap-2">
 											<div className="relative md:w-80">
 												<CustomInput
@@ -226,17 +224,6 @@ export default function Users() {
 					<EmptyData text="No Users at the moment" />
 				)}
 			</div>
-		</div>
-	);
-}
-
-function CurrentUserDisplay() {
-	const { data, isLoading } = useGetCurrentUser(true);
-	if (isLoading) return null;
-	if (!data) return null;
-	return (
-		<div className="text-sm text-muted-foreground hidden md:block">
-			Signed in as <span className="font-medium">{data.fullName ?? data.email ?? data.username}</span>
 		</div>
 	);
 }

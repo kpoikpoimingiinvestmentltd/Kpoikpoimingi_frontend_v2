@@ -1,8 +1,9 @@
 import CustomInput from "../../components/base/CustomInput";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import { useGetReferenceData } from "@/api/reference";
 import { twMerge } from "tailwind-merge";
+import * as React from "react";
 import { inputStyle } from "../../components/common/commonStyles";
-// icons and Image are not needed here; Avatar encapsulates them
 import { media } from "../../resources/images";
 import Avatar from "../../components/base/Avatar";
 import { CalendarIcon, EmailIcon, PhoneIcon } from "../../assets/icons";
@@ -33,6 +34,40 @@ export default function UserForm({
 	onSubmit?: () => void;
 	submitLabel?: string;
 }) {
+	const { data: refData } = useGetReferenceData(true, false);
+	const roleCandidates: { key: string; value: string }[] = React.useMemo(() => {
+		if (!refData) return [];
+
+		const prefer = ["roles", "user_roles", "userRoles", "role", "roles_list"];
+		for (const k of prefer) {
+			const arr = (refData as any)[k];
+			if (Array.isArray(arr) && arr.length) {
+				return arr.map((it: any) => {
+					const value =
+						it.role ?? it.status ?? it.type ?? it.method ?? it.value ?? it.key ?? it.duration ?? it.intervals ?? it.percentage ?? it.rate ?? "";
+					const key = String(it.id ?? value ?? "");
+					return { key, value: String(value) };
+				});
+			}
+		}
+
+		for (const [k, v] of Object.entries(refData)) {
+			if (Array.isArray(v) && v.length) {
+				const sample = v[0] as any;
+				const t = String(sample.type ?? sample.key ?? "").toLowerCase();
+				if (t.includes("role") || k.toLowerCase().includes("role")) {
+					return v.map((it: any) => {
+						const value =
+							it.role ?? it.status ?? it.type ?? it.method ?? it.value ?? it.key ?? it.duration ?? it.intervals ?? it.percentage ?? it.rate ?? "";
+						const key = String(it.id ?? value ?? "");
+						return { key, value: String(value) };
+					});
+				}
+			}
+		}
+
+		return [];
+	}, [refData]);
 	return (
 		<div className="max-w-4xl mx-auto">
 			<div className="flex flex-col items-center mb-6">
@@ -118,8 +153,15 @@ export default function UserForm({
 							<SelectValue placeholder="Select role" />
 						</SelectTrigger>
 						<SelectContent>
-							<SelectItem value="admin">Admin</SelectItem>
-							<SelectItem value="sales">Sales Person</SelectItem>
+							{roleCandidates.length === 0 ? (
+								<SelectItem value="admin">Admin</SelectItem>
+							) : (
+								roleCandidates.map((r) => (
+									<SelectItem key={r.key} value={r.key}>
+										{r.value}
+									</SelectItem>
+								))
+							)}
 						</SelectContent>
 					</Select>
 				</div>
