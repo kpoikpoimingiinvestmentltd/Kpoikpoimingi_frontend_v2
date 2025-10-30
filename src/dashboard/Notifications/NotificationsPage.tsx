@@ -4,12 +4,71 @@ import { IconWrapper } from "@/assets/icons";
 import CompactPagination from "@/components/ui/compact-pagination";
 import React from "react";
 import EmptyData from "../../components/common/EmptyData";
+import { useGetNotifications } from "@/api/notifications";
+import { useDispatch, useSelector } from "react-redux";
+import type { RootState } from "@/store";
+import { setNotifications, setPagination, setLoading } from "@/store/notificationsSlice";
+import type { NotificationItem as NotificationType } from "@/types/notifications";
+import { useMarkAllNotificationsRead } from "@/api/notifications";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 export default function NotificationsPage() {
-	const [isEmpty] = React.useState(false);
+	const [page, setPage] = React.useState(1);
+	const [limit] = React.useState(20);
+	const dispatch = useDispatch();
+	const storeState = useSelector((s: RootState) => s.notifications);
+
+	const { data, isFetching, isLoading, isError } = useGetNotifications(page, limit, true);
+
+	const queryClient = useQueryClient();
+	const markAllMutation = useMarkAllNotificationsRead();
+
+	React.useEffect(() => {
+		dispatch(setLoading(!!isFetching || !!isLoading));
+	}, [isFetching, isLoading, dispatch]);
+
+	React.useEffect(() => {
+		dispatch(setLoading(!!markAllMutation.isPending));
+	}, [markAllMutation.isPending, dispatch]);
+
+	React.useEffect(() => {
+		if (!data) return;
+		dispatch(setNotifications(data.data as NotificationType[]));
+		dispatch(setPagination(data.pagination));
+	}, [data, dispatch]);
+
+	const notifications = storeState.items;
+	const pagination = storeState.pagination;
+
+	const isEmpty = notifications.length === 0;
+
 	return (
 		<div>
-			<PageTitles title="Notifications" description="All Notification for the activities carried out everyday." />
+			<div className="flex items-center justify-between">
+				<PageTitles title="Notifications" description="All Notification for the activities carried out everyday." />
+				<button
+					type="button"
+					onClick={() =>
+						markAllMutation.mutate(undefined, {
+							onSuccess: (res: any) => {
+								// update store: mark local notifications as read
+								dispatch(setNotifications((storeState.items || []).map((n) => ({ ...n, read: true }))));
+								// invalidate queries to refresh data
+								queryClient.invalidateQueries({ queryKey: ["notifications"] });
+								queryClient.invalidateQueries({ queryKey: ["notifications", "unreadCount"] });
+								toast.success(res?.count ? `${res.count} notifications marked read` : "All notifications marked read");
+							},
+							onError: (err: any) => {
+								console.error("Failed to mark notifications read", err);
+								toast.error("Failed to mark notifications read");
+							},
+						})
+					}
+					className="bg-primary text-white px-4 py-2 rounded-md">
+					{markAllMutation.isPending ? "Processing..." : "Mark all read"}
+				</button>
+			</div>
 
 			<div className="min-h-96 flex">
 				{!isEmpty ? (
@@ -18,18 +77,18 @@ export default function NotificationsPage() {
 							<h3 className="text-lg font-semibold">Today</h3>
 							<div className="flex flex-col gap-3">
 								{notifications.map((n, i) => (
-									<NotificationItem key={i} {...n} />
+									<NotificationItem key={n.id ?? i} {...n} />
 								))}
 							</div>
 
 							<div>
-								<CompactPagination page={1} pages={5} onPageChange={() => {}} showRange />
+								<CompactPagination page={pagination.page} pages={pagination.totalPages || 1} onPageChange={(p) => setPage(p)} showRange />
 							</div>
 						</div>
 					</CustomCard>
 				) : (
 					<div className="flex-grow flex items-center justify-center">
-						<EmptyData text="Notification Unavailable" />
+						{isError ? <EmptyData text="Failed to load notifications" /> : <EmptyData text="Notification Unavailable" />}
 					</div>
 				)}
 			</div>
@@ -40,7 +99,7 @@ export default function NotificationsPage() {
 type Notification = {
 	title: string;
 	subtitle?: string;
-	time: string;
+	time?: string;
 	type?: string; // for icon selection
 };
 
@@ -59,24 +118,11 @@ function NotificationItem({ title, subtitle, time, type }: Notification) {
 				<div className="flex justify-between items-start">
 					<div>
 						<div className="font-medium">{title}</div>
-						{subtitle && <div className="text-sm text-muted-foreground mt-1">{subtitle}</div>}
+						{subtitle && <p className="text-sm text-muted-foreground mt-1">{subtitle}</p>}
 					</div>
-					<div className="text-xs text-gray-400">{time}</div>
+					<p className="text-xs text-end text-gray-400">{time ?? ""}</p>
 				</div>
 			</div>
 		</div>
 	);
 }
-
-const notifications: Notification[] = [
-	{
-		title: "New Customer Registration",
-		subtitle: "New customer registration submitted by [Staff Name] - awaiting contract upload",
-		time: "5 minutes ago",
-		type: "customer",
-	},
-	{ title: "Contract Uploaded", subtitle: "Contract uploaded for Customer X - pending approval", time: "4:22 pm", type: "contract" },
-	{ title: "Contract Approved", subtitle: "Contract for Customer X approved - assign property", time: "4:22 pm", type: "contract" },
-	{ title: "Property Assigned", subtitle: "Property [Name] assigned to Customer X", time: "4:22 pm", type: "contract" },
-	{ title: "Payment received", subtitle: "NXXX payment received from Customer X via [method]", time: "4:22 pm", type: "payment" },
-];

@@ -28,6 +28,7 @@ export const _router = {
 		auditAndCompliance: "/dashboard/audit-and-compliance",
 		users: "/dashboard/users",
 		addUser: "/dashboard/users/add",
-		userDetails: "/dashboard/users/:id",
+		userDetails: (id: string) => `/dashboard/users/${id}`,
+		userDetailsPath: "/dashboard/users/:id",
 	},
 };

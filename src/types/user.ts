@@ -26,3 +26,14 @@ export type User = {
 	phoneNumber?: string;
 	media?: any | null;
 };
+
+export type ResetPasswordResponse = {
+	userId: string;
+	newPassword: string;
+	message: string;
+};
+
+export type SuspendUserResponse = {
+	message: string;
+	user: User;
+};

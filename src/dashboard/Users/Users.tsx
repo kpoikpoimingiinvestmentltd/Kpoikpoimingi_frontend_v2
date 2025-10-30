@@ -185,7 +185,12 @@ export default function Users() {
 																</DropdownMenuTrigger>
 																<DropdownMenuContent align="end" sideOffset={6} className="w-48">
 																	{[
-																		{ key: "view", label: "View Profile", danger: false, action: () => navigate(_router.dashboard.userDetails) },
+																		{
+																			key: "view",
+																			label: "View Profile",
+																			danger: false,
+																			action: () => navigate(_router.dashboard.userDetails(row.id)),
+																		},
 																		{ key: "edit", label: "Edit Profile", danger: false },
 																		{ key: "deactivate", label: "Deactivate", danger: false },
 																		{ key: "reset", label: "Reset Password", danger: false },

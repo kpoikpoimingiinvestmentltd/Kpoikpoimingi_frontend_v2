@@ -32,7 +32,7 @@ export default function Setting() {
 						type="button"
 						onClick={() => setChangePassOpen(true)}
 						className="flex items-center text-sm md:text-base gap-2 bg-primary rounded-sm px-8 py-2.5 active-scale transition text-white">
-						<span>Change Password</span>
+						<span>Reset Password</span>
 					</button>
 					<button
 						type="button"

@@ -331,7 +331,6 @@ export default function Categories() {
 
 						<div className="mt-8">
 							<CompactPagination
-								showRange
 								page={page}
 								pages={(fetchedCategories as any)?.pagination?.totalPages ?? 1}
 								onPageChange={(p) => setPage(p)}

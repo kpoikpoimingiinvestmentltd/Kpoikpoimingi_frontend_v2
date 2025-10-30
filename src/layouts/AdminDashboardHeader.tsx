@@ -10,6 +10,7 @@ import {
 } from "../components/ui/dropdown-menu";
 import { IconWrapper, LogoutIcon, MenuIcon, NotificationIcon, ReceiptPlusIcon, SettingIcon, UserIcon } from "@/assets/icons";
 import { useGetCurrentUser } from "@/api/user";
+import { useGetUnreadNotificationCount } from "@/api/notifications";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { AvatarSkeleton, RectangleSkeleton } from "@/components/common/Skeleton";
 import GenerateReceiptModal from "@/dashboard/Receipt/GenerateReceiptModal";
@@ -53,22 +54,7 @@ export default function AdminDashboardHeader({ onSidebarOpen, onLogoutOpen }: Ad
 					</IconWrapper>
 				</NavLink>
 
-				<div className="relative">
-					<NavLink
-						to={_router.dashboard.notifications}
-						className={({ isActive }) =>
-							`p-2.5 rounded-full relative flex bg-gray-50 hover:bg-gray-100 dark:bg-neutral-800 dark:hover:bg-neutral-700 before:content-[''] before:absolute before:-translate-x-1/2 before:translate-y-1.5 before:left-1/2 before:bottom-0 before:h-[2.5px] before:w-1/2 ${
-								isActive ? "before:bg-primary" : "before:bg-transparent"
-							}`
-						}>
-						<IconWrapper className="text-xl">
-							<NotificationIcon />
-						</IconWrapper>
-					</NavLink>
-					<span className="absolute -top-0.5 -right-0.5 inline-flex items-center justify-center w-4 h-4 text-[0.6rem] font-medium text-white bg-red-500 rounded-full">
-						1
-					</span>
-				</div>
+				<NotificationBell />
 
 				<DropdownMenu>
 					<DropdownMenuTrigger asChild>
@@ -174,6 +160,38 @@ function UserAvatarContent() {
 				<span className="text-sm font-medium text-nowrap">{name}</span>
 				<span className="text-xs text-gray-400">{role}</span>
 			</div>
+		</div>
+	);
+}
+
+function NotificationBell() {
+	const { data: unread, isLoading } = useGetUnreadNotificationCount(true);
+
+	const count = typeof unread === "number" ? unread : 0;
+
+	return (
+		<div className="relative">
+			<NavLink
+				to={_router.dashboard.notifications}
+				className={({ isActive }) =>
+					`p-2.5 rounded-full relative flex bg-gray-50 hover:bg-gray-100 dark:bg-neutral-800 dark:hover:bg-neutral-700 before:content-[''] before:absolute before:-translate-x-1/2 before:translate-y-1.5 before:left-1/2 before:bottom-0 before:h-[2.5px] before:w-1/2 ${
+						isActive ? "before:bg-primary" : "before:bg-transparent"
+					}`
+				}>
+				<IconWrapper className="text-xl">
+					<NotificationIcon />
+				</IconWrapper>
+			</NavLink>
+
+			{/* badge */}
+			{!isLoading && count > 0 && (
+				<span className="absolute -top-0.5 -right-0.5 inline-flex items-center justify-center min-w-[1rem] h-4 px-1 text-[0.6rem] font-medium text-white bg-red-500 rounded-full">
+					{count > 99 ? "99+" : count}
+				</span>
+			)}
+
+			{/* loading state: small pulse */}
+			{isLoading && <span className="absolute -top-0.5 -right-0.5 inline-block w-3 h-3 bg-primary rounded-full animate-pulse" />}
 		</div>
 	);
 }

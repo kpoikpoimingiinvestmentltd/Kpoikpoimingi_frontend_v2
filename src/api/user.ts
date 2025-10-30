@@ -1,7 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { apiGet, apiPost } from "@/services/apiClient";
+import { apiGet, apiPost, apiPut } from "@/services/apiClient";
 import { API_ROUTES } from "./routes";
-import type { ChangePasswordInput, User } from "@/types/user";
+import { store } from "@/store";
+import type { ChangePasswordInput, User, ResetPasswordResponse } from "@/types/user";
+
+export async function resetPasswordRequest(userId: string) {
+	return apiPost(API_ROUTES.user.resetPassword(userId), {});
+}
 
 export async function getUserById(id: string) {
 	return apiGet(API_ROUTES.user.getUserById(id));
@@ -29,6 +34,52 @@ export function useChangePassword(onSuccess?: () => void) {
 	});
 }
 
+export function useResetPassword() {
+	return useMutation<ResetPasswordResponse, unknown, string>({
+		mutationFn: async (userId: string) => {
+			const data = await resetPasswordRequest(userId);
+			return data as ResetPasswordResponse;
+		},
+	});
+}
+
+export async function updateUserRequest(id: string, payload: any) {
+	return apiPut(API_ROUTES.user.updateUser(id), payload);
+}
+
+export function useUpdateUser() {
+	const qc = useQueryClient();
+	return useMutation<any, unknown, { id: string; payload: any }>({
+		mutationFn: async ({ id, payload }: { id: string; payload: any }) => {
+			const data = await updateUserRequest(id, payload);
+			return data;
+		},
+		onSuccess: (data: any, vars: any) => {
+			try {
+				if (vars?.id) qc.setQueryData(["currentUser", vars.id], data);
+				// also update users list cache if present
+				qc.invalidateQueries({ queryKey: ["users"] });
+				qc.invalidateQueries({ queryKey: ["currentUser", vars?.id] });
+			} catch (e) {
+				// ignore cache update errors
+			}
+		},
+	} as any);
+}
+
+export async function suspendUserRequest(userId: string) {
+	return apiPost(API_ROUTES.user.suspendUser(userId), {});
+}
+
+export function useSuspendUser() {
+	return useMutation<any, unknown, string>({
+		mutationFn: async (userId: string) => {
+			const data = await suspendUserRequest(userId);
+			return data;
+		},
+	});
+}
+
 // --- users list ---
 export async function getAllUsers(): Promise<User[]> {
 	return apiGet(API_ROUTES.user.getAllUsers) as Promise<User[]>;
@@ -50,9 +101,10 @@ export function useGetAllUsers(enabled = true) {
 }
 
 export function useGetCurrentUser(enabled = true) {
+	const id = (store.getState() as any)?.auth?.id;
 	return useQuery<User>({
-		queryKey: ["currentUser"],
-		queryFn: async () => apiGet(API_ROUTES.user.getCurrentUserProfile) as Promise<User>,
-		enabled,
+		queryKey: ["currentUser", id],
+		queryFn: async () => getUserById(id!),
+		enabled: !!id && enabled,
 	} as any);
 }

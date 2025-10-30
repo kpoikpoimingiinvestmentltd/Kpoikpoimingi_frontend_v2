@@ -35,7 +35,7 @@ export function TableSkeleton({ rows = 4, cols = 6 }: { rows?: number; cols?: nu
 	const colWidths = ["w-2/5", "w-1/5", "w-1/6", "w-1/12", "w-1/12", "w-1/12"];
 	return (
 		<div className="overflow-x-auto w-full">
-			<div className="w-full bg-white rounded-lg p-4 border border-gray-100">
+			<div className="w-full bg-white">
 				<div className="w-full">
 					<div className="mb-4">
 						<div className="h-6 w-1/6 bg-gray-200 rounded" />

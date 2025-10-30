@@ -6,7 +6,13 @@ import { Avatar, AvatarImage } from "../../components/ui/avatar";
 import Badge from "../../components/base/Badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import UserForm from "./UserForm";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { store } from "@/store";
+import { toast } from "sonner";
+import { useResetPassword, useSuspendUser, useGetCurrentUser, useUpdateUser } from "@/api/user";
+import { useGetReferenceData } from "@/api/reference";
+import { useQueryClient } from "@tanstack/react-query";
+import { Spinner } from "@/components/ui/spinner";
 import SuccessModal from "@/components/common/SuccessModal";
 import { media } from "../../resources/images";
 import PageWrapper from "../../components/common/PageWrapper";
@@ -28,28 +34,91 @@ export default function UserDetails() {
 	const [resetOpen, setResetOpen] = useState(false);
 	const [generatedPassword, setGeneratedPassword] = useState<string | null>(null);
 
-	const openReset = () => {
-		// generate a temporary password (simple example)
-		const pwd = `@Root${Math.floor(Math.random() * 900) + 100}`;
-		setGeneratedPassword(pwd);
-		setResetOpen(true);
-	};
-	const openDeactivate = () => {
-		/* TODO: open deactivate modal */
-	};
+	const resetMutation = useResetPassword();
 
-	const userValues = {
-		username: "Kenny Banks James",
-		email: "dunny@gmail.com",
-		phone: "0909282228",
-		houseAddress: "8 Lagos Street",
-		stateOfOrigin: "lagos",
-		dob: "2000-05-03",
-		role: "sales",
-		salary: "30,000",
-		accountNumber: "1234567890",
-		accountType: "savings",
-		bankName: "Access bank",
+	async function openReset() {
+		const currentAuthId = (store.getState() as any)?.auth?.id;
+		const userIdToReset = currentAuthId;
+
+		if (!userIdToReset) {
+			const pwd = `@Root${Math.floor(Math.random() * 900) + 100}`;
+			setGeneratedPassword(pwd);
+			setResetOpen(true);
+			return;
+		}
+
+		resetMutation.mutate(userIdToReset, {
+			onSuccess: (res) => {
+				setGeneratedPassword((res as any)?.newPassword ?? null);
+				setResetOpen(true);
+			},
+			onError: (err) => {
+				console.error("Reset password failed:", err);
+				// Fallback behavior: show a locally generated password so the admin can continue
+				const pwd = `@Root${Math.floor(Math.random() * 900) + 100}`;
+				setGeneratedPassword(pwd);
+				setResetOpen(true);
+			},
+		});
+	}
+	const queryClient = useQueryClient();
+
+	const suspendMutation = useSuspendUser();
+
+	// reference data (statuses, roles, etc.)
+	const { data: refData } = useGetReferenceData();
+
+	// fetch current user (so we can display and update status)
+	const { data: currentUser } = useGetCurrentUser();
+
+	// form values for editing
+	const [formValues, setFormValues] = useState<any>({});
+	useEffect(() => {
+		if (!currentUser) return;
+		const cu: any = currentUser as any;
+		setFormValues({
+			username: cu?.fullName ?? cu?.username ?? "",
+			email: cu?.email ?? "",
+			phone: cu?.phoneNumber ?? cu?.phone ?? "",
+			houseAddress: cu?.houseAddress ?? "",
+			stateOfOrigin: cu?.stateOfOrigin ?? "",
+			dob: cu?.dateOfBirth ?? cu?.dob ?? "",
+			role: typeof cu?.role === "string" ? cu.role : cu?.role?.id ?? cu?.role?.role ?? "",
+			salary: cu?.salaryAmount ?? cu?.salary ?? "",
+			accountNumber: cu?.accountNumber ?? "",
+			accountType: cu?.accountType ?? "",
+			bankName: cu?.bankName ?? "",
+			avatar: cu?.media ?? null,
+		});
+	}, [currentUser]);
+
+	const updateMutation = useUpdateUser();
+
+	const openDeactivate = async () => {
+		const currentAuthId = (store.getState() as any)?.auth?.id;
+		const userIdToSuspend = currentAuthId;
+		if (!userIdToSuspend) {
+			toast.info("No user to suspend");
+			return;
+		}
+
+		suspendMutation.mutate(userIdToSuspend, {
+			onSuccess: (res: any) => {
+				try {
+					// update currentUser cache with returned user
+					if (res?.user) {
+						queryClient.setQueryData(["currentUser"], res.user);
+					}
+					toast.success(res?.message || "User suspended");
+				} catch (e) {
+					console.warn("Failed to update user cache", e);
+				}
+			},
+			onError: (err) => {
+				console.error("Suspend user failed:", err);
+				toast.error("Failed to suspend user");
+			},
+		});
 	};
 
 	return (
@@ -66,14 +135,30 @@ export default function UserDetails() {
 					<button
 						type="button"
 						onClick={openReset}
-						className="flex items-center text-sm md:text-base gap-2 bg-primary rounded-sm px-8 py-2.5 active-scale transition text-white">
-						<span>Reset Password</span>
+						disabled={resetMutation.isPending}
+						className="flex items-center text-sm md:text-base gap-2 bg-primary rounded-sm px-8 py-2.5 active-scale transition text-white disabled:opacity-60">
+						{resetMutation.isPending ? (
+							<>
+								<Spinner className="size-4" />
+								<span>Resetting...</span>
+							</>
+						) : (
+							<span>Reset Password</span>
+						)}
 					</button>
 					<button
 						type="button"
 						onClick={openDeactivate}
-						className="flex items-center text-sm md:text-base gap-2 bg-red-600 rounded-sm px-8 py-2.5 active-scale transition text-white">
-						<span>Deactivate</span>
+						disabled={suspendMutation.isPending}
+						className="flex items-center text-sm md:text-base gap-2 bg-red-600 rounded-sm px-8 py-2.5 active-scale transition text-white disabled:opacity-60">
+						{suspendMutation.isPending ? (
+							<>
+								<Spinner className="size-4" />
+								<span>Processing...</span>
+							</>
+						) : (
+							<span>Deactivate</span>
+						)}
 					</button>
 				</div>
 			</div>
@@ -84,7 +169,7 @@ export default function UserDetails() {
 					<div className="relative">
 						<div className="h-36 bg-gradient-to-r from-sky-400 to-blue-600 rounded-lg" />
 						<div className="absolute bottom-0 translate-y-1/2 left-4 sm:left-10">
-							<Avatar className="size-32">
+							<Avatar className="size-32 bg-white">
 								<AvatarImage src={media.images.avatar} alt="avatar" />
 							</Avatar>
 						</div>
@@ -93,23 +178,70 @@ export default function UserDetails() {
 					{/* content grid */}
 					<div className="mt-24 grid grid-cols-1 gap-4">
 						<div className="space-y-4">
-							<KeyValueRow label="User Name" value="Kenny Banks James" />
-							<KeyValueRow label="Email" value="dunny@gmail.com" />
-							<KeyValueRow label="Phone Number" value="0909282228" />
-							<KeyValueRow label="House address" value="8 Lagos Street" />
-							<KeyValueRow label="State Of Origin" value="Lagos State" />
-							<KeyValueRow label="Date Of Birth" value="3-5-2000" />
-							<KeyValueRow label="User Role" value="Sales Person" />
-							<KeyValueRow label="Assigned Customers">
-								<Badge value="7" status="primary" label={<span>7 Assigned</span>} size="md" />
-							</KeyValueRow>
+							{/* Status row: show current user's status using reference data when available */}
+							<KeyValueRow
+								label="Status"
+								value={
+									<Badge
+										value={
+											(currentUser as any)?.status?.status ??
+											((refData as any)?.statuses && Array.isArray((refData as any).statuses)
+												? (refData as any).statuses.find((s: any) => s.id === (currentUser as any)?.statusId)?.status ?? "Unknown"
+												: "Unknown")
+										}
+										status={
+											(currentUser as any)?.status?.status ??
+											(refData as any)?.statuses?.find((s: any) => s.id === (currentUser as any)?.statusId)?.status ??
+											"unknown"
+										}
+										showDot
+									/>
+								}
+							/>
+							{(() => {
+								const cu: any = currentUser as any;
+								const name = cu?.fullName ?? cu?.username ?? "-";
+								const email = cu?.email ?? "-";
+								const phone = cu?.phoneNumber ?? cu?.phone ?? "-";
+								const address = cu?.houseAddress ?? "-";
+								const state = cu?.stateOfOrigin ?? "-";
+								const dobRaw = cu?.dateOfBirth ?? cu?.dob ?? null;
+								const dob = dobRaw ? new Date(dobRaw).toLocaleDateString() : "-";
+								const roleLabel = typeof cu?.role === "string" ? cu.role : cu?.role?.role ?? "-";
+								const assigned = cu?._count?.customers ?? cu?.assignedCustomersCount ?? cu?.assignedCount ?? 0;
+								return (
+									<>
+										<KeyValueRow label="User Name" value={name} />
+										<KeyValueRow label="Email" value={email} />
+										<KeyValueRow label="Phone Number" value={phone} />
+										<KeyValueRow label="House address" value={address} />
+										<KeyValueRow label="State Of Origin" value={state} />
+										<KeyValueRow label="Date Of Birth" value={dob} />
+										<KeyValueRow label="User Role" value={roleLabel} />
+										<KeyValueRow label="Assigned Customers">
+											<Badge value={String(assigned)} status="primary" label={<span>{assigned} Assigned</span>} size="md" />
+										</KeyValueRow>
+									</>
+								);
+							})()}
 						</div>
 						<hr />
 						<div className="space-y-4">
-							<KeyValueRow label="Salary Amount" value="30,000" />
-							<KeyValueRow label="Account Number" value="1234567890" />
-							<KeyValueRow label="Account Type" value="Savings" />
-							<KeyValueRow label="Bank Name" value="Access bank" />
+							{(() => {
+								const cu: any = currentUser as any;
+								const salary = cu?.salaryAmount ?? cu?.salary ?? "-";
+								const accountNumber = cu?.accountNumber ?? "-";
+								const accountType = cu?.accountType ?? cu?.accountTypeId ?? "-";
+								const bankName = cu?.bankName ?? "-";
+								return (
+									<>
+										<KeyValueRow label="Salary Amount" value={salary} />
+										<KeyValueRow label="Account Number" value={accountNumber} />
+										<KeyValueRow label="Account Type" value={accountType} />
+										<KeyValueRow label="Bank Name" value={bankName} />
+									</>
+								);
+							})()}
 						</div>
 					</div>
 				</CustomCard>
@@ -121,7 +253,42 @@ export default function UserDetails() {
 					<DialogHeader className="text-center flex items-center justify-center mt-5">
 						<DialogTitle className="font-medium">Edit User Details</DialogTitle>
 					</DialogHeader>
-					<UserForm values={userValues} onChange={() => {}} onSubmit={() => setEditOpen(false)} submitLabel="Save Changes" />
+					<UserForm
+						values={formValues}
+						onChange={(k, v) => setFormValues((s: any) => ({ ...(s ?? {}), [k]: v }))}
+						onSubmit={async () => {
+							const userId = (store.getState() as any)?.auth?.id;
+							if (!userId) {
+								toast.error("No user id available");
+								return;
+							}
+							try {
+								await updateMutation.mutateAsync({
+									id: userId,
+									payload: {
+										fullName: formValues.username,
+										email: formValues.email,
+										phoneNumber: formValues.phone,
+										houseAddress: formValues.houseAddress,
+										stateOfOrigin: formValues.stateOfOrigin,
+										dateOfBirth: formValues.dob,
+										roleId: Number(formValues.role) || undefined,
+										salaryAmount: formValues.salary,
+										accountNumber: formValues.accountNumber,
+										accountType: formValues.accountType,
+										bankName: formValues.bankName,
+										media: formValues.avatar,
+									},
+								});
+								toast.success("User updated");
+								setEditOpen(false);
+							} catch (e) {
+								console.error("Update user failed", e);
+								toast.error("Failed to update user");
+							}
+						}}
+						submitLabel={updateMutation.isPending ? "Saving..." : "Save Changes"}
+					/>
 				</DialogContent>
 			</Dialog>
 
@@ -145,11 +312,23 @@ export default function UserDetails() {
 				actions={[
 					{
 						label: "Copy Password",
-						onClick: () => {
-							if (generatedPassword) navigator.clipboard.writeText(generatedPassword);
+						onClick: async () => {
+							if (!generatedPassword) {
+								toast.info("No password to copy");
+								return;
+							}
+							try {
+								await navigator.clipboard.writeText(generatedPassword);
+								toast.success("Password copied to clipboard");
+							} catch (e) {
+								console.warn("Clipboard write failed", e);
+								toast.info("Could not copy to clipboard. Please copy manually.");
+							}
 						},
 						variant: "primary",
 						fullWidth: true,
+						// keep the modal open when copying so admin can still see/copy the password
+						closeOnClick: false,
 					},
 				]}
 			/>

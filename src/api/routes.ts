@@ -7,7 +7,6 @@ export const API_ROUTES = {
 	user: {
 		createUser: "/user/create",
 		getAllUsers: "/user",
-		getCurrentUserProfile: "/user/me",
 		getUserById: (id: string) => `/user/${id}`,
 		updateUser: (id: string) => `/user/update/${id}`,
 		resetPassword: (id: string) => `/user/reset-password/${id}`,

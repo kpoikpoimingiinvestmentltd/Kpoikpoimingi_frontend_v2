@@ -69,8 +69,8 @@ export default function VatInterest() {
 	const row = (label: string, value: string | number | undefined, onEdit: () => void) => (
 		<div className="flex items-center justify-between px-6 py-1">
 			<div className="flex items-center gap-1.5">
-				<div className="text-sm text-muted-foreground">{label}</div>
-				<div className="text-lg font-medium text-sky-600">{value ?? "-"}</div>
+				<span className="text-sm text-muted-foreground">{label}</span>
+				<span className="font-medium text-primary">{value ?? "-"}</span>
 			</div>
 			<div>
 				<button onClick={onEdit} className="flex items-center gap-2 bg-sky-50 text-primary px-3 py-1 rounded">

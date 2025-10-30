@@ -36,6 +36,8 @@ export default function SuccessModal({
 		onClick?: () => void;
 		variant?: "primary" | "outline";
 		fullWidth?: boolean;
+		// when false, clicking this action will NOT close the modal
+		closeOnClick?: boolean;
 	}>;
 }) {
 	const handlePrimary = () => {
@@ -110,7 +112,9 @@ export default function SuccessModal({
 											key={i}
 											onClick={() => {
 												if (a.onClick) a.onClick();
-												if (isPrimary) onOpenChange(false);
+												// close modal unless explicitly prevented
+												const shouldClose = a.closeOnClick !== false;
+												if (isPrimary && shouldClose) onOpenChange(false);
 											}}
 											className={merged}>
 											{a.label}
