@@ -7,9 +7,8 @@ import Badge from "../../components/base/Badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import UserForm from "./UserForm";
 import { useState, useEffect } from "react";
-import { store } from "@/store";
 import { toast } from "sonner";
-import { useResetPassword, useSuspendUser, useGetCurrentUser, useUpdateUser } from "@/api/user";
+import { useResetPassword, useSuspendUser, useGetUser, useUpdateUser } from "@/api/user";
 import { useGetReferenceData } from "@/api/reference";
 import { useQueryClient } from "@tanstack/react-query";
 import { Spinner } from "@/components/ui/spinner";
@@ -17,6 +16,8 @@ import SuccessModal from "@/components/common/SuccessModal";
 import { media } from "../../resources/images";
 import PageWrapper from "../../components/common/PageWrapper";
 import { modalContentStyle } from "../../components/common/commonStyles";
+import { useParams } from "react-router";
+import { formatPhoneNumber } from "@/lib/utils";
 
 export default function UserDetails() {
 	function KeyValueRow({ label, value, children }: { label: ReactNode; value?: ReactNode; children?: ReactNode }) {
@@ -34,20 +35,20 @@ export default function UserDetails() {
 	const [resetOpen, setResetOpen] = useState(false);
 	const [generatedPassword, setGeneratedPassword] = useState<string | null>(null);
 
+	const params = useParams();
+	const userId = params.id;
+
 	const resetMutation = useResetPassword();
 
-	async function openReset() {
-		const currentAuthId = (store.getState() as any)?.auth?.id;
-		const userIdToReset = currentAuthId;
+	const updateMutation = useUpdateUser();
 
-		if (!userIdToReset) {
-			const pwd = `@Root${Math.floor(Math.random() * 900) + 100}`;
-			setGeneratedPassword(pwd);
-			setResetOpen(true);
+	async function openReset() {
+		if (!userId) {
+			toast.error("No user ID available");
 			return;
 		}
 
-		resetMutation.mutate(userIdToReset, {
+		resetMutation.mutate(userId, {
 			onSuccess: (res) => {
 				setGeneratedPassword((res as any)?.newPassword ?? null);
 				setResetOpen(true);
@@ -68,46 +69,53 @@ export default function UserDetails() {
 	// reference data (statuses, roles, etc.)
 	const { data: refData } = useGetReferenceData();
 
-	// fetch current user (so we can display and update status)
-	const { data: currentUser } = useGetCurrentUser();
+	// fetch user by ID from URL
+	const { data: currentUser } = useGetUser(userId || undefined);
 
 	// form values for editing
 	const [formValues, setFormValues] = useState<any>({});
 	useEffect(() => {
 		if (!currentUser) return;
 		const cu: any = currentUser as any;
+
+		// Extract IDs from objects for form fields
+		const stateOfOriginId = typeof cu?.stateOfOrigin === "object" ? cu?.stateOfOrigin?.id : cu?.stateOfOrigin;
+		const roleId = typeof cu?.role === "object" ? cu?.role?.id : cu?.role;
+		const accountTypeId = typeof cu?.accountType === "object" ? cu?.accountType?.id : cu?.accountType;
+		const bankNameId = typeof cu?.bankName === "object" ? cu?.bankName?.id : cu?.bankName;
+
+		// Get media URL for avatar display
+		const avatarUrl = Array.isArray(cu?.media) && cu?.media?.length > 0 ? cu?.media[0]?.fileUrl : cu?.avatar;
+
 		setFormValues({
-			username: cu?.fullName ?? cu?.username ?? "",
+			fullName: cu?.fullName ?? "",
+			username: cu?.username ?? "",
 			email: cu?.email ?? "",
 			phone: cu?.phoneNumber ?? cu?.phone ?? "",
 			houseAddress: cu?.houseAddress ?? "",
-			stateOfOrigin: cu?.stateOfOrigin ?? "",
+			stateOfOrigin: String(stateOfOriginId ?? ""),
 			dob: cu?.dateOfBirth ?? cu?.dob ?? "",
-			role: typeof cu?.role === "string" ? cu.role : cu?.role?.id ?? cu?.role?.role ?? "",
+			role: String(roleId ?? ""),
 			salary: cu?.salaryAmount ?? cu?.salary ?? "",
 			accountNumber: cu?.accountNumber ?? "",
-			accountType: cu?.accountType ?? "",
-			bankName: cu?.bankName ?? "",
-			avatar: cu?.media ?? null,
+			accountType: String(accountTypeId ?? ""),
+			bankName: String(bankNameId ?? ""),
+			avatar: avatarUrl ?? null,
 		});
 	}, [currentUser]);
 
-	const updateMutation = useUpdateUser();
-
 	const openDeactivate = async () => {
-		const currentAuthId = (store.getState() as any)?.auth?.id;
-		const userIdToSuspend = currentAuthId;
-		if (!userIdToSuspend) {
-			toast.info("No user to suspend");
+		if (!userId) {
+			toast.error("No user ID available");
 			return;
 		}
 
-		suspendMutation.mutate(userIdToSuspend, {
+		suspendMutation.mutate(userId, {
 			onSuccess: (res: any) => {
 				try {
 					// update currentUser cache with returned user
 					if (res?.user) {
-						queryClient.setQueryData(["currentUser"], res.user);
+						queryClient.setQueryData(["user", userId], res.user);
 					}
 					toast.success(res?.message || "User suspended");
 				} catch (e) {
@@ -170,7 +178,15 @@ export default function UserDetails() {
 						<div className="h-36 bg-gradient-to-r from-sky-400 to-blue-600 rounded-lg" />
 						<div className="absolute bottom-0 translate-y-1/2 left-4 sm:left-10">
 							<Avatar className="size-32 bg-white">
-								<AvatarImage src={media.images.avatar} alt="avatar" />
+								<AvatarImage
+									className="object-cover object-top"
+									src={
+										Array.isArray((currentUser as any)?.media) && (currentUser as any)?.media?.length > 0
+											? (currentUser as any)?.media[0]?.fileUrl
+											: media.images.avatar
+									}
+									alt="avatar"
+								/>
 							</Avatar>
 						</div>
 					</div>
@@ -200,17 +216,20 @@ export default function UserDetails() {
 							/>
 							{(() => {
 								const cu: any = currentUser as any;
-								const name = cu?.fullName ?? cu?.username ?? "-";
+								const fullName = cu?.fullName ?? "-";
+								const name = cu?.username ?? "-";
 								const email = cu?.email ?? "-";
 								const phone = cu?.phoneNumber ?? cu?.phone ?? "-";
 								const address = cu?.houseAddress ?? "-";
-								const state = cu?.stateOfOrigin ?? "-";
+								const stateObj = cu?.stateOfOrigin;
+								const state = typeof stateObj === "string" ? stateObj : stateObj?.state ?? "-";
 								const dobRaw = cu?.dateOfBirth ?? cu?.dob ?? null;
 								const dob = dobRaw ? new Date(dobRaw).toLocaleDateString() : "-";
 								const roleLabel = typeof cu?.role === "string" ? cu.role : cu?.role?.role ?? "-";
 								const assigned = cu?._count?.customers ?? cu?.assignedCustomersCount ?? cu?.assignedCount ?? 0;
 								return (
 									<>
+										<KeyValueRow label="Full Name" value={fullName} />
 										<KeyValueRow label="User Name" value={name} />
 										<KeyValueRow label="Email" value={email} />
 										<KeyValueRow label="Phone Number" value={phone} />
@@ -231,8 +250,15 @@ export default function UserDetails() {
 								const cu: any = currentUser as any;
 								const salary = cu?.salaryAmount ?? cu?.salary ?? "-";
 								const accountNumber = cu?.accountNumber ?? "-";
-								const accountType = cu?.accountType ?? cu?.accountTypeId ?? "-";
-								const bankName = cu?.bankName ?? "-";
+
+								// Extract account type - handle both string and object
+								const accountTypeObj = cu?.accountType;
+								const accountType = typeof accountTypeObj === "string" ? accountTypeObj : accountTypeObj?.type ?? "-";
+
+								// Extract bank name - handle both string and object
+								const bankNameObj = cu?.bankName;
+								const bankName = typeof bankNameObj === "string" ? bankNameObj : bankNameObj?.name ?? "-";
+
 								return (
 									<>
 										<KeyValueRow label="Salary Amount" value={salary} />
@@ -257,18 +283,17 @@ export default function UserDetails() {
 						values={formValues}
 						onChange={(k, v) => setFormValues((s: any) => ({ ...(s ?? {}), [k]: v }))}
 						onSubmit={async () => {
-							const userId = (store.getState() as any)?.auth?.id;
 							if (!userId) {
-								toast.error("No user id available");
+								toast.error("No user ID available");
 								return;
 							}
 							try {
 								await updateMutation.mutateAsync({
 									id: userId,
 									payload: {
-										fullName: formValues.username,
+										fullName: formValues.fullName,
 										email: formValues.email,
-										phoneNumber: formValues.phone,
+										phoneNumber: formatPhoneNumber(formValues.phone),
 										houseAddress: formValues.houseAddress,
 										stateOfOrigin: formValues.stateOfOrigin,
 										dateOfBirth: formValues.dob,
@@ -288,6 +313,7 @@ export default function UserDetails() {
 							}
 						}}
 						submitLabel={updateMutation.isPending ? "Saving..." : "Save Changes"}
+						isLoading={updateMutation.isPending}
 					/>
 				</DialogContent>
 			</Dialog>
@@ -326,7 +352,7 @@ export default function UserDetails() {
 							}
 						},
 						variant: "primary",
-						fullWidth: true,
+						fullWidth: false,
 						// keep the modal open when copying so admin can still see/copy the password
 						closeOnClick: false,
 					},

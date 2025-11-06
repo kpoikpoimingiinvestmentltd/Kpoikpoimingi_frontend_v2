@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { apiGet, apiPost, apiPut } from "@/services/apiClient";
+import { apiGet, apiPost } from "@/services/apiClient";
 import { API_ROUTES } from "./routes";
 import { store } from "@/store";
 import type { ChangePasswordInput, User, ResetPasswordResponse } from "@/types/user";
@@ -43,30 +43,6 @@ export function useResetPassword() {
 	});
 }
 
-export async function updateUserRequest(id: string, payload: any) {
-	return apiPut(API_ROUTES.user.updateUser(id), payload);
-}
-
-export function useUpdateUser() {
-	const qc = useQueryClient();
-	return useMutation<any, unknown, { id: string; payload: any }>({
-		mutationFn: async ({ id, payload }: { id: string; payload: any }) => {
-			const data = await updateUserRequest(id, payload);
-			return data;
-		},
-		onSuccess: (data: any, vars: any) => {
-			try {
-				if (vars?.id) qc.setQueryData(["currentUser", vars.id], data);
-				// also update users list cache if present
-				qc.invalidateQueries({ queryKey: ["users"] });
-				qc.invalidateQueries({ queryKey: ["currentUser", vars?.id] });
-			} catch (e) {
-				// ignore cache update errors
-			}
-		},
-	} as any);
-}
-
 export async function suspendUserRequest(userId: string) {
 	return apiPost(API_ROUTES.user.suspendUser(userId), {});
 }
@@ -107,4 +83,44 @@ export function useGetCurrentUser(enabled = true) {
 		queryFn: async () => getUserById(id!),
 		enabled: !!id && enabled,
 	} as any);
+}
+
+export async function updateUserRequest(id: string, payload: any) {
+	return apiPost(API_ROUTES.user.updateUser(id), payload);
+}
+
+export function useUpdateUser() {
+	return useMutation({
+		mutationFn: async ({ id, payload }: { id: string; payload: any }) => {
+			const data = await updateUserRequest(id, payload);
+			return data;
+		},
+	});
+}
+
+// --- create user ---
+export async function createUserRequest(payload: any) {
+	return apiPost(API_ROUTES.user.createUser, payload);
+}
+
+export function useCreateUser() {
+	return useMutation<any, unknown, any>({
+		mutationFn: async (payload: any) => {
+			const data = await createUserRequest(payload);
+			return data;
+		},
+	});
+}
+
+export async function uploadUserProfileRequest(userId: string, key: string) {
+	return apiPost(API_ROUTES.user.uploadUserProfile(userId), { key });
+}
+
+export function useUploadUserProfile() {
+	return useMutation<any, unknown, { userId: string; key: string }>({
+		mutationFn: async ({ userId, key }) => {
+			const data = await uploadUserProfileRequest(userId, key);
+			return data;
+		},
+	});
 }

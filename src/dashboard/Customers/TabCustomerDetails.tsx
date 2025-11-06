@@ -3,7 +3,7 @@ import SectionTitle from "@/components/common/SectionTitle";
 import KeyValueRow from "@/components/common/KeyValueRow";
 
 const titleSectionStyle = "flex flex-col gap-3";
-export default function TabCustomerDetails() {
+export default function TabCustomerDetails({ customer }: { customer: any }) {
 	const files = [
 		{ url: "#", label: "Indigene certificate" },
 		{ url: "#", label: "NIN" },
@@ -18,9 +18,40 @@ export default function TabCustomerDetails() {
 				<section className={titleSectionStyle}>
 					<SectionTitle title="Personal information" />
 					<div className="space-y-2">
-						<KeyValueRow label="Customer full name" value="Tom Deo James" leftClassName="text-sm text-muted-foreground" rightClassName="text-right" />
-						<KeyValueRow label="Email" value="dunny@gmail.com" leftClassName="text-sm text-muted-foreground" rightClassName="text-right" />
-						<KeyValueRow label="Whatsapp number" value="+2348134567890" leftClassName="text-sm text-muted-foreground" rightClassName="text-right" />
+						<KeyValueRow
+							label="Customer full name"
+							value={customer?.fullName || "Tom Deo James"}
+							leftClassName="text-sm text-muted-foreground"
+							rightClassName="text-right"
+						/>
+						<KeyValueRow
+							label="Email"
+							value={customer?.email || "dunny@gmail.com"}
+							leftClassName="text-sm text-muted-foreground"
+							rightClassName="text-right"
+						/>
+						<KeyValueRow
+							label="Whatsapp number"
+							value={customer?.phoneNumber || "+2348134567890"}
+							leftClassName="text-sm text-muted-foreground"
+							rightClassName="text-right"
+						/>
+						{customer?.customerCode && (
+							<KeyValueRow
+								label="Customer code"
+								value={customer.customerCode}
+								leftClassName="text-sm text-muted-foreground"
+								rightClassName="text-right"
+							/>
+						)}
+						{customer?.createdAt && (
+							<KeyValueRow
+								label="Created at"
+								value={new Date(customer.createdAt).toLocaleDateString()}
+								leftClassName="text-sm text-muted-foreground"
+								rightClassName="text-right"
+							/>
+						)}
 						<KeyValueRow
 							label="Home Address"
 							value="3 ikorudu street lagos"

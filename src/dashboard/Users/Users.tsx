@@ -24,17 +24,20 @@ export default function Users() {
 	const navigate = useNavigate();
 	const dispatch = useDispatch();
 	const storedUsers = useSelector((s: RootState) => s.users.list ?? []);
-	const pages = Math.max(1, Math.ceil((storedUsers.length || 0) / 10));
+	const [total, setTotal] = React.useState(0);
+	const pages = Math.max(1, Math.ceil(total / 10));
 	const [query, setQuery] = React.useState("");
 	const [roleFilter, setRoleFilter] = React.useState<string | null>(null);
 
-	const { data: usersData, isLoading } = useGetAllUsers(true as any);
+	const { data: rawData, isLoading } = useGetAllUsers(true as any);
+	const data: any = rawData;
 
 	React.useEffect(() => {
-		if (usersData && Array.isArray(usersData)) {
-			dispatch(setUsers(usersData));
+		if (data?.data && Array.isArray(data.data)) {
+			dispatch(setUsers(data.data));
+			setTotal(data.pagination?.total || data.data.length);
 		}
-	}, [usersData, dispatch]);
+	}, [data, dispatch]);
 
 	const renderField = (val: any) => {
 		if (val === null || val === undefined) return "-";
@@ -57,7 +60,7 @@ export default function Users() {
 	const getPhone = (r: any) => (isUser(r) ? r.phoneNumber ?? "-" : r.phone ?? "-");
 	const getRole = (r: any) => (isUser(r) ? (typeof r.role === "string" ? r.role : r.role?.role ?? "-") : r.role ?? "-");
 	const getAssigned = (r: any) => (isUser(r) ? "-" : r.assigned ?? "-");
-	const getSalary = (r: any) => (isUser(r) ? "-" : r.salary ?? "-");
+	const getSalary = (r: any) => r.salaryAmount ?? "-";
 
 	const normalizedQuery = query.trim().toLowerCase();
 	const visibleUsers = (storedUsers || []).filter((u: any) => {
@@ -117,40 +120,53 @@ export default function Users() {
 													showClear
 												/>
 											</div>
-											<DropdownMenu>
-												<DropdownMenuTrigger asChild>
-													<button type="button" className={`${preTableButtonStyle} text-white bg-primary ml-auto`}>
-														<IconWrapper className="text-base">
-															<FilterIcon />
-														</IconWrapper>
-														<span className="hidden sm:inline">Filter</span>
+											<div className="flex items-center gap-2">
+												<DropdownMenu>
+													<DropdownMenuTrigger asChild>
+														<button type="button" className={`${preTableButtonStyle} text-white bg-primary ml-auto`}>
+															<IconWrapper className="text-base">
+																<FilterIcon />
+															</IconWrapper>
+															<span className="hidden sm:inline">Filter</span>
+														</button>
+													</DropdownMenuTrigger>
+													<DropdownMenuContent align="start" sideOffset={6} className="w-64">
+														<div className="px-3 py-2">
+															<div className="text-sm text-muted-foreground mb-2">Filter by role</div>
+															<Select value={roleFilter ?? "__all"} onValueChange={(v) => setRoleFilter(v === "__all" ? null : (v as string))}>
+																<SelectTrigger size="sm" className="h-9 w-full">
+																	<SelectValue placeholder="All roles" />
+																</SelectTrigger>
+																<SelectContent>
+																	<SelectItem value="__all">All</SelectItem>
+																	{Array.from(
+																		new Set(
+																			(storedUsers || [])
+																				.map((u: any) => (typeof u.role === "string" ? u.role : u.role?.role || u.role?.role || ""))
+																				.filter(Boolean)
+																		)
+																	).map((r: string) => (
+																		<SelectItem key={r} value={r}>
+																			{r}
+																		</SelectItem>
+																	))}
+																</SelectContent>
+															</Select>
+														</div>
+													</DropdownMenuContent>
+												</DropdownMenu>
+
+												{/* Clear filter button shown when a role filter is active */}
+												{roleFilter ? (
+													<button
+														type="button"
+														onClick={() => setRoleFilter(null)}
+														className="ml-2 text-sm text-muted-foreground hover:text-primary"
+														aria-label="Clear role filter">
+														Clear
 													</button>
-												</DropdownMenuTrigger>
-												<DropdownMenuContent align="start" sideOffset={6} className="w-64">
-													<div className="px-3 py-2">
-														<div className="text-sm text-muted-foreground mb-2">Filter by role</div>
-														<Select onValueChange={(v) => setRoleFilter(v === "__all" ? null : (v as string))}>
-															<SelectTrigger size="sm" className="h-9 w-full">
-																<SelectValue placeholder="All roles" />
-															</SelectTrigger>
-															<SelectContent>
-																<SelectItem value="__all">All</SelectItem>
-																{Array.from(
-																	new Set(
-																		(storedUsers || [])
-																			.map((u: any) => (typeof u.role === "string" ? u.role : u.role?.role || u.role?.role || ""))
-																			.filter(Boolean)
-																	)
-																).map((r: string) => (
-																	<SelectItem key={r} value={r}>
-																		{r}
-																	</SelectItem>
-																))}
-															</SelectContent>
-														</Select>
-													</div>
-												</DropdownMenuContent>
-											</DropdownMenu>
+												) : null}
+											</div>
 										</div>
 									</div>
 
@@ -219,7 +235,7 @@ export default function Users() {
 						)}
 
 						<div className="mt-8 flex flex-col md:flex-row text-center md:text-start justify-center items-center">
-							<span className="text-sm text-nowrap">Total of ({storedUsers.length ? storedUsers.length : 0})</span>
+							<span className="text-sm text-nowrap">Total of ({total})</span>
 							<div className="ml-auto">
 								<CompactPagination page={page} pages={pages} onPageChange={setPage} />
 							</div>

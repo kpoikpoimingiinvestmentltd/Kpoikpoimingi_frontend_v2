@@ -41,7 +41,7 @@ export default function Avatar({ src = null, alt = "avatar", size = 128, variant
 
 	return (
 		<div className={baseClasses} style={{ width: size, height: size }}>
-			{preview ? <Image src={preview} alt={alt} className="w-full h-full object-cover" /> : <div className="text-gray-400">No image</div>}
+			{preview ? <Image src={preview} alt={alt} className="w-full h-full object-cover object-top" /> : <div className="text-gray-400">No image</div>}
 
 			{variant === "editable" && (
 				<>

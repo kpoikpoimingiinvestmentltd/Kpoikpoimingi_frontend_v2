@@ -1,6 +1,16 @@
 import CustomCard from "@/components/base/CustomCard";
 import PageTitles from "@/components/common/PageTitles";
-import { IconWrapper } from "@/assets/icons";
+import {
+	ContractCancelledIcon,
+	ContractPausedIcon,
+	ContractResumedIcon,
+	ContractTerminatedIcon,
+	IconWrapper,
+	MissedPaymentIcon,
+	NewCustomerAddIcon,
+	NotificationIcon,
+	ReceiptIssuedIcon,
+} from "@/assets/icons";
 import CompactPagination from "@/components/ui/compact-pagination";
 import React from "react";
 import EmptyData from "../../components/common/EmptyData";
@@ -8,7 +18,6 @@ import { useGetNotifications } from "@/api/notifications";
 import { useDispatch, useSelector } from "react-redux";
 import type { RootState } from "@/store";
 import { setNotifications, setPagination, setLoading } from "@/store/notificationsSlice";
-import type { NotificationItem as NotificationType } from "@/types/notifications";
 import { useMarkAllNotificationsRead } from "@/api/notifications";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -34,7 +43,7 @@ export default function NotificationsPage() {
 
 	React.useEffect(() => {
 		if (!data) return;
-		dispatch(setNotifications(data.data as NotificationType[]));
+		dispatch(setNotifications(data.data.map((n) => ({ id: n.id, title: n.message, time: n.createdAt, read: n.isRead, type: n.type?.type }))));
 		dispatch(setPagination(data.pagination));
 	}, [data, dispatch]);
 
@@ -65,7 +74,7 @@ export default function NotificationsPage() {
 							},
 						})
 					}
-					className="bg-primary text-white px-4 py-2 rounded-md">
+					className="bg-primary text-white px-4 text-sm py-2 rounded-md">
 					{markAllMutation.isPending ? "Processing..." : "Mark all read"}
 				</button>
 			</div>
@@ -77,7 +86,7 @@ export default function NotificationsPage() {
 							<h3 className="text-lg font-semibold">Today</h3>
 							<div className="flex flex-col gap-3">
 								{notifications.map((n, i) => (
-									<NotificationItem key={n.id ?? i} {...n} />
+									<NotificationItem key={n.id ?? i} title={n.title} time={new Date(n.time || "").toLocaleString()} type={n.type} />
 								))}
 							</div>
 
@@ -100,27 +109,30 @@ type Notification = {
 	title: string;
 	subtitle?: string;
 	time?: string;
-	type?: string; // for icon selection
+	type?: string;
 };
 
-function NotificationItem({ title, subtitle, time, type }: Notification) {
-	const iconMap: Record<string, string> = {
-		customer: "🧑‍💼",
-		contract: "📄",
-		payment: "💸",
-		default: "🔔",
+function NotificationItem({ title, time, type }: Notification) {
+	const iconMap: Record<string, string | React.ReactNode> = {
+		CONTRACT_PAUSED: <ContractPausedIcon />,
+		CONTRACT_RESUMED: <ContractResumedIcon />,
+		CONTRACT_TERMINATED: <ContractTerminatedIcon />,
+		CONTRACT_CANCELLED: <ContractCancelledIcon />,
+		NEW_CUSTOMER_REGISTRATION: <NewCustomerAddIcon />,
+		MISSED_PAYMENT: <MissedPaymentIcon />,
+		RECEIPT_ISSUED: <ReceiptIssuedIcon />,
+		default: <NotificationIcon />,
 	};
 	const icon = iconMap[type ?? "default"] ?? iconMap.default;
 	return (
-		<div className="flex items-start gap-4 p-5 rounded-md  bg-card">
-			<IconWrapper className="bg-[#1312120D] w-10 h-10 text-primary rounded-md">{icon}</IconWrapper>
+		<div className="flex items-center gap-4 p-5 rounded-md bg-card">
+			<IconWrapper className="bg-[#1312120D] w-10 h-10 text-xl text-primary rounded-md">{icon}</IconWrapper>
 			<div className="flex-1">
-				<div className="flex justify-between items-start">
-					<div>
-						<div className="font-medium">{title}</div>
-						{subtitle && <p className="text-sm text-muted-foreground mt-1">{subtitle}</p>}
+				<div className="flex justify-between items-center">
+					<div className="max-w-2xl">
+						<p className="text-sm">{title}</p>
 					</div>
-					<p className="text-xs text-end text-gray-400">{time ?? ""}</p>
+					<p className="text-sm text-end text-gray-400">{time ?? ""}</p>
 				</div>
 			</div>
 		</div>

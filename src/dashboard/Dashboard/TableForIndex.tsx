@@ -5,48 +5,11 @@ import { Link } from "react-router";
 import { _router } from "@/routes/_router";
 import Badge from "@/components/base/Badge";
 import { EyeIcon } from "@/assets/icons";
-
-// Dummy data for demonstration
-const customers = [
-	{
-		id: "ID 123456",
-		name: "Tom Doe James",
-		property: "12 inches HP laptop",
-		paymentType: "Hire purchase",
-		status: "Active",
-		totalPayment: "500,000",
-		date: "30-4-2025",
-	},
-	{
-		id: "ID 123456",
-		name: "Tom Doe James",
-		property: "12 inches HP laptop",
-		paymentType: "Hire purchase",
-		status: "Active",
-		totalPayment: "500,000",
-		date: "30-4-2025",
-	},
-	{
-		id: "ID 123456",
-		name: "Tom Doe James",
-		property: "12 inches HP laptop",
-		paymentType: "Hire purchase",
-		status: "Active",
-		totalPayment: "500,000",
-		date: "30-4-2025",
-	},
-	{
-		id: "ID 123456",
-		name: "Tom Doe James",
-		property: "12 inches HP laptop",
-		paymentType: "Hire purchase",
-		status: "Pending",
-		totalPayment: "500,000",
-		date: "30-4-2025",
-	},
-];
+import { useGetAllCustomers } from "@/api/customer";
+import { TableSkeleton } from "@/components/common/Skeleton";
 
 export default function TableForIndex() {
+	const { data: customersResponse, isLoading } = useGetAllCustomers(1, 5);
 	return (
 		<CustomCard className="bg-white w-full rounded-lg p-4 border border-gray-100">
 			<div className="flex items-center justify-between mb-2">
@@ -61,37 +24,49 @@ export default function TableForIndex() {
 						<TableRow className="bg-[#EAF6FF] h-12 overflow-hidden py-4 rounded-lg">
 							<TableHead>Customer ID</TableHead>
 							<TableHead>Name</TableHead>
-							<TableHead>Property Name</TableHead>
-							<TableHead>Payment Type</TableHead>
+							<TableHead>Email</TableHead>
+							<TableHead>Phone</TableHead>
 							<TableHead>Status</TableHead>
-							<TableHead>Total payment</TableHead>
 							<TableHead>Date</TableHead>
 							<TableHead>Action</TableHead>
 						</TableRow>
 					</TableHeader>
 					<TableBody>
-						{customers.map((row, idx) => (
-							<TableRow key={idx} className="hover:bg-[#F6FBFF]">
-								<TableCell>{row.id}</TableCell>
-								<TableCell>{row.name}</TableCell>
-								<TableCell>{row.property}</TableCell>
-								<TableCell>{row.paymentType}</TableCell>
-								<TableCell>
-									<Badge value={row.status} size="sm" />
+						{isLoading ? (
+							<TableRow>
+								<TableCell colSpan={7} className="text-center py-8">
+									<div className="flex justify-center">
+										<TableSkeleton rows={3} cols={7} />
+									</div>
 								</TableCell>
-								<TableCell>{row.totalPayment}</TableCell>
-								<TableCell>{row.date}</TableCell>
-								<TableCell>
-									<div className="flex items-center gap-2">
-										<Link to={_router.dashboard.customerDetails} className="text-primary hover:bg-primary/10 p-2 rounded-full">
+							</TableRow>
+						) : (customersResponse as any)?.data && (customersResponse as any).data.length > 0 ? (
+							(customersResponse as any).data.map((customer: any, idx: number) => (
+								<TableRow key={idx} className="hover:bg-[#F6FBFF]">
+									<TableCell>{customer.id}</TableCell>
+									<TableCell>{customer.fullName}</TableCell>
+									<TableCell>{customer.email || "-"}</TableCell>
+									<TableCell>{customer.phoneNumber || "-"}</TableCell>
+									<TableCell>
+										<Badge value={customer.status || "Active"} size="sm" />
+									</TableCell>
+									<TableCell>{customer.createdAt ? new Date(customer.createdAt).toLocaleDateString() : "-"}</TableCell>
+									<TableCell>
+										<Link to={_router.dashboard.customerDetails} className="text-primary hover:bg-primary/10 p-2 rounded-full inline-block">
 											<IconWrapper>
 												<EyeIcon />
 											</IconWrapper>
 										</Link>
-									</div>
+									</TableCell>
+								</TableRow>
+							))
+						) : (
+							<TableRow>
+								<TableCell colSpan={7} className="text-center py-8 text-gray-400">
+									No customers found
 								</TableCell>
 							</TableRow>
-						))}
+						)}
 					</TableBody>
 				</Table>
 			</div>

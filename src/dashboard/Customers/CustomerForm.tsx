@@ -12,11 +12,16 @@ import ActionButton from "../../components/base/ActionButton";
 type Props = {
 	onSubmit?: (data: any) => void;
 	initial?: any;
+	sectionTitle?: (additionalClasses?: string) => string;
+	centeredContainer?: (additionalClasses?: string) => string;
 };
 
-export default function CustomerForm({ onSubmit, initial }: Props) {
-	const EACH_SECTION_TITLE = "text-lg font-normal";
-	const CENTERED_CONTAINER = "mx-auto w-full md:w-2/3";
+export default function CustomerForm({ onSubmit, initial, sectionTitle: sectionTitleProp, centeredContainer: centeredContainerProp }: Props) {
+	const baseEachSectionTitle = "text-lg font-normal";
+	const baseCenteredContainer = "mx-auto w-full md:w-2/3 w-full";
+
+	const sectionTitle = sectionTitleProp || ((additionalClasses?: string) => twMerge(baseEachSectionTitle, additionalClasses));
+	const centeredContainer = centeredContainerProp || ((additionalClasses?: string) => twMerge(baseCenteredContainer, additionalClasses));
 	const [form, setForm] = React.useState(() => ({
 		fullName: initial?.fullName ?? "",
 		email: initial?.email ?? "",
@@ -71,8 +76,8 @@ export default function CustomerForm({ onSubmit, initial }: Props) {
 	return (
 		<form onSubmit={handleSubmit} className="space-y-6">
 			{/* Personal details - centered half width */}
-			<div className={CENTERED_CONTAINER}>
-				<h3 className={EACH_SECTION_TITLE}>Personal details</h3>
+			<div className={centeredContainer()}>
+				<h3 className={sectionTitle()}>Personal details</h3>
 
 				<div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
 					<CustomInput
@@ -132,8 +137,8 @@ export default function CustomerForm({ onSubmit, initial }: Props) {
 			<hr className="my-6" />
 
 			{/* Identification Document section */}
-			<div className={CENTERED_CONTAINER}>
-				<h3 className={EACH_SECTION_TITLE}>Identification Document</h3>
+			<div className={centeredContainer()}>
+				<h3 className={sectionTitle()}>Identification Document</h3>
 				<div className="mt-4 flex items-center gap-4">
 					<div className="flex items-center gap-2">
 						<label className="text-sm mr-2">Are you a driver?</label>
@@ -162,8 +167,8 @@ export default function CustomerForm({ onSubmit, initial }: Props) {
 			</div>
 			<hr className="my-6" />
 			{/* Next of Kin Details */}
-			<div className={CENTERED_CONTAINER}>
-				<h3 className={EACH_SECTION_TITLE}>Next Of Kin Details</h3>
+			<div className={centeredContainer()}>
+				<h3 className={sectionTitle()}>Next Of Kin Details</h3>
 				<div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
 					<CustomInput
 						label="Full Name"
@@ -223,8 +228,8 @@ export default function CustomerForm({ onSubmit, initial }: Props) {
 			<hr className="my-6" />
 
 			{/* Property Details */}
-			<div className={CENTERED_CONTAINER}>
-				<h3 className={EACH_SECTION_TITLE}>Property Details</h3>
+			<div className={centeredContainer()}>
+				<h3 className={sectionTitle()}>Property Details</h3>
 				<div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
 					<CustomInput
 						label="Property Name"
@@ -291,8 +296,8 @@ export default function CustomerForm({ onSubmit, initial }: Props) {
 
 			{/* Clarification & Employment & Guarantor sections */}
 			<div className="mt-6 space-y-6">
-				<div className={CENTERED_CONTAINER}>
-					<h3 className={EACH_SECTION_TITLE}>Clarification Details</h3>
+				<div className={centeredContainer()}>
+					<h3 className={sectionTitle()}>Clarification Details</h3>
 					<div className="mt-4 flex items-center gap-4">
 						<div className="flex items-center gap-2">
 							<label className="text-sm">Have you previously entered hire purchase agreement?</label>
@@ -341,8 +346,8 @@ export default function CustomerForm({ onSubmit, initial }: Props) {
 
 				<hr className="my-6" />
 
-				<div className={CENTERED_CONTAINER}>
-					<h3 className={EACH_SECTION_TITLE}>Employment Details</h3>
+				<div className={centeredContainer()}>
+					<h3 className={sectionTitle()}>Employment Details</h3>
 					<div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
 						<div>
 							<label className={labelStyle()}>Employment status*</label>
@@ -378,7 +383,7 @@ export default function CustomerForm({ onSubmit, initial }: Props) {
 				</div>
 
 				{/* Guarantors */}
-				<div className={CENTERED_CONTAINER}>
+				<div className={centeredContainer()}>
 					<CheckboxField
 						labelClassName="font-normal text-stone-600"
 						wrapperClassName="items-start mb-4 gap-3"
@@ -393,7 +398,7 @@ export default function CustomerForm({ onSubmit, initial }: Props) {
 					/>
 				</div>
 				{form.guarantors.map((g: any, idx: number) => (
-					<div key={idx} className={CENTERED_CONTAINER}>
+					<div key={idx} className={centeredContainer()}>
 						<h3 className="text-lg font-medium">Guarantor ({idx + 1})</h3>
 
 						<div className="mt-4">

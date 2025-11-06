@@ -12,13 +12,6 @@ import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent } from "@/compon
 import VATCollected from "./VATCollected";
 import InterestPenalties from "./InterestPenalties";
 
-// demo stat values (header cards)
-const stats = [
-	{ id: "income", title: "Total Income Earned", value: 50000000, currency: "NGN", variant: "income" },
-	{ id: "vat", title: "Total VAT Collected", value: 50000000, currency: "NGN", variant: "income" },
-	{ id: "interest", title: "Total Interest Penalties", value: 4000, currency: "NGN", variant: "income" },
-];
-
 // demo rows for VAT and interest (separate shapes)
 const vatRows = [
 	{
@@ -73,6 +66,31 @@ export default function ReportAnalytics() {
 	const pages = 6;
 	const [fromDate, setFromDate] = React.useState<string | null>("2025-04-02");
 	const [toDate, setToDate] = React.useState<string | null>("2025-07-12");
+
+	// Static stats data
+	const stats = [
+		{
+			id: "income",
+			title: "Total Income Earned",
+			value: 50000000,
+			currency: "NGN",
+			variant: "income",
+		},
+		{
+			id: "vat",
+			title: "Total VAT Collected",
+			value: 5000000,
+			currency: "NGN",
+			variant: "income",
+		},
+		{
+			id: "interest",
+			title: "Total Interest Penalties",
+			value: 2500000,
+			currency: "NGN",
+			variant: "income",
+		},
+	];
 
 	return (
 		<div className="flex flex-col gap-y-6">

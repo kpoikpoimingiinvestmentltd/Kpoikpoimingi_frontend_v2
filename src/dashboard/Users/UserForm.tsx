@@ -6,9 +6,14 @@ import * as React from "react";
 import { inputStyle } from "../../components/common/commonStyles";
 import { media } from "../../resources/images";
 import Avatar from "../../components/base/Avatar";
+import { usePresignUploadMutation } from "@/api/presign-upload.api";
+import { uploadFileToPresignedUrl } from "@/utils/media-upload";
+import { toast } from "sonner";
 import { CalendarIcon, EmailIcon, PhoneIcon } from "../../assets/icons";
+import { Spinner } from "@/components/ui/spinner";
 
 type FormShape = {
+	fullName?: string;
 	username?: string;
 	email?: string;
 	phone?: string;
@@ -28,13 +33,19 @@ export default function UserForm({
 	onChange = () => {},
 	onSubmit = () => {},
 	submitLabel = "Save Changes",
+	onAvatarUploaded,
+	isLoading = false,
 }: {
 	values: FormShape;
 	onChange?: (k: keyof FormShape, v: any) => void;
 	onSubmit?: () => void;
 	submitLabel?: string;
+	onAvatarUploaded?: (key: string) => void;
+	isLoading?: boolean;
 }) {
 	const { data: refData } = useGetReferenceData(true, false);
+	const [presignUpload] = usePresignUploadMutation();
+
 	const roleCandidates: { key: string; value: string }[] = React.useMemo(() => {
 		if (!refData) return [];
 
@@ -43,8 +54,7 @@ export default function UserForm({
 			const arr = (refData as any)[k];
 			if (Array.isArray(arr) && arr.length) {
 				return arr.map((it: any) => {
-					const value =
-						it.role ?? it.status ?? it.type ?? it.method ?? it.value ?? it.key ?? it.duration ?? it.intervals ?? it.percentage ?? it.rate ?? "";
+					const value = it.role;
 					const key = String(it.id ?? value ?? "");
 					return { key, value: String(value) };
 				});
@@ -57,8 +67,7 @@ export default function UserForm({
 				const t = String(sample.type ?? sample.key ?? "").toLowerCase();
 				if (t.includes("role") || k.toLowerCase().includes("role")) {
 					return v.map((it: any) => {
-						const value =
-							it.role ?? it.status ?? it.type ?? it.method ?? it.value ?? it.key ?? it.duration ?? it.intervals ?? it.percentage ?? it.rate ?? "";
+						const value = it.role;
 						const key = String(it.id ?? value ?? "");
 						return { key, value: String(value) };
 					});
@@ -68,6 +77,149 @@ export default function UserForm({
 
 		return [];
 	}, [refData]);
+
+	const bankCandidates: { key: string; value: string }[] = React.useMemo(() => {
+		if (!refData) return [];
+		const prefer = ["bankNames", "banks", "bank_list", "banks_list"];
+		for (const k of prefer) {
+			const arr = (refData as any)[k];
+			if (Array.isArray(arr) && arr.length) {
+				return arr.map((it: any) => {
+					const value = String(it.name ?? it.bank ?? it.value ?? it.key ?? "");
+					const key = String(it.id ?? value ?? "");
+					return { key, value };
+				});
+			}
+		}
+		// fallback: scan entries for a likely banks list
+		for (const [k, v] of Object.entries(refData)) {
+			if (Array.isArray(v) && v.length) {
+				const sample = v[0] as any;
+				if (String(sample.name ?? sample.bank ?? "").length > 0 && k.toLowerCase().includes("bank")) {
+					return (v as any[]).map((it: any) => ({
+						key: String(it.id ?? it.name ?? it.bank ?? ""),
+						value: String(it.name ?? it.bank ?? it.value ?? ""),
+					}));
+				}
+			}
+		}
+		return [];
+	}, [refData]);
+
+	const accountCandidates: { key: string; value: string }[] = React.useMemo(() => {
+		if (!refData) return [];
+		const prefer = ["accountTypes", "account_types", "account_type", "accountType"];
+		for (const k of prefer) {
+			const arr = (refData as any)[k];
+			if (Array.isArray(arr) && arr.length) {
+				return arr.map((it: any) => {
+					const value = String(it.type ?? it.name ?? it.accountType ?? it.value ?? it.key ?? "");
+					const key = String(it.id ?? value ?? "");
+					return { key, value };
+				});
+			}
+		}
+
+		for (const [, v] of Object.entries(refData)) {
+			if (Array.isArray(v) && v.length) {
+				const sample = v[0] as any;
+				if (
+					String(sample.type ?? sample.name ?? "")
+						.toLowerCase()
+						.includes("account")
+				) {
+					return (v as any[]).map((it: any) => ({
+						key: String(it.id ?? it.name ?? it.type ?? ""),
+						value: String(it.name ?? it.type ?? it.value ?? ""),
+					}));
+				}
+			}
+		}
+
+		return [];
+	}, [refData]);
+
+	const stateCandidates: { key: string; value: string }[] = React.useMemo(() => {
+		if (!refData) return [];
+		const prefer = ["stateOfOrigins", "state_of_origins", "states", "state_list", "stateOfOrigin"];
+		for (const k of prefer) {
+			const arr = (refData as any)[k];
+			if (Array.isArray(arr) && arr.length) {
+				return arr.map((it: any) => {
+					const value = String(it.state ?? it.name ?? it.value ?? "");
+					const key = String(it.id ?? value ?? "");
+					return { key, value };
+				});
+			}
+		}
+		// fallback: scan entries for state-like lists
+		for (const [k, v] of Object.entries(refData)) {
+			if (Array.isArray(v) && v.length) {
+				const sample = v[0] as any;
+				const t = String(sample.state ?? sample.name ?? "").toLowerCase();
+				if (t.length > 0 && (t.includes("state") || k.toLowerCase().includes("state"))) {
+					return (v as any[]).map((it: any) => ({
+						key: String(it.id ?? it.state ?? it.name ?? ""),
+						value: String(it.state ?? it.name ?? it.value ?? ""),
+					}));
+				}
+			}
+		}
+		return [];
+	}, [refData]);
+
+	async function handleAvatarFile(file: File | null, preview?: string) {
+		onChange("avatar" as any, preview ?? null);
+		if (!file) return;
+
+		try {
+			// Step 1: Get presigned URL (adapted from purchase-policy.tsx uploadFile)
+			const presignResult = await presignUpload({
+				filename: file.name,
+				contentType: file.type,
+				relatedTable: "user",
+			}).unwrap();
+
+			const uploadUrl = (presignResult as any)?.url;
+			if (!uploadUrl) {
+				throw new Error("Presign upload did not return an uploadUrl");
+			}
+
+			// Step 2: Upload file to presigned URL
+			const uploadResult = await uploadFileToPresignedUrl(uploadUrl, file);
+			if (!uploadResult.success) {
+				throw new Error(uploadResult.error ?? "Upload failed");
+			}
+
+			// Step 3: Get the key and store it in form state (for payload inclusion, like mediaKeys in purchase-policy.tsx)
+			const mediaKey = (presignResult as any)?.key ?? (presignResult as any)?.data?.key;
+			if (mediaKey) {
+				onChange("avatar", mediaKey); // Store key in values.avatar for submission
+				// Optionally fetch view URL for preview
+				try {
+					const resp = await fetch(`/api/media/get-url-by-key?key=${encodeURIComponent(mediaKey)}`);
+					if (resp.ok) {
+						const json = await resp.json().catch(() => ({}));
+						const viewUrl = (json as any)?.url ?? (json as any)?.uploadUrl;
+						if (viewUrl) onChange("avatar" as any, viewUrl); // Update preview
+					}
+				} catch (err) {
+					console.error("Failed to fetch view URL", err);
+				}
+				// Notify parent if needed
+				if (typeof onAvatarUploaded === "function") onAvatarUploaded(mediaKey);
+			}
+		} catch (err: any) {
+			console.error("Avatar upload failed", err);
+			let message = "Unknown error";
+			if (err instanceof Error) message = err.message;
+			else if (typeof err === "string") message = err;
+			else if (err && typeof (err as any).message === "string") message = (err as any).message;
+			else message = String(err);
+			toast.error(`Avatar upload failed: ${message}`);
+		}
+	}
+
 	return (
 		<div className="max-w-4xl mx-auto">
 			<div className="flex flex-col items-center mb-6">
@@ -76,14 +228,27 @@ export default function UserForm({
 					alt="profile"
 					size={128}
 					variant="editable"
-					onChange={(_, preview) => onChange("avatar", preview ?? null)}
+					onChange={(file, preview) => {
+						// preview immediate; then attempt presign+upload in background
+						handleAvatarFile(file ?? null, preview);
+					}}
 				/>
 			</div>
 
 			<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 				<div>
 					<CustomInput
-						label="User Name*"
+						label="Full Name*"
+						labelClassName="text-sm block mb-2"
+						className={twMerge(inputStyle)}
+						value={values.fullName ?? ""}
+						onChange={(e) => onChange("fullName" as any, e.target.value)}
+					/>
+				</div>
+
+				<div>
+					<CustomInput
+						label="Username*"
 						labelClassName="text-sm block mb-2"
 						className={twMerge(inputStyle)}
 						value={values.username ?? ""}
@@ -111,6 +276,7 @@ export default function UserForm({
 						iconRight={<PhoneIcon />}
 					/>
 				</div>
+
 				<div>
 					<CustomInput
 						label="House Address*"
@@ -128,13 +294,20 @@ export default function UserForm({
 							<SelectValue placeholder="Select state" />
 						</SelectTrigger>
 						<SelectContent>
-							<SelectItem value="lagos">Lagos</SelectItem>
-							<SelectItem value="abuja">Abuja</SelectItem>
-							<SelectItem value="oyo">Oyo</SelectItem>
+							{stateCandidates.length === 0 ? (
+								<SelectItem value="none">Select</SelectItem>
+							) : (
+								// use id (s.key) as the Select value so parent receives the id string
+								stateCandidates.map((s) => (
+									<SelectItem key={s.key} value={s.key}>
+										{s.value}
+									</SelectItem>
+								))
+							)}
 						</SelectContent>
 					</Select>
 				</div>
-				<div>
+				<div className="">
 					<CustomInput
 						label="Date Of Birth*"
 						labelClassName="text-sm block mb-2"
@@ -146,7 +319,7 @@ export default function UserForm({
 					/>
 				</div>
 
-				<div className="md:col-span-2">
+				<div>
 					<label className="text-sm block mb-2">User Role*</label>
 					<Select value={values.role} onValueChange={(v) => onChange("role", v)}>
 						<SelectTrigger className={twMerge(inputStyle, "min-h-11")}>
@@ -154,9 +327,10 @@ export default function UserForm({
 						</SelectTrigger>
 						<SelectContent>
 							{roleCandidates.length === 0 ? (
-								<SelectItem value="admin">Admin</SelectItem>
+								<SelectItem value="1">Admin</SelectItem>
 							) : (
 								roleCandidates.map((r) => (
+									// use id (r.key) as the Select value so callers receive the numeric id as a string
 									<SelectItem key={r.key} value={r.key}>
 										{r.value}
 									</SelectItem>
@@ -192,25 +366,56 @@ export default function UserForm({
 							<SelectValue placeholder="Select account type" />
 						</SelectTrigger>
 						<SelectContent>
-							<SelectItem value="savings">Savings</SelectItem>
-							<SelectItem value="current">Current</SelectItem>
+							{accountCandidates.length === 0 ? (
+								<>
+									<SelectItem value="savings">Savings</SelectItem>
+									<SelectItem value="current">Current</SelectItem>
+								</>
+							) : (
+								accountCandidates.map((a) => (
+									<SelectItem key={a.key} value={a.key}>
+										{a.value}
+									</SelectItem>
+								))
+							)}
 						</SelectContent>
 					</Select>
 				</div>
 				<div>
-					<CustomInput
-						label="Bank Name*"
-						labelClassName="text-sm block mb-2"
-						className={twMerge(inputStyle)}
-						value={values.bankName ?? ""}
-						onChange={(e) => onChange("bankName", e.target.value)}
-					/>
+					<label className="text-sm block mb-2">Bank Name*</label>
+					<Select value={values.bankName} onValueChange={(v) => onChange("bankName", v)}>
+						<SelectTrigger className={twMerge(inputStyle, "min-h-11")}>
+							<SelectValue placeholder="Select bank" />
+						</SelectTrigger>
+						<SelectContent>
+							{bankCandidates.length === 0 ? (
+								<SelectItem value="none">Select</SelectItem>
+							) : (
+								bankCandidates.map((b) => (
+									<SelectItem key={b.key} value={b.key}>
+										{b.value}
+									</SelectItem>
+								))
+							)}
+						</SelectContent>
+					</Select>
 				</div>
 			</div>
 
 			<div className="mt-8 flex justify-center">
-				<button type="button" className="w-3/5 mx-auto bg-primary text-white rounded-md py-3" onClick={onSubmit}>
-					{submitLabel}
+				<button
+					type="button"
+					className="w-full md:w-3/5 mx-auto bg-primary text-white rounded-md py-3 flex items-center justify-center gap-2 disabled:opacity-60"
+					onClick={onSubmit}
+					disabled={isLoading}>
+					{isLoading ? (
+						<>
+							<Spinner className="size-4" />
+							<span>Processing...</span>
+						</>
+					) : (
+						submitLabel
+					)}
 				</button>
 			</div>
 		</div>

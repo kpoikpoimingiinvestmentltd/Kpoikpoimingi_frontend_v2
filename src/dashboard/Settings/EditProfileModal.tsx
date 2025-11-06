@@ -6,6 +6,19 @@ import Avatar from "../../components/base/Avatar";
 import { useGetCurrentUser } from "@/api/user";
 import { useForm } from "react-hook-form";
 import ActionButton from "../../components/base/ActionButton";
+import { usePresignUploadMutation } from "@/api/presign-upload.api";
+import { uploadFileToPresignedUrl } from "@/utils/media-upload";
+import { useUpdateUser } from "@/api/user";
+import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
+
+interface EditProfileFormData {
+	fullName: string;
+	email: string;
+	username: string;
+	phoneNumber?: string;
+	branchLocation?: string;
+}
 
 interface EditProfileFormData {
 	fullName: string;
@@ -19,6 +32,10 @@ export default function EditProfileModal({ open, onOpenChange }: { open: boolean
 	const { data: user, isLoading } = useGetCurrentUser(true);
 	const [profileImage, setProfileImage] = useState<File | null>(null);
 	const [profilePreview, setProfilePreview] = useState<string | null>(null);
+	const queryClient = useQueryClient();
+
+	const [presignUpload] = usePresignUploadMutation();
+	const updateUserMutation = useUpdateUser();
 
 	const {
 		register,
@@ -52,11 +69,53 @@ export default function EditProfileModal({ open, onOpenChange }: { open: boolean
 		}
 	}, [user, reset]);
 
-	const handleSave = handleSubmit((data) => {
-		// TODO: wire to API with mutation
-		console.log("Form data:", data);
-		console.log("Profile image:", profileImage);
-		onOpenChange(false);
+	const handleSave = handleSubmit(async (data) => {
+		try {
+			let mediaKey: string | undefined;
+
+			if (profileImage) {
+				// Upload the profile image
+				const presignResult = await presignUpload({
+					filename: profileImage.name,
+					contentType: profileImage.type,
+					relatedTable: "user",
+				}).unwrap();
+
+				// RTK Query unwrap should return the data but some responses may be nested; normalize here
+				const uploadUrl = (presignResult as any)?.uploadUrl ?? (presignResult as any)?.data?.uploadUrl ?? (presignResult as any)?.url;
+				if (!uploadUrl) {
+					console.error("Presign response missing uploadUrl", presignResult);
+					throw new Error("Presign upload did not return an uploadUrl");
+				}
+
+				const uploadResult = await uploadFileToPresignedUrl(uploadUrl, profileImage);
+				if (!uploadResult.success) {
+					throw new Error(uploadResult.error || "Upload failed");
+				}
+				mediaKey = presignResult.key;
+			}
+
+			// Update user profile
+			const updatePayload = {
+				...data,
+				...(mediaKey && { media: mediaKey }),
+			};
+
+			await updateUserMutation.mutateAsync({
+				id: user!.id,
+				payload: updatePayload,
+			});
+
+			// Invalidate current user query to refetch updated data
+			queryClient.invalidateQueries({ queryKey: ["currentUser", user!.id] });
+
+			toast.success("Profile updated successfully!");
+			onOpenChange(false);
+			setProfileImage(null);
+			setProfilePreview(null);
+		} catch (error: any) {
+			toast.error(`Failed to update profile: ${error.message || "Unknown error"}`);
+		}
 	});
 
 	const handleAvatarChange = (file: File | null, preview?: string) => {
@@ -142,8 +201,12 @@ export default function EditProfileModal({ open, onOpenChange }: { open: boolean
 						</div>
 
 						<div className="mt-6">
-							<ActionButton type="submit" isLoading={isLoading} className="w-full" disabled={isLoading}>
-								{isLoading ? "Loading..." : "Save Changes"}
+							<ActionButton
+								type="submit"
+								isLoading={isLoading || updateUserMutation.isPending}
+								className="w-full"
+								disabled={isLoading || updateUserMutation.isPending}>
+								{isLoading || updateUserMutation.isPending ? "Saving..." : "Save Changes"}
 							</ActionButton>
 						</div>
 					</form>

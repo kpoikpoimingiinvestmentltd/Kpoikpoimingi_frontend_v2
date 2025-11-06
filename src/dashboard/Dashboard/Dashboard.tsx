@@ -6,6 +6,7 @@ import PageTitles from "@/components/common/PageTitles";
 import { Link } from "react-router";
 import { _router } from "../../routes/_router";
 import { IconWrapper, PlusIcon } from "../../assets/icons";
+import { useGetIncomeAnalytics } from "@/api/analytics";
 
 export default function Dashboard() {
 	return (
@@ -46,11 +47,18 @@ export default function Dashboard() {
 }
 
 const PieLegend = () => {
+	const { data: incomeData } = useGetIncomeAnalytics();
+
 	const items = [
-		{ color: "#7C3AED", label: "Full Payment", amount: "400,000" },
-		{ color: "#E3901B", label: "Hire purchase", amount: "500,000" },
-		{ color: "#F3E9FF", label: "Unpaid dept", amount: "500,000" },
+		{ color: "#7C3AED", label: "Full Payment", value: (incomeData as any)?.fullPayment ?? 0 },
+		{ color: "#E3901B", label: "Hire purchase", value: (incomeData as any)?.hirePurchase ?? 0 },
+		{ color: "#F3E9FF", label: "Unpaid debt", value: (incomeData as any)?.unpaidDebt ?? 0 },
 	];
+
+	// Format number with commas
+	const formatAmount = (num: number) => {
+		return num.toLocaleString("en-US");
+	};
 
 	return (
 		<div className="flex flex-wrap justify-center lg:flex-col lg:items-start gap-4">
@@ -61,7 +69,7 @@ const PieLegend = () => {
 					</div>
 					<div>
 						<div className="font-medium">{it.label}</div>
-						<div className="text-[.89rem] text-gray-400">{it.amount}</div>
+						<div className="text-[.89rem] text-gray-400">{formatAmount(it.value)}</div>
 					</div>
 				</div>
 			))}

@@ -72,7 +72,7 @@ export default function CustomInput({
 				</div>
 			)}
 
-			<div className={"relative mt-auto"}>
+			<div className={"relative isolate mt-auto"}>
 				{iconLeft && (
 					<div className="absolute inset-y-0 left-0 opacity-50 pl-3 flex items-center pointer-events-none z-10">
 						<IconWrapper className="text-base">{iconLeft}</IconWrapper>

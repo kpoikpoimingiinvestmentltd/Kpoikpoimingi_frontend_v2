@@ -95,18 +95,14 @@ export default function SuccessModal({
 
 					{message && <div className="text-base text-center mt-2">{message}</div>}
 
-					<DialogFooter className="mt-2 w-full">
+					<DialogFooter className="mt-6 w-full flex flex-col justify-center items-center">
 						{/* If actions provided, render them; otherwise fall back to single primary button */}
 						{actions && actions.length > 0 ? (
-							<div className="w-full flex gap-3 items-center">
+							<div className="w-full flex flex-col gap-3 items-center">
 								{(actions as NonNullable<typeof actions>).map((a: NonNullable<typeof actions>[0], i: number) => {
 									const isPrimary = a.variant === "primary" || (!a.variant && i === 0);
-									const btnBase = a.fullWidth ? "px-16 py-3 mx-auto" : "px-10";
-									const merged = twMerge(
-										"py-3 rounded-md active-scale",
-										btnBase,
-										isPrimary ? "bg-primary text-white" : "border-2 bg-card border-primary"
-									);
+									const btnBase = a.fullWidth ? "w-full px-16 py-3" : "px-16 py-3";
+									const merged = twMerge("rounded-md active-scale", btnBase, isPrimary ? "bg-primary text-white" : "border-2 bg-card border-primary");
 									return (
 										<button
 											key={i}
@@ -123,7 +119,7 @@ export default function SuccessModal({
 								})}
 							</div>
 						) : (
-							<button onClick={handlePrimary} className="w-max mx-auto px-16 py-3 rounded-md bg-primary text-white">
+							<button onClick={handlePrimary} className="px-16 py-3 rounded-md bg-primary text-white">
 								{buttonLabel}
 							</button>
 						)}

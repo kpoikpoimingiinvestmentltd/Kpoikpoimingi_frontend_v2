@@ -20,8 +20,8 @@ export function AvatarSkeleton({ size = 36 }: { size?: number }) {
 
 export function CardSkeleton({ lines = 4 }: { lines?: number }) {
 	return (
-		<Skeleton className="p-4">
-			<div className="space-y-3">
+		<Skeleton className="p-4 bg-white rounded-lg">
+			<div className="space-y-3.5">
 				<div className="w-1/3 h-6 bg-gray-200 rounded" />
 				{Array.from({ length: lines }).map((_, i) => (
 					<div key={i} className="w-full h-4 bg-gray-200 rounded" />

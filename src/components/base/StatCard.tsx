@@ -34,15 +34,15 @@ export default function StatCard({
 		const periods = ["Daily", "Weekly", "Monthly", "Yearly"];
 		const [period, setPeriod] = useState<string>("Monthly");
 
-		const numeric = typeof value === "number" ? value : Number(String(value).replace(/[^0-9.-]+/g, ""));
-		const formatted = Number.isFinite(numeric) ? numeric.toLocaleString() : String(value);
+		// const numeric = typeof value === "number" ? value : Number(String(value).replace(/[^0-9.-]+/g, ""));
+		// const formatted = Number.isFinite(numeric) ? numeric.toLocaleString() : String(value);
 
 		return (
 			<>
 				<div className="mt-2">
-					<div className="text-2xl font-semibold flex items-center text-black">
+					<div className="flex items-center text-black">
 						<sub className="mr-1 text-sm font-normal text-stone-500">{currency}</sub>
-						{formatted}
+						<h1 className="text-2xl font-semibold">{value}</h1>
 					</div>
 					{badge ? badge : null}
 				</div>
@@ -80,16 +80,14 @@ export default function StatCard({
 				<Skeleton className="w-full bg-gray-100 dark:bg-gray-100/20 h-7 rounded-xs" />
 			) : (
 				<>
-					{variant === "income" ? (
-						<IncomeStat />
-					) : (
-						value && (
-							<div className={`flex items-center gap-2 mt-2`}>
-								<div className="text-2xl font-semibold text-black">{value}</div>
-								{badge ? badge : null}
-							</div>
-						)
-					)}
+					{variant === "income"
+						? IncomeStat()
+						: value && (
+								<div className={`flex items-center gap-2 mt-2`}>
+									<div className="text-2xl font-semibold text-black">{value}</div>
+									{badge ? badge : null}
+								</div>
+						  )}
 				</>
 			)}
 			<div className="mt-4 flex items-center">

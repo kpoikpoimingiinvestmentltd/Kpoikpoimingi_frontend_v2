@@ -14,6 +14,7 @@ import { setCategories as setCategoriesAction } from "@/store/categoriesSlice";
 import AddCategoryModal from "./AddCategoryModal";
 import EmptyData from "../../components/common/EmptyData";
 import ConfirmModal from "@/components/common/ConfirmModal";
+import { TableSkeleton } from "@/components/common/Skeleton";
 import { twMerge } from "tailwind-merge";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { _router } from "../../routes/_router";
@@ -28,7 +29,7 @@ export default function Categories() {
 	const dispatch = useDispatch();
 	const [page, setPage] = React.useState(1);
 	const [limit] = React.useState(10);
-	const { data: fetchedCategories } = useGetAllCategories(page, limit, true);
+	const { data: fetchedCategories, isLoading } = useGetAllCategories(page, limit, true);
 	const queryClient = useQueryClient();
 
 	const createMutation = useMutation<any, unknown, { category?: string; subCategories?: string[] }>({
@@ -236,67 +237,71 @@ export default function Categories() {
 								</div>
 							</div>
 							<div className="overflow-x-auto w-full mt-8">
-								<Table>
-									<TableHeader className="[&_tr]:border-0">
-										<TableRow className="bg-[#EAF6FF] h-12 overflow-hidden py-4 rounded-lg">
-											<TableHead>Product Categories</TableHead>
-											<TableHead>Sub Categories</TableHead>
-											<TableHead>Number Of Products</TableHead>
-											<TableHead>Action</TableHead>
-										</TableRow>
-									</TableHeader>
-									<TableBody>
-										{(() => {
-											// apply search & filter locally
-											const q = String(query ?? "")
-												.trim()
-												.toLowerCase();
-											const filtered = categories.filter((row) => {
-												if (categoryFilter) {
-													if ((row.title || "").toLowerCase() !== categoryFilter.toLowerCase()) return false;
-												}
-												if (!q) return true;
-												if ((row.title || "").toLowerCase().includes(q)) return true;
-												if (Array.isArray(row.subs) && row.subs.join(" ").toLowerCase().includes(q)) return true;
-												return false;
-											});
-											return filtered.map((row) => (
-												<TableRow key={row.id} className="hover:bg-[#F6FBFF]">
-													<TableCell className="text-[#13121280] align-top">{row.title}</TableCell>
-													<TableCell className="text-[#13121280] align-top">
-														<div className="text-balance w-80">{row.subs.join(", ")}</div>
-													</TableCell>
-													<TableCell className="text-[#13121280] align-top">{row.count}</TableCell>
-													<TableCell className="flex items-center gap-1">
-														<button
-															type="button"
-															className="p-2 flex items-center text-slate-600"
-															onClick={() => {
-																setEditing({ id: row.id, title: row.title, subs: row.subs });
-																setModalMode("edit");
-																setModalOpen(true);
-															}}>
-															<IconWrapper className="text-xl">
-																<EditIcon />
-															</IconWrapper>
-														</button>
-														<button
-															type="button"
-															className="text-red-500 bg-transparent p-2 flex items-center"
-															onClick={() => {
-																setToDelete({ id: row.id, title: row.title });
-																setConfirmOpen(true);
-															}}>
-															<IconWrapper>
-																<TrashIcon />
-															</IconWrapper>
-														</button>
-													</TableCell>
-												</TableRow>
-											));
-										})()}
-									</TableBody>
-								</Table>
+								{isLoading ? (
+									<TableSkeleton rows={6} cols={4} />
+								) : (
+									<Table>
+										<TableHeader className="[&_tr]:border-0">
+											<TableRow className="bg-[#EAF6FF] h-12 overflow-hidden py-4 rounded-lg">
+												<TableHead>Product Categories</TableHead>
+												<TableHead>Sub Categories</TableHead>
+												<TableHead>Number Of Products</TableHead>
+												<TableHead>Action</TableHead>
+											</TableRow>
+										</TableHeader>
+										<TableBody>
+											{(() => {
+												// apply search & filter locally
+												const q = String(query ?? "")
+													.trim()
+													.toLowerCase();
+												const filtered = categories.filter((row) => {
+													if (categoryFilter) {
+														if ((row.title || "").toLowerCase() !== categoryFilter.toLowerCase()) return false;
+													}
+													if (!q) return true;
+													if ((row.title || "").toLowerCase().includes(q)) return true;
+													if (Array.isArray(row.subs) && row.subs.join(" ").toLowerCase().includes(q)) return true;
+													return false;
+												});
+												return filtered.map((row) => (
+													<TableRow key={row.id} className="hover:bg-[#F6FBFF]">
+														<TableCell className="text-[#13121280] align-top">{row.title}</TableCell>
+														<TableCell className="text-[#13121280] align-top">
+															<div className="text-balance w-80">{row.subs.join(", ")}</div>
+														</TableCell>
+														<TableCell className="text-[#13121280] align-top">{row.count}</TableCell>
+														<TableCell className="flex items-center gap-1">
+															<button
+																type="button"
+																className="p-2 flex items-center text-slate-600"
+																onClick={() => {
+																	setEditing({ id: row.id, title: row.title, subs: row.subs });
+																	setModalMode("edit");
+																	setModalOpen(true);
+																}}>
+																<IconWrapper className="text-xl">
+																	<EditIcon />
+																</IconWrapper>
+															</button>
+															<button
+																type="button"
+																className="text-red-500 bg-transparent p-2 flex items-center"
+																onClick={() => {
+																	setToDelete({ id: row.id, title: row.title });
+																	setConfirmOpen(true);
+																}}>
+																<IconWrapper>
+																	<TrashIcon />
+																</IconWrapper>
+															</button>
+														</TableCell>
+													</TableRow>
+												));
+											})()}
+										</TableBody>
+									</Table>
+								)}
 							</div>
 
 							<AddCategoryModal

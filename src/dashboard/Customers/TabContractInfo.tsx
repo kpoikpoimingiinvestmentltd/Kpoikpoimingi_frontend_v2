@@ -48,13 +48,13 @@ export default function TabContractInfo() {
 
 			<div className="mt-6 space-y-3">
 				{visible.map((c) => (
-					<div key={c.id} className="flex items-center justify-between bg-[#f8fafc] rounded px-4 py-3">
-						<div className="text-sm">{c.title}</div>
+					<div key={c.id} className="flex items-center gap-8 justify-between bg-[#f8fafc] rounded px-4 py-3">
+						<p className="text-sm text-balance">{c.title}</p>
 						<button onClick={() => handleView(c)} className="text-sm text-primary flex items-center gap-2">
 							<IconWrapper>
 								<EyeIcon />
 							</IconWrapper>
-							<span>View Contract</span>
+							<span className="text-sm text-nowrap">View Contract</span>
 						</button>
 					</div>
 				))}
