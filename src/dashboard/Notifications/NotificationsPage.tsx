@@ -21,6 +21,7 @@ import { setNotifications, setPagination, setLoading } from "@/store/notificatio
 import { useMarkAllNotificationsRead } from "@/api/notifications";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function NotificationsPage() {
 	const [page, setPage] = React.useState(1);
@@ -80,7 +81,24 @@ export default function NotificationsPage() {
 			</div>
 
 			<div className="min-h-96 flex">
-				{!isEmpty ? (
+				{isLoading ? (
+					<CustomCard className="mt-5 p-6 sm:p-8 md:w-11/12 w-full">
+						<div className="flex flex-col gap-y-5">
+							<Skeleton className="h-6 w-24" />
+							<div className="flex flex-col gap-3">
+								{Array.from({ length: 5 }).map((_, i) => (
+									<div key={i} className="flex items-center gap-4 p-5 rounded-md bg-card">
+										<Skeleton className="w-10 h-10 rounded-md" />
+										<div className="flex-1">
+											<Skeleton className="h-4 w-3/4 mb-2" />
+											<Skeleton className="h-3 w-1/3" />
+										</div>
+									</div>
+								))}
+							</div>
+						</div>
+					</CustomCard>
+				) : !isEmpty ? (
 					<CustomCard className="mt-5 p-6 sm:p-8 md:w-11/12">
 						<div className="flex flex-col gap-y-5">
 							<h3 className="text-lg font-semibold">Today</h3>

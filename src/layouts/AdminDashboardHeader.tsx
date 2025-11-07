@@ -8,13 +8,25 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "../components/ui/dropdown-menu";
-import { IconWrapper, LogoutIcon, MenuIcon, NotificationIcon, ReceiptPlusIcon, SettingIcon, UserIcon } from "@/assets/icons";
+import { ChevronLeftIcon, IconWrapper, LogoutIcon, MenuIcon, NotificationIcon, ReceiptPlusIcon, SettingIcon, UserIcon } from "@/assets/icons";
 import { useGetCurrentUser } from "@/api/user";
 import { useGetUnreadNotificationCount } from "@/api/notifications";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { AvatarSkeleton, RectangleSkeleton } from "@/components/common/Skeleton";
 import GenerateReceiptModal from "@/dashboard/Receipt/GenerateReceiptModal";
-import { Link, NavLink } from "react-router";
+import { Link, NavLink, useLocation, useNavigate } from "react-router";
+
+const PAGES_WITH_BACK_BUTTON = [
+	_router.dashboard.customerDetails,
+	_router.dashboard.propertiesDetails,
+	_router.dashboard.contractDetails,
+	_router.dashboard.productRequestDetails,
+	_router.dashboard.debtDetails,
+	_router.dashboard.receiptDetails,
+	_router.dashboard.userDetailsPath,
+	_router.dashboard.customerDetailsReceipt,
+	_router.dashboard.contractReceipt,
+];
 
 interface AdminDashboardHeaderProps {
 	onSidebarOpen: () => void;
@@ -23,16 +35,36 @@ interface AdminDashboardHeaderProps {
 
 export default function AdminDashboardHeader({ onSidebarOpen, onLogoutOpen }: AdminDashboardHeaderProps) {
 	const [receiptOpen, setReceiptOpen] = React.useState(false);
+	const location = useLocation();
+	const navigate = useNavigate();
+
+	const shouldShowBackButton = PAGES_WITH_BACK_BUTTON.some((pattern) => {
+		const regex = pattern.replace(/:[^/]+/g, "[^/]+");
+		return new RegExp(`^${regex}$`).test(location.pathname);
+	});
+
 	return (
 		<div className="bg-white border-b border-gray-100 p-4 flex items-center justify-between sticky top-0 z-2">
-			<div className="flex items-center gap-4">
+			<div className="flex items-center gap-1">
+				{shouldShowBackButton && (
+					<button
+						className="flex bg-primary text-white p-2 sm:gap-1 active-scale rounded-lg items-center justify-center shadow-lg"
+						type="button"
+						onClick={() => navigate(-1)}
+						title="Go back to previous page">
+						<IconWrapper className="sm:text-2xl">
+							<ChevronLeftIcon />
+						</IconWrapper>
+						<span className="hidden min-[480px]:inline">Go Back</span>
+					</button>
+				)}
 				<button className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-neutral-800 xl:hidden" onClick={onSidebarOpen} aria-label="Open sidebar">
 					<IconWrapper>
 						<MenuIcon />
 					</IconWrapper>
 				</button>
 			</div>
-			<div className="flex items-center gap-3.5 pr-8">
+			<div className="flex items-center gap-3.5 md:pr-8">
 				<button
 					type="button"
 					className="gap-2 items-center hidden md:flex bg-gradient-to-t from-[#134DC1] to-[#03B4FA] active-scale text-white rounded-md py-2.5 px-3"

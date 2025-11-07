@@ -5,7 +5,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@
 import { inputStyle, labelStyle } from "@/components/common/commonStyles";
 import { twMerge } from "tailwind-merge";
 import UploadBox from "@/components/base/UploadBox";
-import { WhatsappIcon, CalendarIcon, PhoneIcon, EmailIcon } from "../../assets/icons";
+import { WhatsappIcon, CalendarIcon, PhoneIcon, EmailIcon, TrashIcon, IconWrapper, PlusIcon, MinusIcon } from "../../assets/icons";
 import CheckboxField from "@/components/base/CheckboxField";
 import ActionButton from "../../components/base/ActionButton";
 
@@ -14,57 +14,124 @@ type Props = {
 	initial?: any;
 	sectionTitle?: (additionalClasses?: string) => string;
 	centeredContainer?: (additionalClasses?: string) => string;
+	paymentMethod?: "once" | "installment";
 };
 
-export default function CustomerForm({ onSubmit, initial, sectionTitle: sectionTitleProp, centeredContainer: centeredContainerProp }: Props) {
+type PropertyItem = {
+	propertyName: string;
+	quantity: number;
+};
+
+type OncePaymentForm = {
+	fullName: string;
+	email: string;
+	whatsapp: string;
+	numberOfProperties: string;
+	properties: PropertyItem[];
+};
+
+type InstallmentPaymentForm = {
+	fullName: string;
+	email: string;
+	whatsapp: string;
+	dob: string;
+	address: string;
+	isDriver: boolean;
+	ninUploaded: boolean;
+	driverLicenseUploaded: boolean;
+	contractUploaded: boolean;
+	nextOfKin: { fullName: string; phone: string; relationship: string; spouseName: string; spousePhone: string; address: string };
+	propertyName: string;
+	paymentFrequency: string;
+	paymentDuration: string;
+	downPayment: string;
+	amountAvailable: string;
+	clarification: { previousAgreement: boolean; completedAgreement: boolean; prevCompany: string; reason: string };
+	employment: { status: string; employerName: string; employerAddress: string };
+	guarantors: Array<{
+		fullName: string;
+		occupation: string;
+		phone: string;
+		email: string;
+		employmentStatus: string;
+		homeAddress: string;
+		businessAddress: string;
+		stateOfOrigin: string;
+		votersUploaded: number;
+	}>;
+};
+
+export default function CustomerForm({
+	onSubmit,
+	initial,
+	sectionTitle: sectionTitleProp,
+	centeredContainer: centeredContainerProp,
+	paymentMethod,
+}: Props) {
 	const baseEachSectionTitle = "text-lg font-normal";
 	const baseCenteredContainer = "mx-auto w-full md:w-2/3 w-full";
 
 	const sectionTitle = sectionTitleProp || ((additionalClasses?: string) => twMerge(baseEachSectionTitle, additionalClasses));
 	const centeredContainer = centeredContainerProp || ((additionalClasses?: string) => twMerge(baseCenteredContainer, additionalClasses));
-	const [form, setForm] = React.useState(() => ({
-		fullName: initial?.fullName ?? "",
-		email: initial?.email ?? "",
-		whatsapp: initial?.whatsapp ?? "",
-		dob: initial?.dob ?? "",
-		address: initial?.address ?? "",
-		isDriver: initial?.isDriver ?? false,
-		ninUploaded: initial?.ninUploaded ?? false,
-		driverLicenseUploaded: initial?.driverLicenseUploaded ?? false,
-		contractUploaded: initial?.contractUploaded ?? false,
-		nextOfKin: initial?.nextOfKin ?? { fullName: "", phone: "", relationship: "", spouseName: "", spousePhone: "", address: "" },
-		propertyName: initial?.propertyName ?? "",
-		paymentFrequency: initial?.paymentFrequency ?? "Monthly",
-		paymentDuration: initial?.paymentDuration ?? "",
-		downPayment: initial?.downPayment ?? "",
-		amountAvailable: initial?.amountAvailable ?? "",
-		clarification: initial?.clarification ?? { previousAgreement: false, completedAgreement: false, prevCompany: "", reason: "" },
-		employment: initial?.employment ?? { status: "", employerName: "", employerAddress: "" },
-		guarantors: initial?.guarantors ?? [
-			{
-				fullName: "",
-				occupation: "",
-				phone: "",
-				email: "",
-				employmentStatus: "",
-				homeAddress: "",
-				businessAddress: "",
-				stateOfOrigin: "",
-				votersUploaded: 0,
-			},
-			{
-				fullName: "",
-				occupation: "",
-				phone: "",
-				email: "",
-				employmentStatus: "",
-				homeAddress: "",
-				businessAddress: "",
-				stateOfOrigin: "",
-				votersUploaded: 0,
-			},
-		],
-	}));
+
+	// Initialize form based on payment method
+	const initializeForm = () => {
+		if (paymentMethod === "once") {
+			return {
+				fullName: initial?.fullName ?? "",
+				email: initial?.email ?? "",
+				whatsapp: initial?.whatsapp ?? "",
+				numberOfProperties: initial?.numberOfProperties ?? "",
+				properties: initial?.properties ?? [{ propertyName: "", quantity: 1 }],
+			} as OncePaymentForm;
+		}
+
+		return {
+			fullName: initial?.fullName ?? "",
+			email: initial?.email ?? "",
+			whatsapp: initial?.whatsapp ?? "",
+			dob: initial?.dob ?? "",
+			address: initial?.address ?? "",
+			isDriver: initial?.isDriver ?? false,
+			ninUploaded: initial?.ninUploaded ?? false,
+			driverLicenseUploaded: initial?.driverLicenseUploaded ?? false,
+			contractUploaded: initial?.contractUploaded ?? false,
+			nextOfKin: initial?.nextOfKin ?? { fullName: "", phone: "", relationship: "", spouseName: "", spousePhone: "", address: "" },
+			propertyName: initial?.propertyName ?? "",
+			paymentFrequency: initial?.paymentFrequency ?? "Monthly",
+			paymentDuration: initial?.paymentDuration ?? "",
+			downPayment: initial?.downPayment ?? "",
+			amountAvailable: initial?.amountAvailable ?? "",
+			clarification: initial?.clarification ?? { previousAgreement: false, completedAgreement: false, prevCompany: "", reason: "" },
+			employment: initial?.employment ?? { status: "", employerName: "", employerAddress: "" },
+			guarantors: initial?.guarantors ?? [
+				{
+					fullName: "",
+					occupation: "",
+					phone: "",
+					email: "",
+					employmentStatus: "",
+					homeAddress: "",
+					businessAddress: "",
+					stateOfOrigin: "",
+					votersUploaded: 0,
+				},
+				{
+					fullName: "",
+					occupation: "",
+					phone: "",
+					email: "",
+					employmentStatus: "",
+					homeAddress: "",
+					businessAddress: "",
+					stateOfOrigin: "",
+					votersUploaded: 0,
+				},
+			],
+		} as InstallmentPaymentForm;
+	};
+
+	const [form, setForm] = React.useState(initializeForm);
 
 	const handleChange = (key: string, value: any) => setForm((s) => ({ ...s, [key]: value }));
 
@@ -73,6 +140,159 @@ export default function CustomerForm({ onSubmit, initial, sectionTitle: sectionT
 		onSubmit?.(form);
 	};
 
+	// Render the "Once" payment form (simplified form)
+	if (paymentMethod === "once") {
+		const onceForm = form as OncePaymentForm;
+		return (
+			<form onSubmit={handleSubmit} className="space-y-6">
+				<div className={centeredContainer()}>
+					<div className="mb-10 text-center">
+						<h3 className={sectionTitle("font-medium")}>Request Details</h3>
+					</div>
+
+					<div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+						<CustomInput
+							label="Full name"
+							required
+							labelClassName={labelStyle()}
+							value={onceForm.fullName}
+							onChange={(e) => handleChange("fullName", e.target.value)}
+							className={twMerge(inputStyle)}
+						/>
+
+						<CustomInput
+							label="Email"
+							required
+							labelClassName={labelStyle()}
+							value={onceForm.email}
+							onChange={(e) => handleChange("email", e.target.value)}
+							className={twMerge(inputStyle)}
+							iconRight={<EmailIcon />}
+						/>
+					</div>
+
+					<div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+						<CustomInput
+							label="Whatsapp number"
+							required
+							labelClassName={labelStyle()}
+							value={onceForm.whatsapp}
+							onChange={(e) => handleChange("whatsapp", e.target.value)}
+							className={twMerge(inputStyle)}
+							iconRight={<WhatsappIcon />}
+						/>
+						<CustomInput
+							label="Number of properties"
+							required
+							type="number"
+							labelClassName={labelStyle()}
+							value={onceForm.numberOfProperties}
+							onChange={(e) => handleChange("numberOfProperties", e.target.value)}
+							className={twMerge(inputStyle)}
+						/>
+					</div>
+
+					{/* Properties list */}
+					<div className="mt-6">
+						<h4 className="text-sm font-medium mb-4">Properties</h4>
+						{onceForm.properties.map((property, idx) => (
+							<div key={idx} className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+								<CustomInput
+									label={`Property Name${idx > 0 ? ` ${idx + 1}` : ""}`}
+									required
+									labelClassName={labelStyle()}
+									value={property.propertyName}
+									onChange={(e) => {
+										const updatedProperties = [...onceForm.properties];
+										updatedProperties[idx].propertyName = e.target.value;
+										handleChange("properties", updatedProperties);
+									}}
+									className={twMerge(inputStyle)}
+								/>
+
+								<div className="flex gap-2 items-end">
+									<div className="flex-1">
+										<label className={labelStyle()}>Quantity</label>
+										<div className="flex items-stretch gap-2 mt-1">
+											<button
+												type="button"
+												onClick={() => {
+													const updatedProperties = [...onceForm.properties];
+													if (updatedProperties[idx].quantity > 1) {
+														updatedProperties[idx].quantity--;
+														handleChange("properties", updatedProperties);
+													}
+												}}
+												className="bg-red-500 text-white px-3 py-2 rounded font-bold">
+												<IconWrapper>
+													<MinusIcon />
+												</IconWrapper>
+											</button>
+											<input
+												type="number"
+												value={property.quantity}
+												onChange={(e) => {
+													const updatedProperties = [...onceForm.properties];
+													updatedProperties[idx].quantity = Math.max(1, parseInt(e.target.value) || 1);
+													handleChange("properties", updatedProperties);
+												}}
+												className={twMerge(inputStyle, "flex-1 text-center")}
+												min="1"
+											/>
+											<button
+												type="button"
+												onClick={() => {
+													const updatedProperties = [...onceForm.properties];
+													updatedProperties[idx].quantity++;
+													handleChange("properties", updatedProperties);
+												}}
+												className="bg-primary text-white px-3 py-2 rounded font-bold">
+												<IconWrapper>
+													<PlusIcon />
+												</IconWrapper>
+											</button>
+										</div>
+									</div>
+									{onceForm.properties.length > 1 && (
+										<button
+											type="button"
+											onClick={() => {
+												const updatedProperties = onceForm.properties.filter((_, i) => i !== idx);
+												handleChange("properties", updatedProperties);
+											}}
+											className="bg-red-500 text-white px-3 py-3 rounded font-bold">
+											<IconWrapper>
+												<TrashIcon />
+											</IconWrapper>
+										</button>
+									)}
+								</div>
+							</div>
+						))}
+
+						<button
+							type="button"
+							onClick={() => {
+								const updatedProperties = [...onceForm.properties, { propertyName: "", quantity: 1 }];
+								handleChange("properties", updatedProperties);
+							}}
+							className="mt-4 px-4 py-2 bg-primary text-white rounded">
+							+ Add Property
+						</button>
+					</div>
+				</div>
+
+				<div className="flex justify-center mt-8">
+					<ActionButton type="submit" className="w-full md:w-2/3 bg-primary text-white py-3">
+						Send Request
+					</ActionButton>
+				</div>
+			</form>
+		);
+	}
+
+	// Render the installment payment form (full form)
+	const installmentForm = form as InstallmentPaymentForm;
 	return (
 		<form onSubmit={handleSubmit} className="space-y-6">
 			{/* Personal details - centered half width */}
@@ -84,7 +304,7 @@ export default function CustomerForm({ onSubmit, initial, sectionTitle: sectionT
 						label="Full name"
 						required
 						labelClassName={labelStyle()}
-						value={form.fullName}
+						value={installmentForm.fullName}
 						onChange={(e) => handleChange("fullName", e.target.value)}
 						className={twMerge(inputStyle)}
 					/>
@@ -93,7 +313,7 @@ export default function CustomerForm({ onSubmit, initial, sectionTitle: sectionT
 						label="Email"
 						required
 						labelClassName={labelStyle()}
-						value={form.email}
+						value={installmentForm.email}
 						onChange={(e) => handleChange("email", e.target.value)}
 						className={twMerge(inputStyle)}
 					/>
@@ -104,7 +324,7 @@ export default function CustomerForm({ onSubmit, initial, sectionTitle: sectionT
 						label="Whatsapp number"
 						required
 						labelClassName={labelStyle()}
-						value={form.whatsapp}
+						value={installmentForm.whatsapp}
 						onChange={(e) => handleChange("whatsapp", e.target.value)}
 						className={twMerge(inputStyle)}
 						iconRight={<WhatsappIcon />}
@@ -113,7 +333,7 @@ export default function CustomerForm({ onSubmit, initial, sectionTitle: sectionT
 						label="Date of birth"
 						required
 						labelClassName={labelStyle()}
-						value={form.dob}
+						value={installmentForm.dob}
 						type="date"
 						onChange={(e) => handleChange("dob", e.target.value)}
 						className={twMerge(inputStyle)}
@@ -124,7 +344,7 @@ export default function CustomerForm({ onSubmit, initial, sectionTitle: sectionT
 				<div className="mt-4">
 					<label className={labelStyle()}>Home Address*</label>
 					<Textarea
-						value={form.address}
+						value={installmentForm.address}
 						onChange={(e) => handleChange("address", e.target.value)}
 						className={twMerge(inputStyle, "h-auto min-h-24")}
 					/>
@@ -145,13 +365,13 @@ export default function CustomerForm({ onSubmit, initial, sectionTitle: sectionT
 						<button
 							type="button"
 							onClick={() => handleChange("isDriver", true)}
-							className={form.isDriver ? "bg-primary text-white px-3 py-1 rounded" : "border px-3 py-1 rounded"}>
+							className={installmentForm.isDriver ? "bg-primary text-white px-3 py-1 rounded" : "border px-3 py-1 rounded"}>
 							Yes
 						</button>
 						<button
 							type="button"
 							onClick={() => handleChange("isDriver", false)}
-							className={!form.isDriver ? "bg-primary text-white px-3 py-1 rounded" : "border px-3 py-1 rounded"}>
+							className={!installmentForm.isDriver ? "bg-primary text-white px-3 py-1 rounded" : "border px-3 py-1 rounded"}>
 							No
 						</button>
 					</div>
@@ -174,16 +394,16 @@ export default function CustomerForm({ onSubmit, initial, sectionTitle: sectionT
 						label="Full Name"
 						required
 						labelClassName={labelStyle()}
-						value={form.nextOfKin.fullName}
-						onChange={(e) => handleChange("nextOfKin", { ...form.nextOfKin, fullName: e.target.value })}
+						value={installmentForm.nextOfKin.fullName}
+						onChange={(e) => handleChange("nextOfKin", { ...installmentForm.nextOfKin, fullName: e.target.value })}
 						className={twMerge(inputStyle)}
 					/>
 					<CustomInput
 						label="Phone number"
 						required
 						labelClassName={labelStyle()}
-						value={form.nextOfKin.phone}
-						onChange={(e) => handleChange("nextOfKin", { ...form.nextOfKin, phone: e.target.value })}
+						value={installmentForm.nextOfKin.phone}
+						onChange={(e) => handleChange("nextOfKin", { ...installmentForm.nextOfKin, phone: e.target.value })}
 						className={twMerge(inputStyle)}
 					/>
 				</div>
@@ -191,7 +411,9 @@ export default function CustomerForm({ onSubmit, initial, sectionTitle: sectionT
 				<div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
 					<div className="col-span-full">
 						<label className={labelStyle()}>Relationship*</label>
-						<Select value={form.nextOfKin.relationship} onValueChange={(v) => handleChange("nextOfKin", { ...form.nextOfKin, relationship: v })}>
+						<Select
+							value={installmentForm.nextOfKin.relationship}
+							onValueChange={(v) => handleChange("nextOfKin", { ...installmentForm.nextOfKin, relationship: v })}>
 							<SelectTrigger className={twMerge(inputStyle, "w-full min-h-11")}>
 								<SelectValue placeholder="Select relationship" />
 							</SelectTrigger>
@@ -209,8 +431,8 @@ export default function CustomerForm({ onSubmit, initial, sectionTitle: sectionT
 						label="Spouse Name"
 						required
 						labelClassName={labelStyle()}
-						value={form.nextOfKin.spouseName}
-						onChange={(e) => handleChange("nextOfKin", { ...form.nextOfKin, spouseName: e.target.value })}
+						value={installmentForm.nextOfKin.spouseName}
+						onChange={(e) => handleChange("nextOfKin", { ...installmentForm.nextOfKin, spouseName: e.target.value })}
 						className={twMerge(inputStyle)}
 					/>
 				</div>
@@ -218,8 +440,8 @@ export default function CustomerForm({ onSubmit, initial, sectionTitle: sectionT
 				<div className="mt-4">
 					<label className={labelStyle()}>Address*</label>
 					<Textarea
-						value={form.nextOfKin.address}
-						onChange={(e) => handleChange("nextOfKin", { ...form.nextOfKin, address: e.target.value })}
+						value={installmentForm.nextOfKin.address}
+						onChange={(e) => handleChange("nextOfKin", { ...installmentForm.nextOfKin, address: e.target.value })}
 						className={twMerge(inputStyle)}
 					/>
 				</div>
@@ -230,18 +452,26 @@ export default function CustomerForm({ onSubmit, initial, sectionTitle: sectionT
 			{/* Property Details */}
 			<div className={centeredContainer()}>
 				<h3 className={sectionTitle()}>Property Details</h3>
+				{paymentMethod && (
+					<div className="mt-2 mb-6 p-3 bg-primary/10 border border-primary/30 rounded-md">
+						<p className="text-sm text-primary font-medium">
+							Selected Payment Method:{" "}
+							<span className="font-semibold">{paymentMethod === "installment" ? "Pay Installmentally" : "Pay at Once"}</span>
+						</p>
+					</div>
+				)}
 				<div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
 					<CustomInput
 						label="Property Name"
 						required
 						labelClassName={labelStyle()}
-						value={form.propertyName}
+						value={installmentForm.propertyName}
 						onChange={(e) => handleChange("propertyName", e.target.value)}
 						className={twMerge(inputStyle)}
 					/>
 					<div>
 						<label className={labelStyle()}>Payment frequency*</label>
-						<Select value={form.paymentFrequency} onValueChange={(v) => handleChange("paymentFrequency", v)}>
+						<Select value={installmentForm.paymentFrequency} onValueChange={(v) => handleChange("paymentFrequency", v)}>
 							<SelectTrigger className={twMerge(inputStyle, "w-full min-h-11")}>
 								<SelectValue placeholder="Select frequency" />
 							</SelectTrigger>
@@ -251,14 +481,13 @@ export default function CustomerForm({ onSubmit, initial, sectionTitle: sectionT
 							</SelectContent>
 						</Select>
 					</div>
-				</div>
-
+				</div>{" "}
 				<div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
 					<CustomInput
 						label="Payment duration"
 						required
 						labelClassName={labelStyle()}
-						value={form.paymentDuration}
+						value={installmentForm.paymentDuration}
 						onChange={(e) => handleChange("paymentDuration", e.target.value)}
 						className={twMerge(inputStyle)}
 					/>
@@ -266,26 +495,25 @@ export default function CustomerForm({ onSubmit, initial, sectionTitle: sectionT
 						label="Down payment amount"
 						required
 						labelClassName={labelStyle()}
-						value={form.downPayment}
+						value={installmentForm.downPayment}
 						onChange={(e) => handleChange("downPayment", e.target.value)}
 						className={twMerge(inputStyle)}
 					/>
 				</div>
-
 				<div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
 					<CustomInput
 						label="Why do you need this property"
 						required
 						labelClassName={labelStyle()}
-						value={form.clarification.reason}
-						onChange={(e) => handleChange("clarification", { ...form.clarification, reason: e.target.value })}
+						value={installmentForm.clarification.reason}
+						onChange={(e) => handleChange("clarification", { ...installmentForm.clarification, reason: e.target.value })}
 						className={twMerge(inputStyle)}
 					/>
 					<CustomInput
 						label="Amount available for down payment"
 						required
 						labelClassName={labelStyle()}
-						value={form.amountAvailable}
+						value={installmentForm.amountAvailable}
 						onChange={(e) => handleChange("amountAvailable", e.target.value)}
 						className={twMerge(inputStyle)}
 					/>
@@ -303,14 +531,14 @@ export default function CustomerForm({ onSubmit, initial, sectionTitle: sectionT
 							<label className="text-sm">Have you previously entered hire purchase agreement?</label>
 							<button
 								type="button"
-								onClick={() => handleChange("clarification", { ...form.clarification, previousAgreement: true })}
-								className={form.clarification.previousAgreement ? "bg-primary text-white px-3 py-1 rounded" : "border px-3 py-1 rounded"}>
+								onClick={() => handleChange("clarification", { ...installmentForm.clarification, previousAgreement: true })}
+								className={installmentForm.clarification.previousAgreement ? "bg-primary text-white px-3 py-1 rounded" : "border px-3 py-1 rounded"}>
 								Yes
 							</button>
 							<button
 								type="button"
-								onClick={() => handleChange("clarification", { ...form.clarification, previousAgreement: false })}
-								className={!form.clarification.previousAgreement ? "bg-primary text-white px-3 py-1 rounded" : "border px-3 py-1 rounded"}>
+								onClick={() => handleChange("clarification", { ...installmentForm.clarification, previousAgreement: false })}
+								className={!installmentForm.clarification.previousAgreement ? "bg-primary text-white px-3 py-1 rounded" : "border px-3 py-1 rounded"}>
 								No
 							</button>
 						</div>
@@ -321,14 +549,16 @@ export default function CustomerForm({ onSubmit, initial, sectionTitle: sectionT
 							<label className="text-sm">Have you completed that agreement?</label>
 							<button
 								type="button"
-								onClick={() => handleChange("clarification", { ...form.clarification, completedAgreement: true })}
-								className={form.clarification.completedAgreement ? "bg-primary text-white px-3 py-1 rounded" : "border px-3 py-1 rounded"}>
+								onClick={() => handleChange("clarification", { ...installmentForm.clarification, completedAgreement: true })}
+								className={installmentForm.clarification.completedAgreement ? "bg-primary text-white px-3 py-1 rounded" : "border px-3 py-1 rounded"}>
 								Yes
 							</button>
 							<button
 								type="button"
-								onClick={() => handleChange("clarification", { ...form.clarification, completedAgreement: false })}
-								className={!form.clarification.completedAgreement ? "bg-primary text-white px-3 py-1 rounded" : "border px-3 py-1 rounded"}>
+								onClick={() => handleChange("clarification", { ...installmentForm.clarification, completedAgreement: false })}
+								className={
+									!installmentForm.clarification.completedAgreement ? "bg-primary text-white px-3 py-1 rounded" : "border px-3 py-1 rounded"
+								}>
 								No
 							</button>
 						</div>
@@ -338,8 +568,8 @@ export default function CustomerForm({ onSubmit, initial, sectionTitle: sectionT
 						label="Previous Company"
 						required
 						labelClassName={labelStyle()}
-						value={form.clarification.prevCompany}
-						onChange={(e) => handleChange("clarification", { ...form.clarification, prevCompany: e.target.value })}
+						value={installmentForm.clarification.prevCompany}
+						onChange={(e) => handleChange("clarification", { ...installmentForm.clarification, prevCompany: e.target.value })}
 						className={twMerge(inputStyle)}
 					/>
 				</div>
@@ -351,7 +581,9 @@ export default function CustomerForm({ onSubmit, initial, sectionTitle: sectionT
 					<div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
 						<div>
 							<label className={labelStyle()}>Employment status*</label>
-							<Select value={form.employment.status} onValueChange={(v) => handleChange("employment", { ...form.employment, status: v })}>
+							<Select
+								value={installmentForm.employment.status}
+								onValueChange={(v) => handleChange("employment", { ...installmentForm.employment, status: v })}>
 								<SelectTrigger className={twMerge(inputStyle, "w-full min-h-11")}>
 									<SelectValue placeholder="Select status" />
 								</SelectTrigger>
@@ -366,8 +598,8 @@ export default function CustomerForm({ onSubmit, initial, sectionTitle: sectionT
 							label="Employer name"
 							required
 							labelClassName={labelStyle()}
-							value={form.employment.employerName}
-							onChange={(e) => handleChange("employment", { ...form.employment, employerName: e.target.value })}
+							value={installmentForm.employment.employerName}
+							onChange={(e) => handleChange("employment", { ...installmentForm.employment, employerName: e.target.value })}
 							className={twMerge(inputStyle)}
 						/>
 					</div>
@@ -375,8 +607,8 @@ export default function CustomerForm({ onSubmit, initial, sectionTitle: sectionT
 					<div className="mt-4">
 						<label className={labelStyle()}>Employer address*</label>
 						<Textarea
-							value={form.employment.employerAddress}
-							onChange={(e) => handleChange("employment", { ...form.employment, employerAddress: e.target.value })}
+							value={installmentForm.employment.employerAddress}
+							onChange={(e) => handleChange("employment", { ...installmentForm.employment, employerAddress: e.target.value })}
 							className={twMerge(inputStyle)}
 						/>
 					</div>
@@ -397,7 +629,7 @@ export default function CustomerForm({ onSubmit, initial, sectionTitle: sectionT
 						labelPosition="right"
 					/>
 				</div>
-				{form.guarantors.map((g: any, idx: number) => (
+				{installmentForm.guarantors.map((g: any, idx: number) => (
 					<div key={idx} className={centeredContainer()}>
 						<h3 className="text-lg font-medium">Guarantor ({idx + 1})</h3>
 
@@ -429,7 +661,7 @@ export default function CustomerForm({ onSubmit, initial, sectionTitle: sectionT
 								labelClassName={labelStyle()}
 								value={g.fullName}
 								onChange={(e) => {
-									const next = [...form.guarantors];
+									const next = [...installmentForm.guarantors];
 									next[idx] = { ...next[idx], fullName: e.target.value };
 									handleChange("guarantors", next);
 								}}
@@ -441,7 +673,7 @@ export default function CustomerForm({ onSubmit, initial, sectionTitle: sectionT
 								labelClassName={labelStyle()}
 								value={g.occupation}
 								onChange={(e) => {
-									const next = [...form.guarantors];
+									const next = [...installmentForm.guarantors];
 									next[idx] = { ...next[idx], occupation: e.target.value };
 									handleChange("guarantors", next);
 								}}
@@ -456,7 +688,7 @@ export default function CustomerForm({ onSubmit, initial, sectionTitle: sectionT
 								labelClassName={labelStyle()}
 								value={g.phone}
 								onChange={(e) => {
-									const next = [...form.guarantors];
+									const next = [...installmentForm.guarantors];
 									next[idx] = { ...next[idx], phone: e.target.value };
 									handleChange("guarantors", next);
 								}}
@@ -470,7 +702,7 @@ export default function CustomerForm({ onSubmit, initial, sectionTitle: sectionT
 								labelClassName={labelStyle()}
 								value={g.email}
 								onChange={(e) => {
-									const next = [...form.guarantors];
+									const next = [...installmentForm.guarantors];
 									next[idx] = { ...next[idx], email: e.target.value };
 									handleChange("guarantors", next);
 								}}
@@ -485,7 +717,7 @@ export default function CustomerForm({ onSubmit, initial, sectionTitle: sectionT
 								<Select
 									value={g.employmentStatus}
 									onValueChange={(v) => {
-										const next = [...form.guarantors];
+										const next = [...installmentForm.guarantors];
 										next[idx] = { ...next[idx], employmentStatus: v };
 										handleChange("guarantors", next);
 									}}>
@@ -506,7 +738,7 @@ export default function CustomerForm({ onSubmit, initial, sectionTitle: sectionT
 								labelClassName={labelStyle()}
 								value={g.homeAddress}
 								onChange={(e) => {
-									const next = [...form.guarantors];
+									const next = [...installmentForm.guarantors];
 									next[idx] = { ...next[idx], homeAddress: e.target.value };
 									handleChange("guarantors", next);
 								}}
@@ -521,7 +753,7 @@ export default function CustomerForm({ onSubmit, initial, sectionTitle: sectionT
 								labelClassName={labelStyle()}
 								value={g.businessAddress}
 								onChange={(e) => {
-									const next = [...form.guarantors];
+									const next = [...installmentForm.guarantors];
 									next[idx] = { ...next[idx], businessAddress: e.target.value };
 									handleChange("guarantors", next);
 								}}
@@ -534,7 +766,7 @@ export default function CustomerForm({ onSubmit, initial, sectionTitle: sectionT
 								labelClassName={labelStyle()}
 								value={g.stateOfOrigin}
 								onChange={(e) => {
-									const next = [...form.guarantors];
+									const next = [...installmentForm.guarantors];
 									next[idx] = { ...next[idx], stateOfOrigin: e.target.value };
 									handleChange("guarantors", next);
 								}}
