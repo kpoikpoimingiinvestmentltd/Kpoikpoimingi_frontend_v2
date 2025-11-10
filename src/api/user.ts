@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { apiGet, apiPost } from "@/services/apiClient";
+import { apiGet, apiPost, apiDelete } from "@/services/apiClient";
 import { API_ROUTES } from "./routes";
 import { store } from "@/store";
 import type { ChangePasswordInput, User, ResetPasswordResponse } from "@/types/user";
@@ -67,10 +67,8 @@ export function useGetAllUsers(enabled = true) {
 		queryKey: ["users"],
 		queryFn: async () => getAllUsers(),
 		enabled,
-		// keep previous data to avoid flicker
 		keepPreviousData: true,
 		onSuccess: (data: User[] | undefined) => {
-			// populate cache or do side effects as needed
 			if (data) qc.setQueryData(["users"], data);
 		},
 	} as any);
@@ -122,5 +120,21 @@ export function useUploadUserProfile() {
 			const data = await uploadUserProfileRequest(userId, key);
 			return data;
 		},
+	});
+}
+
+// --- delete user ---
+export async function deleteUserRequest(userId: string) {
+	return apiDelete(API_ROUTES.user.deleteUser(userId));
+}
+
+export function useDeleteUser() {
+	const qc = useQueryClient();
+	return useMutation({
+		mutationFn: async (userId: string) => {
+			const data = await deleteUserRequest(userId);
+			return data;
+		},
+		onSettled: () => qc.invalidateQueries({ queryKey: ["users"] }),
 	});
 }

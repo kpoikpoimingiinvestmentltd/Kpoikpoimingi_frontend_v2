@@ -13,6 +13,10 @@ import { TableSkeleton } from "@/components/common/Skeleton";
 import { useDispatch, useSelector } from "react-redux";
 import type { RootState } from "@/store";
 import { setUsers } from "@/store/usersSlice";
+import ConfirmModal from "@/components/common/ConfirmModal";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { deleteUserRequest } from "@/api/user";
 import type { User } from "@/types/user";
 import EmptyData from "@/components/common/EmptyData";
 import { Link, useNavigate } from "react-router";
@@ -28,6 +32,38 @@ export default function Users() {
 	const pages = Math.max(1, Math.ceil(total / 10));
 	const [query, setQuery] = React.useState("");
 	const [roleFilter, setRoleFilter] = React.useState<string | null>(null);
+
+	// delete confirmation state
+	const [toDelete, setToDelete] = React.useState<{ id?: string; title?: string } | null>(null);
+	const [confirmOpen, setConfirmOpen] = React.useState(false);
+
+	const queryClient = useQueryClient();
+
+	const deleteMutation = useMutation<any, unknown, string>({
+		mutationFn: (id: string) => deleteUserRequest(id),
+		onMutate: async (id: string) => {
+			await queryClient.cancelQueries({ queryKey: ["users"] });
+			const prev = storedUsers;
+			setTimeout(() => {
+				// optimistic UI: remove user from local store immediately
+				const next = (storedUsers || []).filter((u: any) => u.id !== id);
+				dispatch(setUsers(next));
+			}, 0);
+			return { prev };
+		},
+		onError: (_err: any, _id: any, context: any) => {
+			if (context?.prev) {
+				dispatch(setUsers(context.prev));
+			}
+			toast.error("Failed to delete user");
+		},
+		onSuccess: () => {
+			toast.success("User deleted");
+		},
+		onSettled: () => {
+			queryClient.invalidateQueries({ queryKey: ["users"] });
+		},
+	});
 
 	const { data: rawData, isLoading } = useGetAllUsers(true as any);
 	const data: any = rawData;
@@ -110,6 +146,33 @@ export default function Users() {
 										<h2 className="font-semibold">All Users</h2>
 										<div className="flex items-center gap-2">
 											<div className="relative md:w-80">
+												{/* Confirm delete modal for user */}
+												<ConfirmModal
+													open={confirmOpen}
+													onOpenChange={(o: boolean) => {
+														setConfirmOpen(o);
+														if (!o) setToDelete(null);
+													}}
+													title={toDelete ? `Delete ${toDelete.title}?` : "Delete user"}
+													subtitle={toDelete ? `Are you sure you want to delete ${toDelete.title}? This action cannot be undone.` : undefined}
+													actions={[
+														{
+															label: "Cancel",
+															onClick: () => true,
+															variant: "ghost",
+														},
+														{
+															label: deleteMutation.isPending ? "Deleting..." : "Delete",
+															onClick: async () => {
+																if (!toDelete?.id) return false;
+																await deleteMutation.mutateAsync(toDelete.id as string);
+																return true;
+															},
+															loading: deleteMutation.isPending,
+															variant: "destructive",
+														},
+													]}
+												/>
 												<CustomInput
 													type="search"
 													placeholder="Search by name or phone"
@@ -210,7 +273,15 @@ export default function Users() {
 																		{ key: "edit", label: "Edit Profile", danger: false },
 																		{ key: "deactivate", label: "Deactivate", danger: false },
 																		{ key: "reset", label: "Reset Password", danger: false },
-																		{ key: "delete", label: "Delete", danger: true },
+																		{
+																			key: "delete",
+																			label: "Delete",
+																			danger: true,
+																			action: () => {
+																				setToDelete({ id: row.id, title: String(getName(row)) });
+																				setConfirmOpen(true);
+																			},
+																		},
 																	].map((it) => (
 																		<DropdownMenuItem
 																			key={it.key}

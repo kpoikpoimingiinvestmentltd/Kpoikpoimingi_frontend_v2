@@ -8,9 +8,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import UserForm from "./UserForm";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { useResetPassword, useSuspendUser, useGetUser, useUpdateUser } from "@/api/user";
+import { useResetPassword, useSuspendUser, useGetUser, useUpdateUser, deleteUserRequest } from "@/api/user";
+import ConfirmModal from "@/components/common/ConfirmModal";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router";
 import { useGetReferenceData } from "@/api/reference";
-import { useQueryClient } from "@tanstack/react-query";
+import { _router } from "../../routes/_router";
 import { Spinner } from "@/components/ui/spinner";
 import SuccessModal from "@/components/common/SuccessModal";
 import { media } from "../../resources/images";
@@ -65,6 +68,23 @@ export default function UserDetails() {
 	const queryClient = useQueryClient();
 
 	const suspendMutation = useSuspendUser();
+	const navigate = useNavigate();
+	const [confirmOpen, setConfirmOpen] = useState(false);
+
+	const deleteMutation = useMutation({
+		mutationFn: async (id: string) => {
+			return deleteUserRequest(id);
+		},
+		onSuccess: () => {
+			toast.success("User deleted");
+			queryClient.invalidateQueries({ queryKey: ["users"] });
+			navigate(_router.dashboard.users);
+		},
+		onError: (err) => {
+			console.error("Delete user failed", err);
+			toast.error("Failed to delete user");
+		},
+	});
 
 	// reference data (statuses, roles, etc.)
 	const { data: refData } = useGetReferenceData();
@@ -166,6 +186,20 @@ export default function UserDetails() {
 							</>
 						) : (
 							<span>Deactivate</span>
+						)}
+					</button>
+					<button
+						type="button"
+						onClick={() => setConfirmOpen(true)}
+						disabled={deleteMutation.isPending}
+						className="flex items-center text-sm md:text-base gap-2 bg-red-700 rounded-sm px-8 py-2.5 active-scale transition text-white disabled:opacity-60">
+						{deleteMutation.isPending ? (
+							<>
+								<Spinner className="size-4" />
+								<span>Deleting...</span>
+							</>
+						) : (
+							<span>Delete</span>
 						)}
 					</button>
 				</div>
@@ -272,6 +306,29 @@ export default function UserDetails() {
 					</div>
 				</CustomCard>
 			</main>
+
+			{/* Confirm delete modal for this user */}
+			<ConfirmModal
+				open={confirmOpen}
+				onOpenChange={(o) => {
+					setConfirmOpen(o);
+				}}
+				title={"Delete user"}
+				subtitle={"Are you sure you want to delete this user? This action cannot be undone."}
+				actions={[
+					{ label: "Cancel", onClick: () => true, variant: "ghost" },
+					{
+						label: deleteMutation.isPending ? "Deleting..." : "Delete",
+						onClick: async () => {
+							if (!userId) return false;
+							await deleteMutation.mutateAsync(userId);
+							return true;
+						},
+						loading: deleteMutation.isPending,
+						variant: "destructive",
+					},
+				]}
+			/>
 
 			{/* Edit modal */}
 			<Dialog open={editOpen} onOpenChange={setEditOpen}>

@@ -4,8 +4,6 @@ import { useState } from "react";
 import { useNavigate } from "react-router";
 import { _router } from "../../routes/_router";
 
-// ...existing code
-
 export default function SelectPaymentMethod() {
 	const [selected, setSelected] = useState<"once" | "installment" | null>(null);
 	const navigate = useNavigate();

@@ -85,7 +85,7 @@ export default function AdminLogin() {
 					</div>
 				</div>
 
-				<div className="flex items-center justify-between gap-5 mt-4">
+				<div className="flex items-center justify-between gap-5">
 					<div className="flex items-center gap-2">
 						<Checkbox className={`${checkboxStyle} [&_*_svg]:text-black`} id="remember" />
 						<Label htmlFor="remember" className="font-normal cursor-pointer">

@@ -4,6 +4,11 @@ import CheckboxField from "@/components/base/CheckboxField";
 import { Label } from "@/components/ui/label";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { inputStyle, labelStyle, modalContentStyle, selectTriggerStyle } from "../../components/common/commonStyles";
+import { useGetReferenceData } from "@/api/reference";
+import { Spinner } from "@/components/ui/spinner";
+import { useForm, Controller } from "react-hook-form";
+import ConfirmModal from "@/components/common/ConfirmModal";
+import { useCreateContract } from "@/api/contracts";
 import ContractSuccessModal from "./ContractSuccessModal";
 import CustomInput from "../../components/base/CustomInput";
 import { CalendarIcon } from "../../assets/icons";
@@ -15,15 +20,128 @@ export default function CreateContractModal({ open, onOpenChange }: { open: bool
 	const [generatedLink, setGeneratedLink] = React.useState<string>("");
 	const [selectedCustomer, setSelectedCustomer] = React.useState<string | undefined>(undefined);
 
-	const handleSubmit = (e: React.FormEvent) => {
-		e.preventDefault();
-		const link = "https://docs.google.com/document/d/1y5xRJxMrQ72vCP2nwMff4gXlt-fca5iY_9UH";
-		setGeneratedLink(link);
-		onOpenChange(false);
+	// use react-hook-form for all contract inputs
+	const { control, handleSubmit: rhfHandleSubmit } = useForm({
+		defaultValues: {
+			customerId: selectedCustomer ?? undefined,
+			propertyId: "",
+			paymentTypeId: stepVariant === "hire" ? "1" : "2",
+			quantity: 1,
+			downPayment: "",
+			intervalId: "",
+			durationValue: 12,
+			durationUnitId: "",
+			startDate: "",
+			remarks: "",
+			isCash: false,
+			isPaymentLink: false,
+			isCustomProperty: false,
+			customPropertyName: "",
+			customPropertyPrice: "",
+		},
+	});
 
-		// open the success modal after a short delay so the create dialog closes cleanly
-		setTimeout(() => setShowSuccess(true), 200);
+	// NOTE: removed unused watchers; convert selects/checkboxes to Controller when ready
+
+	// confirm / preview state
+	const [previewPayload, setPreviewPayload] = React.useState<any | null>(null);
+	const [confirmOpen, setConfirmOpen] = React.useState(false);
+
+	const { data: refData, isLoading: refLoading } = useGetReferenceData();
+
+	const intervalCandidates = React.useMemo(() => {
+		if (!refData) return [] as { key: string; value: string }[];
+		const prefer = ["paymentIntervals", "payment_intervals", "intervals", "payment_interval"];
+		for (const k of prefer) {
+			const arr = (refData as any)[k];
+			if (Array.isArray(arr) && arr.length) {
+				return arr.map((it: any) => ({
+					key: String(it.id ?? it.key ?? it.intervals ?? it.interval ?? it.value ?? it.name ?? it),
+					value: String(it.intervals ?? it.interval ?? it.value ?? it.name ?? it.key ?? it),
+				}));
+			}
+		}
+
+		for (const [k, v] of Object.entries(refData)) {
+			if (Array.isArray(v) && v.length) {
+				const sample = v[0] as any;
+				const t = String(sample.type ?? sample.key ?? sample.name ?? "").toLowerCase();
+				if (t.includes("interval") || k.toLowerCase().includes("interval") || k.toLowerCase().includes("payment")) {
+					return (v as any[]).map((it: any) => ({
+						key: String(it.id ?? it.key ?? it.intervals ?? it.interval ?? it.value ?? it.name ?? it),
+						value: String(it.intervals ?? it.interval ?? it.value ?? it.name ?? it.key ?? it),
+					}));
+				}
+			}
+		}
+
+		return [] as { key: string; value: string }[];
+	}, [refData]);
+
+	const durationCandidates = React.useMemo(() => {
+		if (!refData) return [] as { key: string; value: string }[];
+		const prefer = ["durations", "paymentDurations", "payment_durations", "duration"];
+		for (const k of prefer) {
+			const arr = (refData as any)[k];
+			if (Array.isArray(arr) && arr.length) {
+				return arr.map((it: any) => ({
+					key: String(it.id ?? it.key ?? it.duration ?? it.durations ?? it.value ?? it.name ?? it),
+					value: String(it.duration ?? it.durations ?? it.value ?? it.name ?? it.key ?? it),
+				}));
+			}
+		}
+
+		for (const [k, v] of Object.entries(refData)) {
+			if (Array.isArray(v) && v.length) {
+				const sample = v[0] as any;
+				const t = String(sample.type ?? sample.key ?? sample.name ?? "").toLowerCase();
+				if (t.includes("duration") || k.toLowerCase().includes("duration") || k.toLowerCase().includes("period")) {
+					return (v as any[]).map((it: any) => ({
+						key: String(it.id ?? it.key ?? it.duration ?? it.durations ?? it.value ?? it.name ?? it),
+						value: String(it.duration ?? it.durations ?? it.value ?? it.name ?? it.key ?? it),
+					}));
+				}
+			}
+		}
+
+		return [] as { key: string; value: string }[];
+	}, [refData]);
+
+	const onFormSubmit = (values: any) => {
+		const payload = {
+			customerId: values.customerId ?? null,
+			propertyId: values.propertyId || undefined,
+			paymentTypeId: Number(values.paymentTypeId) || (stepVariant === "hire" ? 1 : 2),
+			quantity: Number(values.quantity) || 1,
+			downPayment: Number(values.downPayment) || 0,
+			intervalId: Number(values.intervalId) || undefined,
+			durationValue: Number(values.durationValue) || undefined,
+			durationUnitId: Number(values.durationUnitId) || undefined,
+			startDate: values.startDate || undefined,
+			remarks: values.remarks || undefined,
+			isCash: !!values.isCash,
+			isPaymentLink: !!values.isPaymentLink,
+			isCustomProperty: !!values.isCustomProperty,
+			customPropertyName: values.customPropertyName || undefined,
+			customPropertyPrice: values.customPropertyPrice ? Number(values.customPropertyPrice) : undefined,
+		};
+
+		setPreviewPayload(payload);
+		setConfirmOpen(true);
 	};
+
+	const createMutation = useCreateContract(
+		(res) => {
+			const link = (res as any)?.link ?? (res as any)?.data?.link ?? "";
+			setGeneratedLink(link);
+			setConfirmOpen(false);
+			onOpenChange(false);
+			setTimeout(() => setShowSuccess(true), 200);
+		},
+		(err) => {
+			console.error("Create contract failed", err);
+		}
+	);
 
 	return (
 		<>
@@ -34,22 +152,35 @@ export default function CreateContractModal({ open, onOpenChange }: { open: bool
 						<DialogClose />
 					</DialogHeader>
 
-					<form onSubmit={handleSubmit} className="grid max-w-2xl mx-auto items-end grid-cols-1 sm:grid-cols-2 gap-4 md:gap-x-8 md:gap-y-5 py-4">
+					<form
+						onSubmit={rhfHandleSubmit(onFormSubmit)}
+						className="grid max-w-2xl mx-auto items-end grid-cols-1 sm:grid-cols-2 gap-4 md:gap-x-8 md:gap-y-5 py-4">
 						<div>
 							<Label className={labelStyle()}>Full name*</Label>
-							<Select onValueChange={(v) => setSelectedCustomer(v)} value={selectedCustomer}>
-								<SelectTrigger className={selectTriggerStyle()}>
-									<SelectValue placeholder="Search customer" />
-								</SelectTrigger>
-								<SelectContent>
-									<div className="p-1.5">
-										<CustomInput placeholder="Search by name" className={inputStyle} />
-									</div>
-									<SelectItem value="tom">Tom Doe James</SelectItem>
-									<SelectItem value="thomas">Thomas Doe James</SelectItem>
-									<SelectItem value="ogun">Thomas James Ogun</SelectItem>
-								</SelectContent>
-							</Select>
+							<Controller
+								control={control}
+								name="customerId"
+								render={({ field }) => (
+									<Select
+										onValueChange={(v) => {
+											field.onChange(v);
+											setSelectedCustomer(v as any);
+										}}
+										value={(field.value as any) ?? undefined}>
+										<SelectTrigger className={selectTriggerStyle()}>
+											<SelectValue placeholder="Search customer" />
+										</SelectTrigger>
+										<SelectContent>
+											<div className="p-1.5">
+												<CustomInput placeholder="Search by name" className={inputStyle} />
+											</div>
+											<SelectItem value="tom">Tom Doe James</SelectItem>
+											<SelectItem value="thomas">Thomas Doe James</SelectItem>
+											<SelectItem value="ogun">Thomas James Ogun</SelectItem>
+										</SelectContent>
+									</Select>
+								)}
+							/>
 						</div>
 
 						<div>
@@ -75,8 +206,22 @@ export default function CreateContractModal({ open, onOpenChange }: { open: bool
 											<SelectValue placeholder="Select interval" />
 										</SelectTrigger>
 										<SelectContent>
-											<SelectItem value="monthly">Monthly</SelectItem>
-											<SelectItem value="weekly">Weekly</SelectItem>
+											{refLoading ? (
+												<div className="p-3 text-center">
+													<Spinner className="size-4" />
+												</div>
+											) : intervalCandidates.length === 0 ? (
+												<>
+													<SelectItem value="monthly">Monthly</SelectItem>
+													<SelectItem value="weekly">Weekly</SelectItem>
+												</>
+											) : (
+												intervalCandidates.map((it) => (
+													<SelectItem key={it.key} value={it.key}>
+														{it.value}
+													</SelectItem>
+												))
+											)}
 										</SelectContent>
 									</Select>
 								</div>
@@ -88,21 +233,43 @@ export default function CreateContractModal({ open, onOpenChange }: { open: bool
 											<SelectValue placeholder="Select" />
 										</SelectTrigger>
 										<SelectContent>
-											<SelectItem value="months">Months</SelectItem>
+											{refLoading ? (
+												<div className="p-3 text-center">
+													<Spinner className="size-4" />
+												</div>
+											) : durationCandidates.length === 0 ? (
+												<SelectItem value="months">Months</SelectItem>
+											) : (
+												durationCandidates.map((it) => (
+													<SelectItem key={it.key} value={it.key}>
+														{it.value}
+													</SelectItem>
+												))
+											)}
 										</SelectContent>
 									</Select>
 								</div>
 
 								<div>
 									<Label className={labelStyle()}>For How Many Months*</Label>
-									<Select defaultValue="12">
-										<SelectTrigger className={selectTriggerStyle()}>
-											<SelectValue placeholder="12" />
-										</SelectTrigger>
-										<SelectContent>
-											<SelectItem value="12">12</SelectItem>
-										</SelectContent>
-									</Select>
+									<Controller
+										control={control}
+										name="durationValue"
+										render={({ field }) => (
+											<Select onValueChange={(v) => field.onChange(Number(v))} value={String(field.value ?? "12")}>
+												<SelectTrigger className={selectTriggerStyle()}>
+													<SelectValue placeholder="12" />
+												</SelectTrigger>
+												<SelectContent>
+													{Array.from({ length: 12 }, (_, i) => i + 1).map((n) => (
+														<SelectItem key={n} value={String(n)}>
+															{n}
+														</SelectItem>
+													))}
+												</SelectContent>
+											</Select>
+										)}
+									/>
 								</div>
 
 								<CustomInput defaultValue="30,000" label="Amount available for down payment" required />
@@ -142,6 +309,26 @@ export default function CreateContractModal({ open, onOpenChange }: { open: bool
 					</form>
 				</DialogContent>
 			</Dialog>
+
+			<ConfirmModal
+				open={confirmOpen}
+				onOpenChange={(o) => setConfirmOpen(o)}
+				title="Confirm Create Contract"
+				subtitle={previewPayload ? "Please confirm the contract details before creating." : "Create contract"}
+				actions={[
+					{ label: "Cancel", onClick: () => true, variant: "ghost" },
+					{
+						label: createMutation.isPending ? "Creating..." : "Create",
+						onClick: async () => {
+							if (!previewPayload) return false;
+							await createMutation.mutateAsync(previewPayload);
+							return true;
+						},
+						loading: createMutation.isPending,
+						variant: "primary",
+					},
+				]}
+			/>
 
 			<ContractSuccessModal
 				open={showSuccess}

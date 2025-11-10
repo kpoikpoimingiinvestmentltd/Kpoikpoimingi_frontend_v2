@@ -13,6 +13,7 @@ export const API_ROUTES = {
 		changePassword: "/user/change-password",
 		suspendUser: (id: string) => `/user/suspend/${id}`,
 		uploadUserProfile: (id: string) => `/user/upload/${id}`,
+		deleteUser: (id: string) => `/user/delete/${id}`,
 	},
 	media: {
 		getPresignedUploadUrl: "/media/presign-upload",

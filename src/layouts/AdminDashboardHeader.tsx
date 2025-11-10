@@ -64,7 +64,7 @@ export default function AdminDashboardHeader({ onSidebarOpen, onLogoutOpen }: Ad
 					</IconWrapper>
 				</button>
 			</div>
-			<div className="flex items-center gap-3.5 md:pr-8">
+			<div className="flex items-center gap-3.5 xl:pr-8">
 				<button
 					type="button"
 					className="gap-2 items-center hidden md:flex bg-gradient-to-t from-[#134DC1] to-[#03B4FA] active-scale text-white rounded-md py-2.5 px-3"
