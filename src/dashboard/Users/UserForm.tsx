@@ -11,6 +11,7 @@ import { uploadFileToPresignedUrl } from "@/utils/media-upload";
 import { toast } from "sonner";
 import { CalendarIcon, EmailIcon, PhoneIcon } from "../../assets/icons";
 import { Spinner } from "@/components/ui/spinner";
+import { extractRoleOptions, extractBankOptions, extractAccountTypeOptions, extractStateOptions } from "@/lib/referenceDataHelpers";
 
 type FormShape = {
 	fullName?: string;
@@ -46,127 +47,10 @@ export default function UserForm({
 	const { data: refData } = useGetReferenceData(true, false);
 	const [presignUpload] = usePresignUploadMutation();
 
-	const roleCandidates: { key: string; value: string }[] = React.useMemo(() => {
-		if (!refData) return [];
-
-		const prefer = ["roles", "user_roles", "userRoles", "role", "roles_list"];
-		for (const k of prefer) {
-			const arr = (refData as any)[k];
-			if (Array.isArray(arr) && arr.length) {
-				return arr.map((it: any) => {
-					const value = it.role;
-					const key = String(it.id ?? value ?? "");
-					return { key, value: String(value) };
-				});
-			}
-		}
-
-		for (const [k, v] of Object.entries(refData)) {
-			if (Array.isArray(v) && v.length) {
-				const sample = v[0] as any;
-				const t = String(sample.type ?? sample.key ?? "").toLowerCase();
-				if (t.includes("role") || k.toLowerCase().includes("role")) {
-					return v.map((it: any) => {
-						const value = it.role;
-						const key = String(it.id ?? value ?? "");
-						return { key, value: String(value) };
-					});
-				}
-			}
-		}
-
-		return [];
-	}, [refData]);
-
-	const bankCandidates: { key: string; value: string }[] = React.useMemo(() => {
-		if (!refData) return [];
-		const prefer = ["bankNames", "banks", "bank_list", "banks_list"];
-		for (const k of prefer) {
-			const arr = (refData as any)[k];
-			if (Array.isArray(arr) && arr.length) {
-				return arr.map((it: any) => {
-					const value = String(it.name ?? it.bank ?? it.value ?? it.key ?? "");
-					const key = String(it.id ?? value ?? "");
-					return { key, value };
-				});
-			}
-		}
-		// fallback: scan entries for a likely banks list
-		for (const [k, v] of Object.entries(refData)) {
-			if (Array.isArray(v) && v.length) {
-				const sample = v[0] as any;
-				if (String(sample.name ?? sample.bank ?? "").length > 0 && k.toLowerCase().includes("bank")) {
-					return (v as any[]).map((it: any) => ({
-						key: String(it.id ?? it.name ?? it.bank ?? ""),
-						value: String(it.name ?? it.bank ?? it.value ?? ""),
-					}));
-				}
-			}
-		}
-		return [];
-	}, [refData]);
-
-	const accountCandidates: { key: string; value: string }[] = React.useMemo(() => {
-		if (!refData) return [];
-		const prefer = ["accountTypes", "account_types", "account_type", "accountType"];
-		for (const k of prefer) {
-			const arr = (refData as any)[k];
-			if (Array.isArray(arr) && arr.length) {
-				return arr.map((it: any) => {
-					const value = String(it.type ?? it.name ?? it.accountType ?? it.value ?? it.key ?? "");
-					const key = String(it.id ?? value ?? "");
-					return { key, value };
-				});
-			}
-		}
-
-		for (const [, v] of Object.entries(refData)) {
-			if (Array.isArray(v) && v.length) {
-				const sample = v[0] as any;
-				if (
-					String(sample.type ?? sample.name ?? "")
-						.toLowerCase()
-						.includes("account")
-				) {
-					return (v as any[]).map((it: any) => ({
-						key: String(it.id ?? it.name ?? it.type ?? ""),
-						value: String(it.name ?? it.type ?? it.value ?? ""),
-					}));
-				}
-			}
-		}
-
-		return [];
-	}, [refData]);
-
-	const stateCandidates: { key: string; value: string }[] = React.useMemo(() => {
-		if (!refData) return [];
-		const prefer = ["stateOfOrigins", "state_of_origins", "states", "state_list", "stateOfOrigin"];
-		for (const k of prefer) {
-			const arr = (refData as any)[k];
-			if (Array.isArray(arr) && arr.length) {
-				return arr.map((it: any) => {
-					const value = String(it.state ?? it.name ?? it.value ?? "");
-					const key = String(it.id ?? value ?? "");
-					return { key, value };
-				});
-			}
-		}
-		// fallback: scan entries for state-like lists
-		for (const [k, v] of Object.entries(refData)) {
-			if (Array.isArray(v) && v.length) {
-				const sample = v[0] as any;
-				const t = String(sample.state ?? sample.name ?? "").toLowerCase();
-				if (t.length > 0 && (t.includes("state") || k.toLowerCase().includes("state"))) {
-					return (v as any[]).map((it: any) => ({
-						key: String(it.id ?? it.state ?? it.name ?? ""),
-						value: String(it.state ?? it.name ?? it.value ?? ""),
-					}));
-				}
-			}
-		}
-		return [];
-	}, [refData]);
+	const roleCandidates = React.useMemo(() => extractRoleOptions(refData), [refData]);
+	const bankCandidates = React.useMemo(() => extractBankOptions(refData), [refData]);
+	const accountCandidates = React.useMemo(() => extractAccountTypeOptions(refData), [refData]);
+	const stateCandidates = React.useMemo(() => extractStateOptions(refData), [refData]);
 
 	async function handleAvatarFile(file: File | null, preview?: string) {
 		onChange("avatar" as any, preview ?? null);

@@ -8,17 +8,36 @@ import { useGetReferenceData } from "@/api/reference";
 import { Spinner } from "@/components/ui/spinner";
 import { useForm, Controller } from "react-hook-form";
 import ConfirmModal from "@/components/common/ConfirmModal";
-import { useCreateContract } from "@/api/contracts";
+import { useCreateContract, useGetAllCustomerRegistrations } from "@/api/contracts";
 import ContractSuccessModal from "./ContractSuccessModal";
 import CustomInput from "../../components/base/CustomInput";
 import { CalendarIcon } from "../../assets/icons";
 import ActionButton from "../../components/base/ActionButton";
+import { extractPaymentFrequencyOptions, extractDurationUnitOptions } from "@/lib/referenceDataHelpers";
 
 export default function CreateContractModal({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
 	const [stepVariant, setStepVariant] = React.useState<"hire" | "full">("hire");
 	const [showSuccess, setShowSuccess] = React.useState(false);
 	const [generatedLink, setGeneratedLink] = React.useState<string>("");
 	const [selectedCustomer, setSelectedCustomer] = React.useState<string | undefined>(undefined);
+	const [searchQuery, setSearchQuery] = React.useState("");
+
+	// Fetch customer registrations when modal opens
+	const registrationsQuery = useGetAllCustomerRegistrations(open) as any;
+	const registrations = registrationsQuery?.data;
+
+	const filteredRegistrations = React.useMemo(() => {
+		if (!registrations?.data || !Array.isArray(registrations.data)) return [];
+		const currentRegistrations = registrations.data.filter((reg: any) => reg.isCurrent === true);
+		if (!searchQuery.trim()) return currentRegistrations;
+		return currentRegistrations.filter((reg: any) => reg.fullName?.toLowerCase().includes(searchQuery.toLowerCase()));
+	}, [registrations, searchQuery]);
+
+	React.useEffect(() => {
+		if (!open) {
+			setSearchQuery("");
+		}
+	}, [open, registrationsQuery]);
 
 	// use react-hook-form for all contract inputs
 	const { control, handleSubmit: rhfHandleSubmit } = useForm({
@@ -50,61 +69,11 @@ export default function CreateContractModal({ open, onOpenChange }: { open: bool
 	const { data: refData, isLoading: refLoading } = useGetReferenceData();
 
 	const intervalCandidates = React.useMemo(() => {
-		if (!refData) return [] as { key: string; value: string }[];
-		const prefer = ["paymentIntervals", "payment_intervals", "intervals", "payment_interval"];
-		for (const k of prefer) {
-			const arr = (refData as any)[k];
-			if (Array.isArray(arr) && arr.length) {
-				return arr.map((it: any) => ({
-					key: String(it.id ?? it.key ?? it.intervals ?? it.interval ?? it.value ?? it.name ?? it),
-					value: String(it.intervals ?? it.interval ?? it.value ?? it.name ?? it.key ?? it),
-				}));
-			}
-		}
-
-		for (const [k, v] of Object.entries(refData)) {
-			if (Array.isArray(v) && v.length) {
-				const sample = v[0] as any;
-				const t = String(sample.type ?? sample.key ?? sample.name ?? "").toLowerCase();
-				if (t.includes("interval") || k.toLowerCase().includes("interval") || k.toLowerCase().includes("payment")) {
-					return (v as any[]).map((it: any) => ({
-						key: String(it.id ?? it.key ?? it.intervals ?? it.interval ?? it.value ?? it.name ?? it),
-						value: String(it.intervals ?? it.interval ?? it.value ?? it.name ?? it.key ?? it),
-					}));
-				}
-			}
-		}
-
-		return [] as { key: string; value: string }[];
+		return extractPaymentFrequencyOptions(refData);
 	}, [refData]);
 
 	const durationCandidates = React.useMemo(() => {
-		if (!refData) return [] as { key: string; value: string }[];
-		const prefer = ["durations", "paymentDurations", "payment_durations", "duration"];
-		for (const k of prefer) {
-			const arr = (refData as any)[k];
-			if (Array.isArray(arr) && arr.length) {
-				return arr.map((it: any) => ({
-					key: String(it.id ?? it.key ?? it.duration ?? it.durations ?? it.value ?? it.name ?? it),
-					value: String(it.duration ?? it.durations ?? it.value ?? it.name ?? it.key ?? it),
-				}));
-			}
-		}
-
-		for (const [k, v] of Object.entries(refData)) {
-			if (Array.isArray(v) && v.length) {
-				const sample = v[0] as any;
-				const t = String(sample.type ?? sample.key ?? sample.name ?? "").toLowerCase();
-				if (t.includes("duration") || k.toLowerCase().includes("duration") || k.toLowerCase().includes("period")) {
-					return (v as any[]).map((it: any) => ({
-						key: String(it.id ?? it.key ?? it.duration ?? it.durations ?? it.value ?? it.name ?? it),
-						value: String(it.duration ?? it.durations ?? it.value ?? it.name ?? it.key ?? it),
-					}));
-				}
-			}
-		}
-
-		return [] as { key: string; value: string }[];
+		return extractDurationUnitOptions(refData);
 	}, [refData]);
 
 	const onFormSubmit = (values: any) => {
@@ -172,17 +141,25 @@ export default function CreateContractModal({ open, onOpenChange }: { open: bool
 										</SelectTrigger>
 										<SelectContent>
 											<div className="p-1.5">
-												<CustomInput placeholder="Search by name" className={inputStyle} />
+												<CustomInput
+													placeholder="Search by name"
+													className={inputStyle}
+													value={searchQuery}
+													onChange={(e: any) => setSearchQuery(e.target.value)}
+												/>
 											</div>
-											<SelectItem value="tom">Tom Doe James</SelectItem>
-											<SelectItem value="thomas">Thomas Doe James</SelectItem>
-											<SelectItem value="ogun">Thomas James Ogun</SelectItem>
+											{filteredRegistrations && filteredRegistrations.length > 0
+												? filteredRegistrations.map((reg: any) => (
+														<SelectItem className="cursor-pointer" key={reg.id} value={reg.customerId}>
+															{reg.fullName}
+														</SelectItem>
+												  ))
+												: searchQuery && <div className="p-3 text-center text-sm text-gray-500">No customers found</div>}
 										</SelectContent>
 									</Select>
 								)}
 							/>
 						</div>
-
 						<div>
 							<Label className={labelStyle()}>Payment Type*</Label>
 							<Select onValueChange={(v) => setStepVariant(v as any)} value={stepVariant}>
@@ -195,7 +172,6 @@ export default function CreateContractModal({ open, onOpenChange }: { open: bool
 								</SelectContent>
 							</Select>
 						</div>
-
 						{stepVariant !== "full" && (
 							<>
 								<CustomInput label="Property Name" required />
@@ -283,7 +259,6 @@ export default function CreateContractModal({ open, onOpenChange }: { open: bool
 								</div>
 							</>
 						)}
-
 						{stepVariant === "full" && (
 							<>
 								<CustomInput label="Property Name" required />
@@ -302,7 +277,6 @@ export default function CreateContractModal({ open, onOpenChange }: { open: bool
 								</div>
 							</>
 						)}
-
 						<DialogFooter className="col-span-2 mt-5">
 							<ActionButton fullWidth>Create Contract</ActionButton>
 						</DialogFooter>

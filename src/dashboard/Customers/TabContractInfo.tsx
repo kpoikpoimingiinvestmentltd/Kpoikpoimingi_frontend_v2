@@ -3,7 +3,7 @@ import SectionTitle from "@/components/common/SectionTitle";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { ChevronDownIcon, EyeIcon, IconWrapper } from "@/assets/icons";
 import { useNavigate } from "react-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { _router } from "@/routes/_router";
 
 type Contract = { id: string; title: string };
@@ -13,9 +13,17 @@ const contracts: Contract[] = Array.from({ length: 5 }).map((_, i) => ({
 	title: `Contract For(Hire Purchase): ${i === 0 ? "12 inches HP laptop" : "25kg gas cylinder"}`,
 }));
 
-export default function TabContractInfo() {
+export default function TabContractInfo(props: { contracts?: any }) {
+	const { contracts: contractsData } = props;
 	const [filter, setFilter] = useState<string>("Completed Contract");
 	const navigate = useNavigate();
+
+	// Log the contracts response for debugging
+	useEffect(() => {
+		if (contractsData) {
+			console.log("Contracts Response Structure:", contractsData);
+		}
+	}, [contractsData]);
 
 	const visible = contracts;
 

@@ -8,8 +8,8 @@ import TabDocument from "./TabDocument";
 import TabContractInfo from "./TabContractInfo";
 import PageWrapper from "../../components/common/PageWrapper";
 import { useParams } from "react-router";
-import { useEffect, useState } from "react";
-import { useGetCustomer } from "@/api/customer";
+import { useState } from "react";
+import { useGetCustomer, useGetCustomerContracts, useGetCustomerPayments, useGetCustomerDocuments, useGetCustomerReceipts } from "@/api/customer";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { ChevronDownIcon, EditIcon, IconWrapper } from "@/assets/icons";
 import EditCustomerModal from "./EditCustomerModal";
@@ -17,13 +17,11 @@ import EditCustomerModal from "./EditCustomerModal";
 export default function CustomerDetails() {
 	const { id } = useParams();
 	const { data: customer } = useGetCustomer(id as any, true);
+	const { data: contracts } = useGetCustomerContracts(id as any, true);
+	const { data: payments } = useGetCustomerPayments(id as any, true);
+	const { data: documents } = useGetCustomerDocuments(id as any, true);
+	const { data: receipts } = useGetCustomerReceipts(id as any, true);
 	const [isEditOpen, setIsEditOpen] = useState(false);
-
-	useEffect(() => {
-		if (customer) {
-			console.log("Fetched customer details:", customer);
-		}
-	}, [customer]);
 
 	return (
 		<PageWrapper className="flex flex-col gap-6">
@@ -84,16 +82,16 @@ export default function CustomerDetails() {
 							<TabCustomerDetails customer={customer} />
 						</TabsContent>
 						<TabsContent value="payments">
-							<TabPaymentHistory />
+							<TabPaymentHistory payments={payments} />
 						</TabsContent>
 						<TabsContent value="receipt">
-							<TabReceipt />
+							<TabReceipt receipts={receipts} />
 						</TabsContent>
 						<TabsContent value="document">
-							<TabDocument />
+							<TabDocument documents={documents} />
 						</TabsContent>
 						<TabsContent value="contract">
-							<TabContractInfo />
+							<TabContractInfo contracts={contracts} />
 						</TabsContent>
 					</div>
 				</Tabs>

@@ -45,10 +45,12 @@ export const API_ROUTES = {
 		deleteCustomer: (customerId: string) => `/customer/${customerId}`,
 		getApprovedRegistrations: (customerId: string) => `/customer/approved-registrations/${customerId}`,
 		getRegistrationsByEmail: (email: string) => `/customer/registrations/${email}`,
-		getCustomerContracts: (customerId: string) => `/customer/contracts/${customerId}`,
+		getCustomerContracts: (customerId: string) => `/customer/${customerId}/contracts`,
 		getCustomerPayments: (customerId: string) => `/customer/payments/${customerId}`,
 		getCustomerDocuments: (customerId: string) => `/customer/documents/${customerId}`,
 		getCustomerReceipts: (customerId: string) => `/customer/receipts/${customerId}`,
+		sendEmailSpecific: "/customer/send-email/specific",
+		sendEmailBroadcast: "/customer/send-email/broadcast",
 	},
 	customerRegistration: {
 		createExternalCustomerRegistration: "/customer-registration",

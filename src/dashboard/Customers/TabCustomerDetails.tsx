@@ -1,38 +1,57 @@
 import CustomCard from "@/components/base/CustomCard";
 import SectionTitle from "@/components/common/SectionTitle";
 import KeyValueRow from "@/components/common/KeyValueRow";
+import { useGetReferenceData } from "@/api/reference";
+import { extractStateOptions } from "@/lib/referenceDataHelpers";
+import React from "react";
 
 const titleSectionStyle = "flex flex-col gap-3";
+
 export default function TabCustomerDetails({ customer }: { customer: any }) {
-	const files = [
-		{ url: "#", label: "Indigene certificate" },
-		{ url: "#", label: "NIN" },
-		{ url: "#", label: "Drivers license" },
-		{ url: "#", label: "Voters card" },
-		{ url: "#", label: "Signed contract" },
-	];
+	// Get the current registration (latest)
+	const registration = customer?.registrations?.[0];
+	const nok = registration?.nextOfKin;
+	const employment = registration?.employmentDetails;
+	const property = registration?.propertyInterestRequest?.[0];
+	const guarantors = registration?.guarantors ?? [];
+
+	// Fetch reference data for state options
+	const { data: refData } = useGetReferenceData();
+	const stateOfOriginOptions = React.useMemo(() => extractStateOptions(refData), [refData]);
+
+	const formatPhoneNumber = (phone: string) => {
+		return phone?.startsWith("+") ? phone : `+234${phone}`;
+	};
+
+	const getStateNameById = (stateId: string): string => {
+		if (!stateId) return "";
+		const state = stateOfOriginOptions.find((o) => o.key === stateId);
+		return state?.value || stateId;
+	};
+
+	// Transform media files from API format { fileUrl } to component format { url }
+	const transformMediaFiles = (mediaArray: any[]): { url: string }[] => {
+		if (!Array.isArray(mediaArray)) return [];
+		return mediaArray.map((item) => ({ url: item.fileUrl }));
+	};
 	return (
 		<CustomCard className="mt-4 border-none p-0 bg-white">
 			<SectionTitle title="Customer Details" />
 			<CustomCard className="mt-6 grid grid-cols-1 gap-6 md:p-8 bg-card">
+				{/* Personal Information */}
 				<section className={titleSectionStyle}>
 					<SectionTitle title="Personal information" />
 					<div className="space-y-2">
 						<KeyValueRow
 							label="Customer full name"
-							value={customer?.fullName || "Tom Deo James"}
+							value={customer?.fullName || "N/A"}
 							leftClassName="text-sm text-muted-foreground"
 							rightClassName="text-right"
 						/>
-						<KeyValueRow
-							label="Email"
-							value={customer?.email || "dunny@gmail.com"}
-							leftClassName="text-sm text-muted-foreground"
-							rightClassName="text-right"
-						/>
+						<KeyValueRow label="Email" value={customer?.email || "N/A"} leftClassName="text-sm text-muted-foreground" rightClassName="text-right" />
 						<KeyValueRow
 							label="Whatsapp number"
-							value={customer?.phoneNumber || "+2348134567890"}
+							value={customer?.phoneNumber || "N/A"}
 							leftClassName="text-sm text-muted-foreground"
 							rightClassName="text-right"
 						/>
@@ -52,122 +71,222 @@ export default function TabCustomerDetails({ customer }: { customer: any }) {
 								rightClassName="text-right"
 							/>
 						)}
-						<KeyValueRow
-							label="Home Address"
-							value="3 ikorudu street lagos"
-							leftClassName="text-sm text-muted-foreground"
-							rightClassName="text-right"
-						/>
-						<KeyValueRow label="Date of birth" value="03-04-2025" leftClassName="text-sm text-muted-foreground" rightClassName="text-right" />
-						<KeyValueRow
-							className="items-center"
-							label="Indigene certificate"
-							variant="files"
-							files={[files[0]]}
-							leftClassName="text-sm text-muted-foreground"
-						/>
+						{registration?.dateOfBirth && (
+							<KeyValueRow
+								label="Date of birth"
+								value={new Date(registration.dateOfBirth).toLocaleDateString()}
+								leftClassName="text-sm text-muted-foreground"
+								rightClassName="text-right"
+							/>
+						)}
+						{employment?.homeAddress && (
+							<KeyValueRow
+								label="Home Address"
+								value={employment.homeAddress}
+								leftClassName="text-sm text-muted-foreground"
+								rightClassName="text-right"
+							/>
+						)}
 					</div>
 				</section>
+				{/* Identification Documents */}
 				<section className={titleSectionStyle}>
 					<SectionTitle title="Identification Documents" />
 					<div>
-						<KeyValueRow className="items-center" label="NIN" variant="files" files={[files[1]]} leftClassName="text-sm text-muted-foreground" />
+						<KeyValueRow
+							className="items-center"
+							label="NIN"
+							variant="files"
+							files={transformMediaFiles(registration?.mediaFiles?.identificationDocument ?? [])}
+							leftClassName="text-sm text-muted-foreground"
+						/>
 						<KeyValueRow
 							className="items-center"
 							label="Drivers license"
 							variant="files"
-							files={[files[2]]}
+							files={transformMediaFiles(registration?.mediaFiles?.driverLicense ?? [])}
 							leftClassName="text-sm text-muted-foreground"
 						/>
 						<KeyValueRow
 							className="items-center"
-							label="Voters card"
+							label="Indigene certificate"
 							variant="files"
-							files={[files[3]]}
+							files={transformMediaFiles(registration?.mediaFiles?.indegeneCertificate ?? [])}
 							leftClassName="text-sm text-muted-foreground"
 						/>
 						<KeyValueRow
 							className="items-center"
 							label="Signed contract"
 							variant="files"
-							files={[files[4]]}
+							files={transformMediaFiles(registration?.mediaFiles?.signedContract ?? [])}
 							leftClassName="text-sm text-muted-foreground"
 						/>
 					</div>
-				</section>
-
-				<section className={titleSectionStyle}>
-					<SectionTitle title="Next of kin details" />
-					<div className="grid grid-cols-1 gap-2">
-						<KeyValueRow label="Name" value="Jake Amgbara Sofi" leftClassName="text-sm text-muted-foreground" rightClassName="text-right" />
-						<KeyValueRow label="Phone number" value="+234567890948" leftClassName="text-sm text-muted-foreground" rightClassName="text-right" />
-						<KeyValueRow label="Relationship" value="Brother" leftClassName="text-sm text-muted-foreground" rightClassName="text-right" />
-						<KeyValueRow label="Spouse name" value="Rose Amgbara" leftClassName="text-sm text-muted-foreground" rightClassName="text-right" />
-						<KeyValueRow label="Spouse phone number" value="234567894847" leftClassName="text-sm text-muted-foreground" rightClassName="text-right" />
-						<KeyValueRow
-							label="Spouse address"
-							value="Ikorudu street lagos"
-							leftClassName="text-sm text-muted-foreground"
-							rightClassName="text-right"
-						/>
-					</div>
-				</section>
-
-				<section className={titleSectionStyle}>
-					<SectionTitle title="Property details" />
-					<div className="grid grid-cols-1 gap-2">
-						<KeyValueRow label="Property name" value="25kg gas cylinder" leftClassName="text-sm text-muted-foreground" rightClassName="text-right" />
-						<KeyValueRow label="Payment frequency" value="Monthly" leftClassName="text-sm text-muted-foreground" rightClassName="text-right" />
-						<KeyValueRow label="Payment duration" value="6 monthly" leftClassName="text-sm text-muted-foreground" rightClassName="text-right" />
-						<KeyValueRow label="Down payment amount" value="30,000" leftClassName="text-sm text-muted-foreground" rightClassName="text-right" />
-						<KeyValueRow
-							label="What do you need this property for"
-							value="To cook food"
-							leftClassName="text-sm text-muted-foreground"
-							rightClassName="text-right"
-						/>
-						<KeyValueRow
-							label="Amount available for down payment"
-							value="30,000"
-							leftClassName="text-sm text-muted-foreground"
-							rightClassName="text-right"
-						/>
-					</div>
-				</section>
-
+				</section>{" "}
+				{/* Next of Kin Details */}
+				{nok && (
+					<section className={titleSectionStyle}>
+						<SectionTitle title="Next of kin details" />
+						<div className="grid grid-cols-1 gap-2">
+							<KeyValueRow label="Name" value={nok.fullName || "N/A"} leftClassName="text-sm text-muted-foreground" rightClassName="text-right" />
+							<KeyValueRow
+								label="Phone number"
+								value={formatPhoneNumber(nok.phoneNumber) || "N/A"}
+								leftClassName="text-sm text-muted-foreground"
+								rightClassName="text-right"
+							/>
+							<KeyValueRow
+								label="Relationship"
+								value={nok.relationship || "N/A"}
+								leftClassName="text-sm text-muted-foreground"
+								rightClassName="text-right"
+							/>
+							{nok.isNextOfKinSpouse === "Yes" && (
+								<>
+									<KeyValueRow
+										label="Spouse name"
+										value={nok.spouseFullName || "N/A"}
+										leftClassName="text-sm text-muted-foreground"
+										rightClassName="text-right"
+									/>
+									<KeyValueRow
+										label="Spouse phone number"
+										value={formatPhoneNumber(nok.spousePhone) || "N/A"}
+										leftClassName="text-sm text-muted-foreground"
+										rightClassName="text-right"
+									/>
+									<KeyValueRow
+										label="Spouse address"
+										value={nok.spouseAddress || "N/A"}
+										leftClassName="text-sm text-muted-foreground"
+										rightClassName="text-right"
+									/>
+								</>
+							)}
+						</div>
+					</section>
+				)}
+				{/* Property Details */}
+				{property && (
+					<section className={titleSectionStyle}>
+						<SectionTitle title="Property details" />
+						<div className="grid grid-cols-1 gap-2">
+							<KeyValueRow
+								label="Property name"
+								value={property.propertyName || registration?.customPropertyName || "N/A"}
+								leftClassName="text-sm text-muted-foreground"
+								rightClassName="text-right"
+							/>
+							<KeyValueRow
+								label="Payment frequency"
+								value={property.paymentInterval?.intervals || "N/A"}
+								leftClassName="text-sm text-muted-foreground"
+								rightClassName="text-right"
+							/>
+							{property.durationValue && (
+								<KeyValueRow
+									label="Payment duration"
+									value={`${property.durationValue} ${property.durationUnit?.id === 1 ? "weeks" : "months"}`}
+									leftClassName="text-sm text-muted-foreground"
+									rightClassName="text-right"
+								/>
+							)}
+							<KeyValueRow
+								label="Down payment amount"
+								value={`₦${Number(property.downPayment || 0).toLocaleString()}`}
+								leftClassName="text-sm text-muted-foreground"
+								rightClassName="text-right"
+							/>
+							{registration?.purposeOfProperty && (
+								<KeyValueRow
+									label="What do you need this property for"
+									value={registration.purposeOfProperty}
+									leftClassName="text-sm text-muted-foreground"
+									rightClassName="text-right"
+								/>
+							)}
+						</div>
+					</section>
+				)}
+				{/* Clarification Details */}
 				<section className={titleSectionStyle}>
 					<SectionTitle title="Clarification details" />
 					<div className="grid grid-cols-1 gap-2">
 						<KeyValueRow
-							label="Previous hire purchase company"
-							value="Big brother 9ja"
+							label="Previous hire purchase"
+							value={registration?.previousHirePurchase || "N/A"}
 							leftClassName="text-sm text-muted-foreground"
 							rightClassName="text-right"
 						/>
+						{registration?.previousCompany && (
+							<KeyValueRow
+								label="Previous hire purchase company"
+								value={registration.previousCompany}
+								leftClassName="text-sm text-muted-foreground"
+								rightClassName="text-right"
+							/>
+						)}
+						{registration?.wasPreviousCompleted && (
+							<KeyValueRow
+								label="Was previous agreement completed"
+								value={registration.wasPreviousCompleted}
+								leftClassName="text-sm text-muted-foreground"
+								rightClassName="text-right"
+							/>
+						)}
 					</div>
 				</section>
-
-				<section className={titleSectionStyle}>
-					<SectionTitle title="Employment details" />
-					<div className="grid grid-cols-1 gap-2">
-						<KeyValueRow label="Employment status" value="Civil servant" leftClassName="text-sm text-muted-foreground" rightClassName="text-right" />
-						<KeyValueRow label="Employer name" value="Tony Henshaw" leftClassName="text-sm text-muted-foreground" rightClassName="text-right" />
-						<KeyValueRow
-							label="Employer address"
-							value="2 ikorudu street"
-							leftClassName="text-sm text-muted-foreground"
-							rightClassName="text-right"
-						/>
-					</div>
-				</section>
-
+				{/* Employment Details */}
+				{employment && (
+					<section className={titleSectionStyle}>
+						<SectionTitle title="Employment details" />
+						<div className="grid grid-cols-1 gap-2">
+							<KeyValueRow
+								label="Employment status"
+								value={employment.employmentStatus?.status || "N/A"}
+								leftClassName="text-sm text-muted-foreground"
+								rightClassName="text-right"
+							/>
+							{employment.employmentStatus?.status === "SELF EMPLOYED" ? (
+								<>
+									<KeyValueRow
+										label="Company name"
+										value={employment.companyName || "N/A"}
+										leftClassName="text-sm text-muted-foreground"
+										rightClassName="text-right"
+									/>
+									<KeyValueRow
+										label="Business address"
+										value={employment.businessAddress || "N/A"}
+										leftClassName="text-sm text-muted-foreground"
+										rightClassName="text-right"
+									/>
+								</>
+							) : (
+								<>
+									<KeyValueRow
+										label="Employer name"
+										value={employment.employerName || "N/A"}
+										leftClassName="text-sm text-muted-foreground"
+										rightClassName="text-right"
+									/>
+									<KeyValueRow
+										label="Employer address"
+										value={employment.employerAddress || "N/A"}
+										leftClassName="text-sm text-muted-foreground"
+										rightClassName="text-right"
+									/>
+								</>
+							)}
+						</div>
+					</section>
+				)}
 				<div>
 					<small className="text-[#131212B2]">
 						I hereby authorise <b className="font-medium text-black">Kpoi Kpoi Mingi Investments Ltd</b> to retrieve the electrical appliance from me,
 						or any other person at my or any other place it may be found in the event of my default in paying the Hire Purchase sum as agreed.
 					</small>
 				</div>
-
 				<section className={titleSectionStyle}>
 					<SectionTitle
 						title="Guarantor (1)"
@@ -177,70 +296,143 @@ export default function TabCustomerDetails({ customer }: { customer: any }) {
 									As a guarantor, I hereby guaranty to pay all sums due under the Hire Purchase Agreement in the event of default by the Applicant.{" "}
 									<br />
 									<br /> I accept that messages, notices, processes and other correspondences where necessary, sent to my WhatsApp number as shown
-									herein are properly delivered and served on me.
+									herein are properly delivered and served on me.
 								</small>
 							</>
 						}
 					/>
 					<div className="grid grid-cols-1 gap-2">
-						<KeyValueRow label="Full name" value="Donald Trumph" leftClassName="text-sm text-muted-foreground" rightClassName="text-right" />
-						<KeyValueRow label="Occupation" value="Self employed" leftClassName="text-sm text-muted-foreground" rightClassName="text-right" />
-						<KeyValueRow label="Phone number" value="+2345955895" leftClassName="text-sm text-muted-foreground" rightClassName="text-right" />
-						<KeyValueRow label="Email" value="dunny@gmail.com" leftClassName="text-sm text-muted-foreground" rightClassName="text-right" />
-						<KeyValueRow label="Home address" value="3 ikorudu street" leftClassName="text-sm text-muted-foreground" rightClassName="text-right" />
 						<KeyValueRow
-							label="Business address"
-							value="3 ikorudu street"
+							label="Full name"
+							value={guarantors[0]?.fullName || "N/A"}
 							leftClassName="text-sm text-muted-foreground"
 							rightClassName="text-right"
 						/>
-						<KeyValueRow label="State of origin" value="Lagos state" leftClassName="text-sm text-muted-foreground" rightClassName="text-right" />
 						<KeyValueRow
-							label="Voters card"
+							label="Occupation"
+							value={guarantors[0]?.occupation || "N/A"}
+							leftClassName="text-sm text-muted-foreground"
+							rightClassName="text-right"
+						/>
+						<KeyValueRow
+							label="Phone number"
+							value={formatPhoneNumber(guarantors[0]?.phoneNumber) || "N/A"}
+							leftClassName="text-sm text-muted-foreground"
+							rightClassName="text-right"
+						/>
+						<KeyValueRow
+							label="Email"
+							value={guarantors[0]?.email || "N/A"}
+							leftClassName="text-sm text-muted-foreground"
+							rightClassName="text-right"
+						/>
+						<KeyValueRow
+							label="Employment status"
+							value={guarantors[0]?.employmentStatus?.status || "N/A"}
+							leftClassName="text-sm text-muted-foreground"
+							rightClassName="text-right"
+						/>
+						<KeyValueRow
+							label="Home address"
+							value={guarantors[0]?.homeAddress || "N/A"}
+							leftClassName="text-sm text-muted-foreground"
+							rightClassName="text-right"
+						/>
+						<KeyValueRow
+							label="Business address"
+							value={guarantors[0]?.companyAddress || guarantors[0]?.businessAddress || "N/A"}
+							leftClassName="text-sm text-muted-foreground"
+							rightClassName="text-right"
+						/>
+						<KeyValueRow
+							label="State of origin"
+							value={getStateNameById(guarantors[0]?.stateOfOrigin) || "N/A"}
+							leftClassName="text-sm text-muted-foreground"
+							rightClassName="text-right"
+						/>
+						<KeyValueRow
+							label="Identity documents"
 							className="items-center"
 							variant="files"
-							files={[{ url: "#", label: "Voters card" }]}
+							files={transformMediaFiles(registration?.mediaFiles?.guarantor_0_doc ?? [])}
 							leftClassName="text-sm text-muted-foreground"
 						/>
 					</div>
 				</section>
-
-				<section className={titleSectionStyle}>
-					<SectionTitle
-						title="Guarantor (2)"
-						children={
-							<>
-								<small className="text-[#131212B2]">
-									As a guarantor, I hereby guaranty to pay all sums due under the Hire Purchase Agreement in the event of default by the Applicant.{" "}
-									<br />
-									<br /> I accept that messages, notices, processes and other correspondences where necessary, sent to my WhatsApp number as shown
-									herein are properly delivered and served on me.
-								</small>
-							</>
-						}
-					/>
-					<div className="grid grid-cols-1 gap-2">
-						<KeyValueRow label="Full name" value="Donald Trumph" leftClassName="text-sm text-muted-foreground" rightClassName="text-right" />
-						<KeyValueRow label="Occupation" value="Self employed" leftClassName="text-sm text-muted-foreground" rightClassName="text-right" />
-						<KeyValueRow label="Phone number" value="+2345955895" leftClassName="text-sm text-muted-foreground" rightClassName="text-right" />
-						<KeyValueRow label="Email" value="dunny@gmail.com" leftClassName="text-sm text-muted-foreground" rightClassName="text-right" />
-						<KeyValueRow label="Home address" value="3 ikorudu street" leftClassName="text-sm text-muted-foreground" rightClassName="text-right" />
-						<KeyValueRow
-							label="Business address"
-							value="3 ikorudu street"
-							leftClassName="text-sm text-muted-foreground"
-							rightClassName="text-right"
+				{guarantors.length > 1 && (
+					<section className={titleSectionStyle}>
+						<SectionTitle
+							title="Guarantor (2)"
+							children={
+								<>
+									<small className="text-[#131212B2]">
+										As a guarantor, I hereby guaranty to pay all sums due under the Hire Purchase Agreement in the event of default by the Applicant.{" "}
+										<br />
+										<br /> I accept that messages, notices, processes and other correspondences where necessary, sent to my WhatsApp number as shown
+										herein are properly delivered and served on me.
+									</small>
+								</>
+							}
 						/>
-						<KeyValueRow label="State of origin" value="Lagos state" leftClassName="text-sm text-muted-foreground" rightClassName="text-right" />
-						<KeyValueRow
-							className="items-center"
-							label="Voters card"
-							variant="files"
-							files={[{ url: "#", label: "Voters card" }]}
-							leftClassName="text-sm text-muted-foreground"
-						/>
-					</div>
-				</section>
+						<div className="grid grid-cols-1 gap-2">
+							<KeyValueRow
+								label="Full name"
+								value={guarantors[1]?.fullName || "N/A"}
+								leftClassName="text-sm text-muted-foreground"
+								rightClassName="text-right"
+							/>
+							<KeyValueRow
+								label="Occupation"
+								value={guarantors[1]?.occupation || "N/A"}
+								leftClassName="text-sm text-muted-foreground"
+								rightClassName="text-right"
+							/>
+							<KeyValueRow
+								label="Phone number"
+								value={formatPhoneNumber(guarantors[1]?.phoneNumber || "")}
+								leftClassName="text-sm text-muted-foreground"
+								rightClassName="text-right"
+							/>
+							<KeyValueRow
+								label="Email"
+								value={guarantors[1]?.email || "N/A"}
+								leftClassName="text-sm text-muted-foreground"
+								rightClassName="text-right"
+							/>
+							<KeyValueRow
+								label="Home address"
+								value={guarantors[1]?.homeAddress || "N/A"}
+								leftClassName="text-sm text-muted-foreground"
+								rightClassName="text-right"
+							/>
+							<KeyValueRow
+								label="Business address"
+								value={guarantors[1]?.businessAddress || guarantors[1]?.companyAddress || "N/A"}
+								leftClassName="text-sm text-muted-foreground"
+								rightClassName="text-right"
+							/>
+							<KeyValueRow
+								label="State of origin"
+								value={getStateNameById(guarantors[1]?.stateOfOrigin || "")}
+								leftClassName="text-sm text-muted-foreground"
+								rightClassName="text-right"
+							/>
+							<KeyValueRow
+								label="Employment status"
+								value={guarantors[1]?.employmentStatus?.status || "N/A"}
+								leftClassName="text-sm text-muted-foreground"
+								rightClassName="text-right"
+							/>
+							<KeyValueRow
+								label="Identity documents"
+								className="items-center"
+								variant="files"
+								files={transformMediaFiles(registration?.mediaFiles?.guarantor_1_doc ?? [])}
+								leftClassName="text-sm text-muted-foreground"
+							/>
+						</div>
+					</section>
+				)}
 			</CustomCard>
 		</CustomCard>
 	);

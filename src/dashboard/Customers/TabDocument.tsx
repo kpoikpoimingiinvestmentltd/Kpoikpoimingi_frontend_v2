@@ -3,8 +3,15 @@ import SectionTitle from "@/components/common/SectionTitle";
 import Image from "@/components/base/Image";
 import { media } from "@/resources/images";
 import { Link } from "react-router";
+import { useEffect } from "react";
 
-export default function TabDocument() {
+export default function TabDocument({ documents }: { documents?: any }) {
+	// Log the documents response for debugging
+	useEffect(() => {
+		if (documents) {
+			console.log("Documents Response Structure:", documents);
+		}
+	}, [documents]);
 	const signedDocs = Array.from({ length: 5 }).map((_, i) => ({ id: `s${i + 1}`, label: "Contract for 25kg gas cylinder", url: "#" }));
 	const customerDocs = [
 		{ id: "nin", title: "NIN", src: media.images.demoId },

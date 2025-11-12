@@ -23,3 +23,14 @@ export type GetAllCustomersResponse = {
 		hasPrev: boolean;
 	};
 };
+
+export interface DeleteCustomerResponse {
+	id: string;
+	customerCode: string;
+	fullName: string;
+	email: string;
+	registrations: Array<{
+		id: string;
+		registrationCode: string;
+	}>;
+}

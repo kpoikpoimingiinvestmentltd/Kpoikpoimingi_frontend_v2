@@ -16,10 +16,7 @@ export default function AddCustomer() {
 
 			<CustomCard>
 				<div className="p-6">
-					<CustomerForm
-						onSubmit={(data) => console.log("submit", data)}
-						paymentMethod={paymentMethod === "once" || paymentMethod === "installment" ? paymentMethod : undefined}
-					/>
+					<CustomerForm paymentMethod={paymentMethod === "once" || paymentMethod === "installment" ? paymentMethod : undefined} />
 				</div>
 			</CustomCard>
 		</PageWrapper>

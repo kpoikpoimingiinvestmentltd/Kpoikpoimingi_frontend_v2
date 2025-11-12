@@ -7,6 +7,7 @@ import { FileIcon } from "@/assets/icons";
 // import ModalPaymentDetails from "./ModalPaymentDetails";
 import { useNavigate, useParams } from "react-router";
 import { _router } from "@/routes/_router";
+import { useEffect } from "react";
 
 type Payment = { id: string; date: string };
 type ContractGroup = { id: string; title: string; payments: Payment[]; totalPaid?: string };
@@ -33,10 +34,17 @@ const groups: ContractGroup[] = [
 	},
 ];
 
-export default function TabReceipt() {
+export default function TabReceipt({ receipts }: { receipts?: any }) {
 	const navigate = useNavigate();
 	const params = useParams();
 	const customerId = params.id ?? "";
+
+	// Log the receipts response for debugging
+	useEffect(() => {
+		if (receipts) {
+			console.log("Receipts Response Structure:", receipts);
+		}
+	}, [receipts]);
 
 	const handleView = (p: Payment) => {
 		// Sanitize customer id (replace spaces with hyphens) so the URL remains readable

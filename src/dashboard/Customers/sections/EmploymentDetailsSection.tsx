@@ -1,0 +1,116 @@
+import CustomInput from "@/components/base/CustomInput";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import { Spinner } from "@/components/ui/spinner";
+import { inputStyle, labelStyle } from "@/components/common/commonStyles";
+import { twMerge } from "tailwind-merge";
+import type { InstallmentPaymentForm } from "@/types/customerRegistration";
+
+type Props = {
+	form: InstallmentPaymentForm;
+	handleChange: (key: string, value: any) => void;
+	employmentStatusOptions: Array<{ key: string; value: string }>;
+	refLoading: boolean;
+	centeredContainer: (additionalClasses?: string) => string;
+	sectionTitle: (additionalClasses?: string) => string;
+};
+
+export default function EmploymentDetailsSection({
+	form,
+	handleChange,
+	employmentStatusOptions,
+	refLoading,
+	centeredContainer,
+	sectionTitle,
+}: Props) {
+	const isSelfEmployed =
+		form.employment.status &&
+		(form.employment.status === "Self employer" ||
+			employmentStatusOptions.some((o) => o.key === form.employment.status && o.value.toLowerCase().includes("self")));
+
+	return (
+		<div className={centeredContainer()}>
+			<h3 className={sectionTitle()}>Employment Details</h3>
+			<div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+				<div>
+					<label className={labelStyle()}>Employment status*</label>
+					<Select value={form.employment.status} onValueChange={(v) => handleChange("employment", { ...form.employment, status: v })}>
+						<SelectTrigger className={twMerge(inputStyle, "w-full min-h-11 cursor-pointer")}>
+							<SelectValue placeholder="Select status" />
+						</SelectTrigger>
+						<SelectContent>
+							{refLoading ? (
+								<div className="p-3 text-center">
+									<Spinner className="size-4" />
+								</div>
+							) : employmentStatusOptions.length === 0 ? (
+								<>
+									<SelectItem value="Civil servant">Civil servant</SelectItem>
+									<SelectItem value="Self employer">Self employer</SelectItem>
+									<SelectItem value="Unemployed">Unemployed</SelectItem>
+								</>
+							) : (
+								employmentStatusOptions.map((it) => (
+									<SelectItem key={it.key} value={it.key}>
+										{it.value}
+									</SelectItem>
+								))
+							)}
+						</SelectContent>
+					</Select>
+				</div>
+
+				{isSelfEmployed ? (
+					<>
+						<CustomInput
+							label="Company name"
+							required
+							labelClassName={labelStyle()}
+							value={form.employment.companyName}
+							onChange={(e) => handleChange("employment", { ...form.employment, companyName: e.target.value })}
+							className={twMerge(inputStyle)}
+						/>
+
+						<div className="mt-4 col-span-full">
+							<label className={labelStyle()}>Business address*</label>
+							<Textarea
+								value={form.employment.businessAddress}
+								onChange={(e) => handleChange("employment", { ...form.employment, businessAddress: e.target.value })}
+								className={twMerge(inputStyle)}
+							/>
+						</div>
+
+						<div className="mt-4 col-span-full">
+							<label className={labelStyle()}>Home address*</label>
+							<Textarea
+								value={form.employment.homeAddress}
+								onChange={(e) => handleChange("employment", { ...form.employment, homeAddress: e.target.value })}
+								className={twMerge(inputStyle)}
+							/>
+						</div>
+					</>
+				) : (
+					<>
+						<CustomInput
+							label="Employer name"
+							required
+							labelClassName={labelStyle()}
+							value={form.employment.employerName}
+							onChange={(e) => handleChange("employment", { ...form.employment, employerName: e.target.value })}
+							className={twMerge(inputStyle)}
+						/>
+
+						<div className="mt-4 col-span-full">
+							<label className={labelStyle()}>Employer address*</label>
+							<Textarea
+								value={form.employment.employerAddress}
+								onChange={(e) => handleChange("employment", { ...form.employment, employerAddress: e.target.value })}
+								className={twMerge(inputStyle)}
+							/>
+						</div>
+					</>
+				)}
+			</div>
+		</div>
+	);
+}

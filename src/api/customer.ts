@@ -1,7 +1,8 @@
-import { useQuery } from "@tanstack/react-query";
-import { apiGet } from "@/services/apiClient";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { apiGet, apiPost, apiDelete } from "@/services/apiClient";
 import { API_ROUTES } from "./routes";
-import type { GetAllCustomersResponse, Customer } from "@/types/customer";
+import type { GetAllCustomersResponse, Customer, DeleteCustomerResponse } from "@/types/customer";
+import type { SendEmailSpecificPayload, SendEmailBroadcastPayload, SendEmailResponse } from "@/types/email";
 
 export async function getAllCustomers(page = 1, limit = 10, search?: string, sortBy?: string, sortOrder?: string) {
 	const params = new URLSearchParams();
@@ -35,4 +36,88 @@ export function useGetCustomer(customerId?: string, enabled = true) {
 		queryFn: () => getCustomerById(customerId!),
 		enabled: !!customerId && enabled,
 	} as any);
+}
+
+export async function getCustomerContracts(customerId: string) {
+	return apiGet(API_ROUTES.customer.getCustomerContracts(customerId)) as Promise<any>;
+}
+
+export function useGetCustomerContracts(customerId?: string, enabled = true) {
+	return useQuery({
+		queryKey: ["customer-contracts", customerId],
+		queryFn: () => getCustomerContracts(customerId!),
+		enabled: !!customerId && enabled,
+	} as any);
+}
+
+export async function getCustomerPayments(customerId: string) {
+	return apiGet(API_ROUTES.customer.getCustomerPayments(customerId)) as Promise<any>;
+}
+
+export function useGetCustomerPayments(customerId?: string, enabled = true) {
+	return useQuery({
+		queryKey: ["customer-payments", customerId],
+		queryFn: () => getCustomerPayments(customerId!),
+		enabled: !!customerId && enabled,
+	} as any);
+}
+
+export async function getCustomerDocuments(customerId: string) {
+	return apiGet(API_ROUTES.customer.getCustomerDocuments(customerId)) as Promise<any>;
+}
+
+export function useGetCustomerDocuments(customerId?: string, enabled = true) {
+	return useQuery({
+		queryKey: ["customer-documents", customerId],
+		queryFn: () => getCustomerDocuments(customerId!),
+		enabled: !!customerId && enabled,
+	} as any);
+}
+
+export async function getCustomerReceipts(customerId: string) {
+	return apiGet(API_ROUTES.customer.getCustomerReceipts(customerId)) as Promise<any>;
+}
+
+export function useGetCustomerReceipts(customerId?: string, enabled = true) {
+	return useQuery({
+		queryKey: ["customer-receipts", customerId],
+		queryFn: () => getCustomerReceipts(customerId!),
+		enabled: !!customerId && enabled,
+	} as any);
+}
+
+export async function sendEmailToSpecificCustomers(payload: SendEmailSpecificPayload) {
+	return apiPost<SendEmailResponse>(API_ROUTES.customer.sendEmailSpecific, payload) as Promise<SendEmailResponse>;
+}
+
+export function useSendEmailToSpecificCustomers(onSuccess?: (data: SendEmailResponse) => void, onError?: (error: any) => void) {
+	return useMutation<SendEmailResponse, Error, SendEmailSpecificPayload>({
+		mutationFn: (payload: SendEmailSpecificPayload) => sendEmailToSpecificCustomers(payload),
+		onSuccess,
+		onError,
+	});
+}
+
+export async function sendEmailBroadcast(payload: SendEmailBroadcastPayload) {
+	return apiPost<SendEmailResponse>(API_ROUTES.customer.sendEmailBroadcast, payload) as Promise<SendEmailResponse>;
+}
+
+export function useSendEmailBroadcast(onSuccess?: (data: SendEmailResponse) => void, onError?: (error: any) => void) {
+	return useMutation<SendEmailResponse, Error, SendEmailBroadcastPayload>({
+		mutationFn: (payload: SendEmailBroadcastPayload) => sendEmailBroadcast(payload),
+		onSuccess,
+		onError,
+	});
+}
+
+export async function deleteCustomer(customerId: string) {
+	return apiDelete<DeleteCustomerResponse>(API_ROUTES.customer.deleteCustomer(customerId)) as Promise<DeleteCustomerResponse>;
+}
+
+export function useDeleteCustomer(onSuccess?: (data: DeleteCustomerResponse) => void, onError?: (error: any) => void) {
+	return useMutation<DeleteCustomerResponse, Error, string>({
+		mutationFn: (customerId: string) => deleteCustomer(customerId),
+		onSuccess,
+		onError,
+	});
 }

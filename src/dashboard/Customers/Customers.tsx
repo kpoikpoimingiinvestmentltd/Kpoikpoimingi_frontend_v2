@@ -13,14 +13,31 @@ import DeleteModal from "@/dashboard/Customers/DeleteModal";
 import SendEmailModal from "@/dashboard/Customers/SendEmailModal";
 import EmptyData from "../../components/common/EmptyData";
 import ActionButton from "../../components/base/ActionButton";
-import { useGetAllCustomers } from "@/api/customer";
+import { useGetAllCustomers, useDeleteCustomer } from "@/api/customer";
 import { TableSkeleton } from "@/components/common/Skeleton";
+import { toast } from "sonner";
 
 export default function Customers() {
-	const { data: customersData, isLoading } = useGetAllCustomers(1, 10);
+	const { data: customersData, isLoading, refetch } = useGetAllCustomers(1, 10);
 	const [page, setPage] = React.useState(1);
 	const [deleteOpen, setDeleteOpen] = React.useState(false);
 	const [isSendEmailOpen, setIsSendEmailOpen] = React.useState(false);
+	const [selectedCustomerId, setSelectedCustomerId] = React.useState<string | null>(null);
+
+	// Delete customer mutation
+	const deleteCustomerMutation = useDeleteCustomer(
+		(res) => {
+			console.log("Customer deleted successfully:", res);
+			toast.success("Customer deleted successfully");
+			setSelectedCustomerId(null);
+			setDeleteOpen(false); // Close modal after successful deletion
+			refetch(); // Refresh the customer list
+		},
+		(err) => {
+			console.error("Error deleting customer:", err);
+			toast.error("Failed to delete customer");
+		}
+	) as any;
 
 	// Transform API data to table format
 	const customersList = (customersData as any)?.data || [];
@@ -111,6 +128,7 @@ export default function Customers() {
 															type="button"
 															className="text-red-500"
 															onClick={() => {
+																setSelectedCustomerId(row.id);
 																setDeleteOpen(true);
 															}}>
 															<IconWrapper className="text-xl">
@@ -131,10 +149,12 @@ export default function Customers() {
 							onOpenChange={setDeleteOpen}
 							title="Delete customer"
 							description="Are you sure you want to delete this customer? This action cannot be undone."
-							onConfirm={() => {
-								// Note: Delete functionality would need API integration
-								setDeleteOpen(false);
+							onConfirm={async () => {
+								if (selectedCustomerId) {
+									await deleteCustomerMutation.mutateAsync(selectedCustomerId);
+								}
 							}}
+							isLoading={deleteCustomerMutation.isPending}
 						/>
 						<div className="">
 							<CompactPagination showRange page={page} pages={pages} onPageChange={setPage} />

@@ -82,15 +82,21 @@ export default function KeyValueRow({
 
 				{variant === "action" && action ? <div className={`flex items-center ${actionClassName || ""}`}>{action}</div> : null}
 
-				{variant === "files" && files && files.length ? (
+				{variant === "files" && files ? (
 					<div className="flex flex-col items-end space-y-3">
-						{files.map((f, i) => (
-							<Link key={i} to={f.url} download className="inline-flex items-center p-1" aria-label={f.label || `Download file ${i + 1}`}>
-								<IconWrapper className="text-4xl sm:text-5xl">
-									<FileIcon />
-								</IconWrapper>
-							</Link>
-						))}
+						{files.length ? (
+							files.map((f, i) => (
+								<Link key={i} to={f.url} download className="inline-flex items-center p-1" aria-label={f.label || `Download file ${i + 1}`}>
+									<IconWrapper className="text-4xl sm:text-5xl">
+										<FileIcon />
+									</IconWrapper>
+								</Link>
+							))
+						) : (
+							<IconWrapper className="text-4xl sm:text-5xl opacity-50">
+								<FileIcon />
+							</IconWrapper>
+						)}
 					</div>
 				) : null}
 			</aside>

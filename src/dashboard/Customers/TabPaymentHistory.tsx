@@ -32,9 +32,15 @@ const groups: ContractGroup[] = [
 	},
 ];
 
-export default function TabPaymentHistory() {
+export default function TabPaymentHistory({ payments }: { payments?: any }) {
 	const [selected, setSelected] = React.useState<Payment | null>(null);
 	const [open, setOpen] = React.useState(false);
+
+	React.useEffect(() => {
+		if (payments) {
+			console.log("Payments Response Structure:", payments);
+		}
+	}, [payments]);
 
 	const handleView = (p: Payment) => {
 		setSelected(p);

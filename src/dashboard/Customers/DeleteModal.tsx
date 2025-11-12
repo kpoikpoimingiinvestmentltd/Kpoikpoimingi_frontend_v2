@@ -8,16 +8,18 @@ export default function DeleteModal({
 	title = "Delete",
 	description = "Are you sure you want to delete this item?",
 	onConfirm,
+	isLoading = false,
 }: {
 	open: boolean;
 	onOpenChange: (o: boolean) => void;
 	title?: string;
 	description?: string;
-	onConfirm?: () => void;
+	onConfirm?: () => void | Promise<void>;
+	isLoading?: boolean;
 }) {
-	const handleConfirm = () => {
-		if (onConfirm) onConfirm();
-		onOpenChange(false);
+	const handleConfirm = async () => {
+		if (onConfirm) await onConfirm();
+		// Don't close immediately, let the caller handle it
 	};
 
 	return (
@@ -31,10 +33,14 @@ export default function DeleteModal({
 					<p className="text-sm text-muted-foreground">{description}</p>
 
 					<div className="flex items-center gap-4 mt-2">
-						<Button className="bg-red-600 border-0 px-6 py-2.5 hover:bg-red-500" onClick={handleConfirm}>
-							Yes, Delete this
+						<Button className="bg-red-600 border-0 px-6 py-2.5 hover:bg-red-500 disabled:opacity-50" onClick={handleConfirm} disabled={isLoading}>
+							{isLoading ? "Deleting..." : "Yes, Delete this"}
 						</Button>
-						<Button variant="outline" className="border-primary bg-stone-100 px-6 text-primary" onClick={() => onOpenChange(false)}>
+						<Button
+							variant="outline"
+							className="border-primary bg-stone-100 px-6 text-primary disabled:opacity-50"
+							onClick={() => onOpenChange(false)}
+							disabled={isLoading}>
 							Cancel
 						</Button>
 					</div>
