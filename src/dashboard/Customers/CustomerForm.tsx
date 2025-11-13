@@ -3,13 +3,14 @@ import { useGetReferenceData } from "@/api/reference";
 import { twMerge } from "tailwind-merge";
 import { usePresignUploadMutation } from "@/api/presign-upload.api";
 import { uploadFileToPresignedUrl } from "@/utils/media-upload";
-import { createInternalCustomerRegistration } from "@/api/customer-registration";
+import { createInternalCustomerRegistration, useUpdateCustomerRegistration } from "@/api/customer-registration";
 import { useCreateInternalFullPaymentRegistration } from "@/api/contracts";
 import { formatPhoneNumber } from "@/lib/utils";
 import { toast } from "sonner";
 import { useCustomerFormState } from "./hooks/useCustomerFormState";
 import OncePaymentForm from "./forms/OncePaymentForm";
 import InstallmentPaymentForm from "./forms/InstallmentPaymentForm";
+import { getCustomerPaymentMethod } from "./helpers/transformCustomerToForm";
 import type { CustomerRegistrationPayload } from "@/types/customerRegistration";
 import type { OncePaymentForm as OncePaymentFormType, InstallmentPaymentForm as InstallmentPaymentFormType } from "@/types/customerRegistration";
 import {
@@ -33,13 +34,18 @@ export default function CustomerForm({
 	initial,
 	sectionTitle: sectionTitleProp,
 	centeredContainer: centeredContainerProp,
-	paymentMethod,
+	paymentMethod: paymentMethodProp,
 }: Props) {
 	const baseEachSectionTitle = "text-lg font-normal";
 	const baseCenteredContainer = "mx-auto w-full md:w-2/3 w-full my-12";
 
 	const sectionTitle = sectionTitleProp || ((additionalClasses?: string) => twMerge(baseEachSectionTitle, additionalClasses));
 	const centeredContainer = centeredContainerProp || ((additionalClasses?: string) => twMerge(baseCenteredContainer, additionalClasses));
+
+	// Determine if we're in edit mode and which payment method to use
+	const isEditMode = !!initial?.id;
+	const detectedPaymentMethod = isEditMode ? getCustomerPaymentMethod(initial) : paymentMethodProp;
+	const paymentMethod = detectedPaymentMethod || paymentMethodProp;
 
 	// Form state
 	const { form, handleChange, uploadedFiles, setUploadedFiles, uploadedFieldsRef, resetFormCompletely } = useCustomerFormState(
@@ -59,6 +65,16 @@ export default function CustomerForm({
 		(err) => {
 			console.error("Error creating full payment registration:", err);
 			toast.error("Failed to create full payment registration");
+		}
+	);
+
+	const updateMutation = useUpdateCustomerRegistration(
+		() => {
+			toast.success(`Registration updated successfully!`);
+		},
+		(err) => {
+			console.error("Error updating customer registration:", err);
+			toast.error("Failed to update registration");
 		}
 	);
 
@@ -155,15 +171,22 @@ export default function CustomerForm({
 					})),
 				};
 
-				// Submit full payment registration
-				await fullPaymentMutation.mutateAsync(fullPaymentPayload);
+				// Submit or update full payment registration
+				if (isEditMode) {
+					await updateMutation.mutateAsync({
+						id: initial.id,
+						payload: fullPaymentPayload as any,
+					});
+				} else {
+					await fullPaymentMutation.mutateAsync(fullPaymentPayload);
+				}
 
 				// Reset form completely (localStorage + state)
 				resetFormCompletely();
 
 				// Call parent onSubmit if provided
 				if (onSubmit) {
-					onSubmit({ ...fullPaymentPayload, message: "Registration created successfully" });
+					onSubmit({ ...fullPaymentPayload, message: "Registration saved successfully" });
 				}
 			} else {
 				// For installment - create internal registration
@@ -240,16 +263,23 @@ export default function CustomerForm({
 					},
 				};
 
-				// Submit to API
-				const response = await createInternalCustomerRegistration(payload);
-				toast.success(`Registration created successfully! Code: ${response.registrationCode}`);
+				// Submit or update registration
+				if (isEditMode) {
+					await updateMutation.mutateAsync({
+						id: initial.id,
+						payload,
+					});
+				} else {
+					const response = await createInternalCustomerRegistration(payload);
+					toast.success(`Registration created successfully! Code: ${response.registrationCode}`);
+				}
 
 				// Reset form completely (localStorage + state)
 				resetFormCompletely();
 
 				// Call parent onSubmit if provided
 				if (onSubmit) {
-					onSubmit(response);
+					onSubmit({ message: "Registration saved successfully" });
 				}
 			}
 		} catch (err: any) {

@@ -1,7 +1,6 @@
 import * as React from "react";
 import { twMerge } from "tailwind-merge";
 import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
 import { IconWrapper } from "../../assets/icons";
 import { inputStyle } from "../common/commonStyles";
 
@@ -86,15 +85,7 @@ export default function CustomInput({
 						setInternal(e.target.value);
 						if (typeof props.onChange === "function") props.onChange(e);
 					}}
-					className={twMerge(
-						cn(
-							// if iconLeft present, add padding-left; if suffix present, add padding-right
-							iconLeft ? "pl-10" : "pl-3",
-							hasSuffix ? "pr-14" : "pr-3"
-						),
-						inputStyle,
-						className
-					)}
+					className={twMerge(inputStyle, iconLeft ? "pl-10" : "pl-3", hasSuffix || iconRight ? "pr-12" : "pr-3", "truncate", className)}
 				/>
 
 				{iconRight && (

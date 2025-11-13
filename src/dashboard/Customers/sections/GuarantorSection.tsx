@@ -240,16 +240,20 @@ export default function GuarantorSection({
 								}
 								isUploaded={uploadedFieldsRef.current.has(`guarantor_${idx}_doc`)}
 								uploadedFiles={
-									uploadedFiles[`guarantor_${idx}_doc`]?.map((file) => ({
-										name: file.split("/").pop() || "Document",
-										onRemove: () => {
-											uploadedFieldsRef.current.delete(`guarantor_${idx}_doc`);
-											setUploadedFiles((prev) => ({
-												...prev,
-												[`guarantor_${idx}_doc`]: prev[`guarantor_${idx}_doc`]?.filter((f) => f !== file),
-											}));
-										},
-									})) || []
+									uploadedFiles[`guarantor_${idx}_doc`]?.map((file) => {
+										const filename = file.includes("/") ? file.split("/").pop() || "Document" : file;
+										const decodedName = decodeURIComponent(filename);
+										return {
+											name: decodedName,
+											onRemove: () => {
+												uploadedFieldsRef.current.delete(`guarantor_${idx}_doc`);
+												setUploadedFiles((prev) => ({
+													...prev,
+													[`guarantor_${idx}_doc`]: prev[`guarantor_${idx}_doc`]?.filter((f) => f !== file),
+												}));
+											},
+										};
+									}) || []
 								}
 								onChange={async (files) => {
 									if (files[0]) {

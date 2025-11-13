@@ -38,6 +38,18 @@ export function useGetCustomer(customerId?: string, enabled = true) {
 	} as any);
 }
 
+export async function getCustomerApprovedRegistrations(customerId: string) {
+	return apiGet(API_ROUTES.customer.getApprovedRegistrations(customerId)) as Promise<any>;
+}
+
+export function useGetCustomerApprovedRegistrations(customerId?: string, enabled = true) {
+	return useQuery({
+		queryKey: ["customer-approved-registrations", customerId],
+		queryFn: () => getCustomerApprovedRegistrations(customerId!),
+		enabled: !!customerId && enabled,
+	} as any);
+}
+
 export async function getCustomerContracts(customerId: string) {
 	return apiGet(API_ROUTES.customer.getCustomerContracts(customerId)) as Promise<any>;
 }

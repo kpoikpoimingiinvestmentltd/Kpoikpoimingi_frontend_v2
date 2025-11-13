@@ -50,16 +50,21 @@ export default function IdentificationDocumentSection({
 						placeholder={uploadedFiles.nin?.length ? `${uploadedFiles.nin.length} document uploaded` : "Upload NIN or Voters Card"}
 						isUploaded={uploadedFieldsRef.current.has("nin")}
 						uploadedFiles={
-							uploadedFiles.nin?.map((file) => ({
-								name: file.split("/").pop() || "NIN",
-								onRemove: () => {
-									uploadedFieldsRef.current.delete("nin");
-									setUploadedFiles((prev) => ({
-										...prev,
-										nin: prev.nin?.filter((f) => f !== file),
-									}));
-								},
-							})) || []
+							uploadedFiles.nin?.map((file) => {
+								// Extract clean filename from URL
+								const filename = file.includes("/") ? file.split("/").pop() || "NIN" : file;
+								const decodedName = decodeURIComponent(filename);
+								return {
+									name: decodedName,
+									onRemove: () => {
+										uploadedFieldsRef.current.delete("nin");
+										setUploadedFiles((prev) => ({
+											...prev,
+											nin: prev.nin?.filter((f) => f !== file),
+										}));
+									},
+								};
+							}) || []
 						}
 						onChange={async (files) => {
 							if (files[0]) {
@@ -72,16 +77,20 @@ export default function IdentificationDocumentSection({
 							placeholder={uploadedFiles.driverLicense?.length ? `${uploadedFiles.driverLicense.length} license uploaded` : "Upload Drivers License"}
 							isUploaded={uploadedFieldsRef.current.has("driverLicense")}
 							uploadedFiles={
-								uploadedFiles.driverLicense?.map((file) => ({
-									name: file.split("/").pop() || "License",
-									onRemove: () => {
-										uploadedFieldsRef.current.delete("driverLicense");
-										setUploadedFiles((prev) => ({
-											...prev,
-											driverLicense: prev.driverLicense?.filter((f) => f !== file),
-										}));
-									},
-								})) || []
+								uploadedFiles.driverLicense?.map((file) => {
+									const filename = file.includes("/") ? file.split("/").pop() || "License" : file;
+									const decodedName = decodeURIComponent(filename);
+									return {
+										name: decodedName,
+										onRemove: () => {
+											uploadedFieldsRef.current.delete("driverLicense");
+											setUploadedFiles((prev) => ({
+												...prev,
+												driverLicense: prev.driverLicense?.filter((f) => f !== file),
+											}));
+										},
+									};
+								}) || []
 							}
 							onChange={async (files) => {
 								if (files[0]) {
@@ -94,16 +103,20 @@ export default function IdentificationDocumentSection({
 						placeholder={uploadedFiles.contract?.length ? `${uploadedFiles.contract.length} contract uploaded` : "Upload signed contract"}
 						isUploaded={uploadedFieldsRef.current.has("contract")}
 						uploadedFiles={
-							uploadedFiles.contract?.map((file) => ({
-								name: file.split("/").pop() || "Contract",
-								onRemove: () => {
-									uploadedFieldsRef.current.delete("contract");
-									setUploadedFiles((prev) => ({
-										...prev,
-										contract: prev.contract?.filter((f) => f !== file),
-									}));
-								},
-							})) || []
+							uploadedFiles.contract?.map((file) => {
+								const filename = file.includes("/") ? file.split("/").pop() || "Contract" : file;
+								const decodedName = decodeURIComponent(filename);
+								return {
+									name: decodedName,
+									onRemove: () => {
+										uploadedFieldsRef.current.delete("contract");
+										setUploadedFiles((prev) => ({
+											...prev,
+											contract: prev.contract?.filter((f) => f !== file),
+										}));
+									},
+								};
+							}) || []
 						}
 						onChange={async (files) => {
 							if (files[0]) {

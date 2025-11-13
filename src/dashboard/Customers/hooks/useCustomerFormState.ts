@@ -1,5 +1,6 @@
 import React from "react";
 import type { OncePaymentForm, InstallmentPaymentForm, FileUploadState } from "@/types/customerRegistration";
+import { transformCustomerToInstallmentForm, transformCustomerToOnceForm, transformMediaToUploadedFiles } from "../helpers/transformCustomerToForm";
 
 type FormState = OncePaymentForm | InstallmentPaymentForm;
 
@@ -8,6 +9,14 @@ const UPLOADED_FILES_KEY = "customer_registration_uploaded_files";
 
 export function useCustomerFormState(paymentMethod?: "once" | "installment", initial?: any) {
 	const initializeFormState = (): FormState => {
+		if (initial) {
+			if (paymentMethod === "once") {
+				return transformCustomerToOnceForm(initial);
+			} else {
+				return transformCustomerToInstallmentForm(initial);
+			}
+		}
+
 		if (paymentMethod === "once") {
 			try {
 				const raw = localStorage.getItem(DRAFT_KEY);
@@ -22,11 +31,11 @@ export function useCustomerFormState(paymentMethod?: "once" | "installment", ini
 			}
 
 			return {
-				fullName: initial?.fullName ?? "",
-				email: initial?.email ?? "",
-				whatsapp: initial?.whatsapp ?? "",
-				numberOfProperties: initial?.numberOfProperties ?? "",
-				properties: initial?.properties ?? [{ propertyName: "", quantity: 1 }],
+				fullName: "",
+				email: "",
+				whatsapp: "",
+				numberOfProperties: "",
+				properties: [{ propertyName: "", quantity: 1 }],
 			} as OncePaymentForm;
 		}
 
@@ -43,22 +52,22 @@ export function useCustomerFormState(paymentMethod?: "once" | "installment", ini
 		}
 
 		return {
-			fullName: initial?.fullName ?? "",
-			email: initial?.email ?? "",
-			whatsapp: initial?.whatsapp ?? "",
-			dob: initial?.dob ?? "",
-			address: initial?.address ?? "",
-			isDriver: initial?.isDriver ?? undefined,
-			nextOfKin: initial?.nextOfKin ?? { fullName: "", phone: "", relationship: "", spouseName: "", spousePhone: "", address: "" },
-			propertyName: initial?.propertyName ?? "",
-			paymentFrequency: initial?.paymentFrequency ?? "",
-			paymentDurationUnit: initial?.paymentDurationUnit ?? "",
-			paymentDuration: initial?.paymentDuration ?? "",
-			downPayment: initial?.downPayment ?? "",
-			amountAvailable: initial?.amountAvailable ?? "",
-			clarification: initial?.clarification ?? { previousAgreement: null, completedAgreement: null, prevCompany: "", reason: "" },
-			employment: initial?.employment ?? { status: "", employerName: "", employerAddress: "", companyName: "", businessAddress: "", homeAddress: "" },
-			guarantors: initial?.guarantors ?? [
+			fullName: "",
+			email: "",
+			whatsapp: "",
+			dob: "",
+			address: "",
+			isDriver: undefined,
+			nextOfKin: { fullName: "", phone: "", relationship: "", spouseName: "", spousePhone: "", address: "" },
+			propertyName: "",
+			paymentFrequency: "",
+			paymentDurationUnit: "",
+			paymentDuration: "",
+			downPayment: "",
+			amountAvailable: "",
+			clarification: { previousAgreement: null, completedAgreement: null, prevCompany: "", reason: "" },
+			employment: { status: "", employerName: "", employerAddress: "", companyName: "", businessAddress: "", homeAddress: "" },
+			guarantors: [
 				{
 					fullName: "",
 					occupation: "",
@@ -86,8 +95,28 @@ export function useCustomerFormState(paymentMethod?: "once" | "installment", ini
 	};
 
 	const [form, setForm] = React.useState(initializeFormState);
-	const [uploadedFiles, setUploadedFiles] = React.useState<FileUploadState>({});
+	const [uploadedFiles, setUploadedFiles] = React.useState<FileUploadState>(() => {
+		// If initial data has mediaFiles, use those
+		if (initial?.mediaFiles) {
+			return transformMediaToUploadedFiles(initial.mediaFiles);
+		}
+		return {};
+	});
 	const uploadedFieldsRef = React.useRef<Set<string>>(new Set());
+
+	// Initialize uploadedFieldsRef when initial data is provided
+	React.useEffect(() => {
+		if (initial?.mediaFiles) {
+			const mediaFiles = initial.mediaFiles;
+			if (mediaFiles.identificationDocument?.length) uploadedFieldsRef.current.add("nin");
+			if (mediaFiles.driverLicense?.length) uploadedFieldsRef.current.add("driverLicense");
+			if (mediaFiles.indegeneCertificate?.length) uploadedFieldsRef.current.add("indigeneCertificate");
+			if (mediaFiles.signedContract?.length) uploadedFieldsRef.current.add("contract");
+			if (mediaFiles.guarantor_0_doc?.length) uploadedFieldsRef.current.add("guarantor_0_doc");
+			if (mediaFiles.guarantor_1_doc?.length) uploadedFieldsRef.current.add("guarantor_1_doc");
+			if (mediaFiles.guarantor_2_doc?.length) uploadedFieldsRef.current.add("guarantor_2_doc");
+		}
+	}, [initial]);
 
 	// Load uploaded files metadata on mount
 	React.useEffect(() => {

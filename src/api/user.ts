@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { apiGet, apiPost, apiDelete } from "@/services/apiClient";
+import { apiGet, apiPost, apiDelete, apiPut } from "@/services/apiClient";
 import { API_ROUTES } from "./routes";
 import { store } from "@/store";
 import type { ChangePasswordInput, User, ResetPasswordResponse } from "@/types/user";
@@ -84,7 +84,7 @@ export function useGetCurrentUser(enabled = true) {
 }
 
 export async function updateUserRequest(id: string, payload: any) {
-	return apiPost(API_ROUTES.user.updateUser(id), payload);
+	return apiPut(API_ROUTES.user.updateUser(id), payload);
 }
 
 export function useUpdateUser() {

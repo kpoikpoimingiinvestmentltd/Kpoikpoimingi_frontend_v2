@@ -58,3 +58,25 @@ export function useGetRevenueAnalytics(enabled = true) {
 		keepPreviousData: true,
 	} as any);
 }
+
+export async function getAuditLogsGrouped(page = 1, limit = 10, search?: string, sortBy = "createdAt", sortOrder = "desc") {
+	const params = new URLSearchParams();
+	params.append("page", String(page));
+	params.append("limit", String(limit));
+	if (search) params.append("search", search);
+	params.append("sortBy", sortBy);
+	params.append("sortOrder", sortOrder);
+
+	const qs = `?${params.toString()}`;
+	const url = `${API_ROUTES.auditLogs.getAuditLogsGrouped}${qs}`;
+	return apiGet(url) as Promise<any>;
+}
+
+export function useGetAuditLogsGrouped(page = 1, limit = 10, search?: string, sortBy = "createdAt", sortOrder = "desc", enabled = true) {
+	return useQuery({
+		queryKey: ["auditLogsGrouped", page, limit, search, sortBy, sortOrder],
+		queryFn: async () => getAuditLogsGrouped(page, limit, search, sortBy, sortOrder),
+		enabled,
+		keepPreviousData: true,
+	} as any);
+}

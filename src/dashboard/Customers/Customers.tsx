@@ -18,8 +18,8 @@ import { TableSkeleton } from "@/components/common/Skeleton";
 import { toast } from "sonner";
 
 export default function Customers() {
-	const { data: customersData, isLoading, refetch } = useGetAllCustomers(1, 10);
 	const [page, setPage] = React.useState(1);
+	const { data: customersData, isLoading, refetch } = useGetAllCustomers(page, 10, undefined, "createdAt", "desc");
 	const [deleteOpen, setDeleteOpen] = React.useState(false);
 	const [isSendEmailOpen, setIsSendEmailOpen] = React.useState(false);
 	const [selectedCustomerId, setSelectedCustomerId] = React.useState<string | null>(null);

@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import UserForm from "./UserForm";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { useResetPassword, useSuspendUser, useGetUser, useUpdateUser, deleteUserRequest } from "@/api/user";
+import { useResetPassword, useSuspendUser, useGetUser, useUpdateUser, deleteUserRequest, useUploadUserProfile } from "@/api/user";
 import ConfirmModal from "@/components/common/ConfirmModal";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router";
@@ -37,6 +37,7 @@ export default function UserDetails() {
 	const openEdit = () => setEditOpen(true);
 	const [resetOpen, setResetOpen] = useState(false);
 	const [generatedPassword, setGeneratedPassword] = useState<string | null>(null);
+	const [avatarMediaKey, setAvatarMediaKey] = useState<string | null>(null);
 
 	const params = useParams();
 	const userId = params.id;
@@ -44,6 +45,7 @@ export default function UserDetails() {
 	const resetMutation = useResetPassword();
 
 	const updateMutation = useUpdateUser();
+	const uploadProfileMutation = useUploadUserProfile();
 
 	async function openReset() {
 		if (!userId) {
@@ -70,6 +72,7 @@ export default function UserDetails() {
 	const suspendMutation = useSuspendUser();
 	const navigate = useNavigate();
 	const [confirmOpen, setConfirmOpen] = useState(false);
+	const [userStatus, setUserStatus] = useState<string | null>(null);
 
 	const deleteMutation = useMutation({
 		mutationFn: async (id: string) => {
@@ -107,6 +110,14 @@ export default function UserDetails() {
 		// Get media URL for avatar display
 		const avatarUrl = Array.isArray(cu?.media) && cu?.media?.length > 0 ? cu?.media[0]?.fileUrl : cu?.avatar;
 
+		// Format date for HTML date input (YYYY-MM-DD)
+		const dobRaw = cu?.dateOfBirth ?? cu?.dob ?? null;
+		const dobFormatted = dobRaw ? new Date(dobRaw).toISOString().split("T")[0] : "";
+
+		// Update user status
+		const status = cu?.status?.status || cu?.statusId;
+		setUserStatus(status);
+
 		setFormValues({
 			fullName: cu?.fullName ?? "",
 			username: cu?.username ?? "",
@@ -114,7 +125,7 @@ export default function UserDetails() {
 			phone: cu?.phoneNumber ?? cu?.phone ?? "",
 			houseAddress: cu?.houseAddress ?? "",
 			stateOfOrigin: String(stateOfOriginId ?? ""),
-			dob: cu?.dateOfBirth ?? cu?.dob ?? "",
+			dob: dobFormatted,
 			role: String(roleId ?? ""),
 			salary: cu?.salaryAmount ?? cu?.salary ?? "",
 			accountNumber: cu?.accountNumber ?? "",
@@ -133,18 +144,22 @@ export default function UserDetails() {
 		suspendMutation.mutate(userId, {
 			onSuccess: (res: any) => {
 				try {
-					// update currentUser cache with returned user
+					// Update local status state immediately for UI responsiveness
 					if (res?.user) {
+						const newStatus = res?.user?.status?.status || res?.user?.statusId;
+						setUserStatus(newStatus);
 						queryClient.setQueryData(["user", userId], res.user);
 					}
-					toast.success(res?.message || "User suspended");
+					toast.success(res?.message || "User status updated");
+					// Refetch user data to update the UI
+					queryClient.invalidateQueries({ queryKey: ["user", userId] });
 				} catch (e) {
 					console.warn("Failed to update user cache", e);
 				}
 			},
 			onError: (err) => {
 				console.error("Suspend user failed:", err);
-				toast.error("Failed to suspend user");
+				toast.error("Failed to update user status");
 			},
 		});
 	};
@@ -174,20 +189,27 @@ export default function UserDetails() {
 							<span>Reset Password</span>
 						)}
 					</button>
-					<button
-						type="button"
-						onClick={openDeactivate}
-						disabled={suspendMutation.isPending}
-						className="flex items-center text-sm md:text-base gap-2 bg-red-600 rounded-sm px-8 py-2.5 active-scale transition text-white disabled:opacity-60">
-						{suspendMutation.isPending ? (
-							<>
-								<Spinner className="size-4" />
-								<span>Processing...</span>
-							</>
-						) : (
-							<span>Deactivate</span>
-						)}
-					</button>
+					{(() => {
+						const isInactive = userStatus !== "ACTIVE";
+						const buttonBg = isInactive ? "bg-green-600" : "bg-red-600";
+						const buttonText = isInactive ? "Activate" : "Deactivate";
+						return (
+							<button
+								type="button"
+								onClick={openDeactivate}
+								disabled={suspendMutation.isPending}
+								className={`flex items-center text-sm md:text-base gap-2 ${buttonBg} rounded-sm px-8 py-2.5 active-scale transition text-white disabled:opacity-60`}>
+								{suspendMutation.isPending ? (
+									<>
+										<Spinner className="size-4" />
+										<span>Processing...</span>
+									</>
+								) : (
+									<span>{buttonText}</span>
+								)}
+							</button>
+						);
+					})()}
 					<button
 						type="button"
 						onClick={() => setConfirmOpen(true)}
@@ -339,6 +361,7 @@ export default function UserDetails() {
 					<UserForm
 						values={formValues}
 						onChange={(k, v) => setFormValues((s: any) => ({ ...(s ?? {}), [k]: v }))}
+						onAvatarUploaded={(key) => setAvatarMediaKey(key)}
 						onSubmit={async () => {
 							if (!userId) {
 								toast.error("No user ID available");
@@ -353,24 +376,51 @@ export default function UserDetails() {
 										phoneNumber: formatPhoneNumber(formValues.phone),
 										houseAddress: formValues.houseAddress,
 										stateOfOrigin: formValues.stateOfOrigin,
-										dateOfBirth: formValues.dob,
+										dateOfBirth: formValues.dob || undefined,
 										roleId: Number(formValues.role) || undefined,
-										salaryAmount: formValues.salary,
+										salaryAmount: formValues.salary ? Number(formValues.salary) : undefined,
 										accountNumber: formValues.accountNumber,
 										accountType: formValues.accountType,
 										bankName: formValues.bankName,
-										media: formValues.avatar,
 									},
 								});
+
+								// If avatar was uploaded, call the profile upload endpoint
+								if (avatarMediaKey) {
+									try {
+										await uploadProfileMutation.mutateAsync({
+											userId,
+											key: avatarMediaKey,
+										});
+										setAvatarMediaKey(null);
+									} catch (profileErr) {
+										console.error("Profile upload failed", profileErr);
+										toast.error("Profile picture upload failed");
+									}
+								}
+
 								toast.success("User updated");
 								setEditOpen(false);
 							} catch (e) {
-								console.error("Update user failed", e);
-								toast.error("Failed to update user");
+								let errorMsg = "Failed to update user";
+								if (e instanceof Error) {
+									errorMsg = e.message;
+								} else if (typeof e === "object" && e !== null) {
+									const err = e as any;
+									if (Array.isArray(err?.message)) {
+										errorMsg = err.message.join(", ");
+									} else if (err?.message) {
+										errorMsg = err.message;
+									} else if (err?.error) {
+										errorMsg = err.error;
+									}
+								}
+
+								toast.error(errorMsg);
 							}
 						}}
-						submitLabel={updateMutation.isPending ? "Saving..." : "Save Changes"}
-						isLoading={updateMutation.isPending}
+						submitLabel={updateMutation.isPending || uploadProfileMutation.isPending ? "Saving..." : "Save Changes"}
+						isLoading={updateMutation.isPending || uploadProfileMutation.isPending}
 					/>
 				</DialogContent>
 			</Dialog>

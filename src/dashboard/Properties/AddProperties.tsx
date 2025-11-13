@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { Spinner } from "@/components/ui/spinner";
 import { useForm, Controller } from "react-hook-form";
 import { useCreateProperty, type PropertyFormData } from "@/api/property";
+import { useGetAllCategories } from "@/api/categories";
 import { useNavigate } from "react-router";
 
 export default function AddProperties() {
@@ -43,9 +44,14 @@ export default function AddProperties() {
 
 	const [presignUpload] = usePresignUploadMutation();
 	const [successOpen, setSuccessOpen] = useState(false);
-	const [isLoading, setIsLoading] = useState(false);
-	const [uploadedImages, setUploadedImages] = useState<File[]>([]);
+	const [uploadedImages, setUploadedImages] = useState<{ src: string }[]>([]);
+	const [uploadedMediaKeys, setUploadedMediaKeys] = useState<string[]>([]);
+	const [isUploadingImage, setIsUploadingImage] = useState(false);
 	const categoryValue = watch("categoryId");
+
+	// Fetch categories
+	const { data: categoriesData } = useGetAllCategories(1, 100, true);
+	const categories = (categoriesData as any)?.data || [];
 
 	const createPropertyMutation = useCreateProperty(
 		() => {
@@ -58,81 +64,99 @@ export default function AddProperties() {
 		}
 	);
 
-	// Upload property images and return mediaKeys
-	const uploadPropertyImages = async (files: File[]): Promise<string[]> => {
-		const uploadPromises = files.map(async (file) => {
-			try {
-				const res = await presignUpload({
-					filename: file.name,
-					contentType: file.type,
-					relatedTable: "property",
-				}).unwrap();
+	// Upload a single property image and return mediaKey
+	const handleSingleImageUpload = async (file: File): Promise<string | null> => {
+		if (!file) return null;
 
-				const uploadUrl = (res as any)?.url;
-				if (!uploadUrl) {
-					throw new Error("Presign upload did not return an uploadUrl");
-				}
+		try {
+			setIsUploadingImage(true);
 
-				const uploadResult = await uploadFileToPresignedUrl(uploadUrl, file);
-				if (!uploadResult.success) {
-					throw new Error(uploadResult.error ?? "Upload failed");
-				}
+			// Step 1: Get presigned URL
+			const presignResult = await presignUpload({
+				filename: file.name,
+				contentType: file.type,
+				relatedTable: "media",
+			}).unwrap();
 
-				// Return the key from presign response
-				const mediaKey = (res as any)?.key ?? (res as any)?.data?.key;
-				if (!mediaKey) {
-					throw new Error("No media key returned");
-				}
+			const uploadUrl = (presignResult as any)?.url;
+			if (!uploadUrl) {
+				throw new Error("Presign upload did not return an uploadUrl");
+			}
+
+			// Step 2: Upload file to presigned URL
+			const uploadResult = await uploadFileToPresignedUrl(uploadUrl, file);
+			if (!uploadResult.success) {
+				throw new Error(uploadResult.error ?? "Upload failed");
+			}
+
+			// Step 3: Get the media key
+			const mediaKey = (presignResult as any)?.key ?? (presignResult as any)?.data?.key;
+			if (mediaKey) {
+				// Create object URL for preview
+				const previewUrl = URL.createObjectURL(file);
+
+				// Track uploaded media
+				setUploadedImages((prev) => [...prev, { src: previewUrl }]);
+				setUploadedMediaKeys((prev) => [...prev, mediaKey]);
 
 				return mediaKey;
-			} catch (error) {
-				console.error("Image upload error:", error);
-				throw error;
 			}
-		});
 
-		return Promise.all(uploadPromises);
+			return null;
+		} catch (err: any) {
+			console.error("Image upload error:", err);
+			let message = "Unknown error";
+			if (err instanceof Error) message = err.message;
+			else if (typeof err === "string") message = err;
+			else if (err && typeof (err as any).message === "string") message = (err as any).message;
+			else message = String(err);
+			toast.error(`Upload failed: ${message}`);
+			return null;
+		} finally {
+			setIsUploadingImage(false);
+		}
 	};
 
 	const onSubmit = async (formData: PropertyFormData) => {
-		if (uploadedImages.length === 0) {
+		if (uploadedMediaKeys.length === 0) {
 			toast.error("Please upload at least one property image");
 			return;
 		}
 
-		try {
-			setIsLoading(true);
-
-			// Upload images and get mediaKeys
-			const mediaKeys = await uploadPropertyImages(uploadedImages);
-
-			// Build the complete property payload
-			const propertyPayload = {
-				name: formData.name,
-				categoryId: formData.categoryId,
-				price: Number(formData.price),
-				quantityTotal: Number(formData.quantityTotal),
-				condition: formData.condition,
-				mediaKeys,
-				...(categoryValue.toLowerCase().includes("veh") && {
-					vehicleMake: formData.vehicleMake,
-					vehicleModel: formData.vehicleModel,
-					vehicleYear: formData.vehicleYear ? Number(formData.vehicleYear) : undefined,
-					vehicleColor: formData.vehicleColor,
-					vehicleChassisNumber: formData.vehicleChassisNumber,
-					vehicleType: formData.vehicleType,
-					vehicleRegistrationNumber: formData.vehicleRegistrationNumber,
-				}),
-				...(formData.propertyRequestId && { propertyRequestId: formData.propertyRequestId }),
-			};
-
-			console.log("Property payload:", propertyPayload);
-			await createPropertyMutation.mutateAsync(propertyPayload);
-		} catch (error: any) {
-			console.error("Property creation error:", error);
-		} finally {
-			setIsLoading(false);
+		if (!formData.description || formData.description.trim() === "") {
+			toast.error("Please provide a product description");
+			return;
 		}
+
+		// Convert mediaKeys array to object with image keys
+		const mediaKeysObject = uploadedMediaKeys.reduce((acc, key, idx) => {
+			acc[`image${idx + 1}`] = key;
+			return acc;
+		}, {} as Record<string, string>);
+
+		// Build the complete property payload
+		const propertyPayload = {
+			name: formData.name,
+			categoryId: formData.categoryId,
+			price: Number(formData.price),
+			quantityTotal: Number(formData.quantityTotal),
+			condition: formData.condition,
+			description: formData.description.trim(),
+			mediaKeys: mediaKeysObject,
+			...(categoryValue.toLowerCase().includes("veh") && {
+				vehicleMake: formData.vehicleMake,
+				vehicleModel: formData.vehicleModel,
+				vehicleYear: formData.vehicleYear ? Number(formData.vehicleYear) : undefined,
+				vehicleColor: formData.vehicleColor,
+				vehicleChassisNumber: formData.vehicleChassisNumber,
+				vehicleType: formData.vehicleType,
+				vehicleRegistrationNumber: formData.vehicleRegistrationNumber,
+			}),
+			...(formData.propertyRequestId && { propertyRequestId: formData.propertyRequestId }),
+		};
+
+		console.log("Property payload:", propertyPayload);
+		await createPropertyMutation.mutateAsync(propertyPayload as any);
 	};
 
 	return (
@@ -148,7 +172,23 @@ export default function AddProperties() {
 						containerBorder="dashed"
 						thumbBg="bg-primary/10"
 						thumbVariant="dashed"
-						onChange={(files) => setUploadedImages(files)}
+						isUploading={isUploadingImage}
+						uploadedImages={uploadedImages.map((img, idx) => {
+							return {
+								src: img.src,
+								onRemove: () => {
+									const newImages = uploadedImages.filter((_, i) => i !== idx);
+									const newKeys = uploadedMediaKeys.filter((_, i) => i !== idx);
+									setUploadedImages(newImages);
+									setUploadedMediaKeys(newKeys);
+								},
+							};
+						})}
+						onChange={async (files) => {
+							if (files && files.length > 0) {
+								await Promise.all(Array.from(files).map((file) => handleSingleImageUpload(file)));
+							}
+						}}
 					/>
 
 					<form className="space-y-5" onSubmit={handleHookFormSubmit(onSubmit)}>
@@ -185,18 +225,11 @@ export default function AddProperties() {
 													<SelectValue placeholder="Choose Category" />
 												</SelectTrigger>
 												<SelectContent>
-													<SelectItem value="electronics">Electronics</SelectItem>
-													<SelectItem value="vehicles">Vehicles & Automobiles</SelectItem>
-													<SelectItem value="fashion">Fashion</SelectItem>
-													<SelectItem value="home">Home & Kitchen</SelectItem>
-													<SelectItem value="babies">Babies, Kids & Toys</SelectItem>
-													<SelectItem value="phones">Phones & Accessories</SelectItem>
-													<SelectItem value="computer">Computer & Accessories</SelectItem>
-													<SelectItem value="sport">Sport & Fitness</SelectItem>
-													<SelectItem value="books">Books & Stationaries</SelectItem>
-													<SelectItem value="properties">Properties</SelectItem>
-													<SelectItem value="tools">Tools & Hardware</SelectItem>
-													<SelectItem value="services">Services</SelectItem>
+													{categories.map((cat: any) => (
+														<SelectItem key={cat.id} value={cat.id}>
+															{cat.category || cat.title}
+														</SelectItem>
+													))}
 												</SelectContent>
 											</Select>
 										</>
@@ -244,14 +277,19 @@ export default function AddProperties() {
 								<Controller
 									name="quantityTotal"
 									control={control}
-									rules={{ required: "Quantity is required", min: 1 }}
+									rules={{ required: "Quantity is required", min: { value: 1, message: "Quantity must be at least 1" } }}
 									render={({ field }) => (
 										<CustomInput
 											{...field}
 											label="Quantity*"
 											labelClassName="block text-sm font-medium text-gray-700 mb-2"
 											type="number"
+											min="1"
 											className={twMerge(inputStyle)}
+											onChange={(e) => {
+												const value = Math.max(1, Number(e.target.value) || 1);
+												field.onChange(value);
+											}}
 										/>
 									)}
 								/>
@@ -379,9 +417,10 @@ export default function AddProperties() {
 							<Controller
 								name="description"
 								control={control}
+								rules={{ required: "Product description is required" }}
 								render={({ field }) => (
 									<>
-										<label className="block text-sm font-medium text-gray-700 mb-2">Product Description</label>
+										<label className="block text-sm font-medium text-gray-700 mb-2">Product Description*</label>
 										<Textarea {...field} className={twMerge(inputStyle, "h-auto min-h-24")} rows={8} />
 									</>
 								)}
@@ -408,9 +447,9 @@ export default function AddProperties() {
 						<div className="flex justify-center mt-16">
 							<Button
 								type="submit"
-								disabled={isLoading}
+								disabled={createPropertyMutation.isPending}
 								className="w-full md:w-1/2 rounded-md py-3 h-auto text-base active-scale disabled:opacity-60">
-								{isLoading ? (
+								{createPropertyMutation.isPending ? (
 									<>
 										<Spinner className="size-4 mr-2" />
 										Adding Property...

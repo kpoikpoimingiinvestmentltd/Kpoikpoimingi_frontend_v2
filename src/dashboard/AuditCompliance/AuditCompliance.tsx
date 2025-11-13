@@ -1,57 +1,22 @@
-// icons not used in this file
-import ExportTrigger from "@/components/common/ExportTrigger";
-import PageTitles from "@/components/common/PageTitles";
-import React, { useMemo, useState } from "react";
+import { useState } from "react";
 import CompactPagination from "@/components/ui/compact-pagination";
 import EmptyData from "@/components/common/EmptyData";
 import CustomCard from "@/components/base/CustomCard";
+import { useGetAuditLogsGrouped } from "@/api/analytics";
+import PageTitles from "@/components/common/PageTitles";
+import ExportTrigger from "@/components/common/ExportTrigger";
+import { CardSkeleton } from "@/components/common/Skeleton";
 
 export default function AuditCompliance() {
-	const [isEmpty] = React.useState(false);
-
-	const groups = [
-		{
-			title: "This Month",
-			items: Array.from({ length: 4 }).map((_, i) => ({
-				id: `tm-${i}`,
-				title: "Receipt Generated",
-				subtitle: "Staff Name: Jones Michael O.",
-				date: "12-03-2025",
-			})),
-		},
-		{
-			title: "12/03/2025",
-			items: Array.from({ length: 2 }).map((_, i) => ({
-				id: `d-${i}`,
-				title: "Receipt Generated",
-				subtitle: "Staff Name: Jones Michael O.",
-				date: "12-03-2025",
-			})),
-		},
-	];
-
 	const [page, setPage] = useState(1);
-	const pageSize = 4;
+	const pageSize = 10;
 
-	const flat = useMemo(() => {
-		return groups.flatMap((g) => g.items.map((it) => ({ ...it, groupTitle: g.title })));
-	}, [groups]);
+	// Fetch grouped audit logs
+	const { data: auditData, isLoading } = useGetAuditLogsGrouped(page, pageSize);
 
-	const pages = Math.max(1, Math.ceil(flat.length / pageSize));
-	const visible = useMemo(() => {
-		const start = (page - 1) * pageSize;
-		return flat.slice(start, start + pageSize);
-	}, [flat, page]);
-
-	const visibleGroups = useMemo(() => {
-		const map = new Map<string, typeof visible>();
-		visible.forEach((it) => {
-			const arr = map.get(it.groupTitle) || [];
-			arr.push(it);
-			map.set(it.groupTitle, arr);
-		});
-		return Array.from(map.entries()).map(([title, items]) => ({ title, items }));
-	}, [visible]);
+	const groups = (auditData as any)?.data || [];
+	const pagination = (auditData as any)?.pagination || { total: 0, totalPages: 1 };
+	const isEmpty = !isLoading && groups.length === 0;
 
 	return (
 		<div className="flex flex-col gap-y-6">
@@ -62,15 +27,25 @@ export default function AuditCompliance() {
 				</div>
 			</div>
 			<div className="min-h-96 flex">
-				{!isEmpty ? (
-					<CustomCard className="bg-transparent p-0 border-0">
+				{isLoading ? (
+					<CustomCard className="bg-transparent p-0 border-0 w-full">
+						<div className="flex flex-col gap-y-4">
+							<CardSkeleton lines={3} />
+							<CardSkeleton lines={3} />
+							<CardSkeleton lines={3} />
+						</div>
+					</CustomCard>
+				) : isEmpty ? (
+					<EmptyData text="No Audit Records at the moment" />
+				) : (
+					<CustomCard className="bg-transparent p-0 border-0 w-full">
 						<div className="flex flex-col gap-y-6">
-							{visibleGroups.map((g) => (
-								<section key={g.title}>
-									<h3 className="text-sm font-medium mb-2 text-[#111827]">{g.title}</h3>
+							{groups.map((group: any) => (
+								<section key={group.title}>
+									<h3 className="text-sm font-medium mb-2 text-[#111827]">{group.title}</h3>
 									<div className="flex flex-col gap-y-4">
-										{g.items.map((it) => (
-											<RowItem key={it.id} title={it.title} subtitle={it.subtitle} date={it.date} />
+										{group.logs?.map((log: any) => (
+											<RowItem key={log.id} action={log.action} staffName={log.staffName} date={log.date} time={log.time} />
 										))}
 									</div>
 								</section>
@@ -78,26 +53,27 @@ export default function AuditCompliance() {
 						</div>
 						<div className="mt-10">
 							<div className="ml-auto">
-								<CompactPagination page={page} pages={pages} onPageChange={setPage} />
+								<CompactPagination page={page} pages={pagination.totalPages} onPageChange={setPage} />
 							</div>
 						</div>
 					</CustomCard>
-				) : (
-					<EmptyData text="No Audit Records at the moment" />
 				)}
 			</div>
 		</div>
 	);
 }
 
-function RowItem({ title, subtitle, date }: { title: string; subtitle: string; date: string }) {
+function RowItem({ action, staffName, date, time }: { action: string; staffName: string; date: string; time: string }) {
 	return (
 		<div className="rounded-lg bg-white p-5 border border-gray-100 flex items-start justify-between">
 			<div>
-				<h4 className="font-medium">{title}</h4>
-				<p className="text-sm text-muted-foreground mt-2">{subtitle}</p>
+				<h4 className="font-medium">{action}</h4>
+				<p className="text-sm text-muted-foreground mt-2">Staff Name: {staffName}</p>
 			</div>
-			<div className="text-right text-sm text-muted-foreground">Date: {date}</div>
+			<div className="text-right text-sm text-muted-foreground">
+				<div>{date}</div>
+				<div>{time}</div>
+			</div>
 		</div>
 	);
 }

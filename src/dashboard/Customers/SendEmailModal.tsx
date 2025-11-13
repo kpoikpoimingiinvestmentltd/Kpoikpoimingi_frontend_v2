@@ -11,6 +11,7 @@ import { twMerge } from "tailwind-merge";
 import { useSendEmailToSpecificCustomers, useSendEmailBroadcast } from "@/api/customer";
 import ConfirmModal from "@/components/common/ConfirmModal";
 import type { SendEmailModalProps, SendEmailFormData } from "@/types/email";
+import { toast } from "sonner";
 
 export default function SendEmailModal({ open, onOpenChange, customers = [], onSend }: SendEmailModalProps) {
 	const [activeTab, setActiveTab] = useState<"specific" | "all">("specific");
@@ -32,24 +33,30 @@ export default function SendEmailModal({ open, onOpenChange, customers = [], onS
 	const sendSpecificMutation = useSendEmailToSpecificCustomers(
 		(res) => {
 			console.log("Email sent successfully:", res);
+			toast.success((res as any)?.message || "Email sent successfully!");
 			resetForm();
 			onOpenChange(false);
 			setConfirmOpen(false);
 		},
 		(err) => {
 			console.error("Error sending specific email:", err);
+			const errorMsg = (err as any)?.message || "Failed to send email";
+			toast.error(errorMsg);
 		}
 	) as any;
 
 	const sendBroadcastMutation = useSendEmailBroadcast(
 		(res) => {
 			console.log("Broadcast email sent successfully:", res);
+			toast.success((res as any)?.message || "Broadcast email sent successfully!");
 			resetForm();
 			onOpenChange(false);
 			setConfirmOpen(false);
 		},
 		(err) => {
 			console.error("Error sending broadcast email:", err);
+			const errorMsg = (err as any)?.message || "Failed to send broadcast email";
+			toast.error(errorMsg);
 		}
 	) as any;
 

@@ -25,7 +25,7 @@ export type PropertyPayload = {
 	price: number;
 	quantityTotal: number;
 	condition: string;
-	mediaKeys: string[];
+	mediaKeys: Record<string, string>;
 	vehicleMake?: string;
 	vehicleModel?: string;
 	vehicleYear?: number;
@@ -37,16 +37,21 @@ export type PropertyPayload = {
 	description?: string;
 };
 
+export type PropertyResponse = {
+	id: string;
+	message: string;
+};
+
 // Create Property
 export async function createPropertyRequest(payload: PropertyPayload) {
 	return apiPost(API_ROUTES.property.createProperty, payload);
 }
 
-export function useCreateProperty(onSuccess?: (data: any) => void, onError?: (error: any) => void) {
+export function useCreateProperty(onSuccess?: (data: PropertyResponse) => void, onError?: (error: any) => void) {
 	return useMutation({
 		mutationFn: async (payload: PropertyPayload) => {
 			const data = await createPropertyRequest(payload);
-			return data;
+			return data as PropertyResponse;
 		},
 		onSuccess: (data) => onSuccess?.(data),
 		onError: (error) => onError?.(error),

@@ -20,16 +20,20 @@ export default function IndigeneCertificateSection({ uploadedFiles, uploadedFiel
 				}
 				isUploaded={uploadedFieldsRef.current.has("indigeneCertificate")}
 				uploadedFiles={
-					uploadedFiles.indigeneCertificate?.map((file) => ({
-						name: file.split("/").pop() || "certificate",
-						onRemove: () => {
-							uploadedFieldsRef.current.delete("indigeneCertificate");
-							setUploadedFiles((prev) => ({
-								...prev,
-								indigeneCertificate: prev.indigeneCertificate?.filter((f) => f !== file),
-							}));
-						},
-					})) || []
+					uploadedFiles.indigeneCertificate?.map((file) => {
+						const filename = file.includes("/") ? file.split("/").pop() || "certificate" : file;
+						const decodedName = decodeURIComponent(filename);
+						return {
+							name: decodedName,
+							onRemove: () => {
+								uploadedFieldsRef.current.delete("indigeneCertificate");
+								setUploadedFiles((prev) => ({
+									...prev,
+									indigeneCertificate: prev.indigeneCertificate?.filter((f) => f !== file),
+								}));
+							},
+						};
+					}) || []
 				}
 				onChange={async (files) => {
 					if (files[0]) {

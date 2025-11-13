@@ -55,12 +55,14 @@ export default function InstallmentPaymentFormComponent({
 		<form onSubmit={onSubmit} className="space-y-6">
 			{/* Personal details */}
 			<PersonalDetailsSection form={form} handleChange={handleChange} centeredContainer={centeredContainer} sectionTitle={sectionTitle} />
-			<IndigeneCertificateSection
-				uploadedFiles={uploadedFiles}
-				uploadedFieldsRef={uploadedFieldsRef}
-				handleFileUpload={handleFileUpload}
-				setUploadedFiles={setUploadedFiles}
-			/>
+			<div className={centeredContainer()}>
+				<IndigeneCertificateSection
+					uploadedFiles={uploadedFiles}
+					uploadedFieldsRef={uploadedFieldsRef}
+					handleFileUpload={handleFileUpload}
+					setUploadedFiles={setUploadedFiles}
+				/>
+			</div>
 			<hr className="my-6" />
 
 			{/* Identification Document */}
