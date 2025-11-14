@@ -15,12 +15,76 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import CustomInput from "@/components/base/CustomInput";
 import TabDocument from "./TabDocument";
+import { useParams } from "react-router";
+import { useGetContractById, usePauseContract, useResumeContract } from "@/api/contracts";
+import { Skeleton } from "@/components/common/Skeleton";
 
 export default function ContractDetails() {
+	const { id } = useParams();
+	const { data: contract, isLoading } = useGetContractById(id || "", !!id);
+
 	const [pauseOpen, setPauseOpen] = useState(false);
 	const [terminateOpen, setTerminateOpen] = useState(false);
 	const [pauseReason, setPauseReason] = useState("Health Crises");
 	const [otherPauseReason, setOtherPauseReason] = useState("");
+
+	const pauseMutation = usePauseContract(
+		() => {
+			setPauseOpen(false);
+			setPauseReason("Health Crises");
+			setOtherPauseReason("");
+		},
+		(err) => {
+			console.error("Error pausing contract:", err);
+		}
+	);
+
+	const resumeMutation = useResumeContract(
+		() => {
+			console.log("Contract resumed successfully");
+		},
+		(err) => {
+			console.error("Error resuming contract:", err);
+		}
+	);
+
+	const handlePauseContract = () => {
+		if (!id) return;
+		const reason = pauseReason === "Other Reasons" ? otherPauseReason : pauseReason;
+		if (!reason.trim()) return;
+		pauseMutation.mutate({ id, reason });
+	};
+
+	const handleResumeContract = () => {
+		if (!id) return;
+		resumeMutation.mutate(id);
+	};
+
+	if (isLoading) {
+		return (
+			<PageWrapper>
+				<div className="flex items-center justify-center min-h-96">
+					<Skeleton className="w-full h-96">
+						<div className="space-y-4">
+							<div className="h-8 w-1/3 bg-gray-200 rounded" />
+							<div className="h-4 w-full bg-gray-200 rounded" />
+							<div className="h-4 w-full bg-gray-200 rounded" />
+						</div>
+					</Skeleton>
+				</div>
+			</PageWrapper>
+		);
+	}
+
+	if (!contract) {
+		return (
+			<PageWrapper>
+				<div className="flex items-center justify-center min-h-96">
+					<p>Contract not found</p>
+				</div>
+			</PageWrapper>
+		);
+	}
 
 	return (
 		<PageWrapper>
@@ -41,6 +105,13 @@ export default function ContractDetails() {
 					</ActionButton>
 					<ActionButton className="px-6 font-normal rounded-sm" variant="primary" onClick={() => setPauseOpen(true)}>
 						Pause
+					</ActionButton>
+					<ActionButton
+						className="px-6 font-normal rounded-sm"
+						variant="primary"
+						onClick={handleResumeContract}
+						disabled={resumeMutation.status === "pending"}>
+						{resumeMutation.status === "pending" ? "Resuming..." : "Resume"}
 					</ActionButton>
 					<ActionButton className="px-6 font-normal rounded-sm" variant="danger" onClick={() => setTerminateOpen(true)}>
 						Terminate
@@ -79,7 +150,12 @@ export default function ContractDetails() {
 							)}
 
 							<DialogFooter className="mt-8">
-								<ActionButton className="w-full bg-primary text-white py-3">Pause Contract</ActionButton>
+								<ActionButton
+									className="w-full bg-primary text-white py-3"
+									onClick={handlePauseContract}
+									disabled={pauseMutation.status === "pending"}>
+									{pauseMutation.status === "pending" ? "Pausing..." : "Pause Contract"}
+								</ActionButton>
 							</DialogFooter>
 						</DialogContent>
 					</Dialog>
@@ -125,21 +201,21 @@ export default function ContractDetails() {
 						</TabsTrigger>
 					</TabsList>
 
-					<div className="mt-6">
+					<div className="mt-4">
 						<TabsContent value="information">
-							<TabContractInformation />
+							<TabContractInformation contract={contract} />
 						</TabsContent>
 
 						<TabsContent value="plan">
-							<TabPaymentPlan />
+							<TabPaymentPlan contract={contract} />
 						</TabsContent>
 
 						<TabsContent value="receipt">
-							<TabReceiptHistory />
+							<TabReceiptHistory contract={contract} />
 						</TabsContent>
 
 						<TabsContent value="document">
-							<TabDocument />
+							<TabDocument contract={contract} />
 						</TabsContent>
 					</div>
 				</Tabs>

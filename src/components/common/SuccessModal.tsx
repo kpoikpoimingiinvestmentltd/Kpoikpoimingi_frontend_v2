@@ -16,6 +16,7 @@ export default function SuccessModal({
 	primaryAction,
 	fields,
 	actions,
+	actionsLayout = "vertical",
 }: {
 	open: boolean;
 	onOpenChange: (v: boolean) => void;
@@ -39,6 +40,7 @@ export default function SuccessModal({
 		// when false, clicking this action will NOT close the modal
 		closeOnClick?: boolean;
 	}>;
+	actionsLayout?: "vertical" | "horizontal";
 }) {
 	const handlePrimary = () => {
 		if (primaryAction) primaryAction();
@@ -95,13 +97,14 @@ export default function SuccessModal({
 
 					{message && <div className="text-base text-center mt-2">{message}</div>}
 
-					<DialogFooter className="mt-6 w-full flex flex-col justify-center items-center">
+					<DialogFooter
+						className={twMerge("mt-6 w-full flex justify-center items-center", actionsLayout === "horizontal" ? "flex-row gap-3" : "flex-col gap-3")}>
 						{/* If actions provided, render them; otherwise fall back to single primary button */}
 						{actions && actions.length > 0 ? (
-							<div className="w-full flex flex-col gap-3 items-center">
+							<div className={twMerge("w-full flex gap-3 items-center", actionsLayout === "horizontal" ? "flex-row" : "flex-col")}>
 								{(actions as NonNullable<typeof actions>).map((a: NonNullable<typeof actions>[0], i: number) => {
 									const isPrimary = a.variant === "primary" || (!a.variant && i === 0);
-									const btnBase = a.fullWidth ? "w-full px-16 py-3" : "px-16 py-3";
+									const btnBase = a.fullWidth ? "w-full px-16 py-3" : "flex-1 px-4 py-3";
 									const merged = twMerge("rounded-md active-scale", btnBase, isPrimary ? "bg-primary text-white" : "border-2 bg-card border-primary");
 									return (
 										<button

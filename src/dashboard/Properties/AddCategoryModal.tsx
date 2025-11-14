@@ -13,8 +13,7 @@ type Props = {
 	mode?: "add" | "edit";
 	initial?: { category?: string; subCategories?: string[] };
 	onSave?: (payload: { category?: string; subCategories: string[] }) => void;
-	// react-query mutation status: 'idle' | 'loading' | 'success' | 'error'
-	savingStatus?: "idle" | "loading" | "success" | "error";
+	savingStatus?: "idle" | "pending" | "success" | "error";
 };
 
 export default function AddCategoryModal({ open, onOpenChange, mode = "add", initial, onSave, savingStatus }: Props) {
@@ -42,21 +41,27 @@ export default function AddCategoryModal({ open, onOpenChange, mode = "add", ini
 				setSubCats([{ id: makeId(), name: "" }]);
 			}
 		}
-	}, [open, initial]);
+	}, [open]);
 
 	const addSub = () => setSubCats((s) => [...s, { id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`, name: "" }]);
 	const updateSub = (id: string, val: string) => setSubCats((s) => s.map((v) => (v.id === id ? { ...v, name: val } : v)));
 	const removeSub = (id: string) => setSubCats((s) => s.filter((v) => v.id !== id));
 
-	const saving = (savingStatus ?? "idle") as "idle" | "loading" | "success" | "error";
-	const isSaveDisabled = saving === "loading" || !String(category).trim();
+	const saving = (savingStatus ?? "idle") as "idle" | "pending" | "success" | "error";
+	const isSaveDisabled = saving === "pending" || !String(category).trim();
 
 	const handleSave = () => {
 		onSave?.({ category, subCategories: subCats.map((s) => s.name) });
 	};
 
+	// Prevent closing modal while saving
+	const handleOpenChange = (newOpen: boolean) => {
+		if (saving === "pending") return; // Don't allow closing while saving
+		onOpenChange(newOpen);
+	};
+
 	return (
-		<Dialog open={open} onOpenChange={onOpenChange}>
+		<Dialog open={open} onOpenChange={handleOpenChange}>
 			<DialogContent className={modalContentStyle()}>
 				<div className="text-center py-4">
 					<div className="text-lg font-medium">{mode === "edit" ? "Edit Category" : "Add Category"}</div>
@@ -91,7 +96,7 @@ export default function AddCategoryModal({ open, onOpenChange, mode = "add", ini
 							type="button"
 							onClick={addSub}
 							className="inline-flex items-center gap-2 bg-sky-500 text-white text-sm px-4 py-2 rounded-md"
-							disabled={saving === "loading"}>
+							disabled={saving === "pending"}>
 							<IconWrapper>
 								<PlusIcon />
 							</IconWrapper>
@@ -108,13 +113,13 @@ export default function AddCategoryModal({ open, onOpenChange, mode = "add", ini
 									value={s.name}
 									placeholder="Type in subcategory"
 									onChange={(e) => updateSub(s.id, e.target.value)}
-									disabled={saving === "loading"}
+									disabled={saving === "pending"}
 								/>
 								<button
 									type="button"
 									onClick={() => removeSub(s.id)}
 									className="bg-red-600 text-white px-3 py-2 rounded-md"
-									disabled={saving === "loading"}>
+									disabled={saving === "pending"}>
 									<IconWrapper>
 										<MinusIcon />
 									</IconWrapper>
@@ -127,10 +132,10 @@ export default function AddCategoryModal({ open, onOpenChange, mode = "add", ini
 						<ActionButton
 							type="button"
 							onClick={handleSave}
-							isLoading={saving === "loading"}
+							isLoading={saving === "pending"}
 							className={twMerge("w-full", isSaveDisabled ? "opacity-50 cursor-not-allowed" : "")}
 							disabled={isSaveDisabled}>
-							{saving === "loading" ? "Loading..." : mode === "edit" ? "Save Changes" : "Add Category"}
+							{saving === "pending" ? "Saving..." : mode === "edit" ? "Save Changes" : "Add Category"}
 						</ActionButton>
 					</div>
 				</div>

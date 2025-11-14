@@ -18,7 +18,7 @@ import { Link, NavLink, useLocation, useNavigate } from "react-router";
 
 const PAGES_WITH_BACK_BUTTON = [
 	_router.dashboard.customerDetails,
-	_router.dashboard.propertiesDetails,
+	_router.dashboard.propertiesDetailsPath,
 	_router.dashboard.contractDetails,
 	_router.dashboard.productRequestDetails,
 	_router.dashboard.debtDetails,

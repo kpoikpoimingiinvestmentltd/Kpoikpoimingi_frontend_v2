@@ -23,7 +23,7 @@ export default function AddProperties() {
 	const {
 		control,
 		handleSubmit: handleHookFormSubmit,
-		watch,
+		formState: { errors, isValid },
 	} = useForm<PropertyFormData>({
 		defaultValues: {
 			name: "",
@@ -40,6 +40,7 @@ export default function AddProperties() {
 			condition: "",
 			description: "",
 		},
+		mode: "onChange",
 	});
 
 	const [presignUpload] = usePresignUploadMutation();
@@ -47,11 +48,19 @@ export default function AddProperties() {
 	const [uploadedImages, setUploadedImages] = useState<{ src: string }[]>([]);
 	const [uploadedMediaKeys, setUploadedMediaKeys] = useState<string[]>([]);
 	const [isUploadingImage, setIsUploadingImage] = useState(false);
-	const categoryValue = watch("categoryId");
+	const [selectedParentCategoryId, setSelectedParentCategoryId] = useState<string>("");
 
 	// Fetch categories
 	const { data: categoriesData } = useGetAllCategories(1, 100, true);
 	const categories = (categoriesData as any)?.data || [];
+
+	// Get subcategories for selected parent category
+	const selectedParentCategory = categories.find((cat: any) => cat.id === selectedParentCategoryId);
+	const subcategories = selectedParentCategory?.children || [];
+
+	// Check if selected parent category is a vehicle category
+	const isVehicleCategory =
+		selectedParentCategory && selectedParentCategory.category && selectedParentCategory.category.toLowerCase().includes("vehicle");
 
 	const createPropertyMutation = useCreateProperty(
 		() => {
@@ -117,6 +126,11 @@ export default function AddProperties() {
 		}
 	};
 
+	// Prevent mouse wheel changes on number inputs
+	const handleNumberInputWheel = (e: React.WheelEvent<HTMLInputElement>) => {
+		e.currentTarget.blur();
+	};
+
 	const onSubmit = async (formData: PropertyFormData) => {
 		if (uploadedMediaKeys.length === 0) {
 			toast.error("Please upload at least one property image");
@@ -143,7 +157,7 @@ export default function AddProperties() {
 			condition: formData.condition,
 			description: formData.description.trim(),
 			mediaKeys: mediaKeysObject,
-			...(categoryValue.toLowerCase().includes("veh") && {
+			...(isVehicleCategory && {
 				vehicleMake: formData.vehicleMake,
 				vehicleModel: formData.vehicleModel,
 				vehicleYear: formData.vehicleYear ? Number(formData.vehicleYear) : undefined,
@@ -152,7 +166,6 @@ export default function AddProperties() {
 				vehicleType: formData.vehicleType,
 				vehicleRegistrationNumber: formData.vehicleRegistrationNumber,
 			}),
-			...(formData.propertyRequestId && { propertyRequestId: formData.propertyRequestId }),
 		};
 
 		console.log("Property payload:", propertyPayload);
@@ -199,57 +212,74 @@ export default function AddProperties() {
 								control={control}
 								rules={{ required: "Property name is required" }}
 								render={({ field }) => (
-									<CustomInput
-										{...field}
-										label="Property Name*"
-										labelClassName="block text-sm font-medium text-gray-700 mb-2"
-										type="text"
-										className={twMerge(inputStyle)}
-									/>
-								)}
-							/>
-						</div>
-
-						{/* Category and Condition */}
-						<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-							<div>
-								<Controller
-									name="categoryId"
-									control={control}
-									rules={{ required: "Category is required" }}
-									render={({ field }) => (
-										<>
-											<label className="block text-sm font-medium text-gray-700 mb-2">Property Category*</label>
-											<Select value={field.value} onValueChange={field.onChange}>
-												<SelectTrigger className={twMerge(inputStyle, "w-full min-h-11")}>
-													<SelectValue placeholder="Choose Category" />
-												</SelectTrigger>
-												<SelectContent>
-													{categories.map((cat: any) => (
-														<SelectItem key={cat.id} value={cat.id}>
-															{cat.category || cat.title}
-														</SelectItem>
-													))}
-												</SelectContent>
-											</Select>
-										</>
-									)}
-								/>
-							</div>
-
-							<div>
-								<Controller
-									name="condition"
-									control={control}
-									rules={{ required: "Condition is required" }}
-									render={({ field }) => (
+									<div>
 										<CustomInput
 											{...field}
-											label="Condition*"
+											label="Property Name*"
 											labelClassName="block text-sm font-medium text-gray-700 mb-2"
 											type="text"
 											className={twMerge(inputStyle)}
 										/>
+										{errors.name && <p className="text-red-500 text-sm mt-1">{errors.name.message}</p>}
+									</div>
+								)}
+							/>
+						</div>
+
+						{/* Category and Sub Category */}
+						<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+							<div>
+								<label className="block text-sm font-medium text-gray-700 mb-2">Property Category*</label>
+								<Select
+									value={selectedParentCategoryId}
+									onValueChange={(value) => {
+										setSelectedParentCategoryId(value);
+										// Reset subcategory selection when parent category changes
+										const control_instance = (control as any)._formValues;
+										control_instance.categoryId = "";
+									}}>
+									<SelectTrigger className={twMerge(inputStyle, "w-full min-h-11 capitalize text-sm")}>
+										<SelectValue placeholder="Choose Category" />
+									</SelectTrigger>
+									<SelectContent>
+										{categories.map((cat: any) => (
+											<SelectItem key={cat.id} value={cat.id} className="capitalize">
+												{cat.category || cat.title}
+											</SelectItem>
+										))}
+									</SelectContent>
+								</Select>
+							</div>
+
+							{/* Sub Category - Always show but disabled until parent category selected */}
+							<div>
+								<Controller
+									name="categoryId"
+									control={control}
+									render={({ field }) => (
+										<div>
+											<label className="block text-sm font-medium text-gray-700 mb-2">Sub Category*</label>
+											<Select value={field.value} onValueChange={field.onChange} disabled={!selectedParentCategoryId || subcategories.length === 0}>
+												<SelectTrigger className={twMerge(inputStyle, "w-full min-h-11 capitalize text-sm")}>
+													<SelectValue
+														placeholder={
+															!selectedParentCategoryId
+																? "Select category first"
+																: subcategories.length === 0
+																? "No subcategories available"
+																: "Choose Sub Category"
+														}
+													/>
+												</SelectTrigger>
+												<SelectContent>
+													{subcategories.map((subcat: any) => (
+														<SelectItem key={subcat.id} value={subcat.id} className="capitalize">
+															{subcat.category || subcat.title}
+														</SelectItem>
+													))}
+												</SelectContent>
+											</Select>
+										</div>
 									)}
 								/>
 							</div>
@@ -261,15 +291,19 @@ export default function AddProperties() {
 								<Controller
 									name="price"
 									control={control}
-									rules={{ required: "Price is required", min: 0 }}
+									rules={{ required: "Price is required", min: { value: 0, message: "Price must be greater than 0" } }}
 									render={({ field }) => (
-										<CustomInput
-											{...field}
-											label="Price*"
-											labelClassName="block text-sm font-medium text-gray-700 mb-2"
-											type="number"
-											className={twMerge(inputStyle)}
-										/>
+										<div>
+											<CustomInput
+												{...field}
+												label="Price*"
+												labelClassName="block text-sm font-medium text-gray-700 mb-2"
+												type="number"
+												className={twMerge(inputStyle)}
+												onWheel={handleNumberInputWheel}
+											/>
+											{errors.price && <p className="text-red-500 text-sm mt-1">{errors.price.message}</p>}
+										</div>
 									)}
 								/>
 							</div>
@@ -279,38 +313,46 @@ export default function AddProperties() {
 									control={control}
 									rules={{ required: "Quantity is required", min: { value: 1, message: "Quantity must be at least 1" } }}
 									render={({ field }) => (
-										<CustomInput
-											{...field}
-											label="Quantity*"
-											labelClassName="block text-sm font-medium text-gray-700 mb-2"
-											type="number"
-											min="1"
-											className={twMerge(inputStyle)}
-											onChange={(e) => {
-												const value = Math.max(1, Number(e.target.value) || 1);
-												field.onChange(value);
-											}}
-										/>
+										<div>
+											<CustomInput
+												{...field}
+												label="Quantity*"
+												labelClassName="block text-sm font-medium text-gray-700 mb-2"
+												type="number"
+												min="1"
+												className={twMerge(inputStyle)}
+												onWheel={handleNumberInputWheel}
+												onChange={(e) => {
+													const value = Math.max(1, Number(e.target.value) || 1);
+													field.onChange(value);
+												}}
+											/>
+											{errors.quantityTotal && <p className="text-red-500 text-sm mt-1">{errors.quantityTotal.message}</p>}
+										</div>
 									)}
 								/>
 							</div>
 						</div>
 
 						{/* Vehicle-specific fields */}
-						{categoryValue && categoryValue.toLowerCase().includes("veh") && (
+						{isVehicleCategory && (
 							<>
 								<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 									<div>
 										<Controller
 											name="vehicleMake"
 											control={control}
+											rules={{ required: "Vehicle Make is required" }}
 											render={({ field }) => (
-												<CustomInput
-													{...field}
-													label="Vehicle Make*"
-													labelClassName="block text-sm font-medium text-gray-700 mb-2"
-													className={twMerge(inputStyle)}
-												/>
+												<div>
+													<CustomInput
+														{...field}
+														label="Vehicle Make*"
+														labelClassName="block text-sm font-medium text-gray-700 mb-2"
+														className={twMerge(inputStyle)}
+													/>
+													{errors.vehicleMake && <p className="text-red-500 text-sm mt-1">{errors.vehicleMake.message}</p>}
+												</div>
 											)}
 										/>
 									</div>
@@ -318,13 +360,17 @@ export default function AddProperties() {
 										<Controller
 											name="vehicleModel"
 											control={control}
+											rules={{ required: "Vehicle Model is required" }}
 											render={({ field }) => (
-												<CustomInput
-													{...field}
-													label="Vehicle Model*"
-													labelClassName="block text-sm font-medium text-gray-700 mb-2"
-													className={twMerge(inputStyle)}
-												/>
+												<div>
+													<CustomInput
+														{...field}
+														label="Vehicle Model*"
+														labelClassName="block text-sm font-medium text-gray-700 mb-2"
+														className={twMerge(inputStyle)}
+													/>
+													{errors.vehicleModel && <p className="text-red-500 text-sm mt-1">{errors.vehicleModel.message}</p>}
+												</div>
 											)}
 										/>
 									</div>
@@ -335,14 +381,18 @@ export default function AddProperties() {
 										<Controller
 											name="vehicleYear"
 											control={control}
+											rules={{ required: "Vehicle Year is required" }}
 											render={({ field }) => (
-												<CustomInput
-													{...field}
-													label="Vehicle Year*"
-													labelClassName="block text-sm font-medium text-gray-700 mb-2"
-													type="number"
-													className={twMerge(inputStyle)}
-												/>
+												<div>
+													<CustomInput
+														{...field}
+														label="Vehicle Year*"
+														labelClassName="block text-sm font-medium text-gray-700 mb-2"
+														type="number"
+														className={twMerge(inputStyle)}
+													/>
+													{errors.vehicleYear && <p className="text-red-500 text-sm mt-1">{errors.vehicleYear.message}</p>}
+												</div>
 											)}
 										/>
 									</div>
@@ -350,13 +400,17 @@ export default function AddProperties() {
 										<Controller
 											name="vehicleColor"
 											control={control}
+											rules={{ required: "Vehicle Color is required" }}
 											render={({ field }) => (
-												<CustomInput
-													{...field}
-													label="Vehicle Color*"
-													labelClassName="block text-sm font-medium text-gray-700 mb-2"
-													className={twMerge(inputStyle)}
-												/>
+												<div>
+													<CustomInput
+														{...field}
+														label="Vehicle Color*"
+														labelClassName="block text-sm font-medium text-gray-700 mb-2"
+														className={twMerge(inputStyle)}
+													/>
+													{errors.vehicleColor && <p className="text-red-500 text-sm mt-1">{errors.vehicleColor.message}</p>}
+												</div>
 											)}
 										/>
 									</div>
@@ -367,13 +421,17 @@ export default function AddProperties() {
 										<Controller
 											name="vehicleChassisNumber"
 											control={control}
+											rules={{ required: "Chassis Number is required" }}
 											render={({ field }) => (
-												<CustomInput
-													{...field}
-													label="Chassis Number*"
-													labelClassName="block text-sm font-medium text-gray-700 mb-2"
-													className={twMerge(inputStyle)}
-												/>
+												<div>
+													<CustomInput
+														{...field}
+														label="Chassis Number*"
+														labelClassName="block text-sm font-medium text-gray-700 mb-2"
+														className={twMerge(inputStyle)}
+													/>
+													{errors.vehicleChassisNumber && <p className="text-red-500 text-sm mt-1">{errors.vehicleChassisNumber.message}</p>}
+												</div>
 											)}
 										/>
 									</div>
@@ -381,13 +439,17 @@ export default function AddProperties() {
 										<Controller
 											name="vehicleType"
 											control={control}
+											rules={{ required: "Vehicle Type is required" }}
 											render={({ field }) => (
-												<CustomInput
-													{...field}
-													label="Vehicle Type*"
-													labelClassName="block text-sm font-medium text-gray-700 mb-2"
-													className={twMerge(inputStyle)}
-												/>
+												<div>
+													<CustomInput
+														{...field}
+														label="Vehicle Type*"
+														labelClassName="block text-sm font-medium text-gray-700 mb-2"
+														className={twMerge(inputStyle)}
+													/>
+													{errors.vehicleType && <p className="text-red-500 text-sm mt-1">{errors.vehicleType.message}</p>}
+												</div>
 											)}
 										/>
 									</div>
@@ -398,13 +460,19 @@ export default function AddProperties() {
 										<Controller
 											name="vehicleRegistrationNumber"
 											control={control}
+											rules={{ required: "Registration Number is required" }}
 											render={({ field }) => (
-												<CustomInput
-													{...field}
-													label="Registration Number*"
-													labelClassName="block text-sm font-medium text-gray-700 mb-2"
-													className={twMerge(inputStyle)}
-												/>
+												<div>
+													<CustomInput
+														{...field}
+														label="Registration Number*"
+														labelClassName="block text-sm font-medium text-gray-700 mb-2"
+														className={twMerge(inputStyle)}
+													/>
+													{errors.vehicleRegistrationNumber && (
+														<p className="text-red-500 text-sm mt-1">{errors.vehicleRegistrationNumber.message}</p>
+													)}
+												</div>
 											)}
 										/>
 									</div>
@@ -419,41 +487,52 @@ export default function AddProperties() {
 								control={control}
 								rules={{ required: "Product description is required" }}
 								render={({ field }) => (
-									<>
+									<div>
 										<label className="block text-sm font-medium text-gray-700 mb-2">Product Description*</label>
 										<Textarea {...field} className={twMerge(inputStyle, "h-auto min-h-24")} rows={8} />
-									</>
+										{errors.description && <p className="text-red-500 text-sm mt-1">{errors.description.message}</p>}
+									</div>
 								)}
 							/>
 						</div>
 
-						{/* Optional Property Request ID */}
-						<div>
-							<Controller
-								name="propertyRequestId"
-								control={control}
-								render={({ field }) => (
-									<CustomInput
-										{...field}
-										label="Property Request ID (Optional)"
-										labelClassName="block text-sm font-medium text-gray-700 mb-2"
-										type="text"
-										className={twMerge(inputStyle)}
-									/>
-								)}
-							/>
+						{/* Condition */}
+						<div className="grid">
+							<div>
+								<Controller
+									name="condition"
+									control={control}
+									rules={{ required: "Condition is required" }}
+									render={({ field }) => (
+										<div>
+											<CustomInput
+												{...field}
+												label="Condition*"
+												labelClassName="block text-sm font-medium text-gray-700 mb-2"
+												type="text"
+												className={twMerge(inputStyle)}
+											/>
+											{errors.condition && <p className="text-red-500 text-sm mt-1">{errors.condition.message}</p>}
+										</div>
+									)}
+								/>
+							</div>
 						</div>
 
 						<div className="flex justify-center mt-16">
 							<Button
 								type="submit"
-								disabled={createPropertyMutation.isPending}
+								disabled={createPropertyMutation.isPending || !isValid || uploadedMediaKeys.length === 0}
 								className="w-full md:w-1/2 rounded-md py-3 h-auto text-base active-scale disabled:opacity-60">
 								{createPropertyMutation.isPending ? (
 									<>
 										<Spinner className="size-4 mr-2" />
 										Adding Property...
 									</>
+								) : uploadedMediaKeys.length === 0 ? (
+									"Please upload at least one image"
+								) : !isValid ? (
+									"Please fill in all required fields"
 								) : (
 									"Add Property"
 								)}

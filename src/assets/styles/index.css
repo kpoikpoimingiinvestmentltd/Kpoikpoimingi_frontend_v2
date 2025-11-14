@@ -13,10 +13,6 @@
 	--fallback-fonts: system-ui, Avenir, Helvetica, Arial, sans-serif;
 	font-family: var(--font-primary), var(--fallback-fonts);
 
-	/* color-scheme: light dark; */
-	/* color: rgba(255, 255, 255, 0.87); */
-	/* background-color: #242424; */
-
 	font-synthesis: none;
 	text-rendering: optimizeLegibility;
 	-webkit-font-smoothing: antialiased;
@@ -194,4 +190,14 @@ input[type="date"] {
 input[type="date"]::-ms-clear,
 input[type="date"]::-ms-expand {
 	display: none;
+}
+
+input[type="number"] {
+	-moz-appearance: textfield;
+}
+
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+	-webkit-appearance: none;
+	margin: 0;
 }

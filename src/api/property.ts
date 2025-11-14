@@ -1,46 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiGet, apiPost, apiPut, apiDelete } from "@/services/apiClient";
 import { API_ROUTES } from "./routes";
+import type { PropertyFormData, PropertyPayload, PropertyResponse, PropertyData } from "@/types/property";
 
-export type PropertyFormData = {
-	name: string;
-	categoryId: string;
-	price: number;
-	quantityTotal: number;
-	vehicleMake?: string;
-	vehicleModel?: string;
-	vehicleYear?: number;
-	vehicleColor?: string;
-	vehicleChassisNumber?: string;
-	vehicleType?: string;
-	vehicleRegistrationNumber?: string;
-	condition: string;
-	propertyRequestId?: string;
-	description?: string;
-};
-
-export type PropertyPayload = {
-	name: string;
-	categoryId: string;
-	price: number;
-	quantityTotal: number;
-	condition: string;
-	mediaKeys: Record<string, string>;
-	vehicleMake?: string;
-	vehicleModel?: string;
-	vehicleYear?: number;
-	vehicleColor?: string;
-	vehicleChassisNumber?: string;
-	vehicleType?: string;
-	vehicleRegistrationNumber?: string;
-	propertyRequestId?: string;
-	description?: string;
-};
-
-export type PropertyResponse = {
-	id: string;
-	message: string;
-};
+export type { PropertyFormData, PropertyPayload, PropertyResponse, PropertyData };
 
 // Create Property
 export async function createPropertyRequest(payload: PropertyPayload) {

@@ -31,7 +31,8 @@ const groups: ContractGroup[] = [
 	},
 ];
 
-export default function TabReceiptHistory() {
+export default function TabReceiptHistory({ contract }: { contract?: any }) {
+	console.log(contract);
 	const navigate = useNavigate();
 
 	return (

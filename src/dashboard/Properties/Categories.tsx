@@ -39,7 +39,7 @@ export default function Categories() {
 			await queryClient.cancelQueries({ queryKey: ["categories"] });
 			const prev = categories;
 			const id = (newCat.category || "").toLowerCase().replace(/\s+/g, "-") || `tmp-${Date.now()}`;
-			const optimistic = { id, title: newCat.category || "Untitled", subs: newCat.subCategories || [], count: 0 };
+			const optimistic = { id, title: newCat.category || "Untitled", subs: (newCat.subCategories || []).filter((s) => s.trim()), count: 0 };
 			setCategories((prevState) => {
 				const next = [...prevState, optimistic];
 				dispatch(setCategoriesAction(next));
@@ -60,19 +60,24 @@ export default function Categories() {
 	});
 
 	const updateMutation = useMutation<any, unknown, { id: string; category?: string; subCategories?: string[] }>({
-		mutationFn: (vars: { id: string; category?: string; subCategories?: string[] }) =>
-			updateCategory(vars.id, { category: vars.category, description: "", subcategories: vars.subCategories as any }),
-		onMutate: async ({ id, category }: { id: string; category?: string }) => {
+		mutationFn: (vars: { id: string; category?: string; subCategories?: string[] }) => {
+			console.log("Updating category with vars:", vars);
+			return updateCategory(vars.id, { category: vars.category, description: "", subcategories: vars.subCategories as any });
+		},
+		onMutate: async ({ id, category, subCategories }: { id: string; category?: string; subCategories?: string[] }) => {
 			await queryClient.cancelQueries({ queryKey: ["categories"] });
 			const prev = categories;
 			setCategories((prevState) => {
-				const next = prevState.map((c) => (c.id === id ? { ...c, title: category ?? c.title } : c));
+				const next = prevState.map((c) =>
+					c.id === id ? { ...c, title: category ?? c.title, subs: (subCategories ?? c.subs).filter((s: string) => s.trim()) } : c
+				);
 				dispatch(setCategoriesAction(next));
 				return next;
 			});
 			return { prev };
 		},
-		onError: (_err: any, _vars: any, context: any) => {
+		onError: (err: any, _vars: any, context: any) => {
+			console.error("Update error:", err);
 			if (context?.prev) {
 				setCategories(context.prev);
 				dispatch(setCategoriesAction(context.prev));
@@ -266,7 +271,7 @@ export default function Categories() {
 												});
 												return filtered.map((row) => (
 													<TableRow key={row.id} className="hover:bg-[#F6FBFF]">
-														<TableCell className="text-[#13121280] align-top">{row.title}</TableCell>
+														<TableCell className="text-[#13121280] align-top capitalize">{row.title}</TableCell>
 														<TableCell className="text-[#13121280] align-top">
 															<div className="text-balance w-80">{row.subs.join(", ")}</div>
 														</TableCell>
@@ -317,20 +322,26 @@ export default function Categories() {
 										if (modalMode === "add") {
 											await createMutation.mutateAsync({ category: payload.category, subCategories: payload.subCategories });
 											toast.success("Category added");
-											setModalOpen(false);
+											setTimeout(() => setModalOpen(false), 500);
 										} else if (modalMode === "edit") {
-											if (!editing) return;
-											await updateMutation.mutateAsync({ id: editing.id!, category: payload.category, subCategories: payload.subCategories });
+											if (!editing?.id) {
+												toast.error("No category selected for editing");
+												return;
+											}
+											await updateMutation.mutateAsync({ id: editing.id, category: payload.category, subCategories: payload.subCategories });
 											toast.success("Category updated");
-											setModalOpen(false);
-											setEditing(null);
+											setTimeout(() => {
+												setModalOpen(false);
+												setEditing(null);
+											}, 500);
 										}
 									} catch (e: any) {
+										console.error("Save error:", e);
 										const serverMessage = e?.data?.message || e?.message || String(e);
 										toast.error(serverMessage || "Failed to save category");
 									}
 								}}
-								savingStatus={(modalMode === "add" ? createMutation.status : updateMutation.status) as "idle" | "loading" | "success" | "error"}
+								savingStatus={(modalMode === "add" ? createMutation.status : updateMutation.status) as "idle" | "pending" | "success" | "error"}
 							/>
 						</div>
 

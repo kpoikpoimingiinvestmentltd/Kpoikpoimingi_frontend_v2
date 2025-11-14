@@ -3,24 +3,27 @@ import SectionTitle from "@/components/common/SectionTitle";
 import KeyValueRow from "@/components/common/KeyValueRow";
 import Badge from "@/components/base/Badge";
 
-export default function TabContractInformation() {
-	const contract = {
-		customerName: "Tom Deo James",
-		whatsapp: "+2348134567890",
-		address: "Dummy address 23 street",
-		businessAddress: "Dummy address 23 street",
-		status: "Active",
-		propertyName: "12 inches HP laptop",
-		paymentType: "Hire purchase",
-		downPayment: "80,000",
-		paymentDuration: "6 months",
-		totalPayable: "30,000",
-		totalProductAmount: "500,000",
-		contractRange: "20/4/2025 to 20/12/2025",
-		assignedStaff: "Tony Donald Jude",
-		interest: "18% applied",
-		vat: "7.5% per instalment",
-		startDate: "20/4/2025",
+export default function TabContractInformation({ contract }: { contract: any }) {
+	const contractData = {
+		customerName: contract?.customer?.fullName || "N/A",
+		whatsapp: contract?.customer?.phoneNumber || "N/A",
+		address: contract?.customer?.houseAddress || "N/A",
+		businessAddress: contract?.customer?.businessAddress || "N/A",
+		status: contract?.status?.status || "N/A",
+		propertyName: contract?.property?.name || "N/A",
+		paymentType: contract?.paymentType?.type || "N/A",
+		downPayment: `₦${parseInt(contract?.downPayment || "0").toLocaleString()}` || "N/A",
+		paymentDuration: `${contract?.durationValue || 0} ${contract?.durationUnit?.duration || ""}` || "N/A",
+		totalPayable: `₦${parseInt(contract?.outStandingBalance || "0").toLocaleString()}` || "N/A",
+		totalProductAmount: `₦${parseInt(contract?.property?.price || "0").toLocaleString()}` || "N/A",
+		contractRange:
+			contract?.startDate && contract?.endDate
+				? `${new Date(contract.startDate).toLocaleDateString()} to ${new Date(contract.endDate).toLocaleDateString()}`
+				: "N/A",
+		assignedStaff: contract?.createdBy?.fullName || "N/A",
+		interest: contract?.interestRate ? `${contract.interestRate}%` : "N/A",
+		vat: contract?.vatPercentage ? `${contract.vatPercentage}%` : "N/A",
+		startDate: contract?.startDate ? new Date(contract.startDate).toLocaleDateString() : "N/A",
 	};
 	return (
 		<CustomCard className="mt-4 border-none p-0 bg-white">
@@ -30,85 +33,90 @@ export default function TabContractInformation() {
 					<div className="grid grid-cols-1 gap-y-4 gap-x-8 text-sm">
 						<KeyValueRow
 							label="Customer full name"
-							value={contract.customerName}
+							value={contractData.customerName}
 							leftClassName="text-sm text-muted-foreground"
 							rightClassName="text-right"
 						/>
 						<KeyValueRow
 							label="Whatsapp number"
-							value={contract.whatsapp}
+							value={contractData.whatsapp}
 							leftClassName="text-sm text-muted-foreground"
 							rightClassName="text-right"
 						/>
-						<KeyValueRow label="Address" value={contract.address} leftClassName="text-sm text-muted-foreground" rightClassName="text-right" />
+						<KeyValueRow label="Address" value={contractData.address} leftClassName="text-sm text-muted-foreground" rightClassName="text-right" />
 						<KeyValueRow
 							label="Business address"
-							value={contract.businessAddress}
+							value={contractData.businessAddress}
 							leftClassName="text-sm text-muted-foreground"
 							rightClassName="text-right"
 						/>
 						<KeyValueRow
 							label="Customer status"
-							value={<Badge value={contract.status} />}
+							value={<Badge value={contractData.status} />}
 							leftClassName="text-sm text-muted-foreground"
 							rightClassName="text-right"
 						/>
 						<KeyValueRow
 							label="Property Name"
-							value={contract.propertyName}
+							value={contractData.propertyName}
 							leftClassName="text-sm text-muted-foreground"
 							rightClassName="text-right"
 						/>
 						<KeyValueRow
 							label="Payment type"
-							value={contract.paymentType}
+							value={contractData.paymentType}
 							leftClassName="text-sm text-muted-foreground"
 							rightClassName="text-right"
 						/>
 						<KeyValueRow
 							label="Down payment"
-							value={contract.downPayment}
+							value={contractData.downPayment}
 							leftClassName="text-sm text-muted-foreground"
 							rightClassName="text-right"
 						/>
 						<KeyValueRow
 							label="Payment duration"
-							value={contract.paymentDuration}
+							value={contractData.paymentDuration}
 							leftClassName="text-sm text-muted-foreground"
 							rightClassName="text-right"
 						/>
 						<KeyValueRow
 							label="Total payable"
-							value={contract.totalPayable}
+							value={contractData.totalPayable}
 							leftClassName="text-sm text-muted-foreground"
 							rightClassName="text-right"
 						/>
 						<KeyValueRow
 							label="Total product amount"
-							value={contract.totalProductAmount}
+							value={contractData.totalProductAmount}
 							leftClassName="text-sm text-muted-foreground"
 							rightClassName="text-right"
 						/>
 						<KeyValueRow
 							label="Contract start & End date"
-							value={contract.contractRange}
+							value={contractData.contractRange}
 							leftClassName="text-sm text-muted-foreground"
 							rightClassName="text-right"
 						/>
 						<KeyValueRow
 							label="Assigned staff"
-							value={contract.assignedStaff}
+							value={contractData.assignedStaff}
 							leftClassName="text-sm text-muted-foreground"
 							rightClassName="text-right"
 						/>
 						<KeyValueRow
 							label="Interest rate applied"
-							value={contract.interest}
+							value={contractData.interest}
 							leftClassName="text-sm text-muted-foreground"
 							rightClassName="text-right"
 						/>
-						<KeyValueRow label="VAT breakdown" value={contract.vat} leftClassName="text-sm text-muted-foreground" rightClassName="text-right" />
-						<KeyValueRow label="Start date" value={contract.startDate} leftClassName="text-sm text-muted-foreground" rightClassName="text-right" />
+						<KeyValueRow label="VAT breakdown" value={contractData.vat} leftClassName="text-sm text-muted-foreground" rightClassName="text-right" />
+						<KeyValueRow
+							label="Start date"
+							value={contractData.startDate}
+							leftClassName="text-sm text-muted-foreground"
+							rightClassName="text-right"
+						/>
 					</div>
 				</div>
 			</CustomCard>

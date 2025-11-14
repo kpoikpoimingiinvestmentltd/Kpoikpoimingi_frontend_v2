@@ -7,20 +7,28 @@ import PageTitles from "@/components/common/PageTitles";
 import CreateContractModal from "./CreateContractModal";
 import { inputStyle, preTableButtonStyle } from "@/components/common/commonStyles";
 import CustomInput from "@/components/base/CustomInput";
-import Image from "@/components/base/Image";
-import { media } from "@/resources/images";
 import { Link } from "react-router";
 import CompactPagination from "@/components/ui/compact-pagination";
 import React from "react";
 import EmptyData from "@/components/common/EmptyData";
 import ActionButton from "../../components/base/ActionButton";
 import ExportTrigger from "../../components/common/ExportTrigger";
+import { useGetAllContracts } from "@/api/contracts";
+import { TableSkeleton } from "@/components/common/Skeleton";
 
 export default function Contract() {
-	const [isEmpty] = React.useState(false);
 	const [createOpen, setCreateOpen] = React.useState(false);
 	const [page, setPage] = React.useState(1);
-	const pages = Math.max(1, Math.ceil(customers.length / 10));
+	const [search, setSearch] = React.useState("");
+
+	// Default sort: createdAt descending (newest first)
+	const sortBy = "createdAt";
+	const sortOrder = "desc";
+
+	const { data = {} as any, isLoading } = useGetAllContracts(page, 10, search, sortBy, sortOrder);
+	const contracts = data?.data || [];
+	const pagination = data?.pagination || {};
+	const pages = pagination?.totalPages || 1;
 	return (
 		<div className="flex flex-col gap-y-6">
 			<div className="flex items-center justify-between flex-wrap gap-4 mb-4">
@@ -38,189 +46,100 @@ export default function Contract() {
 				</div>
 			</div>
 			<div className="min-h-80 flex">
-				{!isEmpty ? (
+				{isLoading ? (
 					<CustomCard className="bg-white flex-grow w-full rounded-lg p-4 border border-gray-100">
-						<>
-							<div className="flex-grow max-w-sm mx-auto text-center gap-5 hidden flex-col items-center justify-center p-5">
-								<Image src={media.images.empty} alt="Empty Customer List" className="w-24" />
-								<p className="text-muted-foreground">You have no customers yet. When you do, they will appear here.</p>
-							</div>
-							<div className="w-full">
-								<div className="flex items-center justify-between flex-wrap gap-6">
-									<h2 className="font-semibold">All Contracts </h2>
-									<div className="flex items-center gap-2">
-										<div className="relative md:w-80">
-											<CustomInput
-												placeholder="Search by name, property or contract code"
-												aria-label="Search by name, property or contract code"
-												className={`max-w-[320px] ${inputStyle} h-10 pl-9`}
-												iconLeft={<SearchIcon />}
-											/>
-										</div>
-										<ActionButton type="button" className={`${preTableButtonStyle} text-white bg-primary ml-auto`}>
-											<IconWrapper className="text-base">
-												<FilterIcon />
-											</IconWrapper>
-											<span className="hidden sm:inline">Filter</span>
-										</ActionButton>
+						<TableSkeleton rows={10} cols={8} />
+					</CustomCard>
+				) : contracts.length === 0 ? (
+					<div className="flex-grow flex items-center justify-center">
+						<EmptyData text="No Contracts at the moment" />
+					</div>
+				) : (
+					<CustomCard className="bg-white flex-grow w-full rounded-lg p-4 border border-gray-100">
+						<div className="w-full">
+							<div className="flex items-center justify-between flex-wrap gap-6">
+								<h2 className="font-semibold">All Contracts </h2>
+								<div className="flex items-center gap-2">
+									<div className="relative md:w-80">
+										<CustomInput
+											placeholder="Search by name, property or contract code"
+											aria-label="Search by name, property or contract code"
+											className={`max-w-[320px] ${inputStyle} h-10 pl-9`}
+											iconLeft={<SearchIcon />}
+											value={search}
+											onChange={(e) => {
+												setSearch(e.target.value);
+												setPage(1);
+											}}
+										/>
 									</div>
-								</div>
-								<div className="overflow-x-auto w-full mt-8">
-									<Table>
-										{/* Create contract modal */}
-										<CreateContractModal open={createOpen} onOpenChange={setCreateOpen} />
-
-										<TableHeader className="[&_tr]:border-0">
-											<TableRow className="bg-[#EAF6FF] h-12 overflow-hidden py-4 rounded-lg">
-												<TableHead>Customer ID</TableHead>
-												<TableHead>Name</TableHead>
-												<TableHead>Property Name</TableHead>
-												<TableHead>Payment Type</TableHead>
-												<TableHead>Status</TableHead>
-												<TableHead>Total payment</TableHead>
-												<TableHead>Date</TableHead>
-												<TableHead>Action</TableHead>
-											</TableRow>
-										</TableHeader>
-										<TableBody>
-											{customers.map((row, idx) => (
-												<TableRow key={idx} className="hover:bg-[#F6FBFF]">
-													<TableCell>{row.id}</TableCell>
-													<TableCell>{row.name}</TableCell>
-													<TableCell>{row.property}</TableCell>
-													<TableCell>{row.paymentType}</TableCell>
-													<TableCell>
-														<Badge value={row.status} size="sm" />
-													</TableCell>
-													<TableCell>{row.totalPayment}</TableCell>
-													<TableCell>{row.date}</TableCell>
-													<TableCell>
-														<div className="flex items-center">
-															<Link to={_router.dashboard.contractDetails.replace(":id", row.id)} className=" p-2 flex items-center">
-																<IconWrapper>
-																	<EditIcon />
-																</IconWrapper>
-															</Link>
-															<ExportTrigger className="text-primary" />
-														</div>
-													</TableCell>
-												</TableRow>
-											))}
-										</TableBody>
-									</Table>
+									<ActionButton type="button" className={`${preTableButtonStyle} text-white bg-primary ml-auto`}>
+										<IconWrapper className="text-base">
+											<FilterIcon />
+										</IconWrapper>
+										<span className="hidden sm:inline">Filter</span>
+									</ActionButton>
 								</div>
 							</div>
-						</>
+							<div className="overflow-x-auto w-full mt-8">
+								<Table>
+									{/* Create contract modal */}
+									<CreateContractModal open={createOpen} onOpenChange={setCreateOpen} />
+
+									<TableHeader className="[&_tr]:border-0">
+										<TableRow className="bg-[#EAF6FF] h-12 overflow-hidden py-4 rounded-lg">
+											<TableHead>Customer ID</TableHead>
+											<TableHead>Name</TableHead>
+											<TableHead>Property Name</TableHead>
+											<TableHead>Payment Type</TableHead>
+											<TableHead>Status</TableHead>
+											<TableHead>Outstanding Balance</TableHead>
+											<TableHead>Date</TableHead>
+											<TableHead>Action</TableHead>
+										</TableRow>
+									</TableHeader>
+									<TableBody>
+										{contracts.map((contract: any, idx: number) => (
+											<TableRow key={idx} className="hover:bg-[#F6FBFF]">
+												<TableCell>{contract.customer?.customerCode || "N/A"}</TableCell>
+												<TableCell>{contract.customer?.fullName || "N/A"}</TableCell>
+												<TableCell>{contract.property?.name || "N/A"}</TableCell>
+												<TableCell>{contract.paymentType?.type || "N/A"}</TableCell>
+												<TableCell>
+													<Badge value={contract.status?.status || "N/A"} size="sm" />
+												</TableCell>
+												<TableCell>₦{parseInt(contract.outStandingBalance || "0").toLocaleString()}</TableCell>
+												<TableCell>{new Date(contract.createdAt).toLocaleDateString()}</TableCell>
+												<TableCell>
+													<div className="flex items-center">
+														<Link to={_router.dashboard.contractDetails.replace(":id", contract.id)} className=" p-2 flex items-center">
+															<IconWrapper>
+																<EditIcon />
+															</IconWrapper>
+														</Link>
+														<ExportTrigger className="text-primary" />
+													</div>
+												</TableCell>
+											</TableRow>
+										))}
+									</TableBody>
+								</Table>
+							</div>
+						</div>
 
 						<div className="mt-8 flex flex-col md:flex-row text-center md:text-start justify-center items-center">
 							<span className="text-sm text-nowrap">
-								Showing <span className="font-medium">1-10</span> of <span className="font-medium">100</span> results
+								Showing <span className="font-medium">{(page - 1) * 10 + 1}</span>-
+								<span className="font-medium">{Math.min(page * 10, pagination.total || 0)}</span> of{" "}
+								<span className="font-medium">{pagination.total || 0}</span> results
 							</span>
 							<div className="ml-auto">
 								<CompactPagination page={page} pages={pages} onPageChange={setPage} />
 							</div>
 						</div>
 					</CustomCard>
-				) : (
-					<div className="flex-grow flex items-center justify-center">
-						<EmptyData text="No Customers at the moment" />
-					</div>
 				)}
 			</div>
 		</div>
 	);
 }
-
-// Mock data matching the provided image
-const customers = [
-	{
-		id: "123456",
-		name: "Tom Doe James",
-		property: "12 inches HP laptop",
-		paymentType: "Hire purchase",
-		status: "Active",
-		totalPayment: "500,000",
-		date: "30-4-2025",
-	},
-	{
-		id: "123456",
-		name: "Tom Doe James",
-		property: "12 inches HP laptop",
-		paymentType: "Hire purchase",
-		status: "Active",
-		totalPayment: "500,000",
-		date: "30-4-2025",
-	},
-	{
-		id: "123456",
-		name: "Tom Doe James",
-		property: "12 inches HP laptop",
-		paymentType: "Hire purchase",
-		status: "Active",
-		totalPayment: "500,000",
-		date: "30-4-2025",
-	},
-	{
-		id: "123456",
-		name: "Tom Doe James",
-		property: "12 inches HP laptop",
-		paymentType: "Hire purchase",
-		status: "Active",
-		totalPayment: "500,000",
-		date: "30-4-2025",
-	},
-	{
-		id: "123456",
-		name: "Tom Doe James",
-		property: "12 inches HP laptop",
-		paymentType: "Hire purchase",
-		status: "Pending",
-		totalPayment: "500,000",
-		date: "30-4-2025",
-	},
-	{
-		id: "123456",
-		name: "Tom Doe James",
-		property: "12 inches HP laptop",
-		paymentType: "Hire purchase",
-		status: "Pending",
-		totalPayment: "500,000",
-		date: "30-4-2025",
-	},
-	{
-		id: "123456",
-		name: "Tom Doe James",
-		property: "12 inches HP laptop",
-		paymentType: "Hire purchase",
-		status: "Terminated",
-		totalPayment: "500,000",
-		date: "30-4-2025",
-	},
-	{
-		id: "123456",
-		name: "Tom Doe James",
-		property: "12 inches HP laptop",
-		paymentType: "Hire purchase",
-		status: "Terminated",
-		totalPayment: "500,000",
-		date: "30-4-2025",
-	},
-	{
-		id: "123456",
-		name: "Tom Doe James",
-		property: "12 inches HP laptop",
-		paymentType: "Hire purchase",
-		status: "Paused",
-		totalPayment: "500,000",
-		date: "30-4-2025",
-	},
-	{
-		id: "123456",
-		name: "Tom Doe James",
-		property: "12 inches HP laptop",
-		paymentType: "Hire purchase",
-		status: "Paused",
-		totalPayment: "500,000",
-		date: "30-4-2025",
-	},
-];

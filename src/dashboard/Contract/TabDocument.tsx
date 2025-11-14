@@ -4,7 +4,8 @@ import Image from "@/components/base/Image";
 import { media } from "@/resources/images";
 import { Link } from "react-router";
 
-export default function TabDocument() {
+export default function TabDocument({ contract }: { contract?: any }) {
+	console.log(contract);
 	const signedDocs = Array.from({ length: 1 }).map((_, i) => ({ id: `s${i + 1}`, label: "Contract for 25kg gas cylinder", url: "#" }));
 	const customerDocs = [
 		{ id: "nin", title: "NIN", src: media.images.demoId },

@@ -8,6 +8,9 @@ import { checkboxStyle, inputStyle, tabListStyle, tabStyle } from "@/components/
 import CustomInput from "@/components/base/CustomInput";
 import CompactPagination from "@/components/ui/compact-pagination";
 import React from "react";
+import { useGetAllProperties, useUpdateProperty } from "@/api/property";
+import type { PropertyData } from "@/types/property";
+import { deletePropertyRequest } from "@/api/property";
 import EditPropertyDetailsModal from "./EditPropertyDetailsModal";
 import EmptyData from "@/components/common/EmptyData";
 import { Link } from "react-router";
@@ -17,48 +20,94 @@ import { Dialog, DialogContent } from "../../components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { twMerge } from "tailwind-merge";
 import ActionButton from "../../components/base/ActionButton";
-
-const propertyItems = [
-	{ id: "p1", title: "25 kg Gas Cylinder", price: "₦ 50,000", img: media.images._product1 },
-	{ id: "p2", title: "Hp 12 inches laptop", price: "₦ 50,000", img: media.images._product2 },
-	{ id: "p3", title: "LG two space Fridge", price: "₦ 50,000", img: media.images._product3 },
-	{ id: "p4", title: "Medium tiger generator", price: "₦ 50,000", img: media.images._product4 },
-	{ id: "p5", title: "25 kg Gas Cylinder", price: "₦ 50,000", img: media.images._product5 },
-	{ id: "p6", title: "Hp 12 inches laptop", price: "₦ 50,000", img: media.images._product1 },
-	{ id: "p7", title: "LG two space Fridge", price: "₦ 50,000", img: media.images._product2 },
-	{ id: "p8", title: "Medium tiger generator", price: "₦ 50,000", img: media.images._product3 },
-	{ id: "p9", title: "25 kg Gas Cylinder", price: "₦ 50,000", img: media.images._product4 },
-	{ id: "p10", title: "Hp 12 inches laptop", price: "₦ 50,000", img: media.images._product5 },
-	{ id: "p11", title: "LG two space Fridge", price: "₦ 50,000", img: media.images._product1 },
-	{ id: "p12", title: "Medium tiger generator", price: "₦ 50,000", img: media.images._product2 },
-];
+import { toast } from "sonner";
+import { RectangleSkeleton } from "@/components/common/Skeleton";
 
 export default function Properties() {
 	const [editOpen, setEditOpen] = React.useState(false);
-	const [isEmpty] = React.useState(false);
+	const [propertyToEdit, setPropertyToEdit] = React.useState<PropertyData | null>(null);
+	const [activeTab, setActiveTab] = React.useState("available");
 	const [page, setPage] = React.useState(1);
-	const pages = Math.max(1, Math.ceil(propertyItems.length / 10));
-
-	const [items, setItems] = React.useState([...propertyItems]);
-
+	const [searchQuery, setSearchQuery] = React.useState("");
 	const [selected, setSelected] = React.useState<Record<string, boolean>>({});
 	const [confirmOpen, setConfirmOpen] = React.useState(false);
+	const [deleteType, setDeleteType] = React.useState<"single" | "bulk">("bulk");
+	const [propertyToDelete, setPropertyToDelete] = React.useState<PropertyData | null>(null);
+	const ITEMS_PER_PAGE = 10;
+
+	const { data: propertiesData, isLoading, refetch } = useGetAllProperties();
+	const [isDeleting, setIsDeleting] = React.useState(false);
+	const updateProperty = useUpdateProperty(
+		(data: any) => {
+			refetch();
+			setEditOpen(false);
+			setPropertyToEdit(null);
+			const message = data?.message || "Property updated successfully";
+			toast.success(message);
+		},
+		(error: any) => {
+			toast.error(error?.message || "Failed to update property");
+			console.error("Update failed:", error);
+		}
+	);
+	const allProperties = ((propertiesData as any)?.data || []) as PropertyData[];
+
+	const filteredByStatus = allProperties.filter((prop) => {
+		if (activeTab === "available") return true;
+		if (activeTab === "low") return prop.isLowStock;
+		if (activeTab === "out") return prop.isOutOfStock;
+		return true;
+	});
+
+	const filteredItems = filteredByStatus.filter(
+		(prop) =>
+			prop.propertyCode?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+			prop.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+			prop.addedBy?.fullName?.toLowerCase().includes(searchQuery.toLowerCase())
+	);
+
+	const pages = Math.max(1, Math.ceil(filteredItems.length / ITEMS_PER_PAGE));
+	const paginatedItems = filteredItems.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
+	const isEmpty = allProperties.length === 0;
 
 	const toggleSelect = (id: string) => setSelected((s) => ({ ...s, [id]: !s[id] }));
 	const selectedCount = Object.values(selected).filter(Boolean).length;
 
-	const handleDelete = () => {
-		const toDelete = new Set(
-			Object.entries(selected)
-				.filter(([_, v]) => v)
-				.map(([k]) => k)
-		);
-		setItems((it) => it.filter((i) => !toDelete.has(i.id)));
-		setSelected({});
-		setConfirmOpen(false);
-	};
+	const handleDelete = async () => {
+		try {
+			setIsDeleting(true);
 
-	// (Success modal moved to AddProperties page)
+			if (deleteType === "single" && propertyToDelete) {
+				const data = await deletePropertyRequest(propertyToDelete.id);
+				refetch();
+				setConfirmOpen(false);
+				setPropertyToDelete(null);
+				const message = data?.message || "Property deleted successfully";
+				toast.success(message);
+			} else if (deleteType === "bulk") {
+				const idsToDelete = Object.entries(selected)
+					.filter(([_, v]) => v)
+					.map(([k]) => k);
+
+				// Use Promise.all for concurrent deletion of multiple properties
+				if (idsToDelete.length > 0) {
+					const deletePromises = idsToDelete.map((id) => deletePropertyRequest(id));
+
+					await Promise.all(deletePromises);
+					refetch();
+					setConfirmOpen(false);
+					setSelected({});
+					toast.success(`${idsToDelete.length} properties deleted successfully`);
+				}
+			}
+		} catch (error) {
+			const message = deleteType === "single" ? "Failed to delete property" : "Failed to delete some properties";
+			toast.error(message);
+			console.error("Delete failed:", error);
+		} finally {
+			setIsDeleting(false);
+		}
+	};
 
 	return (
 		<div className="flex flex-col gap-y-6">
@@ -77,13 +126,25 @@ export default function Properties() {
 			</div>
 
 			<div className="min-h-96 flex">
-				{!isEmpty ? (
+				{isLoading ? (
+					<CustomCard className="bg-white flex-grow w-full rounded-lg p-4 border border-gray-100">
+						<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+							{Array.from({ length: 10 }).map((_, i) => (
+								<div key={i} className="bg-white rounded-md p-4">
+									<RectangleSkeleton className="h-32 w-full mb-3" />
+									<RectangleSkeleton className="h-4 w-3/4 mb-2" />
+									<RectangleSkeleton className="h-4 w-1/2" />
+								</div>
+							))}
+						</div>
+					</CustomCard>
+				) : !isEmpty ? (
 					<CustomCard className="bg-white flex-grow w-full rounded-lg p-4 border border-gray-100">
 						<>
 							<div className="w-full">
 								<div className="flex items-center justify-between flex-wrap gap-6">
 									<div className="flex items-center gap-4">
-										<Tabs defaultValue="available">
+										<Tabs value={activeTab} onValueChange={setActiveTab}>
 											<TabsList className={tabListStyle}>
 												<TabsTrigger className={tabStyle} value="available">
 													Available
@@ -101,7 +162,12 @@ export default function Properties() {
 										<div className="relative md:w-80">
 											<CustomInput
 												placeholder="Search by id, name or contact"
-												aria-label="Search payments"
+												aria-label="Search properties"
+												value={searchQuery}
+												onChange={(e) => {
+													setSearchQuery(e.target.value);
+													setPage(1); // Reset to first page on search
+												}}
 												className={`max-w-[320px] ${inputStyle} h-10 pl-9`}
 												iconLeft={<SearchIcon />}
 											/>
@@ -125,7 +191,10 @@ export default function Properties() {
 											<div>
 												<button
 													type="button"
-													onClick={() => setConfirmOpen(true)}
+													onClick={() => {
+														setDeleteType("bulk");
+														setConfirmOpen(true);
+													}}
 													className="bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-md flex items-center gap-1.5 text-sm active-scale">
 													<IconWrapper>
 														<TrashIcon />
@@ -136,8 +205,9 @@ export default function Properties() {
 										</div>
 									)}
 									<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
-										{items.map((prod) => {
+										{paginatedItems.map((prod) => {
 											const checked = !!selected[prod.id];
+											const imgSrc = prod.media?.[0] || media.images._product1;
 											return (
 												<div key={prod.id} className={twMerge("bg-white rounded-md p-4 relative", checked ? "bg-primary/10" : "bg-transparent")}>
 													<div className="absolute top-2 right-2">
@@ -147,13 +217,13 @@ export default function Properties() {
 															className={twMerge("rounded-full !border-primary/50", checkboxStyle)}
 														/>
 													</div>
-													<div className="h-24 md:h-32 flex items-center justify-center overflow-hidden">
-														<Image src={prod.img} alt={prod.title} className="max-h-full object-contain" />
+													<div className="h-24 md:h-32 flex items-center justify-center overflow-hidden bg-gray-50 rounded">
+														<Image src={imgSrc} alt={prod.name} className="max-h-full object-contain" />
 													</div>
 													<div className="mt-3">
-														<h5 className="text-sm font-medium">{prod.title}</h5>
+														<h5 className="text-sm font-medium truncate">{prod.name}</h5>
 														<div className="flex items-center justify-between gap-2">
-															<p className="text-sm mt-1">{prod.price}</p>
+															<p className="text-sm font-semibold text-primary mt-1">₦{prod.price}</p>
 															<DropdownMenu>
 																<DropdownMenuTrigger asChild>
 																	<button className="text-primary">
@@ -164,7 +234,7 @@ export default function Properties() {
 																</DropdownMenuTrigger>
 																<DropdownMenuContent align="end" sideOffset={6} className="w-44 shadow-md px-2">
 																	<DropdownMenuItem>
-																		<Link to={_router.dashboard.propertiesDetails} className="flex w-full items-center gap-2 cursor-pointer">
+																		<Link to={_router.dashboard.propertiesDetails(prod.id)} className="flex w-full items-center gap-2 cursor-pointer">
 																			<IconWrapper className="text-base">
 																				<EyeIcon />
 																			</IconWrapper>
@@ -172,14 +242,26 @@ export default function Properties() {
 																		</Link>
 																	</DropdownMenuItem>
 																	<DropdownMenuItem>
-																		<button type="button" onClick={() => setEditOpen(true)} className="flex items-center gap-2">
+																		<button
+																			type="button"
+																			onClick={() => {
+																				setPropertyToEdit(prod);
+																				setEditOpen(true);
+																			}}
+																			className="flex items-center gap-2 w-full">
 																			<IconWrapper className="text-base">
 																				<EditIcon />
 																			</IconWrapper>
 																			<span>Edit details</span>
 																		</button>
 																	</DropdownMenuItem>
-																	<DropdownMenuItem className="flex items-center gap-2 text-red-600 cursor-pointer">
+																	<DropdownMenuItem
+																		onClick={() => {
+																			setDeleteType("single");
+																			setPropertyToDelete(prod);
+																			setConfirmOpen(true);
+																		}}
+																		className="flex items-center gap-2 text-red-600 cursor-pointer">
 																		<IconWrapper className="text-base">
 																			<TrashIcon />
 																		</IconWrapper>
@@ -188,12 +270,17 @@ export default function Properties() {
 																</DropdownMenuContent>
 															</DropdownMenu>
 														</div>
-														<div className="text-xs text-amber-600 mt-1">3 Items Left.</div>
+														<div className="text-xs text-amber-600 mt-1">{prod.quantityAvailable} Items Available</div>
 													</div>
 												</div>
 											);
 										})}
 									</div>
+									{paginatedItems.length === 0 && (
+										<div className="text-center py-12">
+											<p className="text-muted-foreground">No properties found</p>
+										</div>
+									)}
 								</div>
 							</div>
 						</>
@@ -206,19 +293,26 @@ export default function Properties() {
 						<Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
 							<DialogContent className="max-w-xl">
 								<div className="text-center flex flex-col gap-y-2 py-6">
-									<h5 className="text-lg font-medium">Delete</h5>
-									<p className="mt-6 text-sm font-medium">{selectedCount} Selected items</p>
-									<span className="mt-2 text-sm text-muted-foreground">Do you want to delete this items</span>
+									<h5 className="text-lg font-medium">Delete Property</h5>
+									<p className="mt-6 text-sm font-medium">{deleteType === "single" ? propertyToDelete?.name : `${selectedCount} Selected items`}</p>
+									<span className="mt-2 text-sm text-muted-foreground">
+										{deleteType === "single" ? "This action cannot be undone." : "Do you want to delete these items?"}
+									</span>
 								</div>
 
 								<footer className="max-w-sm mx-auto mb-5 grid grid-cols-1 min-[480px]:grid-cols-2 gap-3">
-									<ActionButton variant="danger" onClick={handleDelete} className="bg-red-600 text-sm text-white px-8 py-3 rounded-md">
-										Yes, Delete this
+									<ActionButton
+										variant="danger"
+										onClick={handleDelete}
+										disabled={isDeleting}
+										className="bg-red-600 text-sm text-white px-8 py-3 rounded-md disabled:opacity-50">
+										{isDeleting ? "Deleting..." : "Yes, Delete this"}
 									</ActionButton>
 									<ActionButton
 										variant="outline"
 										onClick={() => setConfirmOpen(false)}
-										className="border border-primary text-primary px-8 py-3 text-sm rounded-md">
+										disabled={isDeleting}
+										className="border border-primary text-primary px-8 py-3 text-sm rounded-md disabled:opacity-50">
 										Cancel
 									</ActionButton>
 								</footer>
@@ -229,17 +323,59 @@ export default function Properties() {
 						<EditPropertyDetailsModal
 							open={editOpen}
 							onOpenChange={setEditOpen}
-							initial={{
-								id: "",
-								name: "",
-								price: "",
-								quantity: "",
-								status: "",
-								numberAssigned: "",
-								category: "",
-								addedOn: "",
-								images: [media.images._product1],
+							initial={
+								propertyToEdit
+									? {
+											id: propertyToEdit.id,
+											name: propertyToEdit.name,
+											price: propertyToEdit.price,
+											quantity: propertyToEdit.quantityTotal.toString(),
+											status: propertyToEdit.status.status,
+											numberAssigned: propertyToEdit.quantityAssigned.toString(),
+											category: propertyToEdit.category.category,
+											categoryId: propertyToEdit.category.id,
+											addedOn: new Date(propertyToEdit.dateAdded).toLocaleDateString("en-US", {
+												year: "numeric",
+												month: "long",
+												day: "numeric",
+											}),
+											images: propertyToEdit.media || [media.images._product1],
+									  }
+									: {
+											id: "",
+											name: "",
+											price: "",
+											quantity: "",
+											status: "",
+											numberAssigned: "",
+											category: "",
+											addedOn: "",
+											images: [media.images._product1],
+									  }
+							}
+							onSave={(formData: any) => {
+								if (propertyToEdit?.id) {
+									const mediaKeysArray = formData.mediaKeys || [];
+									const mediaKeysObject = mediaKeysArray.reduce((acc: any, key: string, idx: number) => {
+										acc[`media_${idx}`] = key;
+										return acc;
+									}, {});
+
+									const payload = {
+										name: formData.name,
+										categoryId: propertyToEdit.category.id,
+										price: Number(formData.price),
+										quantityTotal: Number(formData.quantity),
+										condition: formData.condition || propertyToEdit.description || "Good",
+										mediaKeys: mediaKeysObject || {},
+									};
+									updateProperty.mutate({
+										id: propertyToEdit.id,
+										payload,
+									});
+								}
 							}}
+							isLoading={updateProperty.isPending}
 						/>
 					</CustomCard>
 				) : (

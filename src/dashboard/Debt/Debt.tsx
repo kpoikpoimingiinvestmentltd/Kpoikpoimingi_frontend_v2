@@ -12,21 +12,47 @@ import { Link } from "react-router";
 import { _router } from "@/routes/_router";
 import React from "react";
 import PageWrapper from "../../components/common/PageWrapper";
-
-const demoDebtors = Array.from({ length: 10 }).map((_, i) => ({
-	id: `ID12345${i}`,
-	customerName: "Kenny Banks James",
-	propertyName: "25kg gas cylinder",
-	amountPaid: "20,000",
-	totalDebt: "80,000",
-	date: "20-04-2025",
-}));
+import { useGetAllContractDebts } from "@/api/contracts";
+import { TableSkeleton } from "@/components/common/Skeleton";
+import EmptyData from "@/components/common/EmptyData";
+import { twMerge } from "tailwind-merge";
 
 export default function Debt() {
-	const [isEmpty] = React.useState(false);
 	const [page, setPage] = React.useState(1);
-	const [rows] = React.useState(demoDebtors);
-	const pages = Math.max(1, Math.ceil(rows.length / 10));
+	const [searchInput, setSearchInput] = React.useState("");
+	const [search, setSearch] = React.useState("");
+
+	// Debounce search input
+	React.useEffect(() => {
+		const timer = setTimeout(() => {
+			setSearch(searchInput);
+		}, 500);
+
+		return () => clearTimeout(timer);
+	}, [searchInput]);
+
+	const { data: debtData = {}, isLoading } = useGetAllContractDebts(page, 10, search) as any;
+
+	const debtors = (debtData?.data || []).map((d: any) => ({
+		id: d.contractId,
+		contractCode: d.contractCode,
+		customerName: d.customerName,
+		propertyName: d.propertyName,
+		amountPaid: d.amountPaid,
+		totalDebt: d.totalDebtAmount,
+		date: new Date(d.date).toLocaleDateString(),
+		isOverdue: d.isOverdue,
+	}));
+
+	const summary = debtData?.summary || {
+		totalCustomersOwing: 0,
+		totalContracts: 0,
+		totalDebtAmount: 0,
+		totalAmountPaid: 0,
+		totalOverdueContracts: 0,
+	};
+
+	const pages = Math.max(1, debtData?.pagination?.totalPages ?? 1);
 
 	return (
 		<PageWrapper>
@@ -42,7 +68,7 @@ export default function Debt() {
 					<div className="flex flex-col h-full justify-between">
 						<div className="text-[.9rem] opacity-90">Total Debt</div>
 						<div className="mt-2 text-lg font-medium">
-							NGN <span className="text-3xl">80,000</span>
+							NGN <span className="text-3xl">{(summary.totalDebtAmount || 0).toLocaleString()}</span>
 						</div>
 					</div>
 				</div>
@@ -53,7 +79,11 @@ export default function Debt() {
 
 			{/* Debtors table */}
 			<div className="min-h-96 flex">
-				{!isEmpty ? (
+				{isLoading ? (
+					<CustomCard className="bg-white flex-grow w-full rounded-lg p-4 border border-gray-100">
+						<TableSkeleton rows={10} />
+					</CustomCard>
+				) : debtors.length > 0 ? (
 					<CustomCard className="bg-white flex-grow w-full rounded-lg p-4 border border-gray-100">
 						<div className="w-full">
 							<div className="flex items-center justify-between flex-wrap gap-6">
@@ -61,8 +91,10 @@ export default function Debt() {
 								<div className="flex items-center gap-2">
 									<div className="relative md:w-80">
 										<CustomInput
-											placeholder="Search reports"
+											placeholder="Search by contract code, customer name, or property name"
 											aria-label="Search"
+											value={searchInput}
+											onChange={(e) => setSearchInput(e.target.value)}
 											className={`max-w-[320px] ${inputStyle} h-10 pl-9`}
 											iconLeft={<SearchIcon />}
 										/>
@@ -78,24 +110,34 @@ export default function Debt() {
 								<Table>
 									<TableHeader className={tableHeaderRowStyle}>
 										<TableRow className="bg-[#EAF6FF] h-12 overflow-hidden py-4 rounded-lg">
-											<TableHead>Contract ID</TableHead>
+											<TableHead>Contract Code</TableHead>
 											<TableHead>Customer Name</TableHead>
 											<TableHead>Property Name</TableHead>
 											<TableHead>Amount Paid</TableHead>
-											<TableHead>Total Dept Amount</TableHead>
+											<TableHead>Total Debt Amount</TableHead>
 											<TableHead>Date</TableHead>
+											<TableHead>Status</TableHead>
 											<TableHead className="text-right">Actions</TableHead>
 										</TableRow>
 									</TableHeader>
 									<TableBody>
-										{rows.map((r, i) => (
-											<TableRow key={i} className="hover:bg-[#F6FBFF]">
-												<TableCell className="text-[#13121266]">{r.id}</TableCell>
+										{debtors.map((r: any, i: number) => (
+											<TableRow key={i}>
+												<TableCell className="text-[#13121266]">{r.contractCode}</TableCell>
 												<TableCell className="text-[#13121266]">{r.customerName}</TableCell>
 												<TableCell className="text-[#13121266]">{r.propertyName}</TableCell>
-												<TableCell className="text-[#13121266]">{r.amountPaid}</TableCell>
-												<TableCell className="text-[#13121266]">{r.totalDebt}</TableCell>
+												<TableCell className="text-[#13121266]">NGN {(r.amountPaid || 0).toLocaleString()}</TableCell>
+												<TableCell className="text-[#13121266]">NGN {(r.totalDebt || 0).toLocaleString()}</TableCell>
 												<TableCell className="text-[#13121266]">{r.date}</TableCell>
+												<TableCell>
+													<span
+														className={twMerge(
+															"px-3 py-1 rounded-full text-xs font-medium",
+															r.isOverdue ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"
+														)}>
+														{r.isOverdue ? "Overdue" : "Current"}
+													</span>
+												</TableCell>
 												<TableCell className="text-right">
 													<Link to={_router.dashboard.debtDetails.replace(":id", r.id)} className="p-2 flex items-center">
 														<IconWrapper className="text-xl">
@@ -111,7 +153,11 @@ export default function Debt() {
 
 							<div className="mt-8 flex flex-col md:flex-row text-center md:text-start justify-center items-center">
 								<span className="text-sm text-nowrap">
-									Showing <span className="font-medium">1-10</span> of <span className="font-medium">{rows.length}</span> results
+									Showing{" "}
+									<span className="font-medium">
+										{Math.min((page - 1) * 10 + 1, debtData?.pagination?.total ?? 0)}-{Math.min(page * 10, debtData?.pagination?.total ?? 0)}
+									</span>{" "}
+									of <span className="font-medium">{debtData?.pagination?.total ?? 0}</span> results
 								</span>
 								<div className="ml-auto">
 									<CompactPagination page={page} pages={pages} onPageChange={setPage} />
@@ -120,7 +166,7 @@ export default function Debt() {
 						</div>
 					</CustomCard>
 				) : (
-					<></>
+					<EmptyData text="No debtors at the moment" />
 				)}
 			</div>
 		</PageWrapper>

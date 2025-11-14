@@ -108,7 +108,7 @@ export const appRouter = createBrowserRouter([
 				element: <Properties />,
 			},
 			{
-				path: _router.dashboard.propertiesDetails,
+				path: _router.dashboard.propertiesDetailsPath,
 				element: <PropertyDetails />,
 			},
 			{
