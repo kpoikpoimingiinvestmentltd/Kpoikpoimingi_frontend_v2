@@ -60,7 +60,7 @@ export default function Payments() {
 	return (
 		<div className="flex flex-col gap-y-6">
 			<div className="flex items-center justify-between flex-wrap gap-4 mb-4">
-				<PageTitles title="Payment Schedule" description="The list of all paid debt and pending payment" />
+				<PageTitles title="Due Payments" description="The list of all paid debt and pending payment" />
 				<div className="flex items-center gap-3">
 					<ExportTrigger title="Export" />
 				</div>
