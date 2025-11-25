@@ -15,6 +15,8 @@ interface StatCardProps {
 	variant?: "default" | "income";
 	currency?: string;
 	footer?: React.ReactNode;
+	period?: string;
+	onPeriodChange?: (period: string) => void;
 }
 
 export default function StatCard({
@@ -28,14 +30,18 @@ export default function StatCard({
 	variant = "default",
 	currency = "₦",
 	footer,
+	period: externalPeriod,
+	onPeriodChange,
 }: StatCardProps) {
 	// Income stat variant component
 	function IncomeStat() {
 		const periods = ["Daily", "Weekly", "Monthly", "Yearly"];
-		const [period, setPeriod] = useState<string>("Monthly");
+		const [period, setPeriod] = useState<string>(externalPeriod || "Monthly");
 
-		// const numeric = typeof value === "number" ? value : Number(String(value).replace(/[^0-9.-]+/g, ""));
-		// const formatted = Number.isFinite(numeric) ? numeric.toLocaleString() : String(value);
+		const handlePeriodChange = (newPeriod: string) => {
+			setPeriod(newPeriod);
+			onPeriodChange?.(newPeriod.toLowerCase());
+		};
 
 		return (
 			<>
@@ -59,7 +65,7 @@ export default function StatCard({
 						</DropdownMenuTrigger>
 						<DropdownMenuContent align="start" className="w-40">
 							{periods.map((p) => (
-								<DropdownMenuItem key={p} onSelect={() => setPeriod(p)}>
+								<DropdownMenuItem key={p} onSelect={() => handlePeriodChange(p)}>
 									{p}
 								</DropdownMenuItem>
 							))}
@@ -90,15 +96,17 @@ export default function StatCard({
 						  )}
 				</>
 			)}
-			<div className="mt-4 flex items-center">
-				{footer ? footer : null}
+			{footer || icon ? (
+				<div className="mt-4 flex items-center">
+					{footer ? footer : null}
 
-				{icon && (
-					<IconWrapper className={`${twMerge(iconColor)} text-3xl ml-auto`}>
-						<span className="ml-2">{icon}</span>
-					</IconWrapper>
-				)}
-			</div>
+					{icon && (
+						<IconWrapper className={`${twMerge(iconColor)} text-3xl ml-auto`}>
+							<span className="ml-2">{icon}</span>
+						</IconWrapper>
+					)}
+				</div>
+			) : null}
 		</div>
 	);
 }

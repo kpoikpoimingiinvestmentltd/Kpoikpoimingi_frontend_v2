@@ -21,3 +21,17 @@ export function formatPhoneNumber(phone: string): string {
 
 	return `+234${cleaned}`;
 }
+
+export function extractErrorMessage(err: unknown, fallback = "An error occurred") {
+	if (err && typeof err === "object") {
+		const e = err as Record<string, unknown>;
+		if (typeof e.message === "string") return e.message;
+		// Some libraries put the message under `error` or `data.message`
+		if (typeof e.error === "string") return e.error;
+		if (e.data && typeof e.data === "object") {
+			const d = e.data as Record<string, unknown>;
+			if (typeof d.message === "string") return d.message;
+		}
+	}
+	return fallback;
+}

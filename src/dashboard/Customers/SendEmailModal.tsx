@@ -9,16 +9,24 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { twMerge } from "tailwind-merge";
 import { useSendEmailToSpecificCustomers, useSendEmailBroadcast } from "@/api/customer";
+import type { SendEmailResponse } from "@/types/email";
 import ConfirmModal from "@/components/common/ConfirmModal";
 import type { SendEmailModalProps, SendEmailFormData } from "@/types/email";
 import { toast } from "sonner";
+import { extractErrorMessage } from "@/lib/utils";
 
 export default function SendEmailModal({ open, onOpenChange, customers = [], onSend }: SendEmailModalProps) {
 	const [activeTab, setActiveTab] = useState<"specific" | "all">("specific");
 	const [selectedEmails, setSelectedEmails] = useState<string[]>([]);
 	const [showEmailDropdown, setShowEmailDropdown] = useState(false);
 	const [confirmOpen, setConfirmOpen] = useState(false);
-	const [previewData, setPreviewData] = useState<any>(null);
+	const [previewData, setPreviewData] = useState<{
+		tab: "specific" | "all";
+		emailCount: number;
+		subject: string;
+		details: string;
+		recipients: string[];
+	} | null>(null);
 
 	const { control, handleSubmit, reset, watch } = useForm<SendEmailFormData>({
 		defaultValues: {
@@ -31,34 +39,34 @@ export default function SendEmailModal({ open, onOpenChange, customers = [], onS
 	const details = watch("details");
 
 	const sendSpecificMutation = useSendEmailToSpecificCustomers(
-		(res) => {
+		(res: SendEmailResponse) => {
 			console.log("Email sent successfully:", res);
-			toast.success((res as any)?.message || "Email sent successfully!");
+			const message = res?.message || "Email sent successfully!";
+			toast.success(message);
 			resetForm();
 			onOpenChange(false);
 			setConfirmOpen(false);
 		},
-		(err) => {
+		(err: unknown) => {
 			console.error("Error sending specific email:", err);
-			const errorMsg = (err as any)?.message || "Failed to send email";
-			toast.error(errorMsg);
+			toast.error(extractErrorMessage(err, "Failed to send email"));
 		}
-	) as any;
+	);
 
 	const sendBroadcastMutation = useSendEmailBroadcast(
-		(res) => {
+		(res: SendEmailResponse) => {
 			console.log("Broadcast email sent successfully:", res);
-			toast.success((res as any)?.message || "Broadcast email sent successfully!");
+			const message = res?.message || "Broadcast email sent successfully!";
+			toast.success(message);
 			resetForm();
 			onOpenChange(false);
 			setConfirmOpen(false);
 		},
-		(err) => {
+		(err: unknown) => {
 			console.error("Error sending broadcast email:", err);
-			const errorMsg = (err as any)?.message || "Failed to send broadcast email";
-			toast.error(errorMsg);
+			toast.error(extractErrorMessage(err, "Failed to send broadcast email"));
 		}
-	) as any;
+	);
 
 	const handleSelectEmail = (email: string) => {
 		if (!selectedEmails.includes(email)) {
@@ -135,7 +143,7 @@ export default function SendEmailModal({ open, onOpenChange, customers = [], onS
 
 					<div className="max-w-lg w-full mt-5 mx-auto">
 						<form onSubmit={handleSubmit(onFormSubmit)}>
-							<Tabs value={activeTab} onValueChange={(v: any) => setActiveTab(v)}>
+							<Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "specific" | "all")}>
 								<TabsList className={twMerge(tabListStyle, "justify-center w-full")}>
 									<TabsTrigger value="specific" className={twMerge(tabStyle, "justify-center")}>
 										Send One /Specific Customers

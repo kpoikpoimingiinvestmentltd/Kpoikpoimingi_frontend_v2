@@ -18,10 +18,13 @@ import TabDocument from "./TabDocument";
 import { useParams } from "react-router";
 import { useGetContractById, usePauseContract, useResumeContract } from "@/api/contracts";
 import { Skeleton } from "@/components/common/Skeleton";
+import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function ContractDetails() {
 	const { id } = useParams();
 	const { data: contract, isLoading } = useGetContractById(id || "", !!id);
+	const queryClient = useQueryClient();
 
 	const [pauseOpen, setPauseOpen] = useState(false);
 	const [terminateOpen, setTerminateOpen] = useState(false);
@@ -29,22 +32,29 @@ export default function ContractDetails() {
 	const [otherPauseReason, setOtherPauseReason] = useState("");
 
 	const pauseMutation = usePauseContract(
-		() => {
+		(response) => {
+			const message = (response as { message?: string })?.message ?? "Contract paused successfully";
+			toast.success(message);
 			setPauseOpen(false);
 			setPauseReason("Health Crises");
 			setOtherPauseReason("");
+			queryClient.invalidateQueries({ queryKey: ["contract", id] });
 		},
 		(err) => {
-			console.error("Error pausing contract:", err);
+			const message = (err as { message?: string })?.message ?? "Failed to pause contract";
+			toast.error(message);
 		}
 	);
 
 	const resumeMutation = useResumeContract(
-		() => {
-			console.log("Contract resumed successfully");
+		(response) => {
+			const message = (response as { message?: string })?.message ?? "Contract resumed successfully";
+			toast.success(message);
+			queryClient.invalidateQueries({ queryKey: ["contract", id] });
 		},
 		(err) => {
-			console.error("Error resuming contract:", err);
+			const message = (err as { message?: string })?.message ?? "Failed to resume contract";
+			toast.error(message);
 		}
 	);
 
@@ -103,20 +113,22 @@ export default function ContractDetails() {
 						}>
 						Edit
 					</ActionButton>
-					<ActionButton className="px-6 font-normal rounded-sm" variant="primary" onClick={() => setPauseOpen(true)}>
-						Pause
-					</ActionButton>
-					<ActionButton
-						className="px-6 font-normal rounded-sm"
-						variant="primary"
-						onClick={handleResumeContract}
-						disabled={resumeMutation.status === "pending"}>
-						{resumeMutation.status === "pending" ? "Resuming..." : "Resume"}
-					</ActionButton>
+					{!contract?.isPaused ? (
+						<ActionButton className="px-6 font-normal rounded-sm" variant="danger" onClick={() => setPauseOpen(true)}>
+							Pause
+						</ActionButton>
+					) : (
+						<ActionButton
+							className="px-6 font-normal rounded-sm"
+							variant="success"
+							onClick={handleResumeContract}
+							disabled={resumeMutation.status === "pending"}>
+							{resumeMutation.status === "pending" ? "Resuming..." : "Resume"}
+						</ActionButton>
+					)}
 					<ActionButton className="px-6 font-normal rounded-sm" variant="danger" onClick={() => setTerminateOpen(true)}>
 						Terminate
-					</ActionButton>
-
+					</ActionButton>{" "}
 					{/* Pause dialog */}
 					<Dialog open={pauseOpen} onOpenChange={setPauseOpen}>
 						<DialogContent>
@@ -159,7 +171,6 @@ export default function ContractDetails() {
 							</DialogFooter>
 						</DialogContent>
 					</Dialog>
-
 					{/* Terminate dialog */}
 					<Dialog open={terminateOpen} onOpenChange={setTerminateOpen}>
 						<DialogContent>
@@ -207,7 +218,7 @@ export default function ContractDetails() {
 						</TabsContent>
 
 						<TabsContent value="plan">
-							<TabPaymentPlan contract={contract} />
+							<TabPaymentPlan contract={contract as any} />
 						</TabsContent>
 
 						<TabsContent value="receipt">

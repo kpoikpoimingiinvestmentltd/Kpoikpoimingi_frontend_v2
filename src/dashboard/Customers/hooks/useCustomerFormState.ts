@@ -59,7 +59,10 @@ export function useCustomerFormState(paymentMethod?: "once" | "installment", ini
 			address: "",
 			isDriver: undefined,
 			nextOfKin: { fullName: "", phone: "", relationship: "", spouseName: "", spousePhone: "", address: "" },
+			propertyId: "",
 			propertyName: "",
+			isCustomProperty: false,
+			customPropertyPrice: "",
 			paymentFrequency: "",
 			paymentDurationUnit: "",
 			paymentDuration: "",
@@ -169,7 +172,7 @@ export function useCustomerFormState(paymentMethod?: "once" | "installment", ini
 		};
 	}, [uploadedFiles]);
 
-	const handleChange = (key: string, value: any) => setForm((s) => ({ ...s, [key]: value }));
+	const handleChange = (key: string, value: unknown) => setForm((s) => ({ ...s, [key]: value }));
 
 	const resetFormCompletely = () => {
 		try {

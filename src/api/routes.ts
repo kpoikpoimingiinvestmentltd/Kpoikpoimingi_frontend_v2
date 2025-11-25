@@ -54,6 +54,7 @@ export const API_ROUTES = {
 	},
 	customerRegistration: {
 		createExternalCustomerRegistration: "/customer-registration",
+		getExternalCustomerRegistrations: "/customer-registration/external",
 		getAllCustomerRegistrations: "/customer-registration",
 		createInternalCustomerRegistration: "/customer-registration/internal",
 		createFullPaymentRegistration: "/customer-registration/full-payment",
@@ -93,23 +94,20 @@ export const API_ROUTES = {
 		getAllReceipts: "/receipt",
 		getReceiptsById: (id: string) => `/receipt/${id}`,
 	},
-	reports: {
-		getAllVATRecords: "/reports",
-		getPenalties: "/reports/penalties",
-	},
-	email: {
-		getEmailTest: "/email/test",
-		postEmailTest: "/email/test",
-		postEmailTestSimple: "/email/test-simple",
-		postEmailTestPaymentTemplate: "/email/test-payment-template",
-	},
-	duePayments: {
-		getDuePayments: "/due-payments",
-	},
 	analytics: {
 		getAnalyticsOverview: "/analytics",
 		getIncomeAnalytics: "/analytics/income",
 		getRevenueAnalytics: "/analytics/revenue",
+	},
+	reports: {
+		getVATRecordsList: "/reports",
+		getIncomeEarned: (period: string) => `/reports/income-earned/${period}`,
+		getVatCollected: (period: string) => `/reports/vat-collected/${period}`,
+		getInterestPenalties: (period: string) => `/reports/interest-penalties/${period}`,
+		getPenalties: "/reports/penalties",
+	},
+	duePayment: {
+		getAllDuePayments: "/due-payments",
 	},
 	settings: {
 		getSystemSettings: "/settings",

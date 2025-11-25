@@ -81,6 +81,9 @@ export default function PropertyDetails() {
 		  })
 		: "N/A";
 
+	// Check if this is a vehicle property
+	const isVehicle = property.category?.parent?.category?.toLowerCase().includes("vehicle") || false;
+
 	return (
 		<PageWrapper>
 			<header>
@@ -109,15 +112,26 @@ export default function PropertyDetails() {
 							onOpenChange={setEditOpen}
 							initial={{
 								id: property.id,
+								propertyCode: property.propertyCode,
 								name: property.name,
 								price: property.price,
-								quantity: property.quantityTotal.toString(),
-								status: property.status.status,
-								numberAssigned: property.quantityAssigned.toString(),
-								category: property.category.category,
+								quantityTotal: property.quantityTotal,
+								quantityAssigned: property.quantityAssigned,
+								status: property.status,
 								categoryId: property.category.id,
-								addedOn: formattedDate,
-								images: images,
+								condition: (property as any).condition || "Good",
+								description: property.description || "",
+								dateAdded: property.dateAdded,
+								media: images,
+								// Vehicle fields
+								vehicleMake: (property as any).vehicleMake || "",
+								vehicleModel: (property as any).vehicleModel || "",
+								vehicleYear: (property as any).vehicleYear || 0,
+								vehicleColor: (property as any).vehicleColor || "",
+								vehicleChassisNumber: (property as any).vehicleChassisNumber || "",
+								vehicleType: (property as any).vehicleType || "",
+								vehicleRegistrationNumber: (property as any).vehicleRegistrationNumber || "",
+								category: property.category,
 							}}
 							onSave={(formData: any) => {
 								if (property?.id) {
@@ -127,14 +141,27 @@ export default function PropertyDetails() {
 										return acc;
 									}, {});
 
-									const payload = {
+									const payload: any = {
 										name: formData.name,
 										categoryId: formData.categoryId,
 										price: Number(formData.price),
-										quantityTotal: Number(formData.quantity),
-										condition: formData.condition || property.description || "Good",
+										quantityTotal: Number(formData.quantityTotal),
+										condition: formData.condition || "Good",
+										description: formData.description || "",
 										mediaKeys: mediaKeysObject || {},
 									};
+
+									// Add vehicle fields if this is a vehicle
+									if (isVehicle) {
+										payload.vehicleMake = formData.vehicleMake;
+										payload.vehicleModel = formData.vehicleModel;
+										payload.vehicleYear = formData.vehicleYear ? Number(formData.vehicleYear) : undefined;
+										payload.vehicleColor = formData.vehicleColor;
+										payload.vehicleChassisNumber = formData.vehicleChassisNumber;
+										payload.vehicleType = formData.vehicleType;
+										payload.vehicleRegistrationNumber = formData.vehicleRegistrationNumber;
+									}
+
 									updateProperty.mutate({
 										id: property.id,
 										payload,
@@ -163,7 +190,42 @@ export default function PropertyDetails() {
 					<KeyValueRow leftClassName="text-black" label="Status" value={property.status.status} />
 					<KeyValueRow leftClassName="text-black" label="Number Assigned" value={property.quantityAssigned.toString()} />
 					<KeyValueRow leftClassName="text-black" label="Category" value={property.category.category} />
+					<KeyValueRow leftClassName="text-black" label="Condition" value={(property as any).condition || "N/A"} />
 					<KeyValueRow leftClassName="text-black" label="Added On" value={formattedDate} />
+
+					{(property as any).description && <KeyValueRow leftClassName="text-black" label="Description" value={(property as any).description} />}
+
+					{/* Vehicle Details Section */}
+					{isVehicle && (
+						<>
+							<div className="border-t my-6 pt-6">
+								<h3 className="font-semibold text-base mb-4">Vehicle Details</h3>
+								<div className="space-y-4">
+									{(property as any).vehicleMake && (
+										<KeyValueRow leftClassName="text-black" label="Vehicle Make" value={(property as any).vehicleMake} />
+									)}
+									{(property as any).vehicleModel && (
+										<KeyValueRow leftClassName="text-black" label="Vehicle Model" value={(property as any).vehicleModel} />
+									)}
+									{(property as any).vehicleYear && (
+										<KeyValueRow leftClassName="text-black" label="Vehicle Year" value={(property as any).vehicleYear.toString()} />
+									)}
+									{(property as any).vehicleColor && (
+										<KeyValueRow leftClassName="text-black" label="Vehicle Color" value={(property as any).vehicleColor} />
+									)}
+									{(property as any).vehicleType && (
+										<KeyValueRow leftClassName="text-black" label="Vehicle Type" value={(property as any).vehicleType} />
+									)}
+									{(property as any).vehicleChassisNumber && (
+										<KeyValueRow leftClassName="text-black" label="Chassis Number" value={(property as any).vehicleChassisNumber} />
+									)}
+									{(property as any).vehicleRegistrationNumber && (
+										<KeyValueRow leftClassName="text-black" label="Registration Number" value={(property as any).vehicleRegistrationNumber} />
+									)}
+								</div>
+							</div>
+						</>
+					)}
 				</section>
 			</CustomCard>
 		</PageWrapper>

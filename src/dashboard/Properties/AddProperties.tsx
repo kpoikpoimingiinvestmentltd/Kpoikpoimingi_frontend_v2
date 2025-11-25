@@ -168,7 +168,6 @@ export default function AddProperties() {
 			}),
 		};
 
-		console.log("Property payload:", propertyPayload);
 		await createPropertyMutation.mutateAsync(propertyPayload as any);
 	};
 
@@ -523,7 +522,7 @@ export default function AddProperties() {
 							<Button
 								type="submit"
 								disabled={createPropertyMutation.isPending || !isValid || uploadedMediaKeys.length === 0}
-								className="w-full md:w-1/2 rounded-md py-3 h-auto text-base active-scale disabled:opacity-60">
+								className="w-max mx-auto rounded-md py-3 h-auto text-base active-scale disabled:opacity-60">
 								{createPropertyMutation.isPending ? (
 									<>
 										<Spinner className="size-4 mr-2" />

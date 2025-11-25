@@ -75,7 +75,7 @@ function handleSessionExpired() {
 	store.dispatch(clearAuth());
 	saveAuthToStorage(null);
 	setTimeout(() => {
-		window.location.href = _router.auth.login;
+		window.location.href = _router.auth.index;
 	}, 100);
 }
 

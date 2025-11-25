@@ -9,7 +9,7 @@ import type { OncePaymentForm } from "@/types/customerRegistration";
 
 type Props = {
 	form: OncePaymentForm;
-	handleChange: (key: string, value: any) => void;
+	handleChange: (key: string, value: unknown) => void;
 	isSubmitting: boolean;
 	onSubmit: (e: React.FormEvent) => void;
 	centeredContainer: (additionalClasses?: string) => string;

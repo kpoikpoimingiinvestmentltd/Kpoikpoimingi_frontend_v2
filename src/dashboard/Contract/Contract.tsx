@@ -83,9 +83,6 @@ export default function Contract() {
 							</div>
 							<div className="overflow-x-auto w-full mt-8">
 								<Table>
-									{/* Create contract modal */}
-									<CreateContractModal open={createOpen} onOpenChange={setCreateOpen} />
-
 									<TableHeader className="[&_tr]:border-0">
 										<TableRow className="bg-[#EAF6FF] h-12 overflow-hidden py-4 rounded-lg">
 											<TableHead>Customer ID</TableHead>
@@ -139,6 +136,7 @@ export default function Contract() {
 						</div>
 					</CustomCard>
 				)}
+				<CreateContractModal open={createOpen} onOpenChange={setCreateOpen} />
 			</div>
 		</div>
 	);

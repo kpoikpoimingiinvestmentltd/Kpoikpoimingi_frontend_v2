@@ -4,7 +4,7 @@ import type { InstallmentPaymentForm, FileUploadState } from "@/types/customerRe
 
 type Props = {
 	form: InstallmentPaymentForm;
-	handleChange: (key: string, value: any) => void;
+	handleChange: (key: string, value: unknown) => void;
 	uploadedFiles: FileUploadState;
 	uploadedFieldsRef: React.MutableRefObject<Set<string>>;
 	handleFileUpload: (file: File, fieldKey: string) => Promise<string | null>;

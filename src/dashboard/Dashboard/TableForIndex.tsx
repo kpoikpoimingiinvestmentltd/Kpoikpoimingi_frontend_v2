@@ -52,7 +52,10 @@ export default function TableForIndex() {
 									</TableCell>
 									<TableCell>{customer.createdAt ? new Date(customer.createdAt).toLocaleDateString() : "-"}</TableCell>
 									<TableCell>
-										<Link to={_router.dashboard.customerDetails} className="text-primary hover:bg-primary/10 p-2 rounded-full inline-block">
+										<Link
+											preventScrollReset={false}
+											to={_router.dashboard.customerDetails.replace(":id", customer.id)}
+											className="text-primary hover:bg-primary/10 p-2 rounded-full inline-block">
 											<IconWrapper>
 												<EyeIcon />
 											</IconWrapper>

@@ -9,6 +9,7 @@ import CustomInput from "@/components/base/CustomInput";
 import { Link } from "react-router";
 import CompactPagination from "@/components/ui/compact-pagination";
 import React from "react";
+import type { CustomerRow } from "@/types/customer";
 import DeleteModal from "@/dashboard/Customers/DeleteModal";
 import SendEmailModal from "@/dashboard/Customers/SendEmailModal";
 import EmptyData from "../../components/common/EmptyData";
@@ -37,11 +38,35 @@ export default function Customers() {
 			console.error("Error deleting customer:", err);
 			toast.error("Failed to delete customer");
 		}
-	) as any;
+	);
 
-	// Transform API data to table format
-	const customersList = (customersData as any)?.data || [];
-	const pages = Math.max(1, Math.ceil(((customersData as any)?.pagination?.total || 0) / 10));
+	// Transform API data to typed table format with runtime guards
+	const customersList = React.useMemo((): CustomerRow[] => {
+		if (!customersData || typeof customersData !== "object") return [];
+		const cd = customersData as { data?: unknown[]; pagination?: { total?: number } };
+		const raw = Array.isArray(cd.data) ? cd.data : [];
+		return raw.map((item, idx) => {
+			if (item && typeof item === "object") {
+				const it = item as Record<string, unknown>;
+				return {
+					id: String(it.id ?? `cust-${idx}`),
+					fullName: String(it.fullName ?? it.name ?? ""),
+					email: String(it.email ?? ""),
+					phoneNumber: it.phoneNumber ? String(it.phoneNumber) : undefined,
+					status: typeof it.status === "string" ? it.status : undefined,
+					createdAt: typeof it.createdAt === "string" ? it.createdAt : undefined,
+				} as CustomerRow;
+			}
+			return { id: `cust-${idx}`, fullName: "", email: "" } as CustomerRow;
+		});
+	}, [customersData]);
+
+	const pages = React.useMemo(() => {
+		if (!customersData || typeof customersData !== "object") return 1;
+		const cd = customersData as { pagination?: { total?: number } };
+		const total = (cd.pagination && typeof cd.pagination.total === "number" ? cd.pagination.total : 0) || 0;
+		return Math.max(1, Math.ceil(total / 10));
+	}, [customersData]);
 
 	return (
 		<div className="flex flex-col gap-y-6">
@@ -108,16 +133,16 @@ export default function Customers() {
 											</TableRow>
 										</TableHeader>
 										<TableBody>
-											{customersList.map((row: any, idx: number) => (
+											{customersList.map((row, idx: number) => (
 												<TableRow key={row.id || idx} className="hover:bg-[#F6FBFF]">
 													<TableCell className="text-[#13121266]">{row.id}</TableCell>
 													<TableCell className="text-[#13121266]">{row.fullName}</TableCell>
 													<TableCell className="text-[#13121266]">{row.email}</TableCell>
-													<TableCell className="text-[#13121266]">{row.phoneNumber}</TableCell>
+													<TableCell className="text-[#13121266]">{row.phoneNumber ?? "-"}</TableCell>
 													<TableCell className="text-[#13121266]">
 														<Badge value={row.status || "Active"} size="sm" />
 													</TableCell>
-													<TableCell className="text-[#13121266]">{new Date(row.createdAt).toLocaleDateString()}</TableCell>
+													<TableCell className="text-[#13121266]">{row.createdAt ? new Date(row.createdAt).toLocaleDateString() : "-"}</TableCell>
 													<TableCell className="flex items-center gap-1">
 														<Link to={_router.dashboard.customerDetails.replace(":id", row.id)} className="p-2 flex items-center">
 															<IconWrapper className="text-xl">
@@ -165,11 +190,7 @@ export default function Customers() {
 				<SendEmailModal
 					open={isSendEmailOpen}
 					onOpenChange={setIsSendEmailOpen}
-					customers={customersList.map((c: any) => ({
-						id: c.id,
-						email: c.email,
-						name: c.fullName,
-					}))}
+					customers={customersList.map((c) => ({ id: c.id, email: c.email, name: c.fullName }))}
 					onSend={async (data) => {
 						try {
 							console.log("Sending email with data:", data);

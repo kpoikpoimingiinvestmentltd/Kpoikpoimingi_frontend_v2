@@ -1,0 +1,35 @@
+import { useQuery } from "@tanstack/react-query";
+import { apiGet } from "@/services/apiClient";
+import { API_ROUTES } from "./routes";
+
+export async function getReceipts(page = 1, limit = 10, search?: string, sortBy = "createdAt", sortOrder = "desc") {
+	const params = new URLSearchParams();
+	params.append("page", String(page));
+	params.append("limit", String(limit));
+	if (search) params.append("search", search);
+	if (sortBy) params.append("sortBy", sortBy);
+	if (sortOrder) params.append("sortOrder", sortOrder);
+	const url = `${API_ROUTES.receipt.getAllReceipts}?${params.toString()}`;
+	return apiGet(url) as Promise<any>;
+}
+
+export function useGetReceipts(page = 1, limit = 10, search?: string, sortBy = "createdAt", sortOrder = "desc", enabled = true) {
+	return useQuery({
+		queryKey: ["receipts", page, limit, search, sortBy, sortOrder],
+		queryFn: () => getReceipts(page, limit, search, sortBy, sortOrder),
+		enabled: !!enabled,
+	});
+}
+
+export async function getReceiptById(id: string) {
+	const url = API_ROUTES.receipt.getReceiptsById(id);
+	return apiGet(url) as Promise<any>;
+}
+
+export function useGetReceiptById(id?: string, enabled = true) {
+	return useQuery({
+		queryKey: ["receipt", id],
+		queryFn: () => getReceiptById(id!),
+		enabled: !!id && enabled,
+	});
+}

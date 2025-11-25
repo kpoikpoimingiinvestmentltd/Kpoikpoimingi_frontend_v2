@@ -7,7 +7,7 @@ import type { InstallmentPaymentForm } from "@/types/customerRegistration";
 
 type Props = {
 	form: InstallmentPaymentForm;
-	handleChange: (key: string, value: any) => void;
+	handleChange: (key: string, value: unknown) => void;
 	centeredContainer: (additionalClasses?: string) => string;
 	sectionTitle: (additionalClasses?: string) => string;
 };

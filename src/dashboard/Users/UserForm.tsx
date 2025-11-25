@@ -223,26 +223,6 @@ export default function UserForm({
 						</SelectContent>
 					</Select>
 				</div>
-
-				<div>
-					<CustomInput
-						label="Salary Amount*"
-						labelClassName="text-sm block mb-2"
-						className={twMerge(inputStyle)}
-						value={values.salary ?? ""}
-						onChange={(e) => onChange("salary", e.target.value)}
-					/>
-				</div>
-				<div>
-					<CustomInput
-						label="Account Number*"
-						labelClassName="text-sm block mb-2"
-						className={twMerge(inputStyle)}
-						value={values.accountNumber ?? ""}
-						onChange={(e) => onChange("accountNumber", e.target.value)}
-					/>
-				</div>
-
 				<div>
 					<label className="text-sm block mb-2">Account type*</label>
 					<Select value={values.accountType} onValueChange={(v) => onChange("accountType", v)}>
@@ -266,6 +246,15 @@ export default function UserForm({
 					</Select>
 				</div>
 				<div>
+					<CustomInput
+						label="Salary Amount"
+						labelClassName="text-sm block mb-2"
+						className={twMerge(inputStyle)}
+						value={values.salary ?? ""}
+						onChange={(e) => onChange("salary", e.target.value)}
+					/>
+				</div>
+				<div>
 					<label className="text-sm block mb-2">Bank Name*</label>
 					<Select value={values.bankName} onValueChange={(v) => onChange("bankName", v)}>
 						<SelectTrigger className={twMerge(inputStyle, "min-h-11")}>
@@ -283,6 +272,15 @@ export default function UserForm({
 							)}
 						</SelectContent>
 					</Select>
+				</div>
+				<div>
+					<CustomInput
+						label="Account Number*"
+						labelClassName="text-sm block mb-2"
+						className={twMerge(inputStyle)}
+						value={values.accountNumber ?? ""}
+						onChange={(e) => onChange("accountNumber", e.target.value)}
+					/>
 				</div>
 			</div>
 

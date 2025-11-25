@@ -11,7 +11,7 @@ import type { InstallmentPaymentForm, FileUploadState } from "@/types/customerRe
 
 type Props = {
 	form: InstallmentPaymentForm;
-	handleChange: (key: string, value: any) => void;
+	handleChange: (key: string, value: unknown) => void;
 	uploadedFiles: FileUploadState;
 	uploadedFieldsRef: React.MutableRefObject<Set<string>>;
 	handleFileUpload: (file: File, fieldKey: string) => Promise<string | null>;
@@ -41,7 +41,7 @@ export default function GuarantorSection({
 			<h3 className={sectionTitle()}>Guarandor Details</h3>
 
 			<div className="mt-4">
-				{form.guarantors.map((g: any, idx: number) => (
+				{form.guarantors.map((g: InstallmentPaymentForm["guarantors"][number], idx: number) => (
 					<div key={idx}>
 						<h3 className="text-lg font-medium">Guarantor ({idx + 1})</h3>
 

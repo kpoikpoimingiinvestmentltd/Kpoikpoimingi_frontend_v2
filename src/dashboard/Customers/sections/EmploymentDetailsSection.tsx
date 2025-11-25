@@ -8,7 +8,7 @@ import type { InstallmentPaymentForm } from "@/types/customerRegistration";
 
 type Props = {
 	form: InstallmentPaymentForm;
-	handleChange: (key: string, value: any) => void;
+	handleChange: (key: string, value: unknown) => void;
 	employmentStatusOptions: Array<{ key: string; value: string }>;
 	refLoading: boolean;
 	centeredContainer: (additionalClasses?: string) => string;

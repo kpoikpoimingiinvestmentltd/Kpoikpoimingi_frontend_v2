@@ -92,11 +92,11 @@ export default function ImageGallery({
 
 	return (
 		<div className={`${twMerge("flex flex-col gap-4", className)}`}>
-			<div className={twMerge(`rounded-md p-6 flex flex-grow items-center justify-center relative md:h-56 h-92`, containerBg, containerBorderClass)}>
+			<div className={twMerge(`rounded-md p-6 flex flex-grow items-center justify-center relative md:h-80 h-92`, containerBg, containerBorderClass)}>
 				<div className="absolute top-4 left-4">{mode === "view" && <p className="text-sm text-black">{labelText}</p>}</div>
 
 				{effectiveImgs[selected] ? (
-					<Image src={effectiveImgs[selected]} alt={`image-${selected}`} className="w-full md:w-52 h-52 md:h-40 object-center" />
+					<Image src={effectiveImgs[selected]} alt={`image-${selected}`} className="w-full md:w-[300px] h-52 md:h-64 object-center" />
 				) : (
 					<div className="flex items-center justify-center gap-y-3 flex-col text-center text-black">
 						<IconWrapper className="text-2xl rotate-y-180">
@@ -148,7 +148,7 @@ export default function ImageGallery({
 			</div>
 
 			{effectiveImgs && effectiveImgs.length >= 1 && (
-				<div className="flex items-center gap-3 mt-2">
+				<div className="flex items-center gap-3 mt-2 flex-wrap">
 					{uploadedImages.map((uploadedImg, idx) => (
 						<div
 							key={idx}

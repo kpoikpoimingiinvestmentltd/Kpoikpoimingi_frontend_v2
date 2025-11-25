@@ -4,8 +4,33 @@ import Image from "@/components/base/Image";
 import { media } from "@/resources/images";
 import KeyValueRow from "@/components/common/KeyValueRow";
 import ReceiptWrapper from "@/components/common/ReceiptWrapper";
+import { useParams } from "react-router";
+import { useGetReceiptById } from "@/api/receipt";
+import { TableSkeleton } from "@/components/common/Skeleton";
+import type { ReceiptDetail } from "@/types/receipt";
 
 export default function ReceiptDetails() {
+	const params = useParams();
+	const id = params.id ?? undefined;
+	const { data, isLoading } = useGetReceiptById(id);
+	const receipt: ReceiptDetail | null = data ?? null;
+
+	if (isLoading) {
+		return (
+			<CustomCard className="mt-4 p-6">
+				<TableSkeleton rows={6} cols={2} />
+			</CustomCard>
+		);
+	}
+
+	if (!receipt) {
+		return (
+			<CustomCard className="mt-4 p-6">
+				<p className="text-sm text-muted-foreground">Receipt not found</p>
+			</CustomCard>
+		);
+	}
+
 	return (
 		<ReceiptWrapper emailSubject="Receipt from Kpoikpoimingi" emailBody="Please find attached the receipt.">
 			<header className="grid grid-cols-1 md:grid-cols-2 items-start border-b-2 border-dashed pb-8">
@@ -25,41 +50,50 @@ export default function ReceiptDetails() {
 					</div>
 				</aside>
 				<aside className="order-1 md:order-2 text-start md:text-end md:mb-4 block">
-					<p className="text-black">Invoice Number: 0468</p>
+					<p className="text-black">Receipt Number: {receipt.receiptNumber ?? receipt.id}</p>
 				</aside>
 			</header>
 			<main className="flex-grow">
 				<section className="flex flex-col gap-y-2 my-4">
-					<KeyValueRow label="Name" value="Tom Doe James" />
-					<KeyValueRow label="Whatsapp number" value="+2348134567890" />
-					<KeyValueRow label="Address" value="No. 9 mbora lane off etaagbor street" />
-					<KeyValueRow label="Date" value="20/4/2025" />
+					<KeyValueRow label="Phone" value={receipt.customer?.phoneNumber ?? "-"} />
+					<KeyValueRow label="Property" value={receipt.contract?.property?.name ?? receipt.propertyName ?? "-"} />
+					<KeyValueRow label="Total amount" value={receipt.totalAmount ? `₦${Number(receipt.totalAmount).toLocaleString()}` : "-"} />
+					<KeyValueRow label="Amount paid" value={receipt.amountPaid ? `₦${Number(receipt.amountPaid).toLocaleString()}` : "-"} />
+					<KeyValueRow
+						label="Payment date"
+						value={
+							receipt.paymentDate
+								? new Date(receipt.paymentDate).toLocaleString()
+								: receipt.createdAt
+								? new Date(receipt.createdAt).toLocaleString()
+								: "-"
+						}
+					/>
 				</section>
 
 				<section className="mt-4 flex flex-col gap-y-6">
 					<header className="flex items-center justify-between bg-[#03B4FA33] px-4 md:px-6 py-2.5 rounded-md">
 						<h5 className="text-start">Payment Details</h5>
-						<span className="text-sm text-end text-slate-700">Payment duration (6 months)</span>
+						<span className="text-sm text-end text-slate-700">Payment duration ({receipt.contract?.durationValue ?? "-"} months)</span>
 					</header>
 					<CustomCard className="grid grid-cols-1 gap-y-3 px-4 md:px-6 py-5 bg-card border-0">
-						<KeyValueRow label="Property Name" value="12 inches HP laptop" />
-						<KeyValueRow label="Total amount" value="500,000" />
-						<KeyValueRow label="Starting amount" value="60,000" />
-						<KeyValueRow label="Amount paid plus VAT" value="43,89.25" />
-						<KeyValueRow label="Total Amount Paid" value="300,000" />
-						<KeyValueRow label="Instalment covered" value="3/6" />
-						<KeyValueRow label="Remaining balance" value="200,000" />
+						<KeyValueRow
+							label="Property Price"
+							value={receipt.contract?.property?.price ? `₦${Number(receipt.contract.property.price).toLocaleString()}` : "-"}
+						/>
+						<KeyValueRow label="Installment progress" value={receipt.installmentProgress ?? "-"} />
+						<KeyValueRow label="Total installments" value={String(receipt.totalInstallments ?? "-")} />
 					</CustomCard>
 				</section>
 				<section className="md:w-11/12 mx-auto mt-16 text-center py-4">
 					<p className="text-sm sm:text-[.9rem]">
-						Next payment is due on the 15th of July 2025,Endeavour to make payment. Failure to make payment attracts an increase in accrued interest
+						Next payment date: {receipt.nextPaymentDate ? new Date(receipt.nextPaymentDate).toLocaleDateString() : "-"}
 					</p>
 				</section>
 
 				<footer className="border-t-2 border-dashed pb-8 pt-4 text-center">
 					<p className="text-stone-700 text-[.9rem]">
-						Receipt granted by: <span className="font-medium text-black">Staff Mr Joel Edet</span>
+						Receipt issued by: <span className="font-medium text-black">{receipt.issuedById ?? "-"}</span>
 					</p>
 				</footer>
 			</main>

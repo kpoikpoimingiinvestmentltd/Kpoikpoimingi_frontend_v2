@@ -7,7 +7,63 @@ import React from "react";
 
 const titleSectionStyle = "flex flex-col gap-3";
 
-export default function TabCustomerDetails({ customer }: { customer: any }) {
+type MediaFile = { fileUrl?: string };
+
+type Registration = {
+	dateOfBirth?: string;
+	mediaFiles?: Record<string, MediaFile[]>;
+	nextOfKin?: {
+		fullName?: string;
+		phoneNumber?: string;
+		relationship?: string;
+		isNextOfKinSpouse?: string;
+		spouseFullName?: string;
+		spousePhone?: string;
+		spouseAddress?: string;
+	};
+	employmentDetails?: {
+		employmentStatus?: { status?: string };
+		employerName?: string;
+		employerAddress?: string;
+		companyName?: string;
+		businessAddress?: string;
+		homeAddress?: string;
+	};
+	propertyInterestRequest?: Array<{
+		propertyName?: string;
+		paymentInterval?: { intervals?: string };
+		durationValue?: number;
+		durationUnit?: { id?: number };
+		downPayment?: number;
+	}>;
+	customPropertyName?: string;
+	guarantors?: Array<{
+		fullName?: string;
+		occupation?: string;
+		phoneNumber?: string;
+		email?: string;
+		employmentStatus?: { status?: string };
+		homeAddress?: string;
+		companyAddress?: string;
+		businessAddress?: string;
+		stateOfOrigin?: string;
+	}>;
+	purposeOfProperty?: string;
+	previousHirePurchase?: string;
+	previousCompany?: string;
+	wasPreviousCompleted?: string;
+};
+
+type CustomerDetails = {
+	fullName?: string;
+	email?: string;
+	phoneNumber?: string;
+	customerCode?: string;
+	createdAt?: string;
+	registrations?: Registration[];
+};
+
+export default function TabCustomerDetails({ customer }: { customer: CustomerDetails }) {
 	// Get the current registration (latest)
 	const registration = customer?.registrations?.[0];
 	const nok = registration?.nextOfKin;
@@ -19,20 +75,21 @@ export default function TabCustomerDetails({ customer }: { customer: any }) {
 	const { data: refData } = useGetReferenceData();
 	const stateOfOriginOptions = React.useMemo(() => extractStateOptions(refData), [refData]);
 
-	const formatPhoneNumber = (phone: string) => {
-		return phone?.startsWith("+") ? phone : `+234${phone}`;
+	const formatPhoneNumber = (phone?: string) => {
+		if (!phone) return "";
+		return phone.startsWith("+") ? phone : `+234${phone}`;
 	};
 
-	const getStateNameById = (stateId: string): string => {
+	const getStateNameById = (stateId?: string): string => {
 		if (!stateId) return "";
 		const state = stateOfOriginOptions.find((o) => o.key === stateId);
 		return state?.value || stateId;
 	};
 
 	// Transform media files from API format { fileUrl } to component format { url }
-	const transformMediaFiles = (mediaArray: any[]): { url: string }[] => {
+	const transformMediaFiles = (mediaArray?: MediaFile[]): { url: string }[] => {
 		if (!Array.isArray(mediaArray)) return [];
-		return mediaArray.map((item) => ({ url: item.fileUrl }));
+		return mediaArray.map((item) => ({ url: item.fileUrl ?? "" }));
 	};
 	return (
 		<CustomCard className="mt-4 border-none p-0 bg-white">

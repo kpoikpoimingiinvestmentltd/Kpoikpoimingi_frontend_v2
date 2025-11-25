@@ -24,6 +24,15 @@ export type GetAllCustomersResponse = {
 	};
 };
 
+export type CustomerRow = {
+	id: string;
+	fullName: string;
+	email: string;
+	phoneNumber?: string;
+	status?: string;
+	createdAt?: string;
+};
+
 export interface DeleteCustomerResponse {
 	id: string;
 	customerCode: string;

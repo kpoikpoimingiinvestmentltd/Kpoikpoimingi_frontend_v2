@@ -5,8 +5,8 @@ import { modalContentStyle } from "../../components/common/commonStyles";
 type Props = {
 	open: boolean;
 	onOpenChange: (open: boolean) => void;
-	initial?: any;
-	onSave?: (data: any) => void;
+	initial?: unknown;
+	onSave?: (data: unknown) => void;
 };
 
 export default function EditCustomerModal({ open, onOpenChange, initial, onSave }: Props) {

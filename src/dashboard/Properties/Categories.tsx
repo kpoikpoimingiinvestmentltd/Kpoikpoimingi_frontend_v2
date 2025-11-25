@@ -22,7 +22,6 @@ import { _router } from "../../routes/_router";
 // (moved into component state)
 
 export default function Categories() {
-	const [isEmpty] = React.useState(false);
 	const [categories, setCategories] = React.useState<any[]>([]);
 	const [query, setQuery] = React.useState("");
 	const [categoryFilter, setCategoryFilter] = React.useState<string | null>(null);
@@ -31,6 +30,7 @@ export default function Categories() {
 	const [limit] = React.useState(10);
 	const { data: fetchedCategories, isLoading } = useGetAllCategories(page, limit, true);
 	const queryClient = useQueryClient();
+	const isEmpty = categories.length === 0 && !isLoading;
 
 	const createMutation = useMutation<any, unknown, { category?: string; subCategories?: string[] }>({
 		mutationFn: (vars: { category?: string; subCategories?: string[] }) =>
@@ -143,10 +143,6 @@ export default function Categories() {
 			<div className="flex items-center justify-between flex-wrap gap-4 mb-4">
 				<PageTitles title="All Categories" description="Manage your product categories" />
 				<div className="flex items-center gap-3">
-					<button type="button" className="flex items-center gap-2 bg-primary/10 rounded-sm px-4 py-2.5 active-scale transition text-primary">
-						<span className="text-sm">Export</span>
-					</button>
-
 					<button
 						type="button"
 						onClick={() => {
@@ -308,41 +304,6 @@ export default function Categories() {
 									</Table>
 								)}
 							</div>
-
-							<AddCategoryModal
-								open={modalOpen}
-								onOpenChange={(open) => {
-									setModalOpen(open);
-									if (!open) setEditing(null);
-								}}
-								mode={modalMode}
-								initial={editing ? { category: editing.title, subCategories: editing.subs } : undefined}
-								onSave={async (payload) => {
-									try {
-										if (modalMode === "add") {
-											await createMutation.mutateAsync({ category: payload.category, subCategories: payload.subCategories });
-											toast.success("Category added");
-											setTimeout(() => setModalOpen(false), 500);
-										} else if (modalMode === "edit") {
-											if (!editing?.id) {
-												toast.error("No category selected for editing");
-												return;
-											}
-											await updateMutation.mutateAsync({ id: editing.id, category: payload.category, subCategories: payload.subCategories });
-											toast.success("Category updated");
-											setTimeout(() => {
-												setModalOpen(false);
-												setEditing(null);
-											}, 500);
-										}
-									} catch (e: any) {
-										console.error("Save error:", e);
-										const serverMessage = e?.data?.message || e?.message || String(e);
-										toast.error(serverMessage || "Failed to save category");
-									}
-								}}
-								savingStatus={(modalMode === "add" ? createMutation.status : updateMutation.status) as "idle" | "pending" | "success" | "error"}
-							/>
 						</div>
 
 						<div className="mt-8">
@@ -361,6 +322,41 @@ export default function Categories() {
 					</div>
 				)}
 			</div>
+
+			<AddCategoryModal
+				open={modalOpen}
+				onOpenChange={(open) => {
+					setModalOpen(open);
+					if (!open) setEditing(null);
+				}}
+				mode={modalMode}
+				initial={editing ? { category: editing.title, subCategories: editing.subs } : undefined}
+				onSave={async (payload) => {
+					try {
+						if (modalMode === "add") {
+							await createMutation.mutateAsync({ category: payload.category, subCategories: payload.subCategories });
+							toast.success("Category added");
+							setTimeout(() => setModalOpen(false), 500);
+						} else if (modalMode === "edit") {
+							if (!editing?.id) {
+								toast.error("No category selected for editing");
+								return;
+							}
+							await updateMutation.mutateAsync({ id: editing.id, category: payload.category, subCategories: payload.subCategories });
+							toast.success("Category updated");
+							setTimeout(() => {
+								setModalOpen(false);
+								setEditing(null);
+							}, 500);
+						}
+					} catch (e: any) {
+						console.error("Save error:", e);
+						const serverMessage = e?.data?.message || e?.message || String(e);
+						toast.error(serverMessage || "Failed to save category");
+					}
+				}}
+				savingStatus={(modalMode === "add" ? createMutation.status : updateMutation.status) as "idle" | "pending" | "success" | "error"}
+			/>
 		</div>
 	);
 }

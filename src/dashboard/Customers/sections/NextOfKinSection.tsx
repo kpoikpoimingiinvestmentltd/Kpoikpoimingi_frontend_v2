@@ -9,7 +9,7 @@ import type { InstallmentPaymentForm } from "@/types/customerRegistration";
 
 type Props = {
 	form: InstallmentPaymentForm;
-	handleChange: (key: string, value: any) => void;
+	handleChange: (key: string, value: unknown) => void;
 	relationshipOptions: Array<{ key: string; value: string }>;
 	refLoading: boolean;
 	centeredContainer: (additionalClasses?: string) => string;
@@ -80,9 +80,19 @@ export default function NextOfKinSection({ form, handleChange, relationshipOptio
 											</div>
 										) : relationshipOptions.length === 0 ? (
 											<>
+												<SelectItem value="Spouse">Spouse</SelectItem>
+												<SelectItem value="Father">Father</SelectItem>
+												<SelectItem value="Mother">Mother</SelectItem>
+												<SelectItem value="Son">Son</SelectItem>
+												<SelectItem value="Daughter">Daughter</SelectItem>
 												<SelectItem value="Brother">Brother</SelectItem>
 												<SelectItem value="Sister">Sister</SelectItem>
-												<SelectItem value="Spouse">Spouse</SelectItem>
+												<SelectItem value="Grandfather">Grandfather</SelectItem>
+												<SelectItem value="Grandmother">Grandmother</SelectItem>
+												<SelectItem value="Uncle">Uncle</SelectItem>
+												<SelectItem value="Aunt">Aunt</SelectItem>
+												<SelectItem value="Cousin">Cousin</SelectItem>
+												<SelectItem value="Friend">Friend</SelectItem>
 											</>
 										) : (
 											relationshipOptions.map((it) => (
@@ -140,9 +150,19 @@ export default function NextOfKinSection({ form, handleChange, relationshipOptio
 											</div>
 										) : relationshipOptions.length === 0 ? (
 											<>
+												<SelectItem value="Spouse">Spouse</SelectItem>
+												<SelectItem value="Father">Father</SelectItem>
+												<SelectItem value="Mother">Mother</SelectItem>
+												<SelectItem value="Son">Son</SelectItem>
+												<SelectItem value="Daughter">Daughter</SelectItem>
 												<SelectItem value="Brother">Brother</SelectItem>
 												<SelectItem value="Sister">Sister</SelectItem>
-												<SelectItem value="Spouse">Spouse</SelectItem>
+												<SelectItem value="Grandfather">Grandfather</SelectItem>
+												<SelectItem value="Grandmother">Grandmother</SelectItem>
+												<SelectItem value="Uncle">Uncle</SelectItem>
+												<SelectItem value="Aunt">Aunt</SelectItem>
+												<SelectItem value="Cousin">Cousin</SelectItem>
+												<SelectItem value="Friend">Friend</SelectItem>
 											</>
 										) : (
 											relationshipOptions.map((it) => (

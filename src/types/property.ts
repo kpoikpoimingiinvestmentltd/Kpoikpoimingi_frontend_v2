@@ -53,13 +53,21 @@ export type PropertyData = {
 	quantityAvailable: number;
 	addedBy: { fullName: string };
 	dateAdded: string;
-	category: { id: string; category: string };
+	category: { id: string; category: string; parentId?: string; parent?: { id: string; category: string } };
 	status: { status: string };
 	media: string[];
 	stockStatus: string;
 	isLowStock: boolean;
 	isOutOfStock: boolean;
 	stockPercentage: number;
+	condition?: string;
+	vehicleMake?: string;
+	vehicleModel?: string;
+	vehicleYear?: number;
+	vehicleColor?: string;
+	vehicleChassisNumber?: string;
+	vehicleType?: string;
+	vehicleRegistrationNumber?: string;
 };
 
 // Types for property routes
@@ -73,22 +81,33 @@ export type EditPropertyDetailsModalProps = {
 	isLoading?: boolean;
 	initial?: {
 		id?: string;
+		propertyCode?: string;
 		name?: string;
 		price?: string;
 		quantity?: string;
-		status?: string;
+		quantityTotal?: number;
+		quantityAssigned?: number;
+		status?: string | { status?: string };
 		numberAssigned?: string;
-		category?: string;
+		category?: string | { category?: string; id?: string };
 		categoryId?: string;
 		addedOn?: string;
+		dateAdded?: string;
 		subCategory?: string;
+		vehicleModel?: string;
 		vehicleMake?: string;
+		vehicleYear?: number;
 		type?: string;
+		vehicleType?: string;
 		colour?: string;
+		vehicleColor?: string;
 		registrationNumber?: string;
+		vehicleRegistrationNumber?: string;
 		chassisNumber?: string;
+		vehicleChassisNumber?: string;
 		condition?: string;
 		description?: string;
 		images?: string[];
+		media?: string[];
 	};
 };

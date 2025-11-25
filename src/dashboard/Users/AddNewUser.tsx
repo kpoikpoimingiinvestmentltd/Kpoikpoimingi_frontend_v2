@@ -47,7 +47,7 @@ export default function AddNewUser() {
 			const parsedStateId = Number(form.stateOfOrigin);
 			const parsedStatusId = 1; // Default active status
 			const parsedPhoneNumber = formatPhoneNumber(form.phone);
-			const parsedSalaryAmount = Number(form.salary);
+			const parsedSalaryAmount = form.salary ? Number(form.salary) : undefined;
 
 			const payload: any = {
 				fullName: form.fullName,
@@ -58,7 +58,7 @@ export default function AddNewUser() {
 				statusId: parsedStatusId,
 				branchLocation: "",
 				accountTypeId: Number.isInteger(parsedAccountTypeId) ? parsedAccountTypeId : undefined,
-				salaryAmount: parsedSalaryAmount,
+				...(parsedSalaryAmount !== undefined && { salaryAmount: parsedSalaryAmount }),
 				stateOfOriginId: Number.isInteger(parsedStateId) ? parsedStateId : undefined,
 				dateOfBirth: form.dob,
 				houseAddress: form.houseAddress,

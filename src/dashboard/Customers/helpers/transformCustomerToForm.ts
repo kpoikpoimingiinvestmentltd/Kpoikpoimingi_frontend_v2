@@ -3,41 +3,29 @@ import type { InstallmentPaymentForm, OncePaymentForm, FileUploadState } from "@
 /**
  * Transform API mediaFiles to uploadedFiles state format
  */
-export function transformMediaToUploadedFiles(mediaFiles: any): FileUploadState {
-	if (!mediaFiles) return {};
+export function transformMediaToUploadedFiles(mediaFiles: unknown): FileUploadState {
+	if (!mediaFiles || typeof mediaFiles !== "object") return {};
 
+	const mf = mediaFiles as Record<string, unknown>;
 	const result: FileUploadState = {};
 
-	// Map identification documents
-	if (mediaFiles.identificationDocument?.length > 0) {
-		result.nin = mediaFiles.identificationDocument.map((file: any) => file.fileUrl);
-	}
+	const mapFileArray = (key: string) => {
+		const arr = mf[key];
+		if (Array.isArray(arr) && arr.length > 0) {
+			return arr
+				.map((f) => (f && typeof f === "object" ? (f as Record<string, unknown>).fileUrl : undefined))
+				.filter((u): u is string => typeof u === "string");
+		}
+		return undefined;
+	};
 
-	// Map driver license
-	if (mediaFiles.driverLicense?.length > 0) {
-		result.driverLicense = mediaFiles.driverLicense.map((file: any) => file.fileUrl);
-	}
-
-	// Map indigene certificate
-	if (mediaFiles.indegeneCertificate?.length > 0) {
-		result.indigeneCertificate = mediaFiles.indegeneCertificate.map((file: any) => file.fileUrl);
-	}
-
-	// Map contract/signed contract
-	if (mediaFiles.signedContract?.length > 0) {
-		result.contract = mediaFiles.signedContract.map((file: any) => file.fileUrl);
-	}
-
-	// Map guarantor documents
-	if (mediaFiles.guarantor_0_doc?.length > 0) {
-		result.guarantor_0_doc = mediaFiles.guarantor_0_doc.map((file: any) => file.fileUrl);
-	}
-	if (mediaFiles.guarantor_1_doc?.length > 0) {
-		result.guarantor_1_doc = mediaFiles.guarantor_1_doc.map((file: any) => file.fileUrl);
-	}
-	if (mediaFiles.guarantor_2_doc?.length > 0) {
-		result.guarantor_2_doc = mediaFiles.guarantor_2_doc.map((file: any) => file.fileUrl);
-	}
+	result.nin = mapFileArray("identificationDocument");
+	result.driverLicense = mapFileArray("driverLicense");
+	result.indigeneCertificate = mapFileArray("indegeneCertificate");
+	result.contract = mapFileArray("signedContract");
+	result.guarantor_0_doc = mapFileArray("guarantor_0_doc");
+	result.guarantor_1_doc = mapFileArray("guarantor_1_doc");
+	result.guarantor_2_doc = mapFileArray("guarantor_2_doc");
 
 	return result;
 }
@@ -45,104 +33,134 @@ export function transformMediaToUploadedFiles(mediaFiles: any): FileUploadState 
 /**
  * Transform API customer response to InstallmentPaymentForm structure
  */
-export function transformCustomerToInstallmentForm(customer: any): InstallmentPaymentForm {
-	if (!customer) {
-		return null as any;
-	}
+export function transformCustomerToInstallmentForm(customer: unknown): InstallmentPaymentForm {
+	const empty: InstallmentPaymentForm = {
+		fullName: "",
+		email: "",
+		whatsapp: "",
+		dob: "",
+		address: "",
+		isDriver: undefined,
+		nextOfKin: { fullName: "", phone: "", relationship: "", spouseName: "", spousePhone: "", address: "" },
+		propertyId: "",
+		propertyName: "",
+		isCustomProperty: false,
+		customPropertyPrice: "",
+		paymentFrequency: "",
+		paymentDuration: "",
+		paymentDurationUnit: "",
+		downPayment: "",
+		amountAvailable: "",
+		clarification: { previousAgreement: null, completedAgreement: null, prevCompany: "", reason: "" },
+		employment: { status: "", employerName: "", employerAddress: "", companyName: "", businessAddress: "", homeAddress: "" },
+		guarantors: [],
+	};
+
+	if (!customer || typeof customer !== "object") return empty;
+
+	const c = customer as Record<string, unknown>;
+
+	const firstInterest =
+		Array.isArray(c.propertyInterestRequest) && c.propertyInterestRequest.length > 0
+			? (c.propertyInterestRequest[0] as Record<string, unknown>)
+			: undefined;
+
+	const guarantorsArray = Array.isArray(c.guarantors) ? (c.guarantors as unknown[]) : [];
 
 	return {
-		fullName: customer.fullName || customer.name || "",
-		email: customer.email || "",
-		whatsapp: customer.phoneNumber || customer.phone || "",
-		dob: customer.dateOfBirth || "",
-		address: customer.homeAddress || customer.employmentDetails?.homeAddress || customer.address || "",
-		isDriver:
-			customer.isDriver === "Yes" || customer.isDriver === true
-				? true
-				: customer.isDriver === "No" || customer.isDriver === false
-				? false
-				: undefined,
+		fullName: (c.fullName || c.name || "") as string,
+		email: (c.email || "") as string,
+		whatsapp: (c.phoneNumber || c.phone || "") as string,
+		dob: (c.dateOfBirth || "") as string,
+		address: (c.homeAddress || (c.employmentDetails && (c.employmentDetails as Record<string, unknown>).homeAddress) || c.address || "") as string,
+		isDriver: c.isDriver === "Yes" || c.isDriver === true ? true : c.isDriver === "No" || c.isDriver === false ? false : undefined,
 		nextOfKin: {
-			fullName: customer.nextOfKin?.fullName || "",
-			phone: customer.nextOfKin?.phoneNumber || customer.nextOfKin?.phone || "",
-			relationship: customer.nextOfKin?.relationship || "",
-			spouseName: customer.nextOfKin?.spouseFullName || customer.nextOfKin?.spouseName || "",
-			spousePhone: customer.nextOfKin?.spousePhone || "",
-			address: customer.nextOfKin?.spouseAddress || customer.nextOfKin?.address || "",
+			fullName: ((c.nextOfKin && (c.nextOfKin as Record<string, unknown>).fullName) || "") as string,
+			phone: ((c.nextOfKin && ((c.nextOfKin as Record<string, unknown>).phoneNumber || (c.nextOfKin as Record<string, unknown>).phone)) ||
+				"") as string,
+			relationship: ((c.nextOfKin && (c.nextOfKin as Record<string, unknown>).relationship) || "") as string,
+			spouseName: ((c.nextOfKin &&
+				((c.nextOfKin as Record<string, unknown>).spouseFullName || (c.nextOfKin as Record<string, unknown>).spouseName)) ||
+				"") as string,
+			spousePhone: ((c.nextOfKin && (c.nextOfKin as Record<string, unknown>).spousePhone) || "") as string,
+			address: ((c.nextOfKin && ((c.nextOfKin as Record<string, unknown>).spouseAddress || (c.nextOfKin as Record<string, unknown>).address)) ||
+				"") as string,
 		},
-		propertyName: customer.propertyInterestRequest?.[0]?.customPropertyName || "",
-		paymentFrequency: String(customer.propertyInterestRequest?.[0]?.paymentIntervalId || ""),
-		paymentDuration: String(customer.propertyInterestRequest?.[0]?.durationValue || ""),
-		paymentDurationUnit: String(customer.propertyInterestRequest?.[0]?.durationUnitId || ""),
-		downPayment: String(customer.propertyInterestRequest?.[0]?.downPayment || customer.downPayment || ""),
-		amountAvailable: customer.propertyInterestRequest?.[0]?.downPayment ? String(customer.propertyInterestRequest[0].downPayment) : "",
+		propertyName: (firstInterest && (firstInterest.customPropertyName as string)) || "",
+		propertyId: (firstInterest && (firstInterest.propertyId as string)) || "",
+		isCustomProperty: Boolean(firstInterest && (firstInterest.isCustomProperty as boolean)),
+		customPropertyPrice: String((firstInterest && (firstInterest.customPropertyPrice as number)) || ""),
+		paymentFrequency: String((firstInterest && firstInterest.paymentIntervalId) || ""),
+		paymentDuration: String((firstInterest && firstInterest.durationValue) || ""),
+		paymentDurationUnit: String((firstInterest && firstInterest.durationUnitId) || ""),
+		downPayment: String((firstInterest && firstInterest.downPayment) || (c.downPayment as string) || ""),
+		amountAvailable: firstInterest && firstInterest.downPayment ? String(firstInterest.downPayment) : "",
 		clarification: {
-			previousAgreement: customer.previousHirePurchase === "Yes" ? true : customer.previousHirePurchase === "No" ? false : null,
-			completedAgreement: customer.wasPreviousCompleted === "Yes" ? true : customer.wasPreviousCompleted === "No" ? false : null,
-			prevCompany: customer.previousCompany || "",
-			reason: customer.purposeOfProperty || "",
+			previousAgreement: c.previousHirePurchase === "Yes" ? true : c.previousHirePurchase === "No" ? false : null,
+			completedAgreement: c.wasPreviousCompleted === "Yes" ? true : c.wasPreviousCompleted === "No" ? false : null,
+			prevCompany: (c.previousCompany || "") as string,
+			reason: (c.purposeOfProperty || "") as string,
 		},
 		employment: {
-			status: String(customer.employmentDetails?.employmentStatusId || ""),
-			employerName: customer.employmentDetails?.employerName || "",
-			employerAddress: customer.employmentDetails?.employerAddress || "",
-			companyName: customer.employmentDetails?.companyName || "",
-			businessAddress: customer.employmentDetails?.businessAddress || "",
-			homeAddress: customer.employmentDetails?.homeAddress || "",
+			status: String((c.employmentDetails && (c.employmentDetails as Record<string, unknown>).employmentStatusId) || ""),
+			employerName: String((c.employmentDetails && (c.employmentDetails as Record<string, unknown>).employerName) || ""),
+			employerAddress: String((c.employmentDetails && (c.employmentDetails as Record<string, unknown>).employerAddress) || ""),
+			companyName: String((c.employmentDetails && (c.employmentDetails as Record<string, unknown>).companyName) || ""),
+			businessAddress: String((c.employmentDetails && (c.employmentDetails as Record<string, unknown>).businessAddress) || ""),
+			homeAddress: String((c.employmentDetails && (c.employmentDetails as Record<string, unknown>).homeAddress) || ""),
 		},
-		guarantors: (customer.guarantors || []).map((g: any) => ({
-			fullName: g.fullName || "",
-			occupation: g.occupation || "",
-			phone: g.phoneNumber || g.phone || "",
-			email: g.email || "",
-			employmentStatus: String(g.employmentStatusId || ""),
-			homeAddress: g.homeAddress || g.address || "",
-			businessAddress: g.companyAddress || g.businessAddress || "",
-			stateOfOrigin: String(g.stateOfOrigin || ""),
-			votersUploaded: g.votersUploaded || 0,
-		})),
+		guarantors: guarantorsArray.map((g) => {
+			const gg = g && typeof g === "object" ? (g as Record<string, unknown>) : {};
+			return {
+				fullName: (gg.fullName || "") as string,
+				occupation: (gg.occupation || "") as string,
+				phone: (gg.phoneNumber || gg.phone || "") as string,
+				email: (gg.email || "") as string,
+				employmentStatus: String(gg.employmentStatusId || ""),
+				homeAddress: (gg.homeAddress || gg.address || "") as string,
+				businessAddress: (gg.companyAddress || gg.businessAddress || "") as string,
+				stateOfOrigin: String(gg.stateOfOrigin || ""),
+				votersUploaded: (gg.votersUploaded as number) || 0,
+			};
+		}),
 	};
 }
 
 /**
  * Transform API customer response to OncePaymentForm structure
  */
-export function transformCustomerToOnceForm(customer: any): OncePaymentForm {
-	if (!customer) {
-		return null as any;
-	}
+export function transformCustomerToOnceForm(customer: unknown): OncePaymentForm {
+	const empty: OncePaymentForm = { fullName: "", email: "", whatsapp: "", numberOfProperties: "0", properties: [] };
+	if (!customer || typeof customer !== "object") return empty;
+
+	const c = customer as Record<string, unknown>;
+	const propsArr = Array.isArray(c.propertyInterestRequest) ? (c.propertyInterestRequest as unknown[]) : [];
 
 	return {
-		fullName: customer.fullName || customer.name || "",
-		email: customer.email || "",
-		whatsapp: customer.phoneNumber || customer.phone || "",
-		numberOfProperties: String(customer.propertyInterestRequest?.length || 0),
-		properties: (customer.propertyInterestRequest || []).map((prop: any) => ({
-			propertyName: prop.customPropertyName || "",
-			quantity: prop.quantity || 1,
-		})),
+		fullName: (c.fullName || c.name || "") as string,
+		email: (c.email || "") as string,
+		whatsapp: (c.phoneNumber || c.phone || "") as string,
+		numberOfProperties: String(propsArr.length || 0),
+		properties: propsArr.map((prop) => {
+			const p = prop && typeof prop === "object" ? (prop as Record<string, unknown>) : {};
+			return { propertyName: (p.customPropertyName || "") as string, quantity: (p.quantity as number) || 1 };
+		}),
 	};
 }
 
 /**
  * Determine which payment method the customer used
  */
-export function getCustomerPaymentMethod(customer: any): "once" | "installment" | undefined {
-	if (!customer) return undefined;
+export function getCustomerPaymentMethod(customer: unknown): "once" | "installment" | undefined {
+	if (!customer || typeof customer !== "object") return undefined;
+	const c = customer as Record<string, unknown>;
 
-	// Check if customer has paymentTypeId
-	if (customer.paymentTypeId === 1) return "once";
-	if (customer.paymentTypeId === 2) return "installment";
+	if (c.paymentTypeId === 1) return "once";
+	if (c.paymentTypeId === 2) return "installment";
 
-	// Fallback: check structure
-	if (customer.propertyInterestRequest && customer.propertyInterestRequest.length > 0) {
-		return "installment";
-	}
+	if (Array.isArray(c.propertyInterestRequest) && c.propertyInterestRequest.length > 0) return "installment";
 
-	if (customer.properties && customer.properties.length > 0) {
-		return "once";
-	}
+	if (Array.isArray(c.properties) && c.properties.length > 0) return "once";
 
-	// Default to installment
 	return "installment";
 }

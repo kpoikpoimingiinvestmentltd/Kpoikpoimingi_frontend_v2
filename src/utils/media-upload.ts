@@ -6,6 +6,8 @@ export interface UploadResult {
 
 export async function uploadFileToPresignedUrl(presignedUrl: string, file: File, onProgress?: (progress: number) => void): Promise<UploadResult> {
 	try {
+		// mark onProgress as used to avoid unused parameter TS errors where callers may optionally pass it
+		void onProgress;
 		if (!presignedUrl) {
 			return { success: false, error: "No presigned URL provided" };
 		}

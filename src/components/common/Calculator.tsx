@@ -8,19 +8,104 @@ import { twMerge } from "tailwind-merge";
 import { Label } from "../ui/label";
 import { labelStyle } from "./commonStyles";
 
+const simpleInterestCalculator = ({
+	pi: principal,
+	ri: interestRate,
+	ti: time,
+	ii: interval,
+	si: startingAmount,
+}: {
+	pi: number;
+	ri: number;
+	ti: number;
+	ii: string;
+	si: number;
+}) => {
+	// Defensive defaults
+	const P = Number(principal) || 0;
+	const R = Number(interestRate) || 0; // percent per annum
+	const T = Number(time) || 0;
+	const S = Number(startingAmount) || 0;
+
+	// Convert given duration to years based on interval
+	let timeInYears: number;
+	switch (String(interval)) {
+		case "daily":
+			timeInYears = T / 365;
+			break;
+		case "weekly":
+			timeInYears = T / 52;
+			break;
+		case "monthly":
+			timeInYears = T / 12;
+			break;
+		case "yearly":
+		case "years":
+		default:
+			timeInYears = T; // assume already in years
+	}
+
+	// Simple interest (as float): I = P * (R / 100) * T_years
+	const principalInterestRaw = P * (R / 100) * timeInYears;
+	const startingAmountInterestRaw = S * (R / 100) * timeInYears;
+
+	// Round to 2 decimal places for currency-like presentation
+	const principalInterest = Math.round(principalInterestRaw * 100) / 100;
+	const startingAmountInterest = Math.round(startingAmountInterestRaw * 100) / 100;
+
+	// Total after adding interest on principal
+	const totalWithInterest = P + principalInterest;
+
+	// Previous app behavior subtracted the starting-amount's interest from total.
+	// Keep that behavior but preserve precision and ensure non-negative result.
+	const finalTotal = totalWithInterest - startingAmountInterest;
+
+	return Number(Math.max(0, Math.round(finalTotal * 100) / 100).toFixed(2));
+};
+
 export default function Calculator() {
 	const [open, setOpen] = React.useState(false);
 	const [principal, setPrincipal] = React.useState(0);
 	const [startAmount, setStartAmount] = React.useState(0);
 	const [rate, setRate] = React.useState(0);
-	const [interval, setInterval] = React.useState("Daily");
+	const [interval, setInterval] = React.useState("daily");
 	const [duration, setDuration] = React.useState(0);
 	const [total, setTotal] = React.useState<number | null>(null);
 
+	// Get max duration based on interval
+	const getMaxDuration = () => {
+		switch (interval) {
+			case "daily":
+				return 366; // Leap year
+			case "weekly":
+				return 52;
+			case "monthly":
+				return 12;
+			case "yearly":
+				return 100; // Arbitrary max for years
+			default:
+				return 366;
+		}
+	};
+
+	const maxDuration = getMaxDuration();
+
+	// Handle duration change with validation
+	const handleDurationChange = (value: number) => {
+		if (value <= maxDuration) {
+			setDuration(value);
+		}
+	};
+
 	const calculate = () => {
-		// simple interest placeholder: principal + (principal * rate/100 * duration)
-		const t = principal + (principal * rate * (duration / 12)) / 100;
-		setTotal(t);
+		const result = simpleInterestCalculator({
+			pi: principal,
+			ri: rate,
+			ti: duration,
+			ii: interval,
+			si: startAmount,
+		});
+		setTotal(result);
 	};
 
 	return (
@@ -53,7 +138,7 @@ export default function Calculator() {
 									className="h-9 rounded-sm"
 									value={principal}
 									onChange={(e) => setPrincipal(Number(e.target.value))}
-									label="Princing Amount"
+									label="Principal Amount"
 								/>
 								<CustomInput
 									type="number"
@@ -73,23 +158,34 @@ export default function Calculator() {
 								/>
 								<div className="">
 									<Label className={labelStyle("font-normal mb-1")}>Interval</Label>
-									<Select value={interval} onValueChange={(v) => setInterval(v)}>
+									<Select
+										value={interval}
+										onValueChange={(v) => {
+											setInterval(v);
+											// Reset duration if it exceeds new max
+											const newMaxDuration = v === "daily" ? 366 : v === "weekly" ? 52 : v === "monthly" ? 12 : 100;
+											if (duration > newMaxDuration) {
+												setDuration(0);
+											}
+										}}>
 										<SelectTrigger className={twMerge("w-full text-sm min-h-9 rounded-sm border")}>
 											<SelectValue />
 										</SelectTrigger>
 										<SelectContent>
-											<SelectItem value="Daily">Daily</SelectItem>
-											<SelectItem value="Monthly">Monthly</SelectItem>
-											<SelectItem value="Yearly">Yearly</SelectItem>
+											<SelectItem value="daily">Daily</SelectItem>
+											<SelectItem value="weekly">Weekly</SelectItem>
+											<SelectItem value="monthly">Monthly</SelectItem>
+											<SelectItem value="yearly">Yearly</SelectItem>
 										</SelectContent>
 									</Select>
 								</div>
 								<CustomInput
-									label="Payment Duration"
+									label={`Payment Duration (${interval})`}
 									className="h-9 rounded-sm"
 									type="number"
 									value={duration}
-									onChange={(e) => setDuration(Number(e.target.value))}
+									onChange={(e) => handleDurationChange(Number(e.target.value))}
+									max={maxDuration}
 								/>
 								<div className="mt-3">
 									<Button className="w-full bg-sky-500 text-white" onClick={calculate}>
@@ -99,7 +195,7 @@ export default function Calculator() {
 								{total !== null && (
 									<div className="mt-3 bg-gray-50 p-3 rounded">
 										<div className="text-sm text-muted-foreground">Total Amount</div>
-										<div className="text-lg font-medium">{total.toLocaleString()}</div>
+										<div className="text-lg font-medium">₦{total.toLocaleString()}</div>
 									</div>
 								)}
 							</div>

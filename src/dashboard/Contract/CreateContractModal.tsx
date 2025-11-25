@@ -14,22 +14,36 @@ import CustomInput from "../../components/base/CustomInput";
 import { CalendarIcon } from "../../assets/icons";
 import ActionButton from "../../components/base/ActionButton";
 import { extractPaymentFrequencyOptions, extractDurationUnitOptions } from "@/lib/referenceDataHelpers";
+import type { RefOption } from "@/lib/referenceDataHelpers";
+import { toast } from "sonner";
+import { extractErrorMessage } from "@/lib/utils";
+import type { Registration } from "@/types/customerRegistration";
 
 export default function CreateContractModal({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
 	const [showSuccess, setShowSuccess] = React.useState(false);
 	const [generatedLink, setGeneratedLink] = React.useState<string>("");
-	const [selectedCustomerData, setSelectedCustomerData] = React.useState<any | null>(null);
+	const [selectedCustomerData, setSelectedCustomerData] = React.useState<Registration | null>(null);
 	const [searchQuery, setSearchQuery] = React.useState("");
 
 	// Fetch customer registrations when modal opens
-	const registrationsQuery = useGetAllCustomerRegistrations(open) as any;
+	const registrationsQuery = useGetAllCustomerRegistrations(open) as { data?: { data?: Registration[] } | Registration[] };
 	const registrations = registrationsQuery?.data;
 
-	const filteredRegistrations = React.useMemo(() => {
-		if (!registrations?.data || !Array.isArray(registrations.data)) return [];
-		const currentRegistrations = registrations.data.filter((reg: any) => reg.isCurrent === true);
+	const filteredRegistrations = React.useMemo<Registration[]>(() => {
+		if (!registrations) return [];
+		const list: Registration[] = Array.isArray(registrations)
+			? (registrations as Registration[])
+			: Array.isArray((registrations as { data?: Registration[] }).data)
+			? ((registrations as { data?: Registration[] }).data as Registration[])
+			: [];
+
+		const currentRegistrations = list.filter((reg) => reg?.isCurrent === true);
 		if (!searchQuery.trim()) return currentRegistrations;
-		return currentRegistrations.filter((reg: any) => reg.fullName?.toLowerCase().includes(searchQuery.toLowerCase()));
+		return currentRegistrations.filter((reg) =>
+			String(reg.fullName || "")
+				.toLowerCase()
+				.includes(searchQuery.toLowerCase())
+		);
 	}, [registrations, searchQuery]);
 
 	React.useEffect(() => {
@@ -81,11 +95,28 @@ export default function CreateContractModal({ open, onOpenChange }: { open: bool
 		handleSubmit: rhfHandleSubmit,
 		reset,
 		watch,
+		setValue,
 	} = useForm({
 		defaultValues: getDefaultValues(),
 	});
 
 	const paymentTypeId = watch("paymentTypeId");
+	const watchedIntervalId = watch("intervalId");
+
+	// Watch important fields to compute whether form is ready to submit
+	const watchedCustomerId = watch("customerId");
+	const watchedDurationValue = watch("durationValue");
+	const watchedDurationUnitId = watch("durationUnitId");
+	const watchedStartDate = watch("startDate");
+
+	const canCreate = React.useMemo(() => {
+		const hasCustomer = typeof watchedCustomerId === "string" && watchedCustomerId.trim() !== "";
+		const hasPaymentType = paymentTypeId != null && String(paymentTypeId) !== "";
+		const hasStartDate = typeof watchedStartDate === "string" && watchedStartDate.trim() !== "";
+		const isHire = String(paymentTypeId) === "1";
+		const hireFieldsOk = !isHire || (String(watchedIntervalId) !== "" && watchedDurationValue != null && String(watchedDurationUnitId) !== "");
+		return Boolean(hasCustomer && hasPaymentType && hasStartDate && hireFieldsOk);
+	}, [watchedCustomerId, paymentTypeId, watchedStartDate, watchedIntervalId, watchedDurationValue, watchedDurationUnitId]);
 
 	// Reset form when customer is selected
 	React.useEffect(() => {
@@ -93,31 +124,68 @@ export default function CreateContractModal({ open, onOpenChange }: { open: bool
 	}, [selectedCustomerData, reset]);
 
 	// confirm / preview state
-	const [previewPayload, setPreviewPayload] = React.useState<any | null>(null);
+	type ContractPayload = {
+		customerId?: string;
+		propertyId?: string | undefined;
+		paymentTypeId?: number;
+		quantity?: number;
+		downPayment?: number;
+		intervalId?: number | undefined;
+		durationValue?: number;
+		durationUnitId?: number | undefined;
+		startDate?: string | undefined;
+		remarks?: string | undefined;
+		isCash?: boolean;
+		isPaymentLink?: boolean;
+	};
+
+	const [previewPayload, setPreviewPayload] = React.useState<ContractPayload | null>(null);
 	const [confirmOpen, setConfirmOpen] = React.useState(false);
 
 	const { data: refData, isLoading: refLoading } = useGetReferenceData();
 
-	const intervalCandidates = React.useMemo(() => {
+	const intervalCandidates = React.useMemo<RefOption[]>(() => {
 		return extractPaymentFrequencyOptions(refData);
 	}, [refData]);
 
-	const durationCandidates = React.useMemo(() => {
+	const durationCandidates = React.useMemo<RefOption[]>(() => {
 		return extractDurationUnitOptions(refData);
 	}, [refData]);
 
-	const onFormSubmit = (values: any) => {
-		const payload = {
-			customerId: values.customerId,
-			propertyId: values.propertyId || undefined,
+	// Auto-sync duration unit with selected payment interval (weekly vs monthly)
+	React.useEffect(() => {
+		if (!watchedIntervalId) return;
+		const selected = intervalCandidates.find((it) => String(it.key) === String(watchedIntervalId));
+		const isWeekly = Boolean(selected && String(selected.value).toUpperCase().includes("WEEK"));
+
+		// Try to find the matching duration unit key from durationCandidates
+		let unitKey: string | undefined;
+		if (isWeekly) {
+			unitKey = durationCandidates.find((d) => String(d.value).toUpperCase().includes("WEEK"))?.key;
+		} else {
+			unitKey = durationCandidates.find((d) => String(d.value).toUpperCase().includes("MONTH"))?.key;
+		}
+
+		if (unitKey) {
+			setValue("durationUnitId", String(unitKey));
+			// reset duration value so user selects appropriate option
+			setValue("durationValue", undefined as unknown as number);
+		}
+	}, [watchedIntervalId, intervalCandidates, durationCandidates, setValue]);
+
+	const onFormSubmit = (values: Record<string, unknown>) => {
+		const payload: ContractPayload = {
+			customerId: typeof values.customerId === "string" ? values.customerId : undefined,
+			propertyId: typeof values.propertyId === "string" ? values.propertyId : undefined,
 			paymentTypeId: Number(values.paymentTypeId),
 			quantity: Number(values.quantity) || 1,
 			downPayment: Number(values.downPayment) || 0,
-			intervalId: Number(values.intervalId) || undefined,
+			intervalId: typeof values.intervalId === "string" || typeof values.intervalId === "number" ? Number(values.intervalId) : undefined,
 			durationValue: Number(values.durationValue),
-			durationUnitId: Number(values.durationUnitId) || undefined,
-			startDate: values.startDate ? new Date(values.startDate).toISOString() : undefined,
-			remarks: values.remarks || undefined,
+			durationUnitId:
+				typeof values.durationUnitId === "string" || typeof values.durationUnitId === "number" ? Number(values.durationUnitId) : undefined,
+			startDate: typeof values.startDate === "string" && values.startDate ? new Date(values.startDate).toISOString() : undefined,
+			remarks: typeof values.remarks === "string" ? values.remarks : undefined,
 			isCash: !!values.isCash,
 			isPaymentLink: !!values.isPaymentLink,
 		};
@@ -127,16 +195,35 @@ export default function CreateContractModal({ open, onOpenChange }: { open: bool
 	};
 
 	const createMutation = useCreateContract(
-		(res) => {
-			const link = (res as any)?.link ?? (res as any)?.data?.link ?? "";
-			setGeneratedLink(link);
+		(res: unknown) => {
+			const r = (res as Record<string, unknown>) ?? {};
+			let linkStr = "";
+			if (typeof r.link === "string") {
+				linkStr = r.link;
+			} else if (r.data && typeof (r.data as Record<string, unknown>).link === "string") {
+				linkStr = (r.data as Record<string, unknown>).link as string;
+			}
+			// Show success toast if server returned a friendly message
+			const successMsg =
+				typeof r.message === "string"
+					? r.message
+					: typeof (r.data as Record<string, unknown>)?.message === "string"
+					? (r.data as Record<string, unknown>).message
+					: "Contract created successfully";
+			try {
+				toast.success(String(successMsg));
+			} catch (e) {
+				// ignore toast failures
+			}
+			setGeneratedLink(linkStr);
 			setConfirmOpen(false);
 			onOpenChange(false);
 			setSelectedCustomerData(null);
 			setTimeout(() => setShowSuccess(true), 200);
 		},
-		(err) => {
-			console.error("Create contract failed", err);
+		(err: unknown) => {
+			const msg = extractErrorMessage(err, "Failed to create contract");
+			toast.error(msg);
 		}
 	);
 
@@ -162,10 +249,11 @@ export default function CreateContractModal({ open, onOpenChange }: { open: bool
 									<Select
 										onValueChange={(v) => {
 											field.onChange(v);
-											const selected = filteredRegistrations.find((reg: any) => reg.customerId === v);
-											setSelectedCustomerData(selected || null);
+											const val = v as string;
+											const selected = filteredRegistrations.find((reg) => reg.customerId === val) ?? null;
+											setSelectedCustomerData(selected);
 										}}
-										value={field.value as any}>
+										value={String(field.value)}>
 										<SelectTrigger className={selectTriggerStyle()}>
 											<SelectValue placeholder="Search customer" />
 										</SelectTrigger>
@@ -175,13 +263,13 @@ export default function CreateContractModal({ open, onOpenChange }: { open: bool
 													placeholder="Search by name"
 													className={inputStyle}
 													value={searchQuery}
-													onChange={(e: any) => setSearchQuery(e.target.value)}
+													onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
 												/>
 											</div>
 											{filteredRegistrations && filteredRegistrations.length > 0
-												? filteredRegistrations.map((reg: any) => (
-														<SelectItem className="cursor-pointer" key={reg.id} value={reg.customerId}>
-															{reg.fullName}
+												? filteredRegistrations.map((reg) => (
+														<SelectItem className="cursor-pointer" key={String(reg.id)} value={String(reg.customerId)}>
+															{String(reg.fullName ?? "")}
 														</SelectItem>
 												  ))
 												: searchQuery && <div className="p-3 text-center text-sm text-gray-500">No customers found</div>}
@@ -295,21 +383,32 @@ export default function CreateContractModal({ open, onOpenChange }: { open: bool
 
 								{/* Duration Value */}
 								<div>
-									<Label className={labelStyle()}>For How Many Months*</Label>
+									<Label className={labelStyle()}>
+										{(() => {
+											const sel = intervalCandidates.find((it) => String(it.key) === String(watchedIntervalId));
+											const weekly = Boolean(sel && String(sel.value).toUpperCase().includes("WEEK"));
+											return weekly ? "For How Many Weeks*" : "For How Many Months*";
+										})()}
+									</Label>
 									<Controller
 										control={control}
 										name="durationValue"
 										render={({ field }) => (
-											<Select onValueChange={(v) => field.onChange(Number(v))} value={String(field.value)}>
+											<Select onValueChange={(v) => field.onChange(Number(v))} value={field.value != null ? String(field.value) : ""}>
 												<SelectTrigger className={selectTriggerStyle()}>
 													<SelectValue placeholder="Select duration" />
 												</SelectTrigger>
 												<SelectContent>
-													{Array.from({ length: 12 }, (_, i) => i + 1).map((n) => (
-														<SelectItem key={n} value={String(n)}>
-															{n} month{n !== 1 ? "s" : ""}
-														</SelectItem>
-													))}
+													{(() => {
+														const sel = intervalCandidates.find((it) => String(it.key) === String(watchedIntervalId));
+														const weekly = Boolean(sel && String(sel.value).toUpperCase().includes("WEEK"));
+														const opts = weekly ? Array.from({ length: 52 }, (_, i) => i + 1) : Array.from({ length: 12 }, (_, i) => i + 1);
+														return opts.map((n) => (
+															<SelectItem key={n} value={String(n)}>
+																{n} {weekly ? (n !== 1 ? "weeks" : "week") : `month${n !== 1 ? "s" : ""}`}
+															</SelectItem>
+														));
+													})()}
 												</SelectContent>
 											</Select>
 										)}
@@ -423,7 +522,7 @@ export default function CreateContractModal({ open, onOpenChange }: { open: bool
 						/>
 
 						<DialogFooter className="col-span-2 mt-5">
-							<ActionButton fullWidth type="submit">
+							<ActionButton fullWidth type="submit" disabled={!canCreate}>
 								Create Contract
 							</ActionButton>
 						</DialogFooter>

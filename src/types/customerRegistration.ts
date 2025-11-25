@@ -46,6 +46,16 @@ export interface PropertyInterestRequest {
 	customPropertyPrice?: number;
 }
 
+export type Registration = {
+	id?: string;
+	customerId?: string;
+	fullName?: string;
+	isCurrent?: boolean;
+	paymentTypeId?: number;
+	propertyInterestRequest?: PropertyInterestRequest[];
+	[key: string]: unknown;
+};
+
 export interface MediaKeys {
 	identificationDocument?: string[];
 	indegeneCertificate?: string[];
@@ -124,7 +134,10 @@ export interface InstallmentPaymentForm {
 		spousePhone: string;
 		address: string;
 	};
+	propertyId: string;
 	propertyName: string;
+	isCustomProperty: boolean;
+	customPropertyPrice: string;
 	paymentFrequency: string;
 	paymentDuration: string;
 	paymentDurationUnit: string;

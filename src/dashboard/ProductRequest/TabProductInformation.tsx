@@ -1,61 +1,126 @@
 import CustomCard from "@/components/base/CustomCard";
 import SectionTitle from "@/components/common/SectionTitle";
 import KeyValueRow from "@/components/common/KeyValueRow";
-import ImageGallery from "@/components/base/ImageGallery";
-import { media } from "@/resources/images";
+import { useState } from "react";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import AddProperties from "@/dashboard/Properties/AddProperties";
+import { Button } from "@/components/ui/button";
+import { modalContentStyle } from "../../components/common/commonStyles";
+// import ImageGallery from "@/components/base/ImageGallery";
+// import { media } from "@/resources/images";
 
-export default function TabProductInformation() {
-	const product = {
-		propertyImage: media.images._product1,
-		propertyName: "25kg gas cylinder",
-		amount: "80,000",
-		paymentMethod: "Hire Purchase",
-		paymentFrequency: "Monthly",
-		paymentDuration: "6 months",
-		reason: "To replace the gas cylinder in my home",
-	};
+type PropertyInterest = {
+	id: string;
+	propertyId?: string | null;
+	paymentIntervalId?: number | null;
+	durationValue?: number | null;
+	durationUnitId?: number | null;
+	downPayment?: string | number | null;
+	isAssigned?: boolean;
+	customerRegistrationId?: string;
+	customPropertyName?: string | null;
+	customPropertyPrice?: string | number | null;
+	isCustomProperty?: boolean;
+	quantity?: number;
+};
+
+type CustomerRegistration = {
+	propertyInterestRequest?: PropertyInterest[];
+};
+
+export default function TabProductInformation({ data }: { data?: CustomerRegistration | null }) {
+	const propertyInterests: PropertyInterest[] = Array.isArray(data?.propertyInterestRequest)
+		? (data!.propertyInterestRequest as PropertyInterest[])
+		: [];
+
+	const [addOpen, setAddOpen] = useState(false);
+
+	const hasCustomerProperty = propertyInterests.some((p) => !!p.isCustomProperty);
+
+	if (!propertyInterests.length) {
+		return (
+			<CustomCard className="mt-4 border-none p-0 bg-white">
+				<p className="text-muted-foreground">No property interests found</p>
+			</CustomCard>
+		);
+	}
 
 	return (
 		<CustomCard className="mt-4 border-none p-0 bg-white">
-			<SectionTitle title="Property Details" />
-
-			<CustomCard className="mt-6 p-0 border-0">
-				<div className="mb-6">
-					<ImageGallery
-						images={[product.propertyImage]}
-						mode="view"
-						containerBorder="none"
-						thumbVariant="solid"
-						thumbBg="bg-primary/10"
-						labelText="Property Image"
-						className="rounded-lg"
-					/>
-				</div>
-
-				<div className="grid grid-cols-1 gap-y-0.5 text-sm">
-					<KeyValueRow label="Property Name" value={product.propertyName} leftClassName="text-sm text-muted-foreground" rightClassName="text-right" />
-					<KeyValueRow label="Amount" value={product.amount} leftClassName="text-sm text-muted-foreground" rightClassName="text-right" />
-					<KeyValueRow
-						label="Payment Method"
-						value={product.paymentMethod}
-						leftClassName="text-sm text-muted-foreground"
-						rightClassName="text-right"
-					/>
-					<KeyValueRow
-						label="Payment Frequency"
-						value={product.paymentFrequency}
-						leftClassName="text-sm text-muted-foreground"
-						rightClassName="text-right"
-					/>
-					<KeyValueRow
-						label="Payment duration"
-						value={product.paymentDuration}
-						leftClassName="text-sm text-muted-foreground"
-						rightClassName="text-right"
-					/>
-					<KeyValueRow label="Reason for property" value={product.reason} leftClassName="text-sm text-muted-foreground" rightClassName="text-right" />
-				</div>
-			</CustomCard>
+			<div className="flex flex-col gap-y-6">
+				{hasCustomerProperty && (
+					<>
+						<div className="flex items-center justify-between flex-wrap gap-4 p-4 bg-amber-50 rounded">
+							<div className="text-sm text-amber-700">Property Not In System</div>
+							<div>
+								<Button className="bg-primary text-white" onClick={() => setAddOpen(true)}>
+									+ Add Property
+								</Button>
+							</div>
+						</div>
+						<Dialog open={addOpen} onOpenChange={setAddOpen}>
+							<DialogContent className={modalContentStyle()}>
+								<AddProperties />
+							</DialogContent>
+						</Dialog>
+					</>
+				)}
+				{propertyInterests.map((property: any, index: number) => (
+					<div key={index}>
+						<SectionTitle title={`Property Interest ${index + 1}`} />
+						<CustomCard className="mt-6 p-0 border-0">
+							<div className="grid grid-cols-1 gap-y-0.5 text-sm">
+								<KeyValueRow
+									label="Property ID"
+									value={property.propertyId || "N/A"}
+									leftClassName="text-sm text-muted-foreground"
+									rightClassName="text-right"
+								/>
+								<KeyValueRow
+									label="Quantity"
+									value={String(property.quantity || 1)}
+									leftClassName="text-sm text-muted-foreground"
+									rightClassName="text-right"
+								/>
+								<KeyValueRow
+									label="Down Payment"
+									value={`₦${property.downPayment || 0}`}
+									leftClassName="text-sm text-muted-foreground"
+									rightClassName="text-right"
+								/>
+								<KeyValueRow
+									label="Payment Interval ID"
+									value={String(property.paymentIntervalId || "N/A")}
+									leftClassName="text-sm text-muted-foreground"
+									rightClassName="text-right"
+								/>
+								<KeyValueRow
+									label="Is Assigned"
+									value={property.isAssigned ? "Yes" : "No"}
+									leftClassName="text-sm text-muted-foreground"
+									rightClassName="text-right"
+								/>
+								{property.customPropertyName && (
+									<KeyValueRow
+										label="Custom Property Name"
+										value={property.customPropertyName}
+										leftClassName="text-sm text-muted-foreground"
+										rightClassName="text-right"
+									/>
+								)}
+								{property.customPropertyPrice && (
+									<KeyValueRow
+										label="Custom Property Price"
+										value={`₦${property.customPropertyPrice}`}
+										leftClassName="text-sm text-muted-foreground"
+										rightClassName="text-right"
+									/>
+								)}
+							</div>
+						</CustomCard>
+					</div>
+				))}
+			</div>
 		</CustomCard>
 	);
 }

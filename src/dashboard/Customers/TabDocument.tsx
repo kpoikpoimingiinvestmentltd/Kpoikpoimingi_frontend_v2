@@ -5,7 +5,7 @@ import { media } from "@/resources/images";
 import { Link } from "react-router";
 import { useEffect } from "react";
 
-export default function TabDocument({ documents }: { documents?: any }) {
+export default function TabDocument({ documents }: { documents?: unknown[] | undefined }) {
 	// Log the documents response for debugging
 	useEffect(() => {
 		if (documents) {

@@ -4,6 +4,7 @@ import authReducer from "./authSlice";
 import usersReducer from "./usersSlice";
 import categoriesReducer from "./categoriesSlice";
 import notificationsReducer from "./notificationsSlice";
+import reportAnalyticsReducer from "./reportAnalyticsSlice";
 import { presignUploadApi } from "@/api/presign-upload.api";
 
 const rootReducer = combineReducers({
@@ -11,6 +12,7 @@ const rootReducer = combineReducers({
 	users: usersReducer,
 	categories: categoriesReducer,
 	notifications: notificationsReducer,
+	reportAnalytics: reportAnalyticsReducer,
 	[presignUploadApi.reducerPath]: presignUploadApi.reducer,
 });
 

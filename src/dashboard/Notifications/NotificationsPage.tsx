@@ -61,7 +61,7 @@ export default function NotificationsPage() {
 					type="button"
 					onClick={() =>
 						markAllMutation.mutate(undefined, {
-							onSuccess: (res: any) => {
+							onSuccess: (res) => {
 								// update store: mark local notifications as read
 								dispatch(setNotifications((storeState.items || []).map((n) => ({ ...n, read: true }))));
 								// invalidate queries to refresh data
@@ -69,7 +69,7 @@ export default function NotificationsPage() {
 								queryClient.invalidateQueries({ queryKey: ["notifications", "unreadCount"] });
 								toast.success(res?.count ? `${res.count} notifications marked read` : "All notifications marked read");
 							},
-							onError: (err: any) => {
+							onError: (err: unknown) => {
 								console.error("Failed to mark notifications read", err);
 								toast.error("Failed to mark notifications read");
 							},

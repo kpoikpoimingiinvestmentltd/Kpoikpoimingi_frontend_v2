@@ -4,6 +4,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@
 import CustomInput from "@/components/base/CustomInput";
 import ActionButton from "@/components/base/ActionButton";
 import ImageGallery from "@/components/base/ImageGallery";
+import { Textarea } from "@/components/ui/textarea";
 import { media } from "@/resources/images";
 import { inputStyle, modalContentStyle } from "../../components/common/commonStyles";
 import { useGetAllCategories } from "@/api/categories";
@@ -14,7 +15,7 @@ import { twMerge } from "tailwind-merge";
 import type { EditPropertyDetailsModalProps } from "@/types/property";
 
 export default function EditPropertyDetailsModal({ open, onOpenChange, initial, onSave, isLoading }: EditPropertyDetailsModalProps) {
-	const initialImgs = initial?.images ?? [media.images._product1, media.images._product2];
+	const initialImgs = initial?.media ?? initial?.images ?? [media.images._product1, media.images._product2];
 	const [currentImages, setCurrentImages] = React.useState<string[]>(Array.isArray(initialImgs) ? initialImgs : [initialImgs as string]);
 	const [uploadedMediaKeys, setUploadedMediaKeys] = React.useState<string[]>([]);
 	const [isUploadingImages, setIsUploadingImages] = React.useState(false);
@@ -77,67 +78,86 @@ export default function EditPropertyDetailsModal({ open, onOpenChange, initial, 
 		}
 	};
 
+	const getStatusValue = () => {
+		if (typeof initial?.status === "object" && initial.status?.status) return initial.status.status;
+		if (typeof initial?.status === "string") return initial.status;
+		return "";
+	};
+
 	const [form, setForm] = React.useState({
 		id: initial?.id ?? "",
+		propertyCode: initial?.propertyCode ?? "",
 		name: initial?.name ?? "",
 		price: initial?.price ?? "",
-		quantity: initial?.quantity ?? "",
-		status: initial?.status ?? "",
-		numberAssigned: initial?.numberAssigned ?? "",
-		category: initial?.category ?? "",
+		quantityTotal: String(initial?.quantityTotal ?? ""),
+		quantityAssigned: String(initial?.quantityAssigned ?? ""),
+		status: getStatusValue(),
 		categoryId: initial?.categoryId ?? "",
-		addedOn: initial?.addedOn ?? "",
-		// vehicle specific
-		subCategory: initial?.subCategory ?? "",
-		vehicleMake: initial?.vehicleMake ?? "",
-		type: initial?.type ?? "",
-		colour: initial?.colour ?? "",
-		registrationNumber: initial?.registrationNumber ?? "",
-		chassisNumber: initial?.chassisNumber ?? "",
+		parentCategoryId: "",
 		condition: initial?.condition ?? "",
 		description: initial?.description ?? "",
+		vehicleMake: initial?.vehicleMake ?? "",
+		vehicleModel: initial?.vehicleModel ?? "",
+		vehicleYear: String(initial?.vehicleYear ?? ""),
+		vehicleColor: initial?.vehicleColor ?? "",
+		vehicleChassisNumber: initial?.vehicleChassisNumber ?? "",
+		vehicleType: initial?.vehicleType ?? "",
+		vehicleRegistrationNumber: initial?.vehicleRegistrationNumber ?? "",
 	});
 
 	// Get the parent category and its subcategories based on the current categoryId
-	const selectedCategory = allCategories.find((cat: any) => {
+	const selectedParentCategory = allCategories.find((cat: any) => {
 		return cat.children?.some((child: any) => child.id === form.categoryId);
 	});
-	const subcategories = selectedCategory?.children || [];
+	const subcategories = selectedParentCategory?.children || [];
+
+	// Check if selected parent category is a vehicle category
+	const isVehicleCategory =
+		selectedParentCategory && selectedParentCategory.category && selectedParentCategory.category.toLowerCase().includes("vehicle");
 
 	React.useEffect(() => {
-		const initialImgsArray = initial?.images ?? [media.images._product1, media.images._product2];
+		const initialImgsArray = initial?.media ?? initial?.images ?? [media.images._product1, media.images._product2];
 		setCurrentImages(Array.isArray(initialImgsArray) ? initialImgsArray : [initialImgsArray as string]);
 		setUploadedMediaKeys([]);
+
+		const statusVal = getStatusValue();
+
+		// Find parent category ID based on categoryId
+		const parentCat = allCategories.find((cat: any) => {
+			return cat.children?.some((child: any) => child.id === initial?.categoryId);
+		});
+
 		setForm({
 			id: initial?.id ?? "",
+			propertyCode: initial?.propertyCode ?? "",
 			name: initial?.name ?? "",
 			price: initial?.price ?? "",
-			quantity: initial?.quantity ?? "",
-			status: initial?.status ?? "",
-			numberAssigned: initial?.numberAssigned ?? "",
-			category: initial?.category ?? "",
+			quantityTotal: String(initial?.quantityTotal ?? ""),
+			quantityAssigned: String(initial?.quantityAssigned ?? ""),
+			status: statusVal,
 			categoryId: initial?.categoryId ?? "",
-			addedOn: initial?.addedOn ?? "",
-			// vehicle specific
-			subCategory: initial?.subCategory ?? "",
-			vehicleMake: initial?.vehicleMake ?? "",
-			type: initial?.type ?? "",
-			colour: initial?.colour ?? "",
-			registrationNumber: initial?.registrationNumber ?? "",
-			chassisNumber: initial?.chassisNumber ?? "",
+			parentCategoryId: parentCat?.id ?? "",
 			condition: initial?.condition ?? "",
 			description: initial?.description ?? "",
+			vehicleMake: initial?.vehicleMake ?? "",
+			vehicleModel: initial?.vehicleModel ?? "",
+			vehicleYear: String(initial?.vehicleYear ?? ""),
+			vehicleColor: initial?.vehicleColor ?? "",
+			vehicleChassisNumber: initial?.vehicleChassisNumber ?? "",
+			vehicleType: initial?.vehicleType ?? "",
+			vehicleRegistrationNumber: initial?.vehicleRegistrationNumber ?? "",
 		});
-	}, [initial, open]);
+	}, [initial, open, allCategories]);
 
-	const handleChange = (k: string) => (v: string) => setForm((s) => ({ ...s, [k]: v }));
+	const handleChange = (k: string) => (v: string) => {
+		setForm((s) => ({ ...s, [k]: v }));
+	};
 
 	const handleNumberInputWheel = (e: React.WheelEvent<HTMLInputElement>) => {
 		e.currentTarget.blur();
 	};
 
 	const handleImageUpload = async (files: File[]) => {
-		// Upload each file and collect media keys
 		if (files && files.length > 0) {
 			setIsUploadingImages(true);
 			try {
@@ -149,13 +169,24 @@ export default function EditPropertyDetailsModal({ open, onOpenChange, initial, 
 	};
 
 	const handleSave = () => {
-		// Call API through callback if provided
 		if (onSave) {
-			// Combine original images (non-blob URLs) with newly uploaded media keys
 			const originalImages = currentImages.filter((img) => !img.startsWith("blob:"));
 			const allMediaKeys = [...originalImages, ...uploadedMediaKeys];
 
-			onSave({ ...form, images: currentImages, mediaKeys: allMediaKeys });
+			const payload: any = {
+				...form,
+				images: currentImages,
+				mediaKeys: allMediaKeys,
+				price: Number(form.price),
+				quantityTotal: Number(form.quantityTotal),
+				quantityAssigned: Number(form.quantityAssigned),
+			};
+
+			if (isVehicleCategory) {
+				payload.vehicleYear = form.vehicleYear ? Number(form.vehicleYear) : undefined;
+			}
+
+			onSave(payload);
 		} else {
 			onOpenChange(false);
 		}
@@ -163,13 +194,14 @@ export default function EditPropertyDetailsModal({ open, onOpenChange, initial, 
 
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
-			<DialogContent className={modalContentStyle("md:max-w-3xl")}>
+			<DialogContent className={modalContentStyle("md:max-w-4xl max-h-[90vh] overflow-y-auto")}>
 				<DialogHeader className="justify-center flex-row my-4">
 					<DialogTitle className="font-medium">Edit Property Details</DialogTitle>
 				</DialogHeader>
 
-				<div className="mx-auto w-full md:max-w-2xl">
+				<div className="mx-auto w-full md:max-w-3xl pb-4">
 					<div className="grid grid-cols-1 gap-6">
+						{/* Image Gallery */}
 						<ImageGallery
 							uploadedImages={uploadedImages}
 							mode="upload"
@@ -179,37 +211,30 @@ export default function EditPropertyDetailsModal({ open, onOpenChange, initial, 
 							onChange={handleImageUpload}
 							isUploading={isUploadingImages}
 						/>
+
+						{/* Property Name */}
+						<div>
+							<CustomInput
+								required
+								label="Property Name"
+								value={form.name}
+								onChange={(e) => handleChange("name")(e.target.value)}
+								className={twMerge(inputStyle)}
+							/>
+						</div>
+
+						{/* Category and Sub Category */}
 						<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-							<CustomInput required label="Property ID" value={form.id} onChange={(e) => handleChange("id")(e.target.value)} />
-							<CustomInput required label="Property Name" value={form.name} onChange={(e) => handleChange("name")(e.target.value)} />
-							<CustomInput
-								required
-								label="Price"
-								value={form.price}
-								onChange={(e) => handleChange("price")(e.target.value)}
-								onWheel={handleNumberInputWheel}
-							/>
-							<CustomInput
-								required
-								label="Quantity"
-								value={form.quantity}
-								onChange={(e) => handleChange("quantity")(e.target.value)}
-								onWheel={handleNumberInputWheel}
-							/>
-							<CustomInput required label="Status" value={form.status} onChange={(e) => handleChange("status")(e.target.value)} />
-							<CustomInput
-								required
-								label="Number Assigned"
-								value={form.numberAssigned}
-								onChange={(e) => handleChange("numberAssigned")(e.target.value)}
-							/>
 							<div>
-								<label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+								<label className="block text-sm font-medium text-gray-700 mb-2">Property Category*</label>
 								<Select
-									value={selectedCategory?.id || ""}
+									value={selectedParentCategory?.id || ""}
 									onValueChange={(value) => {
-										const selected = allCategories.find((c: any) => c.id === value);
-										setForm((s) => ({ ...s, categoryId: "", category: selected?.category || "" }));
+										setForm((s) => ({
+											...s,
+											parentCategoryId: value,
+											categoryId: "",
+										}));
 									}}>
 									<SelectTrigger className={twMerge(inputStyle, "w-full min-h-11 capitalize text-sm")}>
 										<SelectValue placeholder="Choose Category" />
@@ -223,17 +248,21 @@ export default function EditPropertyDetailsModal({ open, onOpenChange, initial, 
 									</SelectContent>
 								</Select>
 							</div>
+
 							<div>
-								<label className="block text-sm font-medium text-gray-700 mb-2">Sub Category</label>
+								<label className="block text-sm font-medium text-gray-700 mb-2">Sub Category*</label>
 								<Select
 									value={form.categoryId}
 									onValueChange={(value) => {
-										const selectedSubcat = subcategories.find((c: any) => c.id === value);
-										setForm((s) => ({ ...s, categoryId: value, category: selectedSubcat?.category || "" }));
+										setForm((s) => ({ ...s, categoryId: value }));
 									}}
-									disabled={!selectedCategory}>
+									disabled={!selectedParentCategory || subcategories.length === 0}>
 									<SelectTrigger className={twMerge(inputStyle, "w-full min-h-11 capitalize text-sm")}>
-										<SelectValue placeholder={!selectedCategory ? "Select category first" : "Choose Sub Category"} />
+										<SelectValue
+											placeholder={
+												!selectedParentCategory ? "Select category first" : subcategories.length === 0 ? "No subcategories" : "Choose Sub Category"
+											}
+										/>
 									</SelectTrigger>
 									<SelectContent>
 										{subcategories.map((subcat: any) => (
@@ -244,35 +273,15 @@ export default function EditPropertyDetailsModal({ open, onOpenChange, initial, 
 									</SelectContent>
 								</Select>
 							</div>
-							<CustomInput required label="Added On" value={form.addedOn} onChange={(e) => handleChange("addedOn")(e.target.value)} disabled />
+						</div>
 
-							{/* vehicle specific fields - displayed only when parent category is vehicles */}
-							{selectedCategory && selectedCategory.category && selectedCategory.category.toLowerCase().includes("vehicle") && (
-								<>
-									<CustomInput required label="Vehicle Make" value={form.vehicleMake} onChange={(e) => handleChange("vehicleMake")(e.target.value)} />
-									<CustomInput required label="Type" value={form.type} onChange={(e) => handleChange("type")(e.target.value)} />
-									<CustomInput required label="Colour" value={form.colour} onChange={(e) => handleChange("colour")(e.target.value)} />
-									<CustomInput
-										required
-										label="Registration Number"
-										value={form.registrationNumber}
-										onChange={(e) => handleChange("registrationNumber")(e.target.value)}
-									/>
-									<CustomInput
-										required
-										label="Chassis Number"
-										value={form.chassisNumber}
-										onChange={(e) => handleChange("chassisNumber")(e.target.value)}
-									/>
-									<CustomInput required label="Condition" value={form.condition} onChange={(e) => handleChange("condition")(e.target.value)} />
-								</>
-							)}
-
-							{/* Price and Quantity */}
+						{/* Price and Quantity */}
+						<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 							<div>
-								<label className="block text-sm font-medium text-gray-700 mb-2">Price*</label>
 								<CustomInput
 									required
+									label="Price"
+									type="number"
 									value={form.price}
 									onChange={(e) => handleChange("price")(e.target.value)}
 									onWheel={handleNumberInputWheel}
@@ -280,18 +289,156 @@ export default function EditPropertyDetailsModal({ open, onOpenChange, initial, 
 								/>
 							</div>
 							<div>
-								<label className="block text-sm font-medium text-gray-700 mb-2">Quantity*</label>
 								<CustomInput
 									required
-									value={form.quantity}
-									onChange={(e) => handleChange("quantity")(e.target.value)}
+									label="Quantity"
+									type="number"
+									value={form.quantityTotal}
+									onChange={(e) => handleChange("quantityTotal")(e.target.value)}
 									onWheel={handleNumberInputWheel}
 									className={twMerge(inputStyle)}
 								/>
 							</div>
 						</div>
 
-						<footer className="mt-2 w-full sm:w-11/12 sm:mx-auto">
+						{/* Status and Condition */}
+						<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+							<div>
+								<CustomInput
+									required
+									label="Status"
+									value={form.status}
+									onChange={(e) => handleChange("status")(e.target.value)}
+									className={twMerge(inputStyle)}
+									disabled
+								/>
+							</div>
+							<div>
+								<CustomInput
+									required
+									label="Condition"
+									value={form.condition}
+									onChange={(e) => handleChange("condition")(e.target.value)}
+									className={twMerge(inputStyle)}
+								/>
+							</div>
+						</div>
+
+						{/* Quantity Assigned */}
+						<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+							<div>
+								<CustomInput
+									required
+									label="Quantity Assigned"
+									type="number"
+									value={form.quantityAssigned}
+									onChange={(e) => handleChange("quantityAssigned")(e.target.value)}
+									onWheel={handleNumberInputWheel}
+									className={twMerge(inputStyle)}
+									disabled
+								/>
+							</div>
+						</div>
+
+						{/* Vehicle-specific fields */}
+						{isVehicleCategory && (
+							<>
+								<div className="border-t pt-4 mt-4">
+									<h3 className="font-medium text-sm text-gray-700 mb-4">Vehicle Details</h3>
+								</div>
+
+								<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+									<div>
+										<CustomInput
+											required
+											label="Vehicle Make"
+											value={form.vehicleMake}
+											onChange={(e) => handleChange("vehicleMake")(e.target.value)}
+											className={twMerge(inputStyle)}
+										/>
+									</div>
+									<div>
+										<CustomInput
+											required
+											label="Vehicle Model"
+											value={form.vehicleModel}
+											onChange={(e) => handleChange("vehicleModel")(e.target.value)}
+											className={twMerge(inputStyle)}
+										/>
+									</div>
+								</div>
+
+								<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+									<div>
+										<CustomInput
+											required
+											label="Vehicle Year"
+											type="number"
+											value={form.vehicleYear}
+											onChange={(e) => handleChange("vehicleYear")(e.target.value)}
+											onWheel={handleNumberInputWheel}
+											className={twMerge(inputStyle)}
+										/>
+									</div>
+									<div>
+										<CustomInput
+											required
+											label="Vehicle Color"
+											value={form.vehicleColor}
+											onChange={(e) => handleChange("vehicleColor")(e.target.value)}
+											className={twMerge(inputStyle)}
+										/>
+									</div>
+								</div>
+
+								<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+									<div>
+										<CustomInput
+											required
+											label="Chassis Number"
+											value={form.vehicleChassisNumber}
+											onChange={(e) => handleChange("vehicleChassisNumber")(e.target.value)}
+											className={twMerge(inputStyle)}
+										/>
+									</div>
+									<div>
+										<CustomInput
+											required
+											label="Vehicle Type"
+											value={form.vehicleType}
+											onChange={(e) => handleChange("vehicleType")(e.target.value)}
+											className={twMerge(inputStyle)}
+										/>
+									</div>
+								</div>
+
+								<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+									<div>
+										<CustomInput
+											required
+											label="Registration Number"
+											value={form.vehicleRegistrationNumber}
+											onChange={(e) => handleChange("vehicleRegistrationNumber")(e.target.value)}
+											className={twMerge(inputStyle)}
+										/>
+									</div>
+								</div>
+							</>
+						)}
+
+						{/* Description */}
+						<div>
+							<label className="block text-sm font-medium text-gray-700 mb-2">Description*</label>
+							<Textarea
+								value={form.description}
+								onChange={(e) => handleChange("description")(e.target.value)}
+								className={twMerge(inputStyle, "h-auto min-h-24")}
+								rows={5}
+							/>
+						</div>
+
+						{/* Action Button */}
+						<footer className="mt-4 w-full">
 							<ActionButton variant="primary" onClick={handleSave} disabled={isLoading} className="w-full">
 								{isLoading ? "Saving..." : "Save Changes"}
 							</ActionButton>

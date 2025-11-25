@@ -14,7 +14,7 @@ import type { InstallmentPaymentForm, FileUploadState } from "@/types/customerRe
 
 type Props = {
 	form: InstallmentPaymentForm;
-	handleChange: (key: string, value: any) => void;
+	handleChange: (key: string, value: unknown) => void;
 	isSubmitting: boolean;
 	onSubmit: (e: React.FormEvent) => void;
 	uploadedFiles: FileUploadState;

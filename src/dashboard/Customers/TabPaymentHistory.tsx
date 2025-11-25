@@ -3,37 +3,13 @@ import CustomCard from "@/components/base/CustomCard";
 import SectionTitle from "@/components/common/SectionTitle";
 import ModalPaymentDetails from "./ModalPaymentDetails";
 import PaymentCard from "@/components/base/PaymentCard";
+import type { PaymentDto, ApiPaymentItem, ApiContractPayments } from "@/types/payment";
 import { FileIcon } from "@/assets/icons";
 
-type Payment = { id: string; status?: "Successful" | "Failed"; date: string };
-type ContractGroup = { id: string; title: string; payments: Payment[] };
+// Local simplified Payment shape used by PaymentCard (not exported)
 
-const groups: ContractGroup[] = [
-	{
-		id: "c102",
-		title: "Contract 102 (Hire Purchase): 12 inches HP laptop",
-		payments: [
-			{ id: "p1", status: "Successful", date: "12-3-2025" },
-			{ id: "p2", status: "Failed", date: "12-3-2025" },
-			{ id: "p3", status: "Successful", date: "12-3-2025" },
-			{ id: "p4", status: "Successful", date: "12-3-2025" },
-			{ id: "p5", status: "Successful", date: "12-3-2025" },
-			{ id: "p6", status: "Successful", date: "12-3-2025" },
-			{ id: "p7", status: "Failed", date: "12-3-2025" },
-			{ id: "p8", status: "Successful", date: "12-3-2025" },
-			{ id: "p9", status: "Successful", date: "12-3-2025" },
-			{ id: "p10", status: "Successful", date: "12-3-2025" },
-		],
-	},
-	{
-		id: "c101",
-		title: "Contract 101(Full Payment): 25kg gas cylinder",
-		payments: [{ id: "p11", status: "Successful", date: "12-3-2025" }],
-	},
-];
-
-export default function TabPaymentHistory({ payments }: { payments?: any }) {
-	const [selected, setSelected] = React.useState<Payment | null>(null);
+export default function TabPaymentHistory({ payments }: { payments?: PaymentDto[] | undefined }) {
+	const [selected, setSelected] = React.useState<ApiPaymentItem | null>(null);
 	const [open, setOpen] = React.useState(false);
 
 	React.useEffect(() => {
@@ -42,20 +18,27 @@ export default function TabPaymentHistory({ payments }: { payments?: any }) {
 		}
 	}, [payments]);
 
-	const handleView = (p: Payment) => {
+	const handleView = (p: ApiPaymentItem) => {
 		setSelected(p);
 		setOpen(true);
 	};
 
-	const buildPaymentDetails = (p: Payment) => {
+	const buildPaymentDetails = (p: ApiPaymentItem) => {
+		const date = p.createdAt ?? (p as any).date ?? "";
+		const method = p.paymentMethod ? (p.paymentMethod === "PAYMENT_LINK" ? "Payment Link" : p.paymentMethod) : "-";
+		const amount = p.amount ? Number(p.amount).toLocaleString() : "-";
+		const receipt = p.receiptNumber ?? "-";
+		const outstanding = p.outStandingBalance ?? p.outstandingBalance ?? "-";
+		const status = p.status === "PAID" || p.status === "SUCCESS" ? "Payment Successful" : "Payment Failed";
+
 		return {
-			date: p.date,
-			method: "Paystack",
-			amount: "30,000",
-			receipt: "0-54738376",
-			outstanding: "340,000",
+			date: date ? new Date(date).toLocaleString() : "-",
+			method,
+			amount,
+			receipt,
+			outstanding: outstanding !== "-" ? Number(outstanding).toLocaleString() : "-",
 			penalty: "0",
-			status: p.status === "Successful" ? "Payment Successful" : "Payment Failed",
+			status,
 		};
 	};
 
@@ -65,16 +48,34 @@ export default function TabPaymentHistory({ payments }: { payments?: any }) {
 				<SectionTitle title="Payment History" />
 
 				<div className="space-y-8 mt-4">
-					{groups.map((g) => (
-						<div key={g.id}>
-							<div className="bg-[#F7F7F7] p-3 rounded-sm text-sm mb-4">{g.title}</div>
-							<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-								{g.payments.map((p) => (
-									<PaymentCard key={p.id} p={p} onView={handleView} icon={<FileIcon />} />
-								))}
-							</div>
-						</div>
-					))}
+					{Array.isArray((payments as any)?.payments) && (payments as any).payments.length > 0 ? (
+						(payments as any).payments.map((grp: ApiContractPayments) => {
+							const title = `${grp.contractCode ?? grp.contractId ?? "Contract"} — ${grp.propertyName ?? ""}`;
+							// items variable removed; we render directly from grp.payments below
+
+							return (
+								<div key={grp.contractId ?? grp.contractCode ?? title}>
+									<div className="bg-[#F7F7F7] p-3 rounded-sm text-sm mb-4">{title}</div>
+									<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+										{Array.isArray(grp.payments) && grp.payments.length > 0 ? (
+											grp.payments.map((p) => (
+												<PaymentCard
+													key={p.id}
+													p={{ id: p.id, status: p.status === "PAID" || p.status === "SUCCESS" ? "Successful" : "Failed", date: p.createdAt ?? "" }}
+													onView={(_: any) => handleView(p)}
+													icon={<FileIcon />}
+												/>
+											))
+										) : (
+											<div className="text-sm text-muted-foreground">No payments for this contract.</div>
+										)}
+									</div>
+								</div>
+							);
+						})
+					) : (
+						<div className="text-sm text-muted-foreground">No payment records found.</div>
+					)}
 				</div>
 			</CustomCard>
 

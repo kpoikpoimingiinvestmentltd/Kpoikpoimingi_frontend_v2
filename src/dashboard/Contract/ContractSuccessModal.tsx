@@ -1,6 +1,7 @@
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { IconWrapper, CheckIcon } from "@/assets/icons";
 import ActionButton from "../../components/base/ActionButton";
+import { toast } from "sonner";
 
 type Props = {
 	open: boolean;
@@ -16,7 +17,10 @@ export default function ContractSuccessModal({ open, onOpenChange, link, onSend 
 	};
 
 	const handleCopy = async () => {
-		if (navigator?.clipboard) await navigator.clipboard.writeText(link);
+		if (navigator?.clipboard) {
+			await navigator.clipboard.writeText(link);
+			toast.info("Link copied to clipboard!");
+		}
 	};
 
 	return (
@@ -35,10 +39,10 @@ export default function ContractSuccessModal({ open, onOpenChange, link, onSend 
 					</div>
 
 					<div className="flex gap-3 justify-center mt-4">
-						<ActionButton onClick={handleSend} className="px-6">
+						<ActionButton onClick={handleSend} className="px-6 w-max">
 							Send Via Email
 						</ActionButton>
-						<ActionButton variant="outline" onClick={handleCopy} className="px-6">
+						<ActionButton variant="outline" onClick={handleCopy} className="px-6 w-max">
 							Copy Link
 						</ActionButton>
 					</div>

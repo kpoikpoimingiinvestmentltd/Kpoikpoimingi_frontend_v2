@@ -7,12 +7,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { media } from "@/resources/images";
 import { modalContentStyle } from "../../components/common/commonStyles";
 
-export default function TabCustomerDetails() {
+export default function TabCustomerDetails({ data }: { data: any }) {
 	const customer = {
-		name: "Tom Doe James",
-		email: "dunny@gmail.com",
-		whatsapp: "+2348134567890",
-		dob: "8 June, 2000",
+		name: data?.fullName || "N/A",
+		email: data?.email || "N/A",
+		whatsapp: data?.phoneNumber || "N/A",
+		dob: data?.dateOfBirth || "N/A",
 		paymentMethod: "Hire Purchase",
 		driversLicense: media.images.demoId,
 		nin: media.images.demoId,

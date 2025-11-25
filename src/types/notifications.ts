@@ -1,7 +1,7 @@
 // Types for notifications
 export type NotificationItem = {
 	id: string;
-	title: string;
+	title?: string;
 	subtitle?: string;
 	time?: string;
 	read?: boolean;
@@ -17,5 +17,20 @@ export type NotificationsPagination = {
 
 export type NotificationsResponse = {
 	data: NotificationItem[];
+	pagination: NotificationsPagination;
+};
+
+// API response item shape (may differ from the store's NotificationItem)
+export type ApiNotification = {
+	id: string;
+	message: string;
+	createdAt: string;
+	isRead: boolean;
+	type?: { type?: string } | null;
+	[key: string]: any;
+};
+
+export type NotificationsApiResponse = {
+	data: ApiNotification[];
 	pagination: NotificationsPagination;
 };

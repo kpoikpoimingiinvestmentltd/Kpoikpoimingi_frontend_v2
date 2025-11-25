@@ -18,12 +18,11 @@ export async function getAllCustomers(page = 1, limit = 10, search?: string, sor
 }
 
 export function useGetAllCustomers(page = 1, limit = 10, search?: string, sortBy?: string, sortOrder?: string, enabled = true) {
-	return useQuery({
+	return useQuery<GetAllCustomersResponse>({
 		queryKey: ["customers", page, limit, search, sortBy, sortOrder],
 		queryFn: () => getAllCustomers(page, limit, search, sortBy, sortOrder),
 		enabled,
-		keepPreviousData: true,
-	} as any);
+	});
 }
 
 export async function getCustomerById(customerId: string) {
@@ -31,11 +30,11 @@ export async function getCustomerById(customerId: string) {
 }
 
 export function useGetCustomer(customerId?: string, enabled = true) {
-	return useQuery({
+	return useQuery<Customer>({
 		queryKey: ["customer", customerId],
 		queryFn: () => getCustomerById(customerId!),
 		enabled: !!customerId && enabled,
-	} as any);
+	});
 }
 
 export async function getCustomerApprovedRegistrations(customerId: string) {

@@ -1,15 +1,37 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import CompactPagination from "@/components/ui/compact-pagination";
 import { tableHeaderRowStyle } from "../../components/common/commonStyles";
+import type { PenaltyRecord, PaginationMeta } from "@/types/reports";
 
-interface InterestProps {
-	rows: Array<any>;
+interface InterestPenaltiesProps {
+	rows: PenaltyRecord[];
 	page: number;
 	pages: number;
 	onPageChange: (p: number) => void;
+	pagination?: PaginationMeta;
 }
 
-export default function InterestPenalties({ rows, page, pages, onPageChange }: InterestProps) {
+function formatCurrency(amount: number): string {
+	return new Intl.NumberFormat("en-NG", {
+		style: "currency",
+		currency: "NGN",
+	}).format(amount);
+}
+
+function formatDate(dateString: string): string {
+	try {
+		const date = new Date(dateString);
+		return date.toLocaleDateString("en-NG", {
+			year: "numeric",
+			month: "2-digit",
+			day: "2-digit",
+		});
+	} catch {
+		return dateString;
+	}
+}
+
+export default function InterestPenalties({ rows, page, pages, onPageChange, pagination }: InterestPenaltiesProps) {
 	return (
 		<div>
 			<div>
@@ -30,15 +52,15 @@ export default function InterestPenalties({ rows, page, pages, onPageChange }: I
 						</TableRow>
 					</TableHeader>
 					<TableBody>
-						{rows.map((row: any, idx: number) => (
+						{rows.map((row: PenaltyRecord, idx: number) => (
 							<TableRow key={idx} className="hover:bg-[#F6FBFF]">
 								<TableCell className="text-[#13121266] py-4">{row.contractCode}</TableCell>
 								<TableCell className="text-[#13121266] py-4">{row.propertyName}</TableCell>
 								<TableCell className="text-[#13121266] py-4">{row.customerName}</TableCell>
-								<TableCell className="text-[#13121266] py-4">{row.totalAmount}</TableCell>
-								<TableCell className="text-[#13121266] py-4">{row.lateFee}</TableCell>
+								<TableCell className="text-[#13121266] py-4">{formatCurrency(row.totalAmount)}</TableCell>
+								<TableCell className="text-[#13121266] py-4">{formatCurrency(row.lateFee)}</TableCell>
 								<TableCell className="text-[#13121266] py-4">{row.interestRate}</TableCell>
-								<TableCell className="text-[#13121266] py-4">{row.dueDate}</TableCell>
+								<TableCell className="text-[#13121266] py-4">{formatDate(row.dueDate)}</TableCell>
 							</TableRow>
 						))}
 					</TableBody>
@@ -46,7 +68,7 @@ export default function InterestPenalties({ rows, page, pages, onPageChange }: I
 			</div>
 
 			<div className="mt-4">
-				<CompactPagination page={page} pages={pages} onPageChange={onPageChange} showRange />
+				<CompactPagination page={page} pages={pages || pagination?.totalPages || pages} onPageChange={onPageChange} showRange />
 			</div>
 		</div>
 	);

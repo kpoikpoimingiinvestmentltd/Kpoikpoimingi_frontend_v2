@@ -5,8 +5,9 @@ import { usePresignUploadMutation } from "@/api/presign-upload.api";
 import { uploadFileToPresignedUrl } from "@/utils/media-upload";
 import { createInternalCustomerRegistration, useUpdateCustomerRegistration } from "@/api/customer-registration";
 import { useCreateInternalFullPaymentRegistration } from "@/api/contracts";
-import { formatPhoneNumber } from "@/lib/utils";
+import { formatPhoneNumber, extractErrorMessage } from "@/lib/utils";
 import { toast } from "sonner";
+
 import { useCustomerFormState } from "./hooks/useCustomerFormState";
 import OncePaymentForm from "./forms/OncePaymentForm";
 import InstallmentPaymentForm from "./forms/InstallmentPaymentForm";
@@ -22,7 +23,7 @@ import {
 } from "@/lib/referenceDataHelpers";
 
 type Props = {
-	onSubmit?: (data: any) => void;
+	onSubmit?: (data: unknown) => void;
 	initial?: any;
 	sectionTitle?: (additionalClasses?: string) => string;
 	centeredContainer?: (additionalClasses?: string) => string;
@@ -110,7 +111,7 @@ export default function CustomerForm({
 				relatedTable: "customer",
 			}).unwrap();
 
-			const uploadUrl = (presignResult as any)?.url;
+			const uploadUrl = presignResult.url ?? presignResult.uploadUrl;
 			if (!uploadUrl) {
 				throw new Error("Presign upload did not return an uploadUrl");
 			}
@@ -122,7 +123,16 @@ export default function CustomerForm({
 			}
 
 			// Step 3: Get the media key
-			const mediaKey = (presignResult as any)?.key ?? (presignResult as any)?.data?.key;
+			let mediaKey: string | undefined;
+			if (typeof presignResult.key === "string") mediaKey = presignResult.key;
+			else if (presignResult && typeof presignResult === "object") {
+				const pr = presignResult as Record<string, unknown>;
+				if (pr.data && typeof pr.data === "object") {
+					const dataObj = pr.data as Record<string, unknown>;
+					if (typeof dataObj.key === "string") mediaKey = dataObj.key;
+				}
+			}
+
 			if (mediaKey) {
 				// Track uploaded file
 				setUploadedFiles((prev) => ({
@@ -137,14 +147,9 @@ export default function CustomerForm({
 			}
 
 			return null;
-		} catch (err: any) {
+		} catch (err: unknown) {
 			console.error(`File upload failed for ${fieldKey}:`, err);
-			let message = "Unknown error";
-			if (err instanceof Error) message = err.message;
-			else if (typeof err === "string") message = err;
-			else if (err && typeof (err as any).message === "string") message = (err as any).message;
-			else message = String(err);
-			toast.error(`Upload failed: ${message}`);
+			toast.error(`Upload failed: ${extractErrorMessage(err, "Unknown error")}`);
 			return null;
 		}
 	}
@@ -173,9 +178,11 @@ export default function CustomerForm({
 
 				// Submit or update full payment registration
 				if (isEditMode) {
+					const initObj = initial && typeof initial === "object" ? (initial as Record<string, unknown>) : undefined;
+					const initId = initObj && typeof initObj.id === "string" ? initObj.id : "";
 					await updateMutation.mutateAsync({
-						id: initial.id,
-						payload: fullPaymentPayload as any,
+						id: initId,
+						payload: fullPaymentPayload as unknown as CustomerRegistrationPayload,
 					});
 				} else {
 					await fullPaymentMutation.mutateAsync(fullPaymentPayload);
@@ -244,13 +251,21 @@ export default function CustomerForm({
 					},
 					propertyInterestRequest: [
 						{
+							...(installmentForm.isCustomProperty
+								? {
+										customPropertyName: installmentForm.propertyName,
+										customPropertyPrice: Number(installmentForm.customPropertyPrice) || 0,
+										isCustomProperty: true,
+								  }
+								: {
+										propertyId: installmentForm.propertyId,
+										isCustomProperty: false,
+								  }),
 							paymentIntervalId: Number(installmentForm.paymentFrequency) || 0,
 							durationValue: Number(installmentForm.paymentDuration) || 0,
 							durationUnitId: Number(installmentForm.paymentDurationUnit) || 2,
 							downPayment: Number(installmentForm.downPayment) || 0,
 							quantity: 1,
-							customPropertyName: installmentForm.propertyName,
-							isCustomProperty: true,
 						},
 					],
 					mediaKeys: {
@@ -282,14 +297,9 @@ export default function CustomerForm({
 					onSubmit({ message: "Registration saved successfully" });
 				}
 			}
-		} catch (err: any) {
+		} catch (err: unknown) {
 			console.error("Submission failed", err);
-			let message = "Unknown error";
-			if (err instanceof Error) message = err.message;
-			else if (typeof err === "string") message = err;
-			else if (err && typeof (err as any).message === "string") message = (err as any).message;
-			else message = String(err);
-			toast.error(`Submission failed: ${message}`);
+			toast.error(`Submission failed: ${extractErrorMessage(err, "Unknown error")}`);
 		} finally {
 			setIsSubmitting(false);
 		}
