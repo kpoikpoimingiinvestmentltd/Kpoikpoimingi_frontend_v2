@@ -3,10 +3,12 @@ import SectionTitle from "@/components/common/SectionTitle";
 import Image from "@/components/base/Image";
 import { media } from "@/resources/images";
 import { Link } from "react-router";
+import { useGetSignedContract } from "@/api/contracts";
 
-export default function TabDocument({ contract }: { contract?: any }) {
-	console.log(contract);
-	const signedDocs = Array.from({ length: 1 }).map((_, i) => ({ id: `s${i + 1}`, label: "Contract for 25kg gas cylinder", url: "#" }));
+export default function TabDocument({ contract }: { contract?: { id?: string } }) {
+	const contractId = contract?.id;
+	const { data: signedData, isLoading: signedLoading, isError: signedError } = useGetSignedContract(contractId, !!contractId);
+	const signedDocs = signedData?.signedContract ?? [];
 	const customerDocs = [
 		{ id: "nin", title: "NIN", src: media.images.demoId },
 		{ id: "dl", title: "Drivers License", src: media.images.demoId },
@@ -22,11 +24,16 @@ export default function TabDocument({ contract }: { contract?: any }) {
 			<div className="mt-8 flex flex-col gap-y-6">
 				<h6 className="text-sm">Signed Contract</h6>
 				<div className="flex items-center gap-6 flex-wrap pb-3">
-					{signedDocs.map((d) => (
-						<div key={d.id} className="flex flex-col items-start gap-2.5 w-20">
-							<Link to={d.url} download={d.label} key={d.id} className="flex flex-col items-start gap-2.5">
+					{signedLoading && <div className="text-sm text-muted-foreground">Loading signed contract...</div>}
+					{signedError && <div className="text-sm text-destructive">Failed to load signed contract</div>}
+
+					{!signedLoading && signedDocs.length === 0 && <div className="text-sm text-muted-foreground">No signed contract uploaded.</div>}
+
+					{signedDocs.map((d, idx) => (
+						<div key={idx} className="flex flex-col items-start gap-2.5 w-20">
+							<Link to={d.fileUrl} target="_blank" rel="noopener noreferrer" className="flex flex-col items-start gap-2.5">
 								<Image src={media.images.pdfImage} className="w-14 rounded-md" />
-								<div className="text-xs text-muted-foreground text-start">{d.label}</div>
+								<div className="text-xs text-muted-foreground text-start">Signed contract</div>
 							</Link>
 						</div>
 					))}

@@ -72,11 +72,11 @@ export function useGetAllContractDebts(page = 1, limit = 10, search = "", sortBy
 }
 
 export async function getContractById(id: string) {
-	return apiGet(API_ROUTES.contracts.getContractHistory(id)) as Promise<Record<string, unknown>>;
+	return apiGet(API_ROUTES.contracts.getContractHistory(id)) as Promise<CustomerContract>;
 }
 
 export function useGetContractById(id: string, enabled = true) {
-	return useQuery<Record<string, unknown>, unknown>({
+	return useQuery<CustomerContract, unknown>({
 		queryKey: ["contract", id],
 		queryFn: () => getContractById(id),
 		enabled,
@@ -238,6 +238,61 @@ export type CustomerContract = {
 	};
 	paymentSchedules: unknown[];
 };
+
+export type ContractPaymentItem = {
+	id: string;
+	paymentDate: string;
+	paymentMethod: string;
+	amountPaid: number;
+	receiptNumber: string;
+	receiptId: string;
+	outstandingBalance: number;
+	status: string;
+	reference: string;
+	paymentNumber: number;
+};
+
+export type ContractPaymentsResponse = {
+	contractId: string;
+	contractCode: string;
+	totalPayments: number;
+	payments: ContractPaymentItem[];
+};
+
+export async function getContractPayments(contractId: string) {
+	return apiGet(API_ROUTES.contracts.getContractPayments(contractId)) as Promise<ContractPaymentsResponse>;
+}
+
+export function useGetContractPayments(contractId: string | undefined, enabled = true) {
+	return useQuery<ContractPaymentsResponse, unknown>({
+		queryKey: ["contract-payments", contractId],
+		queryFn: () => getContractPayments(contractId || ""),
+		enabled: !!contractId && enabled,
+	});
+}
+
+export type SignedContractItem = {
+	fileUrl: string;
+};
+
+export type SignedContractResponse = {
+	contractId: string;
+	contractCode: string;
+	registrationCode?: string;
+	signedContract: SignedContractItem[];
+};
+
+export async function getSignedContract(contractId: string) {
+	return apiGet(API_ROUTES.contracts.getSignedContract(contractId)) as Promise<SignedContractResponse>;
+}
+
+export function useGetSignedContract(contractId: string | undefined, enabled = true) {
+	return useQuery<SignedContractResponse, unknown>({
+		queryKey: ["contract-signed", contractId],
+		queryFn: () => getSignedContract(contractId || ""),
+		enabled: !!contractId && enabled,
+	});
+}
 
 export async function getCustomerContracts(customerId: string) {
 	return apiGet(API_ROUTES.customer.getCustomerContracts(customerId)) as Promise<ListResponse<CustomerContract>>;

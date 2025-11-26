@@ -37,7 +37,7 @@ export default function TabPaymentPlan({ contract }: { contract?: Contract }) {
 	const [generatedLink, setGeneratedLink] = useState<PaymentLinkResponse | null>(null);
 	const [loadingScheduleId, setLoadingScheduleId] = useState<string | null>(null);
 
-	const { data: schedules = [], isLoading } = useGetPaymentSchedules(contract?.id || "");
+	const { data: schedules = [], isLoading, isFetching } = useGetPaymentSchedules(contract?.id || "");
 
 	const generateLinkMutation = useGeneratePaymentLink(
 		(data) => {
@@ -89,7 +89,7 @@ export default function TabPaymentPlan({ contract }: { contract?: Contract }) {
 		<CustomCard className="mt-4 border-none p-0 bg-white">
 			<SectionTitle title="Payment Plan & Schedule" />
 			<CustomCard className="mt-8 p-0 border-0">
-				{isLoading ? (
+				{isLoading || isFetching ? (
 					<div className="space-y-4">
 						<div className="p-3 rounded-md bg-card">
 							<Skeleton className="h-4 w-40" />
@@ -186,14 +186,9 @@ export default function TabPaymentPlan({ contract }: { contract?: Contract }) {
 														<span className="text-red-500 font-medium">Defaulted</span>
 														{schedule.paymentLinkUrl ? (
 															<>
-																{/* <button
-																	onClick={() => openPaymentModal(schedule.paymentLinkUrl)}
-																	className="bg-primary text-white px-4 py-2 rounded-md text-sm">
-																	Pay
-																</button> */}
 																<button
 																	onClick={() => handleGenerateLink(schedule.id)}
-																	disabled={loadingScheduleId === schedule.id || !schedule.canGenerateLink}
+																	disabled={loadingScheduleId === schedule.id}
 																	className="active-scale bg-white text-transparent bg-clip-text bg-gradient-to-r from-[#03B4FA] to-[#026B94] px-6 py-2 rounded-l-none text-sm shadow-xl disabled:opacity-50">
 																	{loadingScheduleId === schedule.id ? "Generating..." : "Generate Link"}
 																</button>
@@ -213,17 +208,12 @@ export default function TabPaymentPlan({ contract }: { contract?: Contract }) {
 													<div>
 														{schedule.paymentLinkUrl ? (
 															<div className="flex justify-center items-center">
-																{/* <button
-																	onClick={() => openPaymentModal(schedule.paymentLinkUrl)}
-																	className="bg-primary text-white px-4 py-2 rounded-full rounded-r-none text-sm">
-																	Pay
-																</button> */}
 																<button
 																	onClick={() => handleGenerateLink(schedule.id)}
-																	disabled={!schedule.canGenerateLink || loadingScheduleId === schedule.id}
+																	disabled={loadingScheduleId === schedule.id}
 																	className={twMerge(
 																		"active-scale bg-white text-transparent bg-clip-text bg-gradient-to-r from-[#03B4FA] to-[#026B94] disabled:bg-white disabled:opacity-90 border border-stone-100 px-6 py-2 rounded-full rounded-l-none text-sm shadow-xl",
-																		(!schedule.canGenerateLink || loadingScheduleId === schedule.id) && "opacity-50 cursor-not-allowed"
+																		loadingScheduleId === schedule.id && "opacity-50 cursor-not-allowed"
 																	)}>
 																	{loadingScheduleId === schedule.id ? "Generating..." : "Generate Link"}
 																</button>
@@ -231,10 +221,10 @@ export default function TabPaymentPlan({ contract }: { contract?: Contract }) {
 														) : (
 															<button
 																onClick={() => handleGenerateLink(schedule.id)}
-																disabled={!schedule.canGenerateLink || loadingScheduleId === schedule.id}
+																disabled={loadingScheduleId === schedule.id}
 																className={twMerge(
 																	"active-scale bg-white text-transparent bg-clip-text bg-gradient-to-r from-[#03B4FA] to-[#026B94] px-6 py-2 rounded-full rounded-l-none text-sm shadow-xl",
-																	(!schedule.canGenerateLink || loadingScheduleId === schedule.id) && "opacity-50 cursor-not-allowed"
+																	loadingScheduleId === schedule.id && "opacity-50 cursor-not-allowed"
 																)}>
 																{loadingScheduleId === schedule.id ? "Generating..." : "Generate Link"}
 															</button>

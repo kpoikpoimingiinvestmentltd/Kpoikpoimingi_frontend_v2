@@ -64,6 +64,9 @@ export const API_ROUTES = {
 		updateCustomerRegistration: (id: string) => `/customer-registration/${id}`,
 		declineCustomerRegistration: (id: string) => `/customer-registration/${id}/decline`,
 	},
+	contractDocument: {
+		send: "/contract-document/send",
+	},
 	notifications: {
 		getNotifications: "/notifications",
 		getUnreadNotificationCount: "/notifications/unread-count",
@@ -71,6 +74,8 @@ export const API_ROUTES = {
 	},
 	contracts: {
 		createContract: "/contracts/create",
+		getContractPayments: (id: string) => `/contracts/${id}/payments`,
+		getSignedContract: (id: string) => `/contracts/${id}/signed-contract`,
 		getAllContracts: "/contracts",
 		getAllContractDebts: "/contracts/debts",
 		getContractHistory: (id: string) => `/contracts/${id}`,

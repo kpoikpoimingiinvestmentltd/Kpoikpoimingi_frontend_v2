@@ -35,3 +35,14 @@ export function extractErrorMessage(err: unknown, fallback = "An error occurred"
 	}
 	return fallback;
 }
+
+export function formatDate(dateInput?: string | Date | number | null, options?: Intl.DateTimeFormatOptions, locale = "en-NG") {
+	if (dateInput === undefined || dateInput === null || dateInput === "") return "-";
+	try {
+		const d = typeof dateInput === "string" || typeof dateInput === "number" ? new Date(dateInput) : dateInput;
+		if (!d || Number.isNaN((d as Date).getTime())) return String(dateInput);
+		return (d as Date).toLocaleDateString(locale, options ?? { year: "numeric", month: "short", day: "numeric" });
+	} catch {
+		return String(dateInput);
+	}
+}

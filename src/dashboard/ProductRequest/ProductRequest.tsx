@@ -11,6 +11,7 @@ import { Link } from "react-router";
 import { useGetProductRequests, /* useApproveRegistration, useDeclineRegistration, */ useDeleteRegistration } from "@/api/productRequest";
 import type { ProductRequestItem, ProductRequestResponse } from "@/types/productRequest";
 import ConfirmModal from "@/components/common/ConfirmModal";
+import { TableSkeleton } from "@/components/common/Skeleton";
 // import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import EmptyData from "@/components/common/EmptyData";
@@ -21,7 +22,7 @@ export default function ProductRequest() {
 	const [search, setSearch] = React.useState("");
 
 	const query = useGetProductRequests(page, limit, search);
-	const isLoading = query.isLoading;
+	const isLoading = query.isLoading || query.isFetching;
 
 	const items = ((query.data as ProductRequestResponse | undefined)?.data ?? []) as ProductRequestItem[];
 	const pagination = (query.data as ProductRequestResponse | undefined)?.pagination;
@@ -92,7 +93,9 @@ export default function ProductRequest() {
 
 				<div className="overflow-x-auto w-full mt-8">
 					{isLoading ? (
-						<div className="p-6 text-center">Loading...</div>
+						<div className="p-6">
+							<TableSkeleton rows={6} cols={7} />
+						</div>
 					) : items.length === 0 ? (
 						<EmptyData text="No product requests found." />
 					) : (
@@ -131,47 +134,6 @@ export default function ProductRequest() {
 														<EditIcon />
 													</IconWrapper>
 												</Link>
-
-												{/* <button
-													type="button"
-													title="Approve"
-													disabled={approveMutation.isPending || item.status === "approved"}
-													onClick={async () => {
-														try {
-															const res = await approveMutation.mutateAsync(item.id);
-															toast.success(res?.message ?? "Approved");
-															queryClient.invalidateQueries({ queryKey: ["product-requests"] });
-														} catch (e: unknown) {
-															const msg = (e as { message?: string })?.message ?? "Approve failed";
-															toast.error(msg);
-														}
-													}}
-													className={`p-2 ${item.status === "approved" ? "opacity-50 pointer-events-none" : "text-emerald-600"}`}>
-													<IconWrapper className="text-xl">
-														<CheckIcon />
-													</IconWrapper>
-												</button>
-
-												<button
-													type="button"
-													title="Decline"
-													disabled={declineMutation.isPending || item.status === "declined"}
-													onClick={async () => {
-														try {
-															const res = await declineMutation.mutateAsync(item.id);
-															toast.success(res?.message ?? "Declined");
-															queryClient.invalidateQueries({ queryKey: ["product-requests"] });
-														} catch (e: unknown) {
-															const msg = (e as { message?: string })?.message ?? "Decline failed";
-															toast.error(msg);
-														}
-													}}
-													className={`p-2 ${item.status === "declined" ? "opacity-50 pointer-events-none" : "text-yellow-600"}`}>
-													<IconWrapper className="text-xl">
-														<CloseIcon />
-													</IconWrapper>
-												</button> */}
-
 												<button
 													type="button"
 													title="Delete"

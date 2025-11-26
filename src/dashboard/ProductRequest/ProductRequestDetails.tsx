@@ -7,6 +7,7 @@ import ActionButton from "@/components/base/ActionButton";
 import { useState } from "react";
 import ConfirmModal from "@/components/common/ConfirmModal";
 import { useDeleteRegistration, useGetProductRequestById, useApproveRegistration } from "@/api/productRequest";
+import { useSendContractDocument } from "@/api/contractDocument";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useParams, useNavigate } from "react-router";
@@ -29,9 +30,13 @@ export default function ProductRequestDetails() {
 
 	const { data: registrationData } = useGetProductRequestById(id || "");
 
+	const showApprove = registrationData ? registrationData.isContractSent && !registrationData.approved : false;
+	const showSendContract = registrationData ? !registrationData.isContractSent && !registrationData.approved : false;
+
 	const queryClient = useQueryClient();
 	const deleteMutation = useDeleteRegistration();
 	const approveMutation = useApproveRegistration();
+	const sendMutation = useSendContractDocument();
 	const [confirmOpen, setConfirmOpen] = useState(false);
 	const [confirmAction, setConfirmAction] = useState<"delete" | "approve" | null>(null);
 
@@ -58,18 +63,37 @@ export default function ProductRequestDetails() {
 						onClick={() => setEditOpen(true)}>
 						Edit
 					</ActionButton>
-					<ActionButton
-						className="px-6 font-normal rounded-sm"
-						variant="success"
-						onClick={() => {
-							setConfirmAction("approve");
-							setConfirmOpen(true);
-						}}>
-						Approve
-					</ActionButton>
-					<ActionButton className="px-6 font-normal rounded-sm" variant="primary">
-						Send Contract
-					</ActionButton>
+					{showApprove && (
+						<ActionButton
+							className="px-6 font-normal rounded-sm"
+							variant="success"
+							onClick={() => {
+								setConfirmAction("approve");
+								setConfirmOpen(true);
+							}}>
+							Approve
+						</ActionButton>
+					)}
+					{showSendContract && (
+						<ActionButton
+							className="px-6 font-normal rounded-sm"
+							variant="primary"
+							onClick={async () => {
+								if (!id) return;
+								try {
+									const res = await sendMutation.mutateAsync(id);
+									toast.success((res as any)?.message ?? "Contract sent successfully");
+									queryClient.invalidateQueries({ queryKey: ["product-requests"] });
+									queryClient.invalidateQueries({ queryKey: ["product-request", id] });
+								} catch (e: unknown) {
+									const msg = (e as { message?: string })?.message ?? "Failed to send contract";
+									toast.error(msg);
+								}
+							}}
+							disabled={sendMutation.isPending}>
+							{sendMutation.isPending ? "Sending..." : "Send Contract"}
+						</ActionButton>
+					)}
 					<ActionButton className="px-6 font-normal rounded-sm" variant="danger" onClick={() => setConfirmOpen(true)}>
 						Decline
 					</ActionButton>
@@ -155,6 +179,11 @@ export default function ProductRequestDetails() {
 									toast.success(result.message || "Registration approved successfully");
 									queryClient.invalidateQueries({ queryKey: ["product-requests"] });
 									queryClient.invalidateQueries({ queryKey: ["product-request", id] });
+									if ((result as any)?.customerId) {
+										const cid = (result as any).customerId as string;
+										const path = _router.dashboard.customerDetails.replace(":id", cid);
+										navigate(path);
+									}
 								} else {
 									await deleteMutation.mutateAsync(id);
 									toast.success("Registration deleted");
@@ -174,7 +203,7 @@ export default function ProductRequestDetails() {
 					},
 				]}
 			/>{" "}
-			<EditProductRequest open={editOpen} onOpenChange={setEditOpen} onSave={handleSave} />
+			<EditProductRequest open={editOpen} onOpenChange={setEditOpen} onSave={handleSave} initial={registrationData} />
 		</PageWrapper>
 	);
 }
