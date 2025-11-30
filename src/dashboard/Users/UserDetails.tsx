@@ -59,13 +59,6 @@ export default function UserDetails() {
 				setGeneratedPassword(res?.newPassword ?? null);
 				setResetOpen(true);
 			},
-			onError: (err) => {
-				console.error("Reset password failed:", err);
-				// Fallback behavior: show a locally generated password so the admin can continue
-				const pwd = `@Root${Math.floor(Math.random() * 900) + 100}`;
-				setGeneratedPassword(pwd);
-				setResetOpen(true);
-			},
 		});
 	}
 	const queryClient = useQueryClient();
