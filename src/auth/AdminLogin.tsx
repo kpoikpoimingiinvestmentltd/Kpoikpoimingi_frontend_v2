@@ -101,8 +101,8 @@ export default function AdminLogin() {
 					<Button
 						className="bg-primary rounded-sm active-scale hover:bg-primary/90 text-white h-12 w-full"
 						type="submit"
-						disabled={(mutation as any).isPending}>
-						{(mutation as any).isPending ? "Logging in..." : "Log in"}
+						disabled={mutation.isPending}>
+						{mutation.isPending ? "Logging in..." : "Log in"}
 					</Button>
 				</div>
 			</form>

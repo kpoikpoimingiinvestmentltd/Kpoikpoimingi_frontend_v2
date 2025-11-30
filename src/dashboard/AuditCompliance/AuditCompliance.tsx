@@ -14,8 +14,10 @@ export default function AuditCompliance() {
 	// Fetch grouped audit logs
 	const { data: auditData, isLoading } = useGetAuditLogsGrouped(page, pageSize);
 
-	const groups = (auditData as any)?.data || [];
-	const pagination = (auditData as any)?.pagination || { total: 0, totalPages: 1 };
+	const auditDataTyped = auditData as Record<string, unknown> | undefined;
+	const groups = Array.isArray(auditDataTyped?.data) ? (auditDataTyped?.data as unknown[]) : [];
+	const paginationData = auditDataTyped?.pagination as Record<string, unknown> | undefined;
+	const pagination = { total: (paginationData?.total as number) ?? 0, totalPages: (paginationData?.totalPages as number) ?? 1 };
 	const isEmpty = !isLoading && groups.length === 0;
 
 	return (
@@ -40,16 +42,29 @@ export default function AuditCompliance() {
 				) : (
 					<CustomCard className="bg-transparent p-0 border-0 w-full">
 						<div className="flex flex-col gap-y-6">
-							{groups.map((group: any) => (
-								<section key={group.title}>
-									<h3 className="text-sm font-medium mb-2 text-[#111827]">{group.title}</h3>
-									<div className="flex flex-col gap-y-4">
-										{group.logs?.map((log: any) => (
-											<RowItem key={log.id} action={log.action} staffName={log.staffName} date={log.date} time={log.time} />
-										))}
-									</div>
-								</section>
-							))}
+							{groups.map((group: unknown) => {
+								const g = group as Record<string, unknown>;
+								return (
+									<section key={g.title as string}>
+										<h3 className="text-sm font-medium mb-2 text-[#111827]">{g.title as string}</h3>
+										<div className="flex flex-col gap-y-4">
+											{Array.isArray(g.logs) &&
+												g.logs.map((log: unknown) => {
+													const l = log as Record<string, unknown>;
+													return (
+														<RowItem
+															key={l.id as string}
+															action={l.action as string}
+															staffName={l.staffName as string}
+															date={l.date as string}
+															time={l.time as string}
+														/>
+													);
+												})}
+										</div>
+									</section>
+								);
+							})}
 						</div>
 						<div className="mt-10">
 							<div className="ml-auto">

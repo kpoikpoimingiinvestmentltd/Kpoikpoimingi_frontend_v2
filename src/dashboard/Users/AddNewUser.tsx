@@ -76,7 +76,8 @@ export default function AddNewUser() {
 
 			const res = await createUser.mutateAsync(payload);
 
-			const password = (res as any)?.generatedPassword ?? (res as any)?.password ?? (res as any)?.data?.password;
+			const resData = res as Record<string, unknown>;
+			const password = resData?.generatedPassword ?? resData?.password ?? (resData?.data as Record<string, unknown>)?.password;
 			if (password) setGeneratedPassword(String(password));
 
 			setUserAddedOpen(true);
@@ -97,12 +98,12 @@ export default function AddNewUser() {
 			});
 			setMediaKey(undefined);
 			toast.success("User Added");
-		} catch (err: any) {
+		} catch (err: unknown) {
 			console.error(err);
 			let message = "Unknown error";
 			if (err instanceof Error) message = err.message;
 			else if (typeof err === "string") message = err;
-			else if (err && typeof (err as any).message === "string") message = (err as any).message;
+			else if (err && typeof (err as Record<string, unknown>).message === "string") message = (err as Record<string, unknown>).message as string;
 			else message = String(err);
 			toast.error(`${message || "Unknown error"}`);
 		}
@@ -118,7 +119,7 @@ export default function AddNewUser() {
 				<div className="max-w-4xl mx-auto">
 					<UserForm
 						values={form}
-						onChange={(k, v) => update(k as any, v)}
+						onChange={(k, v) => update(k as keyof typeof form, v)}
 						onSubmit={handleSubmit}
 						submitLabel="Add User"
 						onAvatarUploaded={(key) => setMediaKey(key)}

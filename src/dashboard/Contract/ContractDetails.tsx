@@ -218,7 +218,7 @@ export default function ContractDetails() {
 						</TabsContent>
 
 						<TabsContent value="plan">
-							<TabPaymentPlan contract={contract as any} />
+							<TabPaymentPlan contract={contract} />
 						</TabsContent>
 
 						<TabsContent value="receipt">

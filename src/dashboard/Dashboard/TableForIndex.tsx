@@ -40,29 +40,32 @@ export default function TableForIndex() {
 									</div>
 								</TableCell>
 							</TableRow>
-						) : (customersResponse as any)?.data && (customersResponse as any).data.length > 0 ? (
-							(customersResponse as any).data.map((customer: any, idx: number) => (
-								<TableRow key={idx} className="hover:bg-[#F6FBFF]">
-									<TableCell>{customer.id}</TableCell>
-									<TableCell>{customer.fullName}</TableCell>
-									<TableCell>{customer.email || "-"}</TableCell>
-									<TableCell>{customer.phoneNumber || "-"}</TableCell>
-									<TableCell>
-										<Badge value={customer.status || "Active"} size="sm" />
-									</TableCell>
-									<TableCell>{customer.createdAt ? new Date(customer.createdAt).toLocaleDateString() : "-"}</TableCell>
-									<TableCell>
-										<Link
-											preventScrollReset={false}
-											to={_router.dashboard.customerDetails.replace(":id", customer.id)}
-											className="text-primary hover:bg-primary/10 p-2 rounded-full inline-block">
-											<IconWrapper>
-												<EyeIcon />
-											</IconWrapper>
-										</Link>
-									</TableCell>
-								</TableRow>
-							))
+						) : Array.isArray((customersResponse as Record<string, unknown>)?.data) ? (
+							((customersResponse as Record<string, unknown>).data as unknown[]).map((customer: unknown, idx: number) => {
+								const cust = customer as Record<string, unknown>;
+								return (
+									<TableRow key={idx} className="hover:bg-[#F6FBFF]">
+										<TableCell>{String(cust.id)}</TableCell>
+										<TableCell>{String(cust.fullName)}</TableCell>
+										<TableCell>{String(cust.email || "-")}</TableCell>
+										<TableCell>{String(cust.phoneNumber || "-")}</TableCell>
+										<TableCell>
+											<Badge value={(cust.status as string) || "Active"} size="sm" />
+										</TableCell>
+										<TableCell>{cust.createdAt ? new Date(cust.createdAt as string).toLocaleDateString() : "-"}</TableCell>
+										<TableCell>
+											<Link
+												preventScrollReset={false}
+												to={_router.dashboard.customerDetails.replace(":id", String(cust.id))}
+												className="text-primary hover:bg-primary/10 p-2 rounded-full inline-block">
+												<IconWrapper>
+													<EyeIcon />
+												</IconWrapper>
+											</Link>
+										</TableCell>
+									</TableRow>
+								);
+							})
 						) : (
 							<TableRow>
 								<TableCell colSpan={7} className="text-center py-8 text-gray-400">

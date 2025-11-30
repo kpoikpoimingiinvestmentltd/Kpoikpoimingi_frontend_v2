@@ -36,33 +36,36 @@ export default function VatInterest() {
 	const saveVat = async () => {
 		try {
 			const val = parseFloat(vatValue || "0");
-			await (updateVat as any).mutateAsync({ vat: val / 100 });
+			await updateVat.mutateAsync({ vat: val / 100 });
 			toast.success("VAT updated");
 			setEditVatOpen(false);
-		} catch (e: any) {
-			toast.error(e?.message || "Failed to update VAT");
+		} catch (e: unknown) {
+			const errMsg = (e as Record<string, unknown>)?.message ?? "Failed to update VAT";
+			toast.error(errMsg as string);
 		}
 	};
 
 	const saveInterest = async () => {
 		try {
 			const val = parseFloat(interestValue || "0");
-			await (updateInterest as any).mutateAsync({ interest: val / 100 });
+			await updateInterest.mutateAsync({ interest: val / 100 });
 			toast.success("Interest updated");
 			setEditInterestOpen(false);
-		} catch (e: any) {
-			toast.error(e?.message || "Failed to update interest");
+		} catch (e: unknown) {
+			const errMsg = (e as Record<string, unknown>)?.message ?? "Failed to update interest";
+			toast.error(errMsg as string);
 		}
 	};
 
 	const savePenalty = async () => {
 		try {
 			const val = parseFloat(penaltyValue || "0");
-			await (updatePenalty as any).mutateAsync({ interest: val / 100 });
+			await updatePenalty.mutateAsync({ interest: val / 100 });
 			toast.success("Penalty interest updated");
 			setEditPenaltyOpen(false);
-		} catch (e: any) {
-			toast.error(e?.message || "Failed to update penalty interest");
+		} catch (e: unknown) {
+			const errMsg = (e as Record<string, unknown>)?.message ?? "Failed to update penalty interest";
+			toast.error(errMsg as string);
 		}
 	};
 

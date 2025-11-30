@@ -140,12 +140,20 @@ export default function TabContractInfo({ contracts, isLoading = false }: TabCon
 											<KeyValueRow label="Payment Type" value={firstActive.paymentType?.type ?? "-"} />
 											<KeyValueRow
 												label="Interval"
-												value={(firstActive as any)?.interval?.intervals ?? (firstActive as any)?.durationUnit?.duration ?? "-"}
+												value={String(
+													(firstActive.interval as Record<string, unknown> | null)?.intervals ??
+														(firstActive.durationUnit as Record<string, unknown> | null)?.duration ??
+														"-"
+												)}
 											/>
 
 											<KeyValueRow
 												label="Duration"
-												value={firstActive.durationValue ? `${firstActive.durationValue} ${(firstActive as any)?.durationUnit?.duration ?? ""}` : "-"}
+												value={
+													firstActive.durationValue
+														? `${firstActive.durationValue} ${String((firstActive.durationUnit as Record<string, unknown> | null)?.duration ?? "")}`
+														: "-"
+												}
 											/>
 											<KeyValueRow label="Interest Rate" value={firstActive.interestRate ? `${firstActive.interestRate}%` : "-"} />
 

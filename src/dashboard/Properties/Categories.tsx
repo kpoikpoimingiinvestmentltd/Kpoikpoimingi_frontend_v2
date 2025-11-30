@@ -32,7 +32,7 @@ export default function Categories() {
 	const queryClient = useQueryClient();
 	const isEmpty = categories.length === 0 && !isLoading;
 
-	const createMutation = useMutation<any, unknown, { category?: string; subCategories?: string[] }>({
+	const createMutation = useMutation<unknown, unknown, { category?: string; subCategories?: string[] }>({
 		mutationFn: (vars: { category?: string; subCategories?: string[] }) =>
 			createCategory({ category: vars.category, description: "", subcategories: vars.subCategories }),
 		onMutate: async (newCat: { category?: string; subCategories?: string[] }) => {
@@ -59,10 +59,10 @@ export default function Categories() {
 		},
 	});
 
-	const updateMutation = useMutation<any, unknown, { id: string; category?: string; subCategories?: string[] }>({
+	const updateMutation = useMutation<unknown, unknown, { id: string; category?: string; subCategories?: string[] }>({
 		mutationFn: (vars: { id: string; category?: string; subCategories?: string[] }) => {
 			console.log("Updating category with vars:", vars);
-			return updateCategory(vars.id, { category: vars.category, description: "", subcategories: vars.subCategories as any });
+			return updateCategory(vars.id, { category: vars.category, description: "", subcategories: vars.subCategories });
 		},
 		onMutate: async ({ id, category, subCategories }: { id: string; category?: string; subCategories?: string[] }) => {
 			await queryClient.cancelQueries({ queryKey: ["categories"] });
@@ -76,7 +76,7 @@ export default function Categories() {
 			});
 			return { prev };
 		},
-		onError: (err: any, _vars: any, context: any) => {
+		onError: (err: unknown, _vars: any, context: any) => {
 			console.error("Update error:", err);
 			if (context?.prev) {
 				setCategories(context.prev);
@@ -91,10 +91,21 @@ export default function Categories() {
 	React.useEffect(() => {
 		if (!fetchedCategories) return;
 		console.log("fetched categories:", fetchedCategories);
-		const mapped = ((fetchedCategories as any).data as any[]).map((c) => ({
+		const fetchedData = fetchedCategories as { data?: unknown[] };
+		const dataArray = fetchedData?.data || [];
+		const mapped = (
+			dataArray as Array<{
+				id: string;
+				category?: string;
+				title?: string;
+				children?: Array<{ category?: string; title?: string }>;
+				_count?: { properties?: number };
+				count?: number;
+			}>
+		).map((c) => ({
 			id: c.id,
 			title: c.category || c.title || "",
-			subs: Array.isArray(c.children) ? c.children.map((ch: any) => ch.category || ch.title) : [],
+			subs: Array.isArray(c.children) ? c.children.map((ch) => ch.category || ch.title || "").filter((s) => s) : [],
 			count: c._count?.properties ?? c.count ?? 0,
 		}));
 		setCategories(mapped);
@@ -309,9 +320,9 @@ export default function Categories() {
 						<div className="mt-8">
 							<CompactPagination
 								page={page}
-								pages={(fetchedCategories as any)?.pagination?.totalPages ?? 1}
+								pages={(fetchedCategories as { pagination?: { totalPages?: number } })?.pagination?.totalPages ?? 1}
 								onPageChange={(p) => setPage(p)}
-								total={(fetchedCategories as any)?.pagination?.total}
+								total={(fetchedCategories as { pagination?: { total?: number } })?.pagination?.total}
 								perPage={limit}
 							/>
 						</div>

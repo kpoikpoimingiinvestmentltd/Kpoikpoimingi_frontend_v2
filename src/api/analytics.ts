@@ -55,8 +55,8 @@ export function useGetRevenueAnalytics(enabled = true) {
 		queryKey: ["revenueAnalytics"],
 		queryFn: async () => getRevenueAnalytics(),
 		enabled,
-		keepPreviousData: true,
-	} as any);
+		staleTime: 5 * 60 * 1000,
+	});
 }
 
 export async function getAuditLogsGrouped(page = 1, limit = 10, search?: string, sortBy = "createdAt", sortOrder = "desc") {
@@ -77,8 +77,8 @@ export function useGetAuditLogsGrouped(page = 1, limit = 10, search?: string, so
 		queryKey: ["auditLogsGrouped", page, limit, search, sortBy, sortOrder],
 		queryFn: async () => getAuditLogsGrouped(page, limit, search, sortBy, sortOrder),
 		enabled,
-		keepPreviousData: true,
-	} as any);
+		staleTime: 5 * 60 * 1000,
+	});
 }
 
 export async function getPenalties(page = 1, limit = 10, search?: string, sortBy = "createdAt", sortOrder = "desc"): Promise<PenaltiesResponse> {

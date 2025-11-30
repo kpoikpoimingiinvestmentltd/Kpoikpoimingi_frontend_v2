@@ -17,9 +17,9 @@ export function IndexPieChart() {
 	}
 
 	const pieData: Item[] = [
-		{ name: "Full Payment", value: (incomeData as any)?.fullPayment ?? 0 },
-		{ name: "Hire Purchase", value: (incomeData as any)?.hirePurchase ?? 0 },
-		{ name: "Unpaid Debt", value: (incomeData as any)?.unpaidDebt ?? 0 },
+		{ name: "Full Payment", value: incomeData?.fullPayment ?? 0 },
+		{ name: "Hire Purchase", value: incomeData?.hirePurchase ?? 0 },
+		{ name: "Unpaid Debt", value: incomeData?.unpaidDebt ?? 0 },
 	];
 
 	// Check if all values are zero
@@ -110,8 +110,8 @@ export const IndexAreaChart = () => {
 	}
 
 	// Convert monthly data to chart format
-	const monthlyData = (incomeData as any)?.monthlyIncomeData || [];
-	const chartData = monthlyData.map((d: any) => ({
+	const monthlyData = incomeData?.monthlyIncomeData || [];
+	const chartData = monthlyData.map((d) => ({
 		date: new Date(2024, d.month - 1, 1), // Use current year
 		value: d.income,
 	}));

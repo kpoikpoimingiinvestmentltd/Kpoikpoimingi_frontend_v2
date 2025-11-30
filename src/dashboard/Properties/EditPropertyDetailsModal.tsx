@@ -13,6 +13,7 @@ import { uploadFileToPresignedUrl } from "@/utils/media-upload";
 import { toast } from "sonner";
 import { twMerge } from "tailwind-merge";
 import type { EditPropertyDetailsModalProps } from "@/types/property";
+import type { PresignUploadResponse } from "@/types/media";
 
 export default function EditPropertyDetailsModal({ open, onOpenChange, initial, onSave, isLoading }: EditPropertyDetailsModalProps) {
 	const initialImgs = initial?.media ?? initial?.images ?? [media.images._product1, media.images._product2];
@@ -27,7 +28,12 @@ export default function EditPropertyDetailsModal({ open, onOpenChange, initial, 
 
 	// Fetch categories
 	const { data: categoriesData } = useGetAllCategories(1, 100, true);
-	const allCategories = (categoriesData as any)?.data || [];
+	const allCategories = ((categoriesData as { data?: unknown[] })?.data || []) as Array<{
+		id?: string;
+		category?: string;
+		title?: string;
+		children?: Array<{ id?: string; category?: string; title?: string }>;
+	}>;
 
 	// Image upload mutation
 	const [presignUpload] = usePresignUploadMutation();
@@ -43,7 +49,7 @@ export default function EditPropertyDetailsModal({ open, onOpenChange, initial, 
 				relatedTable: "media",
 			}).unwrap();
 
-			const uploadUrl = (presignResult as any)?.url;
+			const uploadUrl = (presignResult as PresignUploadResponse).uploadUrl ?? (presignResult as PresignUploadResponse).url;
 			if (!uploadUrl) {
 				throw new Error("Presign upload did not return an uploadUrl");
 			}
@@ -53,12 +59,10 @@ export default function EditPropertyDetailsModal({ open, onOpenChange, initial, 
 				throw new Error(uploadResult.error ?? "Upload failed");
 			}
 
-			const mediaKey = (presignResult as any)?.key ?? (presignResult as any)?.data?.key;
+			const mediaKey = (presignResult as PresignUploadResponse).key;
 			if (mediaKey) {
 				// Create object URL for preview
-				const previewUrl = URL.createObjectURL(file);
-
-				// Track uploaded media
+				const previewUrl = URL.createObjectURL(file); // Track uploaded media
 				setCurrentImages((prev) => [...prev, previewUrl]);
 				setUploadedMediaKeys((prev) => [...prev, mediaKey]);
 
@@ -66,12 +70,12 @@ export default function EditPropertyDetailsModal({ open, onOpenChange, initial, 
 			}
 
 			return null;
-		} catch (err: any) {
+		} catch (err: unknown) {
 			console.error("Image upload error:", err);
 			let message = "Unknown error";
 			if (err instanceof Error) message = err.message;
 			else if (typeof err === "string") message = err;
-			else if (err && typeof (err as any).message === "string") message = (err as any).message;
+			else if (err && typeof (err as Record<string, unknown>).message === "string") message = (err as Record<string, unknown>).message as string;
 			else message = String(err);
 			toast.error(`Upload failed: ${message}`);
 			return null;

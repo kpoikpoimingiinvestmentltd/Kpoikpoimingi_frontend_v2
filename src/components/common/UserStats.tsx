@@ -19,10 +19,11 @@ export const UserStats = () => {
 		);
 	}
 
-	const totalPropertyRequests = (analyticsData as any)?.totalPropertyRequests ?? 0;
-	const unapprovedRequests = (analyticsData as any)?.unapprovedRequests ?? 0;
-	const totalPropertiesSold = (analyticsData as any)?.totalPropertiesSold ?? 0;
-	const totalCustomers = (analyticsData as any)?.totalCustomers ?? 0;
+	const analyticsTyped = analyticsData as Record<string, unknown> | undefined;
+	const totalPropertyRequests = (analyticsTyped?.totalPropertyRequests as number) ?? 0;
+	const unapprovedRequests = (analyticsTyped?.unapprovedRequests as number) ?? 0;
+	const totalPropertiesSold = (analyticsTyped?.totalPropertiesSold as number) ?? 0;
+	const totalCustomers = (analyticsTyped?.totalCustomers as number) ?? 0;
 
 	return (
 		<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">

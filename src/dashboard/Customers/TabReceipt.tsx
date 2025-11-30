@@ -55,8 +55,9 @@ export default function TabReceipt({ receipts }: { receipts?: ReceiptDto[] | und
 				<SectionTitle title="Receipt" />
 
 				<div className="space-y-8 mt-4">
-					{Array.isArray((receipts as any)?.receipts) && (receipts as any).receipts.length > 0 ? (
-						(receipts as any).receipts.map((grp: ApiContractReceipts) => {
+					{Array.isArray((receipts as unknown as Record<string, unknown>)?.receipts) &&
+					((receipts as unknown as Record<string, unknown>).receipts as unknown[]).length > 0 ? (
+						((receipts as unknown as Record<string, unknown>).receipts as ApiContractReceipts[]).map((grp: ApiContractReceipts) => {
 							const title = `${grp.contractCode ?? grp.contractId ?? "Contract"} — ${grp.propertyName ?? ""}`;
 							const total = grp.propertyPrice ? Number(grp.propertyPrice).toLocaleString() : "-";
 							return (

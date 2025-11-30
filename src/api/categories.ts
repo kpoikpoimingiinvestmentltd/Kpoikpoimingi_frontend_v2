@@ -44,7 +44,7 @@ export async function updateCategory(id: string, payload: { category?: string; d
 }
 
 export function useGetAllCategories(page = 1, limit = 10, enabled = true) {
-	return useQuery({ queryKey: ["categories", page, limit], queryFn: () => getAllCategories(page, limit), enabled } as any);
+	return useQuery({ queryKey: ["categories", page, limit], queryFn: () => getAllCategories(page, limit), enabled });
 }
 
 export default { getAllCategories, createCategory, updateCategory };

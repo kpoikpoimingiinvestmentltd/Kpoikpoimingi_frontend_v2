@@ -107,7 +107,7 @@ export async function apiRequest<T = any>(url: string, opts: ApiRequestOptions =
 			return parsed as T;
 		} catch (e) {
 			// If any error occurred during refresh process, check if we should redirect
-			if ((e as any)?.status === 401) {
+			if ((e as Record<string, unknown>)?.status === 401) {
 				handleSessionExpired();
 			}
 			throw e;

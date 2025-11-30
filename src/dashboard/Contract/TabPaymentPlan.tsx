@@ -11,19 +11,6 @@ import { useGetPaymentSchedules, useGeneratePaymentLink, type PaymentLinkRespons
 import { Skeleton } from "@/components/common/Skeleton";
 import { twMerge } from "tailwind-merge";
 
-interface PaymentSchedule {
-	id: string;
-	dueDate: string;
-	amount: number;
-	lateFees: number;
-	totalDue: number;
-	isPaid: boolean;
-	isDefaulted: boolean;
-	displayStatus: string;
-	canGenerateLink: boolean;
-	paymentLink?: string;
-}
-
 interface Contract {
 	id: string;
 	property?: {
@@ -59,21 +46,24 @@ export default function TabPaymentPlan({ contract }: { contract?: Contract }) {
 	};
 
 	// Format schedule data for display
-	const displaySchedules = (schedules as unknown as PaymentSchedule[]).map((schedule) => ({
-		id: schedule.id,
-		date: new Date(schedule.dueDate).toLocaleDateString(),
-		amount: Number(schedule.amount).toLocaleString(),
-		lateFees: Number(schedule.lateFees || 0).toLocaleString(),
-		totalDue: Number(schedule.totalDue || 0).toLocaleString(),
-		isPaid: schedule.isPaid,
-		isDefaulted: schedule.isDefaulted,
-		displayStatus: schedule.displayStatus,
-		canGenerateLink: schedule.canGenerateLink,
-		paymentLink: schedule.paymentLink,
-		// paymentLinkUrl: (schedule as any)?.paymentLink?.paymentLink ?? null,
-	}));
+	const displaySchedules = Array.isArray(schedules)
+		? schedules.map((schedule: Record<string, unknown>) => ({
+				id: schedule.id,
+				date: new Date(schedule.dueDate as string).toLocaleDateString(),
+				amount: Number(schedule.amount as number).toLocaleString(),
+				lateFees: Number((schedule.lateFees as number) || 0).toLocaleString(),
+				totalDue: Number((schedule.totalDue as number) || 0).toLocaleString(),
+				isPaid: schedule.isPaid,
+				isDefaulted: schedule.isDefaulted,
+				displayStatus: schedule.displayStatus,
+				canGenerateLink: schedule.canGenerateLink,
+				paymentLink: schedule.paymentLink,
+		  }))
+		: [];
 
-	const totalAmount = (schedules as any[]).reduce((sum: number, s: any) => sum + Number(s.amount), 0).toLocaleString();
+	const totalAmount = (Array.isArray(schedules) ? schedules : [])
+		.reduce((sum: number, s: Record<string, unknown>) => sum + Number(s.amount as number), 0)
+		.toLocaleString();
 
 	// Payment modal state for opening existing payment links
 	// const [paymentModalOpen, setPaymentModalOpen] = useState(false);
@@ -145,7 +135,7 @@ export default function TabPaymentPlan({ contract }: { contract?: Contract }) {
 							</Table>
 						</div>
 					</div>
-				) : (schedules as any[]).length === 0 ? (
+				) : Array.isArray(schedules) && schedules.length === 0 ? (
 					<div className="text-center py-12 text-gray-500">No payment schedules available</div>
 				) : (
 					<>

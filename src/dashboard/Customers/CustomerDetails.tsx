@@ -33,18 +33,12 @@ export default function CustomerDetails() {
 	// Use the first approved registration if available, otherwise use customer data
 	const registrationForEdit = Array.isArray(approvedRegistrations) ? approvedRegistrations[0] : approvedRegistrations || customer;
 
-	const customerAny = customer as any;
-	const paymentsAny = payments as any;
-	const receiptsAny = receipts as any;
-	const documentsAny = documents as any;
-	const contractsAny = contracts as any;
-
 	return (
 		<PageWrapper className="flex flex-col gap-6">
 			<div className="flex items-center justify-between flex-wrap gap-4">
 				<div>
 					<h1 className="text-xl font-medium">Customers Details</h1>
-					<p className="text-sm text-muted-foreground mt-1">{(customer as any)?.fullName ?? (customer as any)?.name}</p>
+					<p className="text-sm text-muted-foreground mt-1">{customer ? String(customer.name ?? "") : ""}</p>
 				</div>
 				<div className="flex items-center gap-3">
 					<button
@@ -80,19 +74,32 @@ export default function CustomerDetails() {
 
 					<div className="mt-6">
 						<TabsContent value="details">
-							<TabCustomerDetails customer={customerAny} />
+							<TabCustomerDetails
+								customer={
+									customer
+										? {
+												fullName: customer.name,
+												email: customer.email,
+												phoneNumber: customer.phone,
+												customerCode: customer.id,
+												createdAt: customer.createdAt,
+												registrations: undefined,
+										  }
+										: null
+								}
+							/>
 						</TabsContent>
 						<TabsContent value="payments">
-							<TabPaymentHistory payments={paymentsAny} />
+							<TabPaymentHistory payments={payments} />
 						</TabsContent>
 						<TabsContent value="receipt">
-							<TabReceipt receipts={receiptsAny} />
+							<TabReceipt receipts={receipts} />
 						</TabsContent>
 						<TabsContent value="document">
-							<TabDocument documents={documentsAny} />
+							<TabDocument documents={documents} />
 						</TabsContent>
 						<TabsContent value="contract">
-							<TabContractInfo contracts={contractsAny} isLoading={isLoadingContracts} />
+							<TabContractInfo contracts={contracts} isLoading={isLoadingContracts} />
 						</TabsContent>
 					</div>
 				</Tabs>

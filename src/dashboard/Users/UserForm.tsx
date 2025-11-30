@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { CalendarIcon, EmailIcon, PhoneIcon } from "../../assets/icons";
 import { Spinner } from "@/components/ui/spinner";
 import { extractRoleOptions, extractBankOptions, extractAccountTypeOptions, extractStateOptions } from "@/lib/referenceDataHelpers";
+import type { PresignUploadResponse } from "@/types/media";
 
 type FormShape = {
 	fullName?: string;
@@ -53,7 +54,7 @@ export default function UserForm({
 	const stateCandidates = React.useMemo(() => extractStateOptions(refData), [refData]);
 
 	async function handleAvatarFile(file: File | null, preview?: string) {
-		onChange("avatar" as any, preview ?? null);
+		onChange("avatar", preview ?? null);
 		if (!file) return;
 
 		try {
@@ -64,7 +65,7 @@ export default function UserForm({
 				relatedTable: "user",
 			}).unwrap();
 
-			const uploadUrl = (presignResult as any)?.url;
+			const uploadUrl = (presignResult as PresignUploadResponse).uploadUrl ?? (presignResult as PresignUploadResponse).url;
 			if (!uploadUrl) {
 				throw new Error("Presign upload did not return an uploadUrl");
 			}
@@ -76,7 +77,7 @@ export default function UserForm({
 			}
 
 			// Step 3: Get the key and store it in form state (for payload inclusion, like mediaKeys in purchase-policy.tsx)
-			const mediaKey = (presignResult as any)?.key ?? (presignResult as any)?.data?.key;
+			const mediaKey = (presignResult as PresignUploadResponse).key;
 			if (mediaKey) {
 				onChange("avatar", mediaKey); // Store key in values.avatar for submission
 				// Optionally fetch view URL for preview
@@ -84,8 +85,8 @@ export default function UserForm({
 					const resp = await fetch(`/api/media/get-url-by-key?key=${encodeURIComponent(mediaKey)}`);
 					if (resp.ok) {
 						const json = await resp.json().catch(() => ({}));
-						const viewUrl = (json as any)?.url ?? (json as any)?.uploadUrl;
-						if (viewUrl) onChange("avatar" as any, viewUrl); // Update preview
+						const viewUrl = (json as Record<string, unknown>)?.url ?? (json as Record<string, unknown>)?.uploadUrl;
+						if (viewUrl) onChange("avatar", viewUrl); // Update preview
 					}
 				} catch (err) {
 					console.error("Failed to fetch view URL", err);
@@ -93,12 +94,12 @@ export default function UserForm({
 				// Notify parent if needed
 				if (typeof onAvatarUploaded === "function") onAvatarUploaded(mediaKey);
 			}
-		} catch (err: any) {
+		} catch (err: unknown) {
 			console.error("Avatar upload failed", err);
 			let message = "Unknown error";
 			if (err instanceof Error) message = err.message;
 			else if (typeof err === "string") message = err;
-			else if (err && typeof (err as any).message === "string") message = (err as any).message;
+			else if (err && typeof (err as Record<string, unknown>).message === "string") message = (err as Record<string, unknown>).message as string;
 			else message = String(err);
 			toast.error(`Avatar upload failed: ${message}`);
 		}
@@ -126,7 +127,7 @@ export default function UserForm({
 						labelClassName="text-sm block mb-2"
 						className={twMerge(inputStyle)}
 						value={values.fullName ?? ""}
-						onChange={(e) => onChange("fullName" as any, e.target.value)}
+						onChange={(e) => onChange("fullName", e.target.value)}
 					/>
 				</div>
 

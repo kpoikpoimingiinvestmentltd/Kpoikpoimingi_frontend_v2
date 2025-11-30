@@ -14,9 +14,15 @@ export default function ReceiptTable({ perPage = 10 }: { perPage?: number }) {
 	const [page, setPage] = React.useState(1);
 	const { data, isLoading } = useGetReceipts(page, perPage);
 
-	const pagination = data?.pagination ?? ({ page: 1, limit: perPage, total: 0, totalPages: 1 } as any);
+	const paginationData = (data?.pagination as Record<string, unknown>) || {};
+	const pagination = {
+		page: (paginationData.page as number) ?? 1,
+		limit: (paginationData.limit as number) ?? perPage,
+		total: (paginationData.total as number) ?? 0,
+		totalPages: (paginationData.totalPages as number) ?? 1,
+	};
 	const items: ReceiptListItem[] = Array.isArray(data?.data) ? data.data : [];
-	const pages = pagination.totalPages ?? Math.max(1, Math.ceil((pagination.total ?? 0) / perPage));
+	const pages = pagination.totalPages ?? Math.max(1, Math.ceil(pagination.total / perPage));
 
 	const formatCurrency = (v?: string | number | null) => {
 		if (v === undefined || v === null || v === "") return "-";
@@ -28,7 +34,7 @@ export default function ReceiptTable({ perPage = 10 }: { perPage?: number }) {
 	const formatPaymentMethod = (pm?: string | { id?: number; method?: string } | null) => {
 		if (!pm) return "-";
 		if (typeof pm === "string") return pm;
-		const method = pm.method ?? (pm as any)?.method;
+		const method = (pm as Record<string, unknown>)?.method;
 		if (!method) return "-";
 		if (method === "PAYMENT_LINK") return "Payment Link";
 		return String(method);
@@ -38,7 +44,7 @@ export default function ReceiptTable({ perPage = 10 }: { perPage?: number }) {
 		<CustomCard className="mt-4 p-6">
 			<div className="flex items-center justify-between mb-4">
 				<h3 className="text-base font-medium">All Receipt</h3>
-				<div className="text-sm text-muted-foreground">Total of ({pagination.total ?? 0})</div>
+				<div className="text-sm text-muted-foreground">Total of ({(pagination.total as number) ?? 0})</div>
 			</div>
 
 			<div className="overflow-x-auto">
@@ -63,7 +69,9 @@ export default function ReceiptTable({ perPage = 10 }: { perPage?: number }) {
 									<TableCell className="text-sm text-muted-foreground">{it.receiptNumber ?? it.id}</TableCell>
 									<TableCell className="text-sm text-[#667085]">{it.customer?.fullName ?? "-"}</TableCell>
 									<TableCell className="text-sm text-[#667085]">{it.contract?.property?.name ?? it.propertyName ?? "-"}</TableCell>
-									<TableCell className="text-sm text-[#667085]">{formatPaymentMethod(it.paymentMethod as any)}</TableCell>
+									<TableCell className="text-sm text-[#667085]">
+										{formatPaymentMethod(it.paymentMethod as string | { id?: number; method?: string })}
+									</TableCell>
 									<TableCell className="text-sm text-[#667085]">{formatCurrency(it.amountPaid ?? it.totalAmount)}</TableCell>
 									<TableCell className="text-sm text-[#667085]">
 										{it.paymentDate

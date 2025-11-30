@@ -17,7 +17,7 @@ export function useGetUser(id?: string) {
 		queryKey: ["user", id],
 		queryFn: async () => getUserById(id!),
 		enabled: !!id,
-	} as any);
+	});
 }
 
 export async function changePassword(payload: ChangePasswordInput) {
@@ -62,25 +62,23 @@ export async function getAllUsers(): Promise<User[]> {
 }
 
 export function useGetAllUsers(enabled = true) {
-	const qc = useQueryClient();
 	return useQuery<User[]>({
 		queryKey: ["users"],
 		queryFn: async () => getAllUsers(),
 		enabled,
-		keepPreviousData: true,
-		onSuccess: (data: User[] | undefined) => {
-			if (data) qc.setQueryData(["users"], data);
-		},
-	} as any);
+		staleTime: 5 * 60 * 1000,
+	});
 }
 
 export function useGetCurrentUser(enabled = true) {
-	const id = (store.getState() as any)?.auth?.id;
+	const stateData = store.getState() as Record<string, unknown>;
+	const authData = stateData?.auth as Record<string, unknown> | undefined;
+	const id = authData?.id as string | undefined;
 	return useQuery<User>({
 		queryKey: ["currentUser", id],
 		queryFn: async () => getUserById(id!),
 		enabled: !!id && enabled,
-	} as any);
+	});
 }
 
 export async function updateUserRequest(id: string, payload: any) {

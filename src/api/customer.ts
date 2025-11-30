@@ -46,7 +46,7 @@ export function useGetCustomerApprovedRegistrations(customerId?: string, enabled
 		queryKey: ["customer-approved-registrations", customerId],
 		queryFn: () => getCustomerApprovedRegistrations(customerId!),
 		enabled: !!customerId && enabled,
-	} as any);
+	});
 }
 
 export async function getCustomerContracts(customerId: string) {
@@ -58,7 +58,7 @@ export function useGetCustomerContracts(customerId?: string, enabled = true) {
 		queryKey: ["customer-contracts", customerId],
 		queryFn: () => getCustomerContracts(customerId!),
 		enabled: !!customerId && enabled,
-	} as any);
+	});
 }
 
 export async function getCustomerPayments(customerId: string) {
@@ -70,7 +70,7 @@ export function useGetCustomerPayments(customerId?: string, enabled = true) {
 		queryKey: ["customer-payments", customerId],
 		queryFn: () => getCustomerPayments(customerId!),
 		enabled: !!customerId && enabled,
-	} as any);
+	});
 }
 
 export async function getCustomerDocuments(customerId: string) {
@@ -82,7 +82,7 @@ export function useGetCustomerDocuments(customerId?: string, enabled = true) {
 		queryKey: ["customer-documents", customerId],
 		queryFn: () => getCustomerDocuments(customerId!),
 		enabled: !!customerId && enabled,
-	} as any);
+	});
 }
 
 export async function getCustomerReceipts(customerId: string) {
@@ -94,7 +94,7 @@ export function useGetCustomerReceipts(customerId?: string, enabled = true) {
 		queryKey: ["customer-receipts", customerId],
 		queryFn: () => getCustomerReceipts(customerId!),
 		enabled: !!customerId && enabled,
-	} as any);
+	});
 }
 
 export async function sendEmailToSpecificCustomers(payload: SendEmailSpecificPayload) {

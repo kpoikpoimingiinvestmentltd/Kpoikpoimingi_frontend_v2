@@ -25,10 +25,11 @@ export default function Contract() {
 	const sortBy = "createdAt";
 	const sortOrder = "desc";
 
-	const { data = {} as any, isLoading } = useGetAllContracts(page, 10, search, sortBy, sortOrder);
-	const contracts = data?.data || [];
-	const pagination = data?.pagination || {};
-	const pages = pagination?.totalPages || 1;
+	const { data = {}, isLoading } = useGetAllContracts(page, 10, search, sortBy, sortOrder);
+	const dataTyped = data as Record<string, unknown>;
+	const contracts = Array.isArray(dataTyped?.data) ? (dataTyped?.data as unknown[]) : [];
+	const paginationData = dataTyped?.pagination as Record<string, unknown> | undefined;
+	const pages = (paginationData?.totalPages as number) || 1;
 	return (
 		<div className="flex flex-col gap-y-6">
 			<div className="flex items-center justify-between flex-wrap gap-4 mb-4">
@@ -127,8 +128,8 @@ export default function Contract() {
 						<div className="mt-8 flex flex-col md:flex-row text-center md:text-start justify-center items-center">
 							<span className="text-sm text-nowrap">
 								Showing <span className="font-medium">{(page - 1) * 10 + 1}</span>-
-								<span className="font-medium">{Math.min(page * 10, pagination.total || 0)}</span> of{" "}
-								<span className="font-medium">{pagination.total || 0}</span> results
+								<span className="font-medium">{Math.min(page * 10, (paginationData?.total as number) || 0)}</span> of{" "}
+								<span className="font-medium">{(paginationData?.total as number) || 0}</span> results
 							</span>
 							<div className="ml-auto">
 								<CompactPagination page={page} pages={pages} onPageChange={setPage} />

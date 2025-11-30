@@ -43,3 +43,59 @@ export interface DeleteCustomerResponse {
 		registrationCode: string;
 	}>;
 }
+
+export type MediaFile = { fileUrl?: string };
+
+export type Registration = {
+	dateOfBirth?: string;
+	mediaFiles?: Record<string, MediaFile[]>;
+	nextOfKin?: {
+		fullName?: string;
+		phoneNumber?: string;
+		relationship?: string;
+		isNextOfKinSpouse?: string;
+		spouseFullName?: string;
+		spousePhone?: string;
+		spouseAddress?: string;
+	};
+	employmentDetails?: {
+		employmentStatus?: { status?: string };
+		employerName?: string;
+		employerAddress?: string;
+		companyName?: string;
+		businessAddress?: string;
+		homeAddress?: string;
+	};
+	propertyInterestRequest?: Array<{
+		propertyName?: string;
+		paymentInterval?: { intervals?: string };
+		durationValue?: number;
+		durationUnit?: { id?: number };
+		downPayment?: number;
+	}>;
+	customPropertyName?: string;
+	guarantors?: Array<{
+		fullName?: string;
+		occupation?: string;
+		phoneNumber?: string;
+		email?: string;
+		employmentStatus?: { status?: string };
+		homeAddress?: string;
+		companyAddress?: string;
+		businessAddress?: string;
+		stateOfOrigin?: string;
+	}>;
+	purposeOfProperty?: string;
+	previousHirePurchase?: string;
+	previousCompany?: string;
+	wasPreviousCompleted?: string;
+};
+
+export type CustomerDetails = {
+	fullName?: string;
+	email?: string;
+	phoneNumber?: string;
+	customerCode?: string;
+	createdAt?: string;
+	registrations?: Registration[];
+};

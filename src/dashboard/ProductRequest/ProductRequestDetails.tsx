@@ -82,7 +82,8 @@ export default function ProductRequestDetails() {
 								if (!id) return;
 								try {
 									const res = await sendMutation.mutateAsync(id);
-									toast.success((res as any)?.message ?? "Contract sent successfully");
+									const resData = res as Record<string, unknown>;
+									toast.success((resData?.message as string) ?? "Contract sent successfully");
 									queryClient.invalidateQueries({ queryKey: ["product-requests"] });
 									queryClient.invalidateQueries({ queryKey: ["product-request", id] });
 								} catch (e: unknown) {
@@ -130,7 +131,7 @@ export default function ProductRequestDetails() {
 
 					<div className="mt-6">
 						<TabsContent value="information">
-							<TabProductInformation data={registrationData} />
+							<TabProductInformation data={registrationData} registrationId={id} />
 						</TabsContent>
 
 						<TabsContent value="customer">
@@ -176,11 +177,12 @@ export default function ProductRequestDetails() {
 							try {
 								if (confirmAction === "approve") {
 									const result = await approveMutation.mutateAsync(id);
-									toast.success(result.message || "Registration approved successfully");
+									const resultData = result as Record<string, unknown>;
+									toast.success((resultData?.message as string) || "Registration approved successfully");
 									queryClient.invalidateQueries({ queryKey: ["product-requests"] });
 									queryClient.invalidateQueries({ queryKey: ["product-request", id] });
-									if ((result as any)?.customerId) {
-										const cid = (result as any).customerId as string;
+									if (resultData?.customerId) {
+										const cid = resultData.customerId as string;
 										const path = _router.dashboard.customerDetails.replace(":id", cid);
 										navigate(path);
 									}

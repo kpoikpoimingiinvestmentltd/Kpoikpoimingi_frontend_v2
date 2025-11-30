@@ -18,7 +18,7 @@ import { useCreateProperty, type PropertyFormData } from "@/api/property";
 import { useGetAllCategories } from "@/api/categories";
 import { useNavigate } from "react-router";
 
-export default function AddProperties() {
+export default function AddProperties({ propertyRequestId }: { propertyRequestId?: string | null }) {
 	const navigate = useNavigate();
 	const {
 		control,
@@ -52,15 +52,17 @@ export default function AddProperties() {
 
 	// Fetch categories
 	const { data: categoriesData } = useGetAllCategories(1, 100, true);
-	const categories = (categoriesData as any)?.data || [];
+	const categories = ((categoriesData as Record<string, unknown>)?.data || []) as Array<Record<string, unknown>>;
 
 	// Get subcategories for selected parent category
-	const selectedParentCategory = categories.find((cat: any) => cat.id === selectedParentCategoryId);
-	const subcategories = selectedParentCategory?.children || [];
+	const selectedParentCategory = categories.find((cat) => cat.id === selectedParentCategoryId) as Record<string, unknown> | undefined;
+	const subcategories = Array.isArray(selectedParentCategory?.children) ? (selectedParentCategory.children as Array<Record<string, unknown>>) : [];
 
 	// Check if selected parent category is a vehicle category
 	const isVehicleCategory =
-		selectedParentCategory && selectedParentCategory.category && selectedParentCategory.category.toLowerCase().includes("vehicle");
+		selectedParentCategory &&
+		typeof selectedParentCategory.category === "string" &&
+		selectedParentCategory.category.toLowerCase().includes("vehicle");
 
 	const createPropertyMutation = useCreateProperty(
 		() => {
@@ -87,7 +89,7 @@ export default function AddProperties() {
 				relatedTable: "media",
 			}).unwrap();
 
-			const uploadUrl = (presignResult as any)?.url;
+			const uploadUrl = presignResult.url || presignResult.uploadUrl;
 			if (!uploadUrl) {
 				throw new Error("Presign upload did not return an uploadUrl");
 			}
@@ -99,7 +101,7 @@ export default function AddProperties() {
 			}
 
 			// Step 3: Get the media key
-			const mediaKey = (presignResult as any)?.key ?? (presignResult as any)?.data?.key;
+			const mediaKey = presignResult.key;
 			if (mediaKey) {
 				// Create object URL for preview
 				const previewUrl = URL.createObjectURL(file);
@@ -112,12 +114,11 @@ export default function AddProperties() {
 			}
 
 			return null;
-		} catch (err: any) {
+		} catch (err: unknown) {
 			console.error("Image upload error:", err);
 			let message = "Unknown error";
 			if (err instanceof Error) message = err.message;
 			else if (typeof err === "string") message = err;
-			else if (err && typeof (err as any).message === "string") message = (err as any).message;
 			else message = String(err);
 			toast.error(`Upload failed: ${message}`);
 			return null;
@@ -166,9 +167,10 @@ export default function AddProperties() {
 				vehicleType: formData.vehicleType,
 				vehicleRegistrationNumber: formData.vehicleRegistrationNumber,
 			}),
+			...(propertyRequestId ? { propertyRequestId } : {}),
 		};
 
-		await createPropertyMutation.mutateAsync(propertyPayload as any);
+		await createPropertyMutation.mutateAsync(propertyPayload);
 	};
 
 	return (
@@ -234,16 +236,16 @@ export default function AddProperties() {
 									onValueChange={(value) => {
 										setSelectedParentCategoryId(value);
 										// Reset subcategory selection when parent category changes
-										const control_instance = (control as any)._formValues;
+										const control_instance = control._formValues;
 										control_instance.categoryId = "";
 									}}>
 									<SelectTrigger className={twMerge(inputStyle, "w-full min-h-11 capitalize text-sm")}>
 										<SelectValue placeholder="Choose Category" />
 									</SelectTrigger>
 									<SelectContent>
-										{categories.map((cat: any) => (
-											<SelectItem key={cat.id} value={cat.id} className="capitalize">
-												{cat.category || cat.title}
+										{categories.map((cat) => (
+											<SelectItem key={cat.id as string} value={cat.id as string} className="capitalize">
+												{(cat.category || cat.title) as string}
 											</SelectItem>
 										))}
 									</SelectContent>
@@ -271,9 +273,9 @@ export default function AddProperties() {
 													/>
 												</SelectTrigger>
 												<SelectContent>
-													{subcategories.map((subcat: any) => (
-														<SelectItem key={subcat.id} value={subcat.id} className="capitalize">
-															{subcat.category || subcat.title}
+													{subcategories.map((subcat) => (
+														<SelectItem key={subcat.id as string} value={subcat.id as string} className="capitalize">
+															{(subcat.category || subcat.title) as string}
 														</SelectItem>
 													))}
 												</SelectContent>

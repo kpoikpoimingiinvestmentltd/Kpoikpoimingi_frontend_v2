@@ -33,17 +33,14 @@ export default function CustomInput({
 	...props
 }: CustomInputProps) {
 	// expose a couple extra props via props (onSearch, debounceMs, showClear)
-	const {
-		onSearch,
-		debounceMs = 300,
-		showClear = false,
-	} = props as any as {
+	const propsTyped = props as CustomInputProps & {
 		onSearch?: (v: string) => void;
 		debounceMs?: number;
 		showClear?: boolean;
 	};
+	const { onSearch, debounceMs = 300, showClear = false } = propsTyped;
 
-	const [internal, setInternal] = React.useState<string>((props as any).value ?? "");
+	const [internal, setInternal] = React.useState<string>((props.value as string) ?? "");
 
 	React.useEffect(() => {
 		let mounted = true;

@@ -65,7 +65,7 @@ export default function Users() {
 		},
 	});
 
-	const { data: rawData, isLoading } = useGetAllUsers(true as any);
+	const { data: rawData, isLoading } = useGetAllUsers(true);
 	const data: any = rawData;
 
 	React.useEffect(() => {

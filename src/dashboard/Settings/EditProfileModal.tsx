@@ -20,14 +20,6 @@ interface EditProfileFormData {
 	branchLocation?: string;
 }
 
-interface EditProfileFormData {
-	fullName: string;
-	email: string;
-	username: string;
-	phoneNumber?: string;
-	branchLocation?: string;
-}
-
 export default function EditProfileModal({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
 	const { data: user, isLoading } = useGetCurrentUser(true);
 	const [profileImage, setProfileImage] = useState<File | null>(null);
@@ -81,14 +73,14 @@ export default function EditProfileModal({ open, onOpenChange }: { open: boolean
 					relatedTable: "user",
 				}).unwrap();
 
-				// RTK Query unwrap should return the data but some responses may be nested; normalize here
-				const uploadUrl = (presignResult as any)?.uploadUrl ?? (presignResult as any)?.data?.uploadUrl ?? (presignResult as any)?.url;
+				// Extract uploadUrl from presignResult
+				const uploadUrl = presignResult.uploadUrl ?? presignResult.url;
 				if (!uploadUrl) {
 					console.error("Presign response missing uploadUrl", presignResult);
 					throw new Error("Presign upload did not return an uploadUrl");
 				}
 
-				const uploadResult = await uploadFileToPresignedUrl(uploadUrl, profileImage);
+				const uploadResult = await uploadFileToPresignedUrl(String(uploadUrl), profileImage);
 				if (!uploadResult.success) {
 					throw new Error(uploadResult.error || "Upload failed");
 				}
@@ -113,8 +105,9 @@ export default function EditProfileModal({ open, onOpenChange }: { open: boolean
 			onOpenChange(false);
 			setProfileImage(null);
 			setProfilePreview(null);
-		} catch (error: any) {
-			toast.error(`Failed to update profile: ${error.message || "Unknown error"}`);
+		} catch (error: unknown) {
+			const errorMsg = (error as Record<string, unknown>)?.message ?? "Unknown error";
+			toast.error(`Failed to update profile: ${errorMsg}`);
 		}
 	});
 

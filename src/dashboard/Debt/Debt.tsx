@@ -31,20 +31,24 @@ export default function Debt() {
 		return () => clearTimeout(timer);
 	}, [searchInput]);
 
-	const { data: debtData = {}, isLoading } = useGetAllContractDebts(page, 10, search) as any;
+	const { data: debtData = {} as Record<string, unknown>, isLoading } = useGetAllContractDebts(page, 10, search);
 
-	const debtors = (debtData?.data || []).map((d: any) => ({
-		id: d.contractId,
-		contractCode: d.contractCode,
-		customerName: d.customerName,
-		propertyName: d.propertyName,
-		amountPaid: d.amountPaid,
-		totalDebt: d.totalDebtAmount,
-		date: new Date(d.date).toLocaleDateString(),
-		isOverdue: d.isOverdue,
-	}));
+	const debtorsData = (debtData.data as unknown[]) || [];
+	const debtors = debtorsData.map((d: unknown) => {
+		const debt = d as Record<string, unknown>;
+		return {
+			id: debt.contractId,
+			contractCode: debt.contractCode,
+			customerName: debt.customerName,
+			propertyName: debt.propertyName,
+			amountPaid: debt.amountPaid,
+			totalDebt: debt.totalDebtAmount,
+			date: new Date(debt.date as string).toLocaleDateString(),
+			isOverdue: debt.isOverdue,
+		};
+	});
 
-	const summary = debtData?.summary || {
+	const summary = (debtData.summary as unknown as Record<string, unknown>) ?? {
 		totalCustomersOwing: 0,
 		totalContracts: 0,
 		totalDebtAmount: 0,
@@ -52,7 +56,8 @@ export default function Debt() {
 		totalOverdueContracts: 0,
 	};
 
-	const pages = Math.max(1, debtData?.pagination?.totalPages ?? 1);
+	const paginationData = (debtData.pagination as Record<string, unknown>) || {};
+	const pages = Math.max(1, (paginationData.totalPages as number) ?? 1);
 
 	return (
 		<PageWrapper>
@@ -155,9 +160,10 @@ export default function Debt() {
 								<span className="text-sm text-nowrap">
 									Showing{" "}
 									<span className="font-medium">
-										{Math.min((page - 1) * 10 + 1, debtData?.pagination?.total ?? 0)}-{Math.min(page * 10, debtData?.pagination?.total ?? 0)}
+										{Math.min((page - 1) * 10 + 1, (paginationData.total as number) ?? 0)}-
+										{Math.min(page * 10, (paginationData.total as number) ?? 0)}
 									</span>{" "}
-									of <span className="font-medium">{debtData?.pagination?.total ?? 0}</span> results
+									of <span className="font-medium">{(paginationData.total as number) ?? 0}</span> results
 								</span>
 								<div className="ml-auto">
 									<CompactPagination page={page} pages={pages} onPageChange={setPage} />

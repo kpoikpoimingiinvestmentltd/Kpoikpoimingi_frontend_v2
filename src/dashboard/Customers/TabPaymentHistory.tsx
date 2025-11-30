@@ -24,7 +24,7 @@ export default function TabPaymentHistory({ payments }: { payments?: PaymentDto[
 	};
 
 	const buildPaymentDetails = (p: ApiPaymentItem) => {
-		const date = p.createdAt ?? (p as any).date ?? "";
+		const date = p.createdAt ?? ((p as Record<string, unknown>).date as string) ?? "";
 		const method = p.paymentMethod ? (p.paymentMethod === "PAYMENT_LINK" ? "Payment Link" : p.paymentMethod) : "-";
 		const amount = p.amount ? Number(p.amount).toLocaleString() : "-";
 		const receipt = p.receiptNumber ?? "-";
@@ -32,7 +32,7 @@ export default function TabPaymentHistory({ payments }: { payments?: PaymentDto[
 		const status = p.status === "PAID" || p.status === "SUCCESS" ? "Payment Successful" : "Payment Failed";
 
 		return {
-			date: date ? new Date(date).toLocaleString() : "-",
+			date: date ? new Date(date as string).toLocaleString() : "-",
 			method,
 			amount,
 			receipt,
@@ -48,8 +48,9 @@ export default function TabPaymentHistory({ payments }: { payments?: PaymentDto[
 				<SectionTitle title="Payment History" />
 
 				<div className="space-y-8 mt-4">
-					{Array.isArray((payments as any)?.payments) && (payments as any).payments.length > 0 ? (
-						(payments as any).payments.map((grp: ApiContractPayments) => {
+					{Array.isArray((payments as unknown as Record<string, unknown>)?.payments) &&
+					((payments as unknown as Record<string, unknown>).payments as unknown[]).length > 0 ? (
+						((payments as unknown as Record<string, unknown>).payments as ApiContractPayments[]).map((grp: ApiContractPayments) => {
 							const title = `${grp.contractCode ?? grp.contractId ?? "Contract"} — ${grp.propertyName ?? ""}`;
 							// items variable removed; we render directly from grp.payments below
 

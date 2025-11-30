@@ -21,8 +21,8 @@ export function useGetReferenceData(enabled = true, refresh = false) {
 		queryKey: ["reference", refresh],
 		queryFn: async () => getAllReferenceData(refresh),
 		enabled,
-		keepPreviousData: true,
-	} as any);
+		staleTime: 10 * 60 * 1000,
+	});
 }
 
 export default {};

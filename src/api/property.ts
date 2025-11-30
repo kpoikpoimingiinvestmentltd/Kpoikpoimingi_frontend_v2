@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiGet, apiPost, apiPut, apiDelete } from "@/services/apiClient";
 import { API_ROUTES } from "./routes";
 import type { PropertyFormData, PropertyPayload, PropertyResponse, PropertyData } from "@/types/property";
@@ -27,16 +27,12 @@ export async function getAllProperties() {
 }
 
 export function useGetAllProperties(enabled = true) {
-	const qc = useQueryClient();
 	return useQuery({
 		queryKey: ["properties"],
 		queryFn: async () => getAllProperties(),
 		enabled,
-		keepPreviousData: true,
-		onSuccess: (data: any) => {
-			if (data) qc.setQueryData(["properties"], data);
-		},
-	} as any);
+		staleTime: 5 * 60 * 1000,
+	});
 }
 
 // Get Property by ID
@@ -49,7 +45,7 @@ export function useGetPropertyById(id?: string) {
 		queryKey: ["property", id],
 		queryFn: async () => getPropertyById(id!),
 		enabled: !!id,
-	} as any);
+	});
 }
 
 // Update Property

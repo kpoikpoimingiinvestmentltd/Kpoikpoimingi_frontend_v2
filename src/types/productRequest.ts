@@ -38,4 +38,28 @@ export type DeleteRegistrationResponse = {
 	message?: string;
 };
 
+export type SendContractResponse = {
+	id: string;
+	message: string;
+};
+
 export type ProductRequestActionResponse = ApproveRegistrationResponse | DeclineRegistrationResponse | DeleteRegistrationResponse;
+
+export type PropertyInterest = {
+	id: string;
+	propertyId?: string | null;
+	paymentIntervalId?: number | null;
+	durationValue?: number | null;
+	durationUnitId?: number | null;
+	downPayment?: string | number | null;
+	isAssigned?: boolean;
+	customerRegistrationId?: string;
+	customPropertyName?: string | null;
+	customPropertyPrice?: string | number | null;
+	isCustomProperty?: boolean;
+	quantity?: number;
+};
+
+export type CustomerRegistration = {
+	propertyInterestRequest?: PropertyInterest[];
+};

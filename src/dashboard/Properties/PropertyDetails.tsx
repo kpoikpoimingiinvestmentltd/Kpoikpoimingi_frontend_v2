@@ -18,7 +18,7 @@ import { toast } from "sonner";
 export default function PropertyDetails() {
 	const { id } = useParams<{ id: string }>();
 	const { data: propertyResponse, isLoading, refetch } = useGetPropertyById(id);
-	const property = propertyResponse as any as PropertyData | undefined;
+	const property = propertyResponse as PropertyData | undefined;
 
 	const [editOpen, setEditOpen] = React.useState(false);
 
@@ -28,8 +28,10 @@ export default function PropertyDetails() {
 			setEditOpen(false);
 			toast.success("Property updated successfully");
 		},
-		(error: any) => {
-			toast.error(error?.message || "Failed to update property");
+		(error: unknown) => {
+			const msg =
+				typeof error === "object" && error !== null && "message" in error ? (error as { message?: string }).message : "Failed to update property";
+			toast.error(msg || "Failed to update property");
 			console.error("Update failed:", error);
 		}
 	);
@@ -119,47 +121,48 @@ export default function PropertyDetails() {
 								quantityAssigned: property.quantityAssigned,
 								status: property.status,
 								categoryId: property.category.id,
-								condition: (property as any).condition || "Good",
+								condition: property.condition || "Good",
 								description: property.description || "",
 								dateAdded: property.dateAdded,
 								media: images,
 								// Vehicle fields
-								vehicleMake: (property as any).vehicleMake || "",
-								vehicleModel: (property as any).vehicleModel || "",
-								vehicleYear: (property as any).vehicleYear || 0,
-								vehicleColor: (property as any).vehicleColor || "",
-								vehicleChassisNumber: (property as any).vehicleChassisNumber || "",
-								vehicleType: (property as any).vehicleType || "",
-								vehicleRegistrationNumber: (property as any).vehicleRegistrationNumber || "",
+								vehicleMake: property.vehicleMake || "",
+								vehicleModel: property.vehicleModel || "",
+								vehicleYear: property.vehicleYear || 0,
+								vehicleColor: property.vehicleColor || "",
+								vehicleChassisNumber: property.vehicleChassisNumber || "",
+								vehicleType: property.vehicleType || "",
+								vehicleRegistrationNumber: property.vehicleRegistrationNumber || "",
 								category: property.category,
 							}}
-							onSave={(formData: any) => {
+							onSave={(formData) => {
 								if (property?.id) {
-									const mediaKeysArray = formData.mediaKeys || [];
-									const mediaKeysObject = mediaKeysArray.reduce((acc: any, key: string, idx: number) => {
+									const typedFormData = formData as Record<string, unknown>;
+									const mediaKeysArray = (typedFormData?.mediaKeys || []) as string[];
+									const mediaKeysObject = mediaKeysArray.reduce((acc: Record<string, string>, key: string, idx: number) => {
 										acc[`media_${idx}`] = key;
 										return acc;
 									}, {});
 
 									const payload: any = {
-										name: formData.name,
-										categoryId: formData.categoryId,
-										price: Number(formData.price),
-										quantityTotal: Number(formData.quantityTotal),
-										condition: formData.condition || "Good",
-										description: formData.description || "",
+										name: typedFormData?.name,
+										categoryId: typedFormData?.categoryId,
+										price: Number(typedFormData?.price),
+										quantityTotal: Number(typedFormData?.quantityTotal),
+										condition: typedFormData?.condition || "Good",
+										description: typedFormData?.description || "",
 										mediaKeys: mediaKeysObject || {},
 									};
 
 									// Add vehicle fields if this is a vehicle
 									if (isVehicle) {
-										payload.vehicleMake = formData.vehicleMake;
-										payload.vehicleModel = formData.vehicleModel;
-										payload.vehicleYear = formData.vehicleYear ? Number(formData.vehicleYear) : undefined;
-										payload.vehicleColor = formData.vehicleColor;
-										payload.vehicleChassisNumber = formData.vehicleChassisNumber;
-										payload.vehicleType = formData.vehicleType;
-										payload.vehicleRegistrationNumber = formData.vehicleRegistrationNumber;
+										payload.vehicleMake = typedFormData?.vehicleMake;
+										payload.vehicleModel = typedFormData?.vehicleModel;
+										payload.vehicleYear = typedFormData?.vehicleYear ? Number(typedFormData?.vehicleYear) : undefined;
+										payload.vehicleColor = typedFormData?.vehicleColor;
+										payload.vehicleChassisNumber = typedFormData?.vehicleChassisNumber;
+										payload.vehicleType = typedFormData?.vehicleType;
+										payload.vehicleRegistrationNumber = typedFormData?.vehicleRegistrationNumber;
 									}
 
 									updateProperty.mutate({
@@ -190,37 +193,25 @@ export default function PropertyDetails() {
 					<KeyValueRow leftClassName="text-black" label="Status" value={property.status.status} />
 					<KeyValueRow leftClassName="text-black" label="Number Assigned" value={property.quantityAssigned.toString()} />
 					<KeyValueRow leftClassName="text-black" label="Category" value={property.category.category} />
-					<KeyValueRow leftClassName="text-black" label="Condition" value={(property as any).condition || "N/A"} />
+					<KeyValueRow leftClassName="text-black" label="Condition" value={property.condition || "N/A"} />
 					<KeyValueRow leftClassName="text-black" label="Added On" value={formattedDate} />
-
-					{(property as any).description && <KeyValueRow leftClassName="text-black" label="Description" value={(property as any).description} />}
-
+					{property.description && <KeyValueRow leftClassName="text-black" label="Description" value={property.description} />}{" "}
 					{/* Vehicle Details Section */}
 					{isVehicle && (
 						<>
 							<div className="border-t my-6 pt-6">
 								<h3 className="font-semibold text-base mb-4">Vehicle Details</h3>
 								<div className="space-y-4">
-									{(property as any).vehicleMake && (
-										<KeyValueRow leftClassName="text-black" label="Vehicle Make" value={(property as any).vehicleMake} />
+									{property.vehicleMake && <KeyValueRow leftClassName="text-black" label="Vehicle Make" value={property.vehicleMake} />}
+									{property.vehicleModel && <KeyValueRow leftClassName="text-black" label="Vehicle Model" value={property.vehicleModel} />}
+									{property.vehicleYear && <KeyValueRow leftClassName="text-black" label="Vehicle Year" value={property.vehicleYear.toString()} />}
+									{property.vehicleColor && <KeyValueRow leftClassName="text-black" label="Vehicle Color" value={property.vehicleColor} />}
+									{property.vehicleType && <KeyValueRow leftClassName="text-black" label="Vehicle Type" value={property.vehicleType} />}
+									{property.vehicleChassisNumber && (
+										<KeyValueRow leftClassName="text-black" label="Chassis Number" value={property.vehicleChassisNumber} />
 									)}
-									{(property as any).vehicleModel && (
-										<KeyValueRow leftClassName="text-black" label="Vehicle Model" value={(property as any).vehicleModel} />
-									)}
-									{(property as any).vehicleYear && (
-										<KeyValueRow leftClassName="text-black" label="Vehicle Year" value={(property as any).vehicleYear.toString()} />
-									)}
-									{(property as any).vehicleColor && (
-										<KeyValueRow leftClassName="text-black" label="Vehicle Color" value={(property as any).vehicleColor} />
-									)}
-									{(property as any).vehicleType && (
-										<KeyValueRow leftClassName="text-black" label="Vehicle Type" value={(property as any).vehicleType} />
-									)}
-									{(property as any).vehicleChassisNumber && (
-										<KeyValueRow leftClassName="text-black" label="Chassis Number" value={(property as any).vehicleChassisNumber} />
-									)}
-									{(property as any).vehicleRegistrationNumber && (
-										<KeyValueRow leftClassName="text-black" label="Registration Number" value={(property as any).vehicleRegistrationNumber} />
+									{property.vehicleRegistrationNumber && (
+										<KeyValueRow leftClassName="text-black" label="Registration Number" value={property.vehicleRegistrationNumber} />
 									)}
 								</div>
 							</div>

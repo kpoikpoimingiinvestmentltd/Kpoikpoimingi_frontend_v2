@@ -50,7 +50,7 @@ export default function Properties() {
 			console.error("Update failed:", error);
 		}
 	);
-	const allProperties = ((propertiesData as any)?.data || []) as PropertyData[];
+	const allProperties = ((propertiesData as Record<string, unknown>)?.data || []) as PropertyData[];
 
 	const filteredByStatus = allProperties.filter((prop) => {
 		if (activeTab === "available") return true;

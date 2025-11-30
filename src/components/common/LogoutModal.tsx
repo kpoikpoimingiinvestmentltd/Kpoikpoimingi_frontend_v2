@@ -33,7 +33,8 @@ export default function LogoutModal({
 		setLoading(true);
 		try {
 			const res = await apiRequest(API_ROUTES.auth.logout, { method: "POST" });
-			const msg = (res && (res as any).message) || "Logged out";
+			const resData = res as Record<string, unknown>;
+			const msg = (resData?.message as string) || "Logged out";
 			toast.success(msg);
 			try {
 				saveAuthToStorage(null);
@@ -43,7 +44,8 @@ export default function LogoutModal({
 			navigate(_router.auth.login);
 			onOpenChange(false);
 		} catch (e) {
-			toast.error((e as any)?.message ?? "Logout failed (session preserved)");
+			const errMsg = (e as Record<string, unknown>)?.message ?? "Logout failed (session preserved)";
+			toast.error(errMsg as string);
 		} finally {
 			setLoading(false);
 		}

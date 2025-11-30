@@ -21,6 +21,7 @@ import PageWrapper from "../../components/common/PageWrapper";
 import { modalContentStyle } from "../../components/common/commonStyles";
 import { useParams } from "react-router";
 import { formatPhoneNumber } from "@/lib/utils";
+import type { ResetPasswordResponse, SuspendUserResponse } from "@/types/user";
 
 export default function UserDetails() {
 	function KeyValueRow({ label, value, children }: { label: ReactNode; value?: ReactNode; children?: ReactNode }) {
@@ -54,8 +55,8 @@ export default function UserDetails() {
 		}
 
 		resetMutation.mutate(userId, {
-			onSuccess: (res) => {
-				setGeneratedPassword((res as any)?.newPassword ?? null);
+			onSuccess: (res: ResetPasswordResponse) => {
+				setGeneratedPassword(res?.newPassword ?? null);
 				setResetOpen(true);
 			},
 			onError: (err) => {
@@ -99,36 +100,35 @@ export default function UserDetails() {
 	const [formValues, setFormValues] = useState<any>({});
 	useEffect(() => {
 		if (!currentUser) return;
-		const cu: any = currentUser as any;
 
 		// Extract IDs from objects for form fields
-		const stateOfOriginId = typeof cu?.stateOfOrigin === "object" ? cu?.stateOfOrigin?.id : cu?.stateOfOrigin;
-		const roleId = typeof cu?.role === "object" ? cu?.role?.id : cu?.role;
-		const accountTypeId = typeof cu?.accountType === "object" ? cu?.accountType?.id : cu?.accountType;
-		const bankNameId = typeof cu?.bankName === "object" ? cu?.bankName?.id : cu?.bankName;
+		const stateOfOriginId = typeof currentUser?.stateOfOrigin === "object" ? currentUser?.stateOfOrigin?.id : currentUser?.stateOfOrigin;
+		const roleId = typeof currentUser?.role === "object" ? currentUser?.role?.id : currentUser?.role;
+		const accountTypeId = typeof currentUser?.accountType === "object" ? currentUser?.accountType?.id : currentUser?.accountType;
+		const bankNameId = typeof currentUser?.bankName === "object" ? currentUser?.bankName?.id : currentUser?.bankName;
 
 		// Get media URL for avatar display
-		const avatarUrl = Array.isArray(cu?.media) && cu?.media?.length > 0 ? cu?.media[0]?.fileUrl : cu?.avatar;
+		const avatarUrl = Array.isArray(currentUser?.media) && currentUser?.media?.length > 0 ? currentUser?.media[0]?.fileUrl : currentUser?.avatar;
 
 		// Format date for HTML date input (YYYY-MM-DD)
-		const dobRaw = cu?.dateOfBirth ?? cu?.dob ?? null;
+		const dobRaw = currentUser?.dateOfBirth ?? currentUser?.dob ?? null;
 		const dobFormatted = dobRaw ? new Date(dobRaw).toISOString().split("T")[0] : "";
 
 		// Update user status
-		const status = cu?.status?.status || cu?.statusId;
+		const status = currentUser?.status?.status || currentUser?.statusId;
 		setUserStatus(status);
 
 		setFormValues({
-			fullName: cu?.fullName ?? "",
-			username: cu?.username ?? "",
-			email: cu?.email ?? "",
-			phone: cu?.phoneNumber ?? cu?.phone ?? "",
-			houseAddress: cu?.houseAddress ?? "",
+			fullName: currentUser?.fullName ?? "",
+			username: currentUser?.username ?? "",
+			email: currentUser?.email ?? "",
+			phone: currentUser?.phoneNumber ?? currentUser?.phone ?? "",
+			houseAddress: currentUser?.houseAddress ?? "",
 			stateOfOrigin: String(stateOfOriginId ?? ""),
 			dob: dobFormatted,
 			role: String(roleId ?? ""),
-			salary: cu?.salaryAmount ?? cu?.salary ?? "",
-			accountNumber: cu?.accountNumber ?? "",
+			salary: currentUser?.salaryAmount ?? currentUser?.salary ?? "",
+			accountNumber: currentUser?.accountNumber ?? "",
 			accountType: String(accountTypeId ?? ""),
 			bankName: String(bankNameId ?? ""),
 			avatar: avatarUrl ?? null,
@@ -142,15 +142,14 @@ export default function UserDetails() {
 		}
 
 		suspendMutation.mutate(userId, {
-			onSuccess: (res: any) => {
+			onSuccess: (res: SuspendUserResponse) => {
 				try {
 					// Update local status state immediately for UI responsiveness
-					if (res?.user) {
-						const newStatus = res?.user?.status?.status || res?.user?.statusId;
-						setUserStatus(newStatus);
-						queryClient.setQueryData(["user", userId], res.user);
-					}
-					toast.success(res?.message || "User status updated");
+					const statusObj = res.user?.status as unknown as Record<string, unknown> | undefined;
+					const newStatus = (statusObj?.status as string) || null;
+					setUserStatus(newStatus);
+					queryClient.setQueryData(["user", userId], res.user);
+					toast.success(res.message || "User status updated");
 					// Refetch user data to update the UI
 					queryClient.invalidateQueries({ queryKey: ["user", userId] });
 				} catch (e) {
@@ -236,11 +235,7 @@ export default function UserDetails() {
 							<Avatar className="size-32 bg-white">
 								<AvatarImage
 									className="object-cover object-top"
-									src={
-										Array.isArray((currentUser as any)?.media) && (currentUser as any)?.media?.length > 0
-											? (currentUser as any)?.media[0]?.fileUrl
-											: media.images.avatar
-									}
+									src={Array.isArray(currentUser?.media) && currentUser?.media?.length > 0 ? currentUser?.media[0]?.fileUrl : media.images.avatar}
 									alt="avatar"
 								/>
 							</Avatar>
@@ -250,20 +245,29 @@ export default function UserDetails() {
 					{/* content grid */}
 					<div className="mt-24 grid grid-cols-1 gap-4">
 						<div className="space-y-4">
-							{/* Status row: show current user's status using reference data when available */}
 							<KeyValueRow
 								label="Status"
 								value={
 									<Badge
 										value={
-											(currentUser as any)?.status?.status ??
-											((refData as any)?.statuses && Array.isArray((refData as any).statuses)
-												? (refData as any).statuses.find((s: any) => s.id === (currentUser as any)?.statusId)?.status ?? "Unknown"
+											currentUser?.status?.status ??
+											(refData?.statuses && Array.isArray(refData.statuses)
+												? ((
+														refData.statuses.find((s: unknown) => (s as Record<string, unknown>)?.id === currentUser?.statusId) as
+															| Record<string, unknown>
+															| undefined
+												  )?.status as string) ?? "Unknown"
 												: "Unknown")
 										}
 										status={
-											(currentUser as any)?.status?.status ??
-											(refData as any)?.statuses?.find((s: any) => s.id === (currentUser as any)?.statusId)?.status ??
+											(currentUser?.status?.status as string) ??
+											(refData?.statuses && Array.isArray(refData.statuses)
+												? ((
+														refData.statuses.find((s: unknown) => (s as Record<string, unknown>)?.id === currentUser?.statusId) as
+															| Record<string, unknown>
+															| undefined
+												  )?.status as string)
+												: null) ??
 											"unknown"
 										}
 										showDot
@@ -271,18 +275,24 @@ export default function UserDetails() {
 								}
 							/>
 							{(() => {
-								const cu: any = currentUser as any;
-								const fullName = cu?.fullName ?? "-";
-								const name = cu?.username ?? "-";
-								const email = cu?.email ?? "-";
-								const phone = cu?.phoneNumber ?? cu?.phone ?? "-";
-								const address = cu?.houseAddress ?? "-";
-								const stateObj = cu?.stateOfOrigin;
+								const fullName = currentUser?.fullName ?? "-";
+								const name = currentUser?.username ?? "-";
+								const email = currentUser?.email ?? "-";
+								const phone = currentUser?.phoneNumber ?? currentUser?.phone ?? "-";
+								const address = currentUser?.houseAddress ?? "-";
+								const stateObj = currentUser?.stateOfOrigin;
 								const state = typeof stateObj === "string" ? stateObj : stateObj?.state ?? "-";
-								const dobRaw = cu?.dateOfBirth ?? cu?.dob ?? null;
+								const dobRaw = currentUser?.dateOfBirth ?? currentUser?.dob ?? null;
 								const dob = dobRaw ? new Date(dobRaw).toLocaleDateString() : "-";
-								const roleLabel = typeof cu?.role === "string" ? cu.role : cu?.role?.role ?? "-";
-								const assigned = cu?._count?.customers ?? cu?.assignedCustomersCount ?? cu?.assignedCount ?? 0;
+								const roleLabel =
+									typeof currentUser?.role === "string"
+										? currentUser.role
+										: (currentUser?.role as unknown as Record<string, unknown> | undefined)?.role ?? "-";
+								const assigned =
+									(currentUser?._count as unknown as Record<string, unknown> | undefined)?.customers ??
+									currentUser?.assignedCustomersCount ??
+									currentUser?.assignedCount ??
+									0;
 								return (
 									<>
 										<KeyValueRow label="Full Name" value={fullName} />
@@ -303,16 +313,15 @@ export default function UserDetails() {
 						<hr />
 						<div className="space-y-4">
 							{(() => {
-								const cu: any = currentUser as any;
-								const salary = cu?.salaryAmount ?? cu?.salary ?? "-";
-								const accountNumber = cu?.accountNumber ?? "-";
+								const salary = currentUser?.salaryAmount ?? currentUser?.salary ?? "-";
+								const accountNumber = currentUser?.accountNumber ?? "-";
 
 								// Extract account type - handle both string and object
-								const accountTypeObj = cu?.accountType;
+								const accountTypeObj = currentUser?.accountType;
 								const accountType = typeof accountTypeObj === "string" ? accountTypeObj : accountTypeObj?.type ?? "-";
 
 								// Extract bank name - handle both string and object
-								const bankNameObj = cu?.bankName;
+								const bankNameObj = currentUser?.bankName;
 								const bankName = typeof bankNameObj === "string" ? bankNameObj : bankNameObj?.name ?? "-";
 
 								return (
@@ -360,7 +369,7 @@ export default function UserDetails() {
 					</DialogHeader>
 					<UserForm
 						values={formValues}
-						onChange={(k, v) => setFormValues((s: any) => ({ ...(s ?? {}), [k]: v }))}
+						onChange={(k: string, v: unknown) => setFormValues((s: any) => ({ ...(s ?? {}), [k]: v }))}
 						onAvatarUploaded={(key) => setAvatarMediaKey(key)}
 						onSubmit={async () => {
 							if (!userId) {
@@ -406,12 +415,12 @@ export default function UserDetails() {
 								if (e instanceof Error) {
 									errorMsg = e.message;
 								} else if (typeof e === "object" && e !== null) {
-									const err = e as any;
+									const err = e as Record<string, unknown>;
 									if (Array.isArray(err?.message)) {
-										errorMsg = err.message.join(", ");
-									} else if (err?.message) {
+										errorMsg = (err.message as string[]).join(", ");
+									} else if (typeof err?.message === "string") {
 										errorMsg = err.message;
-									} else if (err?.error) {
+									} else if (typeof err?.error === "string") {
 										errorMsg = err.error;
 									}
 								}

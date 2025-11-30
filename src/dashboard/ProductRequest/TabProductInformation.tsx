@@ -2,33 +2,15 @@ import CustomCard from "@/components/base/CustomCard";
 import SectionTitle from "@/components/common/SectionTitle";
 import KeyValueRow from "@/components/common/KeyValueRow";
 import { useState } from "react";
+import type { CustomerRegistration, PropertyInterest } from "@/types/productRequest";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import AddProperties from "@/dashboard/Properties/AddProperties";
 import { Button } from "@/components/ui/button";
 import { modalContentStyle } from "../../components/common/commonStyles";
-// import ImageGallery from "@/components/base/ImageGallery";
-// import { media } from "@/resources/images";
 
-type PropertyInterest = {
-	id: string;
-	propertyId?: string | null;
-	paymentIntervalId?: number | null;
-	durationValue?: number | null;
-	durationUnitId?: number | null;
-	downPayment?: string | number | null;
-	isAssigned?: boolean;
-	customerRegistrationId?: string;
-	customPropertyName?: string | null;
-	customPropertyPrice?: string | number | null;
-	isCustomProperty?: boolean;
-	quantity?: number;
-};
+// Types are imported from `@/types/productRequest`
 
-type CustomerRegistration = {
-	propertyInterestRequest?: PropertyInterest[];
-};
-
-export default function TabProductInformation({ data }: { data?: CustomerRegistration | null }) {
+export default function TabProductInformation({ data, registrationId }: { data?: CustomerRegistration | null; registrationId?: string | null }) {
 	const propertyInterests: PropertyInterest[] = Array.isArray(data?.propertyInterestRequest)
 		? (data!.propertyInterestRequest as PropertyInterest[])
 		: [];
@@ -60,7 +42,7 @@ export default function TabProductInformation({ data }: { data?: CustomerRegistr
 						</div>
 						<Dialog open={addOpen} onOpenChange={setAddOpen}>
 							<DialogContent className={modalContentStyle()}>
-								<AddProperties />
+								<AddProperties propertyRequestId={registrationId} />
 							</DialogContent>
 						</Dialog>
 					</>
