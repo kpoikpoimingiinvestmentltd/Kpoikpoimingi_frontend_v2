@@ -6,17 +6,9 @@ import PaymentCard from "@/components/base/PaymentCard";
 import type { PaymentDto, ApiPaymentItem, ApiContractPayments } from "@/types/payment";
 import { FileIcon } from "@/assets/icons";
 
-// Local simplified Payment shape used by PaymentCard (not exported)
-
 export default function TabPaymentHistory({ payments }: { payments?: PaymentDto[] | undefined }) {
 	const [selected, setSelected] = React.useState<ApiPaymentItem | null>(null);
 	const [open, setOpen] = React.useState(false);
-
-	React.useEffect(() => {
-		if (payments) {
-			console.log("Payments Response Structure:", payments);
-		}
-	}, [payments]);
 
 	const handleView = (p: ApiPaymentItem) => {
 		setSelected(p);

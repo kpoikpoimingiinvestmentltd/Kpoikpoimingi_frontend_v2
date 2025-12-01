@@ -136,11 +136,16 @@ export function useCustomerFormState(paymentMethod?: "once" | "installment", ini
 
 	// Save form data to localStorage (debounced)
 	const saveTimer = React.useRef<number | null>(null);
+	const skipFormSaveRef = React.useRef(false);
 	React.useEffect(() => {
 		if (saveTimer.current) {
 			window.clearTimeout(saveTimer.current);
 		}
 		saveTimer.current = window.setTimeout(() => {
+			if (skipFormSaveRef.current) {
+				skipFormSaveRef.current = false;
+				return;
+			}
 			try {
 				localStorage.setItem(DRAFT_KEY, JSON.stringify(form));
 			} catch (err) {
@@ -155,11 +160,16 @@ export function useCustomerFormState(paymentMethod?: "once" | "installment", ini
 
 	// Save uploaded files metadata to localStorage
 	const filesTimer = React.useRef<number | null>(null);
+	const skipFilesSaveRef = React.useRef(false);
 	React.useEffect(() => {
 		if (filesTimer.current) {
 			window.clearTimeout(filesTimer.current);
 		}
 		filesTimer.current = window.setTimeout(() => {
+			if (skipFilesSaveRef.current) {
+				skipFilesSaveRef.current = false;
+				return;
+			}
 			try {
 				localStorage.setItem(UPLOADED_FILES_KEY, JSON.stringify(uploadedFiles));
 			} catch (err) {
@@ -182,7 +192,63 @@ export function useCustomerFormState(paymentMethod?: "once" | "installment", ini
 			console.warn("Failed to clear localStorage", err);
 		}
 
-		setForm(initializeFormState());
+		skipFormSaveRef.current = true;
+		skipFilesSaveRef.current = true;
+
+		if (paymentMethod === "once") {
+			setForm({
+				fullName: "",
+				email: "",
+				whatsapp: "",
+				numberOfProperties: "",
+				properties: [{ propertyName: "", quantity: 1 }],
+			} as FormState);
+		} else {
+			setForm({
+				fullName: "",
+				email: "",
+				whatsapp: "",
+				dob: "",
+				address: "",
+				isDriver: undefined,
+				nextOfKin: { fullName: "", phone: "", relationship: "", spouseName: "", spousePhone: "", address: "" },
+				propertyId: "",
+				propertyName: "",
+				isCustomProperty: false,
+				customPropertyPrice: "",
+				paymentFrequency: "",
+				paymentDurationUnit: "",
+				paymentDuration: "",
+				downPayment: "",
+				amountAvailable: "",
+				clarification: { previousAgreement: null, completedAgreement: null, prevCompany: "", reason: "" },
+				employment: { status: "", employerName: "", employerAddress: "", companyName: "", businessAddress: "", homeAddress: "" },
+				guarantors: [
+					{
+						fullName: "",
+						occupation: "",
+						phone: "",
+						email: "",
+						employmentStatus: "",
+						homeAddress: "",
+						businessAddress: "",
+						stateOfOrigin: "",
+						votersUploaded: 0,
+					},
+					{
+						fullName: "",
+						occupation: "",
+						phone: "",
+						email: "",
+						employmentStatus: "",
+						homeAddress: "",
+						businessAddress: "",
+						stateOfOrigin: "",
+						votersUploaded: 0,
+					},
+				],
+			} as FormState);
+		}
 		setUploadedFiles({});
 		uploadedFieldsRef.current.clear();
 	};

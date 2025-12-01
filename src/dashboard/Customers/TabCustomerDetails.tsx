@@ -36,11 +36,100 @@ export default function TabCustomerDetails({ customer }: { customer?: CustomerDe
 		if (!Array.isArray(mediaArray)) return [];
 		return mediaArray.map((item) => ({ url: item.fileUrl ?? "" }));
 	};
+
+	// Build summary values (support both installment and full-payment shapes)
+	const allRegistrations = customer?.registrations ?? [];
+	const allProps: Record<string, unknown>[] = [];
+	allRegistrations.forEach((r) => {
+		if (!r || typeof r !== "object") return;
+		const rec = r as Record<string, unknown>;
+		const candidates = Array.isArray(rec["propertyInterestRequest"])
+			? (rec["propertyInterestRequest"] as unknown[])
+			: Array.isArray(rec["properties"])
+			? (rec["properties"] as unknown[])
+			: [];
+		candidates.forEach((p) => {
+			if (p && typeof p === "object") allProps.push(p as Record<string, unknown>);
+		});
+	});
+
+	const propertyNames = allProps
+		.map((p) => {
+			// prefer explicit propertyName, then customPropertyName, then nested property.name
+			if (typeof p["propertyName"] === "string" && p["propertyName"]) return p["propertyName"] as string;
+			if (typeof p["customPropertyName"] === "string" && p["customPropertyName"]) return p["customPropertyName"] as string;
+			const nested = p["property"];
+			if (nested && typeof nested === "object" && typeof (nested as Record<string, unknown>)["name"] === "string") {
+				return (nested as Record<string, unknown>)["name"] as string;
+			}
+			return "";
+		})
+		.filter(Boolean);
+
+	const totalQuantity = allProps.reduce((acc, p) => acc + (Number(p.quantity) || 0), 0) || propertyNames.length || 0;
+
+	const totalAmount = allProps.reduce((acc, p) => {
+		const v = Number(p.customPropertyPrice ?? p.customPrice ?? p.price ?? p.downPayment ?? 0) || 0;
+		return acc + v * (Number(p.quantity) || 1);
+	}, 0);
+
+	const rawPt = customer?.paymentTypeId;
+	const pt = typeof rawPt === "number" ? rawPt : typeof rawPt === "string" && /^\d+$/.test(rawPt) ? Number(rawPt) : undefined;
+
+	const allPropsAreCustom =
+		allProps.length > 0 &&
+		allProps.every((p) => {
+			const rec = p as Record<string, unknown>;
+			return !!rec["isCustomProperty"] || rec["customPropertyPrice"] != null;
+		});
+
+	const paymentMethodLabel = pt === 2 || String(pt) === "2" || allPropsAreCustom ? "One time payment" : "Hire Purchase";
+
+	const isFullPayment = paymentMethodLabel === "One time payment";
 	return (
 		<CustomCard className="mt-4 border-none p-0 bg-white">
 			<SectionTitle title="Customer Details" />
 			<CustomCard className="mt-6 grid grid-cols-1 gap-6 md:p-8 bg-card">
 				{/* Personal Information */}
+				{/* Top summary for full payment / quick details */}
+				{allProps.length > 0 && (
+					<section className={titleSectionStyle}>
+						<div className="grid grid-cols-1  gap-2">
+							<KeyValueRow
+								label="Property Name"
+								value={propertyNames[0] || "N/A"}
+								leftClassName="text-sm text-muted-foreground"
+								rightClassName="text-right"
+							/>
+							<KeyValueRow
+								label="Amount"
+								value={totalAmount ? `₦${totalAmount.toLocaleString()}` : "N/A"}
+								leftClassName="text-sm text-muted-foreground"
+								rightClassName="text-right"
+							/>
+							<KeyValueRow
+								label="Payment Method"
+								value={paymentMethodLabel}
+								leftClassName="text-sm text-muted-foreground"
+								rightClassName="text-right"
+							/>
+							<KeyValueRow
+								label="Number of properties"
+								value={String(totalQuantity)}
+								leftClassName="text-sm text-muted-foreground"
+								rightClassName="text-right"
+							/>
+							{propertyNames.length > 0 && (
+								<KeyValueRow
+									label="Property Name(s)"
+									value={propertyNames.join(",")}
+									leftClassName="text-sm text-muted-foreground"
+									rightClassName="text-right"
+								/>
+							)}
+						</div>
+					</section>
+				)}
 				<section className={titleSectionStyle}>
 					<SectionTitle title="Personal information" />
 					<div className="space-y-2">
@@ -126,7 +215,7 @@ export default function TabCustomerDetails({ customer }: { customer?: CustomerDe
 					</div>
 				</section>{" "}
 				{/* Next of Kin Details */}
-				{nok && (
+				{!isFullPayment && nok && (
 					<section className={titleSectionStyle}>
 						<SectionTitle title="Next of kin details" />
 						<div className="grid grid-cols-1 gap-2">
@@ -168,8 +257,8 @@ export default function TabCustomerDetails({ customer }: { customer?: CustomerDe
 						</div>
 					</section>
 				)}
-				{/* Property Details */}
-				{property && (
+				{/* Property Details (hire-purchase only) */}
+				{!isFullPayment && property && (
 					<section className={titleSectionStyle}>
 						<SectionTitle title="Property details" />
 						<div className="grid grid-cols-1 gap-2">
@@ -210,36 +299,38 @@ export default function TabCustomerDetails({ customer }: { customer?: CustomerDe
 						</div>
 					</section>
 				)}
-				{/* Clarification Details */}
-				<section className={titleSectionStyle}>
-					<SectionTitle title="Clarification details" />
-					<div className="grid grid-cols-1 gap-2">
-						<KeyValueRow
-							label="Previous hire purchase"
-							value={registration?.previousHirePurchase || "N/A"}
-							leftClassName="text-sm text-muted-foreground"
-							rightClassName="text-right"
-						/>
-						{registration?.previousCompany && (
+				{/* Clarification Details (hire-purchase only) */}
+				{!isFullPayment && (
+					<section className={titleSectionStyle}>
+						<SectionTitle title="Clarification details" />
+						<div className="grid grid-cols-1 gap-2">
 							<KeyValueRow
-								label="Previous hire purchase company"
-								value={registration.previousCompany}
+								label="Previous hire purchase"
+								value={registration?.previousHirePurchase || "N/A"}
 								leftClassName="text-sm text-muted-foreground"
 								rightClassName="text-right"
 							/>
-						)}
-						{registration?.wasPreviousCompleted && (
-							<KeyValueRow
-								label="Was previous agreement completed"
-								value={registration.wasPreviousCompleted}
-								leftClassName="text-sm text-muted-foreground"
-								rightClassName="text-right"
-							/>
-						)}
-					</div>
-				</section>
-				{/* Employment Details */}
-				{employment && (
+							{registration?.previousCompany && (
+								<KeyValueRow
+									label="Previous hire purchase company"
+									value={registration.previousCompany}
+									leftClassName="text-sm text-muted-foreground"
+									rightClassName="text-right"
+								/>
+							)}
+							{registration?.wasPreviousCompleted && (
+								<KeyValueRow
+									label="Was previous agreement completed"
+									value={registration.wasPreviousCompleted}
+									leftClassName="text-sm text-muted-foreground"
+									rightClassName="text-right"
+								/>
+							)}
+						</div>
+					</section>
+				)}
+				{/* Employment Details (hire-purchase only) */}
+				{!isFullPayment && employment && (
 					<section className={titleSectionStyle}>
 						<SectionTitle title="Employment details" />
 						<div className="grid grid-cols-1 gap-2">
@@ -289,78 +380,80 @@ export default function TabCustomerDetails({ customer }: { customer?: CustomerDe
 						or any other person at my or any other place it may be found in the event of my default in paying the Hire Purchase sum as agreed.
 					</small>
 				</div>
-				<section className={titleSectionStyle}>
-					<SectionTitle
-						title="Guarantor (1)"
-						children={
-							<>
-								<small className="text-[#131212B2] ">
-									As a guarantor, I hereby guaranty to pay all sums due under the Hire Purchase Agreement in the event of default by the Applicant.{" "}
-									<br />
-									<br /> I accept that messages, notices, processes and other correspondences where necessary, sent to my WhatsApp number as shown
-									herein are properly delivered and served on me.
-								</small>
-							</>
-						}
-					/>
-					<div className="grid grid-cols-1 gap-2">
-						<KeyValueRow
-							label="Full name"
-							value={guarantors[0]?.fullName || "N/A"}
-							leftClassName="text-sm text-muted-foreground"
-							rightClassName="text-right"
+				{!isFullPayment && (
+					<section className={titleSectionStyle}>
+						<SectionTitle
+							title="Guarantor (1)"
+							children={
+								<>
+									<small className="text-[#131212B2] ">
+										As a guarantor, I hereby guaranty to pay all sums due under the Hire Purchase Agreement in the event of default by the Applicant.{" "}
+										<br />
+										<br /> I accept that messages, notices, processes and other correspondences where necessary, sent to my WhatsApp number as shown
+										herein are properly delivered and served on me.
+									</small>
+								</>
+							}
 						/>
-						<KeyValueRow
-							label="Occupation"
-							value={guarantors[0]?.occupation || "N/A"}
-							leftClassName="text-sm text-muted-foreground"
-							rightClassName="text-right"
-						/>
-						<KeyValueRow
-							label="Phone number"
-							value={formatPhoneNumber(guarantors[0]?.phoneNumber) || "N/A"}
-							leftClassName="text-sm text-muted-foreground"
-							rightClassName="text-right"
-						/>
-						<KeyValueRow
-							label="Email"
-							value={guarantors[0]?.email || "N/A"}
-							leftClassName="text-sm text-muted-foreground"
-							rightClassName="text-right"
-						/>
-						<KeyValueRow
-							label="Employment status"
-							value={guarantors[0]?.employmentStatus?.status || "N/A"}
-							leftClassName="text-sm text-muted-foreground"
-							rightClassName="text-right"
-						/>
-						<KeyValueRow
-							label="Home address"
-							value={guarantors[0]?.homeAddress || "N/A"}
-							leftClassName="text-sm text-muted-foreground"
-							rightClassName="text-right"
-						/>
-						<KeyValueRow
-							label="Business address"
-							value={guarantors[0]?.companyAddress || guarantors[0]?.businessAddress || "N/A"}
-							leftClassName="text-sm text-muted-foreground"
-							rightClassName="text-right"
-						/>
-						<KeyValueRow
-							label="State of origin"
-							value={getStateNameById(guarantors[0]?.stateOfOrigin) || "N/A"}
-							leftClassName="text-sm text-muted-foreground"
-							rightClassName="text-right"
-						/>
-						<KeyValueRow
-							label="Identity documents"
-							className="items-center"
-							variant="files"
-							files={transformMediaFiles(registration?.mediaFiles?.guarantor_0_doc ?? [])}
-							leftClassName="text-sm text-muted-foreground"
-						/>
-					</div>
-				</section>
+						<div className="grid grid-cols-1 gap-2">
+							<KeyValueRow
+								label="Full name"
+								value={guarantors[0]?.fullName || "N/A"}
+								leftClassName="text-sm text-muted-foreground"
+								rightClassName="text-right"
+							/>
+							<KeyValueRow
+								label="Occupation"
+								value={guarantors[0]?.occupation || "N/A"}
+								leftClassName="text-sm text-muted-foreground"
+								rightClassName="text-right"
+							/>
+							<KeyValueRow
+								label="Phone number"
+								value={formatPhoneNumber(guarantors[0]?.phoneNumber) || "N/A"}
+								leftClassName="text-sm text-muted-foreground"
+								rightClassName="text-right"
+							/>
+							<KeyValueRow
+								label="Email"
+								value={guarantors[0]?.email || "N/A"}
+								leftClassName="text-sm text-muted-foreground"
+								rightClassName="text-right"
+							/>
+							<KeyValueRow
+								label="Employment status"
+								value={guarantors[0]?.employmentStatus?.status || "N/A"}
+								leftClassName="text-sm text-muted-foreground"
+								rightClassName="text-right"
+							/>
+							<KeyValueRow
+								label="Home address"
+								value={guarantors[0]?.homeAddress || "N/A"}
+								leftClassName="text-sm text-muted-foreground"
+								rightClassName="text-right"
+							/>
+							<KeyValueRow
+								label="Business address"
+								value={guarantors[0]?.companyAddress || guarantors[0]?.businessAddress || "N/A"}
+								leftClassName="text-sm text-muted-foreground"
+								rightClassName="text-right"
+							/>
+							<KeyValueRow
+								label="State of origin"
+								value={getStateNameById(guarantors[0]?.stateOfOrigin) || "N/A"}
+								leftClassName="text-sm text-muted-foreground"
+								rightClassName="text-right"
+							/>
+							<KeyValueRow
+								label="Identity documents"
+								className="items-center"
+								variant="files"
+								files={transformMediaFiles(registration?.mediaFiles?.guarantor_0_doc ?? [])}
+								leftClassName="text-sm text-muted-foreground"
+							/>
+						</div>
+					</section>
+				)}
 				{guarantors.length > 1 && (
 					<section className={titleSectionStyle}>
 						<SectionTitle

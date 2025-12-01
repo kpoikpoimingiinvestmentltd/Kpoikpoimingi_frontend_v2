@@ -21,7 +21,6 @@ export default function Contract() {
 	const [page, setPage] = React.useState(1);
 	const [search, setSearch] = React.useState("");
 
-	// Default sort: createdAt descending (newest first)
 	const sortBy = "createdAt";
 	const sortOrder = "desc";
 

@@ -100,7 +100,10 @@ export type CustomerRegistrationDto = { id: string; status?: string };
 // Form-related types
 export interface PropertyItem {
 	propertyName: string;
-	quantity: number;
+	quantity: number | string;
+	propertyId?: string;
+	isCustomProperty?: boolean;
+	customPropertyPrice?: number;
 }
 
 export interface FileUploadState {

@@ -17,6 +17,7 @@ import ActionButton from "../../components/base/ActionButton";
 import { useGetAllCustomers, useDeleteCustomer } from "@/api/customer";
 import { TableSkeleton } from "@/components/common/Skeleton";
 import { toast } from "sonner";
+import { extractErrorMessage } from "@/lib/utils";
 
 export default function Customers() {
 	const [page, setPage] = React.useState(1);
@@ -36,7 +37,7 @@ export default function Customers() {
 		},
 		(err) => {
 			console.error("Error deleting customer:", err);
-			toast.error("Failed to delete customer");
+			toast.error(extractErrorMessage(err, "Failed to delete customer"));
 		}
 	);
 

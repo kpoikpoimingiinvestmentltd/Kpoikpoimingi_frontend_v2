@@ -1,5 +1,4 @@
 import CustomInput from "@/components/base/CustomInput";
-import { Textarea } from "@/components/ui/textarea";
 import { inputStyle, labelStyle } from "@/components/common/commonStyles";
 import { twMerge } from "tailwind-merge";
 import { CalendarIcon, EmailIcon, WhatsappIcon } from "@/assets/icons";
@@ -62,7 +61,7 @@ export default function PersonalDetailsSection({ form, handleChange, centeredCon
 
 			<div className="mt-4">
 				<label className={labelStyle()}>Home Address*</label>
-				<Textarea value={form.address} onChange={(e) => handleChange("address", e.target.value)} className={twMerge(inputStyle, "h-auto min-h-24")} />
+				<CustomInput value={form.address} onChange={(e) => handleChange("address", e.target.value)} className={twMerge(inputStyle)} />
 			</div>
 		</div>
 	);

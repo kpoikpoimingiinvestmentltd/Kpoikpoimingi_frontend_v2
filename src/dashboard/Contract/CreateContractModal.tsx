@@ -7,6 +7,7 @@ import { inputStyle, labelStyle, modalContentStyle, selectTriggerStyle } from ".
 import { useGetReferenceData } from "@/api/reference";
 import { Spinner } from "@/components/ui/spinner";
 import { useForm, Controller } from "react-hook-form";
+import { useQueryClient } from "@tanstack/react-query";
 import ConfirmModal from "@/components/common/ConfirmModal";
 import { useCreateContract, useGetAllCustomerRegistrations } from "@/api/contracts";
 import ContractSuccessModal from "./ContractSuccessModal";
@@ -100,6 +101,8 @@ export default function CreateContractModal({ open, onOpenChange }: { open: bool
 		defaultValues: getDefaultValues(),
 	});
 
+	const queryClient = useQueryClient();
+
 	const paymentTypeId = watch("paymentTypeId");
 	const watchedIntervalId = watch("intervalId");
 
@@ -153,6 +156,7 @@ export default function CreateContractModal({ open, onOpenChange }: { open: bool
 	}, [refData]);
 
 	// Auto-sync duration unit with selected payment interval (weekly vs monthly)
+	// Do not clear an already-provided `durationValue` (e.g., when selecting a customer with prefills).
 	React.useEffect(() => {
 		if (!watchedIntervalId) return;
 		const selected = intervalCandidates.find((it) => String(it.key) === String(watchedIntervalId));
@@ -168,10 +172,12 @@ export default function CreateContractModal({ open, onOpenChange }: { open: bool
 
 		if (unitKey) {
 			setValue("durationUnitId", String(unitKey));
-			// reset duration value so user selects appropriate option
-			setValue("durationValue", undefined as unknown as number);
+			// Only clear durationValue if there was no existing value (preserve prefills)
+			if (watchedDurationValue === undefined || watchedDurationValue === null || String(watchedDurationValue).trim() === "") {
+				setValue("durationValue", undefined as unknown as number);
+			}
 		}
-	}, [watchedIntervalId, intervalCandidates, durationCandidates, setValue]);
+	}, [watchedIntervalId, intervalCandidates, durationCandidates, setValue, watchedDurationValue]);
 
 	const onFormSubmit = (values: Record<string, unknown>) => {
 		const payload: ContractPayload = {
@@ -180,16 +186,41 @@ export default function CreateContractModal({ open, onOpenChange }: { open: bool
 			paymentTypeId: Number(values.paymentTypeId),
 			quantity: Number(values.quantity) || 1,
 			downPayment: Number(values.downPayment) || 0,
-			intervalId: typeof values.intervalId === "string" || typeof values.intervalId === "number" ? Number(values.intervalId) : undefined,
-			durationValue: Number(values.durationValue),
+			intervalId:
+				values.intervalId !== undefined && values.intervalId !== null && String(values.intervalId).trim() !== ""
+					? Number(values.intervalId)
+					: undefined,
+			durationValue:
+				values.durationValue !== undefined && values.durationValue !== null && String(values.durationValue).trim() !== ""
+					? Number(values.durationValue)
+					: undefined,
 			durationUnitId:
-				typeof values.durationUnitId === "string" || typeof values.durationUnitId === "number" ? Number(values.durationUnitId) : undefined,
+				values.durationUnitId !== undefined && values.durationUnitId !== null && String(values.durationUnitId).trim() !== ""
+					? Number(values.durationUnitId)
+					: undefined,
 			startDate: typeof values.startDate === "string" && values.startDate ? new Date(values.startDate).toISOString() : undefined,
 			remarks: typeof values.remarks === "string" ? values.remarks : undefined,
 			isCash: !!values.isCash,
 			isPaymentLink: !!values.isPaymentLink,
 		};
 
+		// Client-side validation for hire-purchase contracts to avoid server 400s
+		const resolvedPaymentType = Number(values.paymentTypeId);
+		if (resolvedPaymentType === 1) {
+			const missing: string[] = [];
+			if (!payload.intervalId) missing.push("payment interval");
+			if (!payload.durationValue && payload.durationValue !== 0) missing.push("duration value");
+			if (!payload.durationUnitId) missing.push("duration unit");
+			if (!payload.startDate) missing.push("start date");
+
+			if (missing.length > 0) {
+				toast.error(`Missing required fields for Hire Purchase: ${missing.join(", ")}`);
+				console.debug("Contract payload blocked due to missing fields:", payload);
+				return;
+			}
+		}
+
+		console.debug("Contract payload preview:", payload);
 		setPreviewPayload(payload);
 		setConfirmOpen(true);
 	};
@@ -219,6 +250,9 @@ export default function CreateContractModal({ open, onOpenChange }: { open: bool
 			setConfirmOpen(false);
 			onOpenChange(false);
 			setSelectedCustomerData(null);
+			try {
+				queryClient.invalidateQueries({ queryKey: ["contracts"] });
+			} catch {}
 			setTimeout(() => setShowSuccess(true), 200);
 		},
 		(err: unknown) => {
@@ -238,9 +272,9 @@ export default function CreateContractModal({ open, onOpenChange }: { open: bool
 
 					<form
 						onSubmit={rhfHandleSubmit(onFormSubmit)}
-						className="grid max-w-2xl mx-auto items-end grid-cols-1 sm:grid-cols-2 gap-4 md:gap-x-8 md:gap-y-5 py-4">
+						className="grid max-w-2xl mx-auto grid-cols-1 md:grid-cols-2 gap-4 md:gap-x-8 md:gap-y-5 py-4">
 						{/* Customer Selection */}
-						<div>
+						<div className="w-full">
 							<Label className={labelStyle()}>Full name*</Label>
 							<Controller
 								control={control}
@@ -280,7 +314,7 @@ export default function CreateContractModal({ open, onOpenChange }: { open: bool
 						</div>
 
 						{/* Payment Type */}
-						<div>
+						<div className="w-full">
 							<Label className={labelStyle()}>Payment Type*</Label>
 							<Controller
 								control={control}
@@ -317,7 +351,7 @@ export default function CreateContractModal({ open, onOpenChange }: { open: bool
 								/>
 
 								{/* Payment Interval */}
-								<div>
+								<div className="w-full">
 									<Label className={labelStyle()}>Payment Interval*</Label>
 									<Controller
 										control={control}
@@ -351,7 +385,7 @@ export default function CreateContractModal({ open, onOpenChange }: { open: bool
 								</div>
 
 								{/* Duration Unit */}
-								<div>
+								<div className="w-full">
 									<Label className={labelStyle()}>Duration Unit*</Label>
 									<Controller
 										control={control}
@@ -382,7 +416,7 @@ export default function CreateContractModal({ open, onOpenChange }: { open: bool
 								</div>
 
 								{/* Duration Value */}
-								<div>
+								<div className="w-full">
 									<Label className={labelStyle()}>
 										{(() => {
 											const sel = intervalCandidates.find((it) => String(it.key) === String(watchedIntervalId));

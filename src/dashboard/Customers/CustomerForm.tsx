@@ -21,6 +21,8 @@ import {
 	extractEmploymentStatusOptions,
 	extractStateOptions,
 } from "@/lib/referenceDataHelpers";
+import { useNavigate } from "react-router";
+import { _router } from "@/routes/_router";
 
 type Props = {
 	onSubmit?: (data: unknown) => void;
@@ -53,6 +55,9 @@ export default function CustomerForm({
 		paymentMethod,
 		initial
 	);
+
+	// Navigation helper
+	const navigate = useNavigate();
 
 	// API hooks
 	const [presignUpload] = usePresignUploadMutation();
@@ -168,11 +173,11 @@ export default function CustomerForm({
 					fullName: onceForm.fullName,
 					email: onceForm.email,
 					phoneNumber: formatPhoneNumber(onceForm.whatsapp),
-					paymentTypeId: 1, // Assuming 1 = full payment
+					paymentTypeId: 2, // Full Payment
 					properties: onceForm.properties.map((prop) => ({
-						propertyId: prop.propertyName,
-						quantity: prop.quantity,
-						isCustomProperty: true,
+						propertyId: prop.propertyId && String(prop.propertyId).trim() ? prop.propertyId : prop.propertyName,
+						quantity: Number(prop.quantity) || 0,
+						isCustomProperty: !!prop.isCustomProperty || !prop.propertyId,
 					})),
 				};
 
@@ -190,6 +195,8 @@ export default function CustomerForm({
 
 				// Reset form completely (localStorage + state)
 				resetFormCompletely();
+				// After successful creation, navigate back to customers list (non-edit)
+				if (!isEditMode) navigate(_router.dashboard.customers);
 
 				// Call parent onSubmit if provided
 				if (onSubmit) {
@@ -205,7 +212,7 @@ export default function CustomerForm({
 					email: installmentForm.email,
 					homeAddress: installmentForm.address,
 					phoneNumber: formatPhoneNumber(installmentForm.whatsapp),
-					paymentTypeId: 2, // Assuming 2 = installment
+					paymentTypeId: 1, // Hire Purchase
 					isDriver: installmentForm.isDriver ? "Yes" : "No",
 					requestAgreement: "I hereby request to be a customer of the company",
 					requestAgreementAt: new Date().toISOString(),
@@ -289,8 +296,8 @@ export default function CustomerForm({
 					toast.success(`Registration created successfully! Code: ${response.registrationCode}`);
 				}
 
-				// Reset form completely (localStorage + state)
 				resetFormCompletely();
+				if (!isEditMode) navigate(_router.dashboard.customers);
 
 				// Call parent onSubmit if provided
 				if (onSubmit) {

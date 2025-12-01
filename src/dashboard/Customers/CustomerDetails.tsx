@@ -30,15 +30,79 @@ export default function CustomerDetails() {
 	const { data: receipts } = useGetCustomerReceipts(id, true);
 	const [isEditOpen, setIsEditOpen] = useState(false);
 
-	// Use the first approved registration if available, otherwise use customer data
+	const hasFullName = (obj: unknown): obj is { fullName?: string } => typeof obj === "object" && obj !== null && "fullName" in obj;
+
+	const getStringField = (obj: unknown, key: string): string | undefined => {
+		if (!obj || typeof obj !== "object") return undefined;
+		const rec = obj as Record<string, unknown>;
+		const v = rec[key];
+		return typeof v === "string" ? v : undefined;
+	};
+
+	const getNumberField = (obj: unknown, key: string): number | undefined => {
+		if (!obj || typeof obj !== "object") return undefined;
+		const rec = obj as Record<string, unknown>;
+		const v = rec[key];
+		if (typeof v === "number") return v;
+		if (typeof v === "string" && /^\d+$/.test(v)) return Number(v);
+		return undefined;
+	};
+
+	const getArrayField = (obj: unknown, key: string): unknown[] | undefined => {
+		if (!obj || typeof obj !== "object") return undefined;
+		const rec = obj as Record<string, unknown>;
+		const v = rec[key];
+		return Array.isArray(v) ? (v as unknown[]) : undefined;
+	};
+
+	const displayName = customer
+		? hasFullName(customer) && customer.fullName
+			? customer.fullName
+			: customer.name ?? getStringField(Array.isArray(approvedRegistrations) ? approvedRegistrations[0] : approvedRegistrations, "fullName") ?? ""
+		: "";
+
 	const registrationForEdit = Array.isArray(approvedRegistrations) ? approvedRegistrations[0] : approvedRegistrations || customer;
+
+	const registrationsFromCustomer = getArrayField(customer, "registrations");
+	const registrationsToPass =
+		registrationsFromCustomer && registrationsFromCustomer.length > 0
+			? registrationsFromCustomer
+			: Array.isArray(approvedRegistrations) && approvedRegistrations.length > 0
+			? approvedRegistrations
+			: undefined;
+
+	const resolveIsFullPayment = (): boolean => {
+		// check top-level customer
+		if (customer && typeof customer === "object") {
+			const cust = customer as Record<string, unknown>;
+			if (cust.paymentType && typeof cust.paymentType === "object") {
+				const pt = cust.paymentType as Record<string, unknown>;
+				if (pt.id === 2 || (typeof pt.id === "string" && pt.id === "2")) return true;
+			}
+			if (cust.paymentTypeId === 2 || (typeof cust.paymentTypeId === "string" && cust.paymentTypeId === "2")) return true;
+		}
+
+		// check registrationForEdit (preferred source)
+		if (registrationForEdit && typeof registrationForEdit === "object") {
+			const reg = registrationForEdit as Record<string, unknown>;
+			if (reg.paymentType && typeof reg.paymentType === "object") {
+				const pt = reg.paymentType as Record<string, unknown>;
+				if (pt.id === 2 || (typeof pt.id === "string" && pt.id === "2")) return true;
+			}
+			if (reg.paymentTypeId === 2 || (typeof reg.paymentTypeId === "string" && reg.paymentTypeId === "2")) return true;
+		}
+
+		return false;
+	};
+
+	const isFullPaymentFromRegistration = resolveIsFullPayment();
 
 	return (
 		<PageWrapper className="flex flex-col gap-6">
 			<div className="flex items-center justify-between flex-wrap gap-4">
 				<div>
 					<h1 className="text-xl font-medium">Customers Details</h1>
-					<p className="text-sm text-muted-foreground mt-1">{customer ? String(customer.name ?? "") : ""}</p>
+					<p className="text-sm text-muted-foreground mt-1">{String(displayName)}</p>
 				</div>
 				<div className="flex items-center gap-3">
 					<button
@@ -58,18 +122,28 @@ export default function CustomerDetails() {
 						<TabsTrigger value="details" className={tabStyle}>
 							Customer details
 						</TabsTrigger>
-						<TabsTrigger value="contract" className={tabStyle}>
-							Contracts
-						</TabsTrigger>
+						{(() => {
+							const isFullPayment = isFullPaymentFromRegistration;
+							return (
+								<TabsTrigger value="contract" className={tabStyle} disabled={isFullPayment}>
+									Contracts
+								</TabsTrigger>
+							);
+						})()}
 						<TabsTrigger value="payments" className={tabStyle}>
 							Payment History
 						</TabsTrigger>
 						<TabsTrigger value="receipt" className={tabStyle}>
 							Receipt
 						</TabsTrigger>
-						<TabsTrigger value="document" className={tabStyle}>
-							Document
-						</TabsTrigger>
+						{(() => {
+							const isFullPayment = isFullPaymentFromRegistration;
+							return (
+								<TabsTrigger value="document" className={tabStyle} disabled={isFullPayment}>
+									Document
+								</TabsTrigger>
+							);
+						})()}
 					</TabsList>
 
 					<div className="mt-6">
@@ -78,12 +152,28 @@ export default function CustomerDetails() {
 								customer={
 									customer
 										? {
-												fullName: customer.name,
-												email: customer.email,
-												phoneNumber: customer.phone,
-												customerCode: customer.id,
-												createdAt: customer.createdAt,
-												registrations: undefined,
+												fullName:
+													hasFullName(customer) && customer.fullName
+														? customer.fullName
+														: customer.name ??
+														  getStringField(Array.isArray(approvedRegistrations) ? approvedRegistrations[0] : approvedRegistrations, "fullName"),
+												email: getStringField(customer, "email") ?? customer?.email,
+												phoneNumber:
+													getStringField(customer, "phoneNumber") ??
+													getStringField(customer, "phone") ??
+													(Array.isArray(approvedRegistrations)
+														? getStringField(approvedRegistrations[0], "phoneNumber") ?? getStringField(approvedRegistrations[0], "phone")
+														: getStringField(approvedRegistrations, "phoneNumber") ?? getStringField(approvedRegistrations, "phone")),
+												customerCode:
+													getStringField(customer, "customerCode") ??
+													(customer && typeof customer === "object" ? String((customer as Record<string, unknown>).id) : undefined),
+												createdAt: getStringField(customer, "createdAt") ?? customer?.createdAt ?? undefined,
+												registrations: registrationsToPass,
+												paymentTypeId:
+													getNumberField(customer, "paymentTypeId") ??
+													(Array.isArray(approvedRegistrations)
+														? getNumberField(approvedRegistrations[0], "paymentTypeId")
+														: getNumberField(approvedRegistrations, "paymentTypeId")),
 										  }
 										: null
 								}

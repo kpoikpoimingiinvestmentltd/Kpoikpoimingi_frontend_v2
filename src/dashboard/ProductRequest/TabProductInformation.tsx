@@ -8,8 +8,6 @@ import AddProperties from "@/dashboard/Properties/AddProperties";
 import { Button } from "@/components/ui/button";
 import { modalContentStyle } from "../../components/common/commonStyles";
 
-// Types are imported from `@/types/productRequest`
-
 export default function TabProductInformation({ data, registrationId }: { data?: CustomerRegistration | null; registrationId?: string | null }) {
 	const propertyInterests: PropertyInterest[] = Array.isArray(data?.propertyInterestRequest)
 		? (data!.propertyInterestRequest as PropertyInterest[])

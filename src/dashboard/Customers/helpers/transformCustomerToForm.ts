@@ -155,10 +155,33 @@ export function getCustomerPaymentMethod(customer: unknown): "once" | "installme
 	if (!customer || typeof customer !== "object") return undefined;
 	const c = customer as Record<string, unknown>;
 
-	if (c.paymentTypeId === 1) return "once";
-	if (c.paymentTypeId === 2) return "installment";
+	// Reference: 1 = Hire Purchase (installment), 2 = Full Payment (once)
+	const explicitId = (() => {
+		if (typeof c.paymentTypeId === "number") return c.paymentTypeId as number;
+		if (typeof c.paymentTypeId === "string" && /^\d+$/.test(c.paymentTypeId)) return Number(c.paymentTypeId);
+		if (c.paymentType && typeof c.paymentType === "object") {
+			const pt = c.paymentType as Record<string, unknown>;
+			if (typeof pt.id === "number") return pt.id;
+			if (typeof pt.id === "string" && /^\d+$/.test(pt.id)) return Number(pt.id);
+			if (typeof pt.type === "string") {
+				if (pt.type.toLowerCase().includes("full")) return 2;
+				if (pt.type.toLowerCase().includes("hire") || pt.type.toLowerCase().includes("install")) return 1;
+			}
+		}
+		return undefined;
+	})();
 
-	if (Array.isArray(c.propertyInterestRequest) && c.propertyInterestRequest.length > 0) return "installment";
+	if (explicitId === 1) return "installment";
+	if (explicitId === 2) return "once";
+
+	if (Array.isArray(c.propertyInterestRequest) && c.propertyInterestRequest.length > 0) {
+		const first = c.propertyInterestRequest[0] as Record<string, unknown> | undefined;
+		if (first) {
+			if (first.paymentInterval || first.durationValue || first.durationUnit) return "installment";
+			if (first.isCustomProperty || first.customPropertyPrice || first.customPropertyName) return "once";
+		}
+		return "installment";
+	}
 
 	if (Array.isArray(c.properties) && c.properties.length > 0) return "once";
 

@@ -127,6 +127,20 @@ export function usePauseContract(onSuccess?: (data: unknown) => void, onError?: 
 	});
 }
 
+export async function terminateContract(id: string, payload: { reason: string }) {
+	return apiPost(API_ROUTES.contracts.terminateContract(id), payload);
+}
+
+export function useTerminateContract(onSuccess?: (data: unknown) => void, onError?: (err: unknown) => void) {
+	return useMutation<unknown, unknown, { id: string; reason: string }>({
+		mutationFn: async ({ id, reason }) => {
+			return terminateContract(id, { reason });
+		},
+		onSuccess: (data) => onSuccess?.(data),
+		onError: (err) => onError?.(err),
+	});
+}
+
 export async function resumeContract(id: string) {
 	return apiPost(API_ROUTES.contracts.resumeContract(id), {});
 }

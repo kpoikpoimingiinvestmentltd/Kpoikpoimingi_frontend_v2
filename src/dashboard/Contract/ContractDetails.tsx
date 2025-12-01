@@ -1,4 +1,3 @@
-// React import not required with new JSX runtime
 import PageTitles from "@/components/common/PageTitles";
 import CustomCard from "@/components/base/CustomCard";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -16,7 +15,8 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@
 import CustomInput from "@/components/base/CustomInput";
 import TabDocument from "./TabDocument";
 import { useParams } from "react-router";
-import { useGetContractById, usePauseContract, useResumeContract } from "@/api/contracts";
+import { useGetContractById, usePauseContract, useResumeContract, useTerminateContract } from "@/api/contracts";
+import { extractErrorMessage } from "@/lib/utils";
 import { Skeleton } from "@/components/common/Skeleton";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
@@ -58,6 +58,20 @@ export default function ContractDetails() {
 		}
 	);
 
+	const terminateMutation = useTerminateContract(
+		(response) => {
+			const message = (response as { message?: string })?.message ?? "Contract terminated successfully";
+			toast.success(message);
+			setTerminateOpen(false);
+			setOtherPauseReason("");
+			queryClient.invalidateQueries({ queryKey: ["contract", id] });
+		},
+		(err) => {
+			const message = extractErrorMessage(err, "Failed to terminate contract");
+			toast.error(message);
+		}
+	);
+
 	const handlePauseContract = () => {
 		if (!id) return;
 		const reason = pauseReason === "Other Reasons" ? otherPauseReason : pauseReason;
@@ -68,6 +82,16 @@ export default function ContractDetails() {
 	const handleResumeContract = () => {
 		if (!id) return;
 		resumeMutation.mutate(id);
+	};
+
+	const handleTerminateContract = () => {
+		if (!id) return;
+		const reason = otherPauseReason || "";
+		if (!reason.trim()) {
+			toast.error("Please provide a reason for terminating the contract");
+			return;
+		}
+		terminateMutation.mutate({ id, reason });
 	};
 
 	if (isLoading) {
@@ -188,7 +212,12 @@ export default function ContractDetails() {
 								/>
 							</div>
 							<DialogFooter className="mt-8">
-								<ActionButton className="w-full bg-primary text-white py-3">Terminate Now</ActionButton>
+								<ActionButton
+									className="w-full bg-primary text-white py-3"
+									onClick={handleTerminateContract}
+									disabled={terminateMutation.status === "pending"}>
+									{terminateMutation.status === "pending" ? "Terminating..." : "Terminate Now"}
+								</ActionButton>
 							</DialogFooter>
 						</DialogContent>
 					</Dialog>

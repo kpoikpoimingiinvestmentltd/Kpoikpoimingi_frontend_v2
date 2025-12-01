@@ -43,6 +43,12 @@ export default function CustomInput({
 	const [internal, setInternal] = React.useState<string>((props.value as string) ?? "");
 
 	React.useEffect(() => {
+		const v = props.value as string | number | undefined;
+		const normalized = v == null ? "" : String(v);
+		setInternal(normalized);
+	}, [props.value]);
+
+	React.useEffect(() => {
 		let mounted = true;
 		const id = setTimeout(() => {
 			if (mounted && typeof onSearch === "function") onSearch(internal);

@@ -98,4 +98,5 @@ export type CustomerDetails = {
 	customerCode?: string;
 	createdAt?: string;
 	registrations?: Registration[];
+	paymentTypeId?: number | string;
 };

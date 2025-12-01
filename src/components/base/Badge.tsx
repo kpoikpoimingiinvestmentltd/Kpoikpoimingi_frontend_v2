@@ -36,6 +36,8 @@ const statusClassMap: Record<string, string> = {
 	cancelled: "bg-red-100 text-red-800",
 	canceled: "bg-red-100 text-red-800",
 	expired: "bg-orange-100 text-orange-800",
+	terminated: "bg-red-100 text-red-800",
+	paused: "bg-blue-100 text-blue-800",
 	primary: "bg-primary/10 text-primary",
 };
 
@@ -51,6 +53,8 @@ const statusDotMap: Record<string, string> = {
 	canceled: "bg-red-500",
 	primary: "bg-primary",
 	expired: "bg-orange-500",
+	terminated: "bg-red-500",
+	paused: "bg-blue-500",
 };
 
 function normalizeStatus(s: string) {
