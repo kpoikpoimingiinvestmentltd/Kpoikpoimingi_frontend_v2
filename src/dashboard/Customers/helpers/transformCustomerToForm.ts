@@ -60,6 +60,18 @@ export function transformCustomerToInstallmentForm(customer: unknown): Installme
 
 	const c = customer as Record<string, unknown>;
 
+	const toDateInput = (val: unknown) => {
+		if (!val) return "";
+		try {
+			const s = String(val);
+			const d = new Date(s);
+			if (Number.isNaN(d.getTime())) return s;
+			return d.toISOString().slice(0, 10); // YYYY-MM-DD for input[type=date]
+		} catch {
+			return String(val);
+		}
+	};
+
 	const firstInterest =
 		Array.isArray(c.propertyInterestRequest) && c.propertyInterestRequest.length > 0
 			? (c.propertyInterestRequest[0] as Record<string, unknown>)
@@ -71,7 +83,7 @@ export function transformCustomerToInstallmentForm(customer: unknown): Installme
 		fullName: (c.fullName || c.name || "") as string,
 		email: (c.email || "") as string,
 		whatsapp: (c.phoneNumber || c.phone || "") as string,
-		dob: (c.dateOfBirth || "") as string,
+		dob: toDateInput(c.dateOfBirth ?? c.dob),
 		address: (c.homeAddress || (c.employmentDetails && (c.employmentDetails as Record<string, unknown>).homeAddress) || c.address || "") as string,
 		isDriver: c.isDriver === "Yes" || c.isDriver === true ? true : c.isDriver === "No" || c.isDriver === false ? false : undefined,
 		nextOfKin: {
@@ -96,8 +108,26 @@ export function transformCustomerToInstallmentForm(customer: unknown): Installme
 		downPayment: String((firstInterest && firstInterest.downPayment) || (c.downPayment as string) || ""),
 		amountAvailable: firstInterest && firstInterest.downPayment ? String(firstInterest.downPayment) : "",
 		clarification: {
-			previousAgreement: c.previousHirePurchase === "Yes" ? true : c.previousHirePurchase === "No" ? false : null,
-			completedAgreement: c.wasPreviousCompleted === "Yes" ? true : c.wasPreviousCompleted === "No" ? false : null,
+			previousAgreement:
+				typeof c.previousHirePurchase === "string"
+					? (c.previousHirePurchase as string).toLowerCase().startsWith("y")
+						? true
+						: (c.previousHirePurchase as string).toLowerCase().startsWith("n")
+						? false
+						: null
+					: typeof c.previousHirePurchase === "boolean"
+					? (c.previousHirePurchase as boolean)
+					: null,
+			completedAgreement:
+				typeof c.wasPreviousCompleted === "string"
+					? (c.wasPreviousCompleted as string).toLowerCase().startsWith("y")
+						? true
+						: (c.wasPreviousCompleted as string).toLowerCase().startsWith("n")
+						? false
+						: null
+					: typeof c.wasPreviousCompleted === "boolean"
+					? (c.wasPreviousCompleted as boolean)
+					: null,
 			prevCompany: (c.previousCompany || "") as string,
 			reason: (c.purposeOfProperty || "") as string,
 		},

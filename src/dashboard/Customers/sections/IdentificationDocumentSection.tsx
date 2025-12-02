@@ -51,8 +51,8 @@ export default function IdentificationDocumentSection({
 						isUploaded={uploadedFieldsRef.current.has("nin")}
 						uploadedFiles={
 							uploadedFiles.nin?.map((file) => {
-								// Extract clean filename from URL
-								const filename = file.includes("/") ? file.split("/").pop() || "NIN" : file;
+								const raw = file.includes("/") ? file.split("/").pop() || "NIN" : file;
+								const filename = raw.split("?")[0];
 								const decodedName = decodeURIComponent(filename);
 								return {
 									name: decodedName,
@@ -78,7 +78,8 @@ export default function IdentificationDocumentSection({
 							isUploaded={uploadedFieldsRef.current.has("driverLicense")}
 							uploadedFiles={
 								uploadedFiles.driverLicense?.map((file) => {
-									const filename = file.includes("/") ? file.split("/").pop() || "License" : file;
+									const raw = file.includes("/") ? file.split("/").pop() || "License" : file;
+									const filename = raw.split("?")[0];
 									const decodedName = decodeURIComponent(filename);
 									return {
 										name: decodedName,
@@ -104,7 +105,8 @@ export default function IdentificationDocumentSection({
 						isUploaded={uploadedFieldsRef.current.has("contract")}
 						uploadedFiles={
 							uploadedFiles.contract?.map((file) => {
-								const filename = file.includes("/") ? file.split("/").pop() || "Contract" : file;
+								const raw = file.includes("/") ? file.split("/").pop() || "Contract" : file;
+								const filename = raw.split("?")[0];
 								const decodedName = decodeURIComponent(filename);
 								return {
 									name: decodedName,

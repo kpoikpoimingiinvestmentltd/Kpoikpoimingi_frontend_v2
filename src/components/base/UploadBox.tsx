@@ -85,7 +85,7 @@ export default function UploadBox({
 								<IconWrapper className="text-lg flex-shrink-0">
 									<FileIcon />
 								</IconWrapper>
-								<span className="text-sm text-gray-700 truncate">{file.name}</span>
+								<span className="text-sm text-gray-700 truncate overflow-hidden">{file.name}</span>
 							</div>
 							{file.onRemove && (
 								<button

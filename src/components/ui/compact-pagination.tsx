@@ -66,7 +66,7 @@ export default function CompactPagination({ page, pages, onPageChange, className
 	const end = Math.min(page * perPage, total ?? pages * perPage);
 
 	return (
-		<div className={twMerge("mt-8 flex flex-col min-[500px]:flex-row text-center justify-between items-center md:justify-between", className)}>
+		<div className={twMerge("mt-8 flex gap-4  flex-col min-[500px]:flex-row text-center justify-between items-center md:justify-between", className)}>
 			{showRange && (
 				<div className="mr-4 flex items-center text-sm text-muted-foreground">
 					Showing{" "}
@@ -76,7 +76,7 @@ export default function CompactPagination({ page, pages, onPageChange, className
 					of <span className="font-medium mx-1">{total ?? pages * perPage} </span> results
 				</div>
 			)}
-			<Pagination className="ml-auto md:justify-end justify-end">
+			<Pagination className="md:ml-auto md:justify-end justify-center">
 				<PaginationContent>
 					<PaginationItem>
 						<PaginationPrevious

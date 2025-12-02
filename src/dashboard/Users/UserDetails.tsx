@@ -404,21 +404,15 @@ export default function UserDetails() {
 								toast.success("User updated");
 								setEditOpen(false);
 							} catch (e) {
-								let errorMsg = "Failed to update user";
-								if (e instanceof Error) {
-									errorMsg = e.message;
-								} else if (typeof e === "object" && e !== null) {
-									const err = e as Record<string, unknown>;
-									if (Array.isArray(err?.message)) {
-										errorMsg = (err.message as string[]).join(", ");
-									} else if (typeof err?.message === "string") {
-										errorMsg = err.message;
-									} else if (typeof err?.error === "string") {
-										errorMsg = err.error;
-									}
+								console.error("Update user failed:", e);
+								const err = e as any;
+								const status = err?.status ?? err?.response?.status;
+								const serverMessage = err?.data?.message ?? err?.message ?? err?.response?.data?.message;
+								if (status) {
+									toast.error(`Failed to update user (status ${status}): ${serverMessage ?? "See console"}`);
+								} else {
+									toast.error(serverMessage ?? "Failed to update user");
 								}
-
-								toast.error(errorMsg);
 							}
 						}}
 						submitLabel={updateMutation.isPending || uploadProfileMutation.isPending ? "Saving..." : "Save Changes"}

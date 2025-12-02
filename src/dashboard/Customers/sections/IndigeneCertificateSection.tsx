@@ -21,7 +21,8 @@ export default function IndigeneCertificateSection({ uploadedFiles, uploadedFiel
 				isUploaded={uploadedFieldsRef.current.has("indigeneCertificate")}
 				uploadedFiles={
 					uploadedFiles.indigeneCertificate?.map((file) => {
-						const filename = file.includes("/") ? file.split("/").pop() || "certificate" : file;
+						const raw = file.includes("/") ? file.split("/").pop() || "certificate" : file;
+						const filename = raw.split("?")[0];
 						const decodedName = decodeURIComponent(filename);
 						return {
 							name: decodedName,

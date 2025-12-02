@@ -329,11 +329,11 @@ export default function Properties() {
 											id: propertyToEdit.id,
 											name: propertyToEdit.name,
 											price: propertyToEdit.price,
-											quantity: propertyToEdit.quantityTotal.toString(),
-											status: propertyToEdit.status.status,
-											numberAssigned: propertyToEdit.quantityAssigned.toString(),
-											category: propertyToEdit.category.category,
-											categoryId: propertyToEdit.category.id,
+											quantity: String(propertyToEdit.quantityTotal ?? ""),
+											status: propertyToEdit.status?.status ?? "",
+											numberAssigned: String(propertyToEdit.quantityAssigned ?? ""),
+											category: propertyToEdit.category?.category ?? "",
+											categoryId: propertyToEdit.category?.id ?? "",
 											addedOn: new Date(propertyToEdit.dateAdded).toLocaleDateString("en-US", {
 												year: "numeric",
 												month: "long",
@@ -355,20 +355,35 @@ export default function Properties() {
 							}
 							onSave={(formData: any) => {
 								if (propertyToEdit?.id) {
-									const mediaKeysArray = formData.mediaKeys || [];
-									const mediaKeysObject = mediaKeysArray.reduce((acc: any, key: string, idx: number) => {
+									const typedFormData = formData as Record<string, unknown>;
+									const mediaKeysArray = (typedFormData?.mediaKeys || []) as string[];
+									const mediaKeysObject = mediaKeysArray.reduce((acc: Record<string, string>, key: string, idx: number) => {
 										acc[`media_${idx}`] = key;
 										return acc;
 									}, {});
 
-									const payload = {
-										name: formData.name,
-										categoryId: propertyToEdit.category.id,
-										price: Number(formData.price),
-										quantityTotal: Number(formData.quantity),
-										condition: formData.condition || propertyToEdit.description || "Good",
+									const isVehicle = (propertyToEdit?.category as any)?.parent?.category?.toLowerCase().includes("vehicle") || false;
+
+									const payload: any = {
+										name: typedFormData?.name,
+										categoryId: typedFormData?.categoryId,
+										price: Number(typedFormData?.price),
+										quantityTotal: Number(typedFormData?.quantityTotal),
+										condition: typedFormData?.condition || propertyToEdit?.description || "Good",
+										description: typedFormData?.description || "",
 										mediaKeys: mediaKeysObject || {},
 									};
+
+									if (isVehicle) {
+										payload.vehicleMake = typedFormData?.vehicleMake;
+										payload.vehicleModel = typedFormData?.vehicleModel;
+										payload.vehicleYear = typedFormData?.vehicleYear ? Number(typedFormData?.vehicleYear) : undefined;
+										payload.vehicleColor = typedFormData?.vehicleColor;
+										payload.vehicleChassisNumber = typedFormData?.vehicleChassisNumber;
+										payload.vehicleType = typedFormData?.vehicleType;
+										payload.vehicleRegistrationNumber = typedFormData?.vehicleRegistrationNumber;
+									}
+
 									updateProperty.mutate({
 										id: propertyToEdit.id,
 										payload,

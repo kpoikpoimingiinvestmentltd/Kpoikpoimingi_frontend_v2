@@ -38,6 +38,9 @@ export default function AdminDashboardHeader({ onSidebarOpen, onLogoutOpen }: Ad
 	const location = useLocation();
 	const navigate = useNavigate();
 
+	// Fetch current user once for dropdown mobile display (cached by react-query)
+	const { data: currentUserForDropdown } = useGetCurrentUser(true);
+
 	const shouldShowBackButton = PAGES_WITH_BACK_BUTTON.some((pattern) => {
 		const regex = pattern.replace(/:[^/]+/g, "[^/]+");
 		return new RegExp(`^${regex}$`).test(location.pathname);
@@ -95,6 +98,18 @@ export default function AdminDashboardHeader({ onSidebarOpen, onLogoutOpen }: Ad
 						</button>
 					</DropdownMenuTrigger>
 					<DropdownMenuContent align="end" className="w-56">
+						{currentUserForDropdown && (
+							<div className="px-3 py-2 sm:hidden border-b">
+								<div className="flex flex-col items-start">
+									<span className="text-sm font-medium text-nowrap">
+										{currentUserForDropdown.fullName ?? currentUserForDropdown.email ?? currentUserForDropdown.username ?? "User"}
+									</span>
+									<span className="text-xs text-gray-400">
+										{typeof currentUserForDropdown.role === "string" ? currentUserForDropdown.role : currentUserForDropdown.role?.role ?? ""}
+									</span>
+								</div>
+							</div>
+						)}
 						<div className="px-1.5">
 							<DropdownMenuLabel>My Account</DropdownMenuLabel>
 						</div>
@@ -165,7 +180,7 @@ function UserAvatarContent() {
 				<Avatar className="w-9 h-9">
 					<AvatarFallback>U</AvatarFallback>
 				</Avatar>
-				<div className="flex flex-col items-start">
+				<div className="hidden sm:flex flex-col items-start">
 					<span className="text-sm font-medium text-nowrap">Unknown User</span>
 					<span className="text-xs text-gray-400">—</span>
 				</div>
@@ -188,7 +203,7 @@ function UserAvatarContent() {
 				<AvatarImage src={typeof data.media === "string" ? data.media : undefined} alt={`${name}'s avatar`} />
 				<AvatarFallback>{initials}</AvatarFallback>
 			</Avatar>
-			<div className="flex flex-col items-start">
+			<div className="hidden sm:flex flex-col items-start">
 				<span className="text-sm font-medium text-nowrap">{name}</span>
 				<span className="text-xs text-gray-400">{role}</span>
 			</div>

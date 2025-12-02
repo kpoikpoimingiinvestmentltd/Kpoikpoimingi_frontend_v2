@@ -55,7 +55,7 @@ export default function NotificationsPage() {
 
 	return (
 		<div>
-			<div className="flex items-center justify-between">
+			<div className="flex items-center flex-wrap gap-5 justify-between">
 				<PageTitles title="Notifications" description="All Notification for the activities carried out everyday." />
 				<button
 					type="button"
@@ -76,7 +76,7 @@ export default function NotificationsPage() {
 						})
 					}
 					className="bg-primary text-white px-4 text-sm py-2 rounded-md">
-					{markAllMutation.isPending ? "Processing..." : "Mark all read"}
+					{markAllMutation.isPending ? "Processing..." : "Mark all as read"}
 				</button>
 			</div>
 
@@ -108,9 +108,7 @@ export default function NotificationsPage() {
 								))}
 							</div>
 
-							<div>
-								<CompactPagination page={pagination.page} pages={pagination.totalPages || 1} onPageChange={(p) => setPage(p)} showRange />
-							</div>
+							<CompactPagination page={pagination.page} pages={pagination.totalPages || 1} onPageChange={(p) => setPage(p)} showRange />
 						</div>
 					</CustomCard>
 				) : (
@@ -143,14 +141,14 @@ function NotificationItem({ title, time, type }: Notification) {
 	};
 	const icon = iconMap[type ?? "default"] ?? iconMap.default;
 	return (
-		<div className="flex items-center gap-4 p-5 rounded-md bg-card">
+		<div className="flex items-start sm:items-center gap-4 p-5 rounded-md bg-card">
 			<IconWrapper className="bg-[#1312120D] w-10 h-10 text-xl text-primary rounded-md">{icon}</IconWrapper>
 			<div className="flex-1">
-				<div className="flex justify-between items-center">
+				<div className="flex justify-between items-center gap-5 flex-wrap">
 					<div className="max-w-2xl">
 						<p className="text-sm">{title}</p>
 					</div>
-					<p className="text-sm text-end text-gray-400">{time ?? ""}</p>
+					<p className="text-sm text-end ml-auto text-gray-400">{time ?? ""}</p>
 				</div>
 			</div>
 		</div>

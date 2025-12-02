@@ -16,10 +16,12 @@ import { Spinner } from "@/components/ui/spinner";
 import { useForm, Controller } from "react-hook-form";
 import { useCreateProperty, type PropertyFormData } from "@/api/property";
 import { useGetAllCategories } from "@/api/categories";
-import { useNavigate } from "react-router";
+import { useSearchParams } from "react-router";
 
-export default function AddProperties({ propertyRequestId }: { propertyRequestId?: string | null }) {
-	const navigate = useNavigate();
+export default function AddProperties({ propertyRequestId, onComplete }: { propertyRequestId?: string | null; onComplete?: () => void }) {
+	const [searchParams] = useSearchParams();
+	const paramPropertyRequestId = searchParams.get("propertyRequestId");
+	const effectivePropertyRequestId = propertyRequestId ?? paramPropertyRequestId ?? undefined;
 	const {
 		control,
 		handleSubmit: handleHookFormSubmit,
@@ -66,8 +68,21 @@ export default function AddProperties({ propertyRequestId }: { propertyRequestId
 
 	const createPropertyMutation = useCreateProperty(
 		() => {
-			toast.success("Property created successfully!");
-			setSuccessOpen(true);
+			// If parent supplied an onComplete handler (used when AddProperties is
+			// opened as a modal from a registration), call it so the parent can
+			// close the modal. Otherwise show the local success dialog.
+			const successMsg = "Property created successfully!";
+			toast.success(successMsg);
+			if (onComplete) {
+				try {
+					onComplete();
+				} catch (e) {
+					// swallow errors from parent handler
+					console.debug("onComplete handler threw:", e);
+				}
+			} else {
+				setSuccessOpen(true);
+			}
 		},
 		(error: any) => {
 			const errorMsg = error?.message || "Failed to create property";
@@ -167,7 +182,7 @@ export default function AddProperties({ propertyRequestId }: { propertyRequestId
 				vehicleType: formData.vehicleType,
 				vehicleRegistrationNumber: formData.vehicleRegistrationNumber,
 			}),
-			...(propertyRequestId ? { propertyRequestId } : {}),
+			...(effectivePropertyRequestId ? { propertyRequestId: effectivePropertyRequestId } : {}),
 		};
 
 		await createPropertyMutation.mutateAsync(propertyPayload);
@@ -557,7 +572,7 @@ export default function AddProperties({ propertyRequestId }: { propertyRequestId
 								<button
 									onClick={() => {
 										setSuccessOpen(false);
-										navigate("/dashboard/properties");
+										// remain on this page after successful add; do not navigate away
 									}}
 									className="bg-primary w-full max-w-36 mx-auto text-white px-8 py-2.5 rounded-md">
 									Ok

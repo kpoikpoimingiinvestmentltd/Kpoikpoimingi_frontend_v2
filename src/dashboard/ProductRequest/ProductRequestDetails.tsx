@@ -40,10 +40,87 @@ export default function ProductRequestDetails() {
 	const [confirmOpen, setConfirmOpen] = useState(false);
 	const [confirmAction, setConfirmAction] = useState<"delete" | "approve" | null>(null);
 
-	const handleSave = (_data: unknown) => {
-		// TODO: persist changes
-		setEditOpen(false);
+	const formatIsoDate = (iso?: string) => {
+		if (!iso) return iso;
+		try {
+			const d = new Date(iso);
+			if (Number.isNaN(d.getTime())) return iso;
+			return d.toLocaleDateString("en-GB"); // dd/mm/yyyy
+		} catch {
+			return iso;
+		}
 	};
+
+	const extractFilename = (fileUrl?: string) => {
+		if (!fileUrl) return "";
+		try {
+			const withoutQuery = fileUrl.split("?")[0];
+			const parts = withoutQuery.split("/");
+			return decodeURIComponent(parts[parts.length - 1] || "");
+		} catch {
+			return "";
+		}
+	};
+
+	const transformMediaFiles = (mediaFiles: Record<string, any> | undefined) => {
+		if (!mediaFiles) return mediaFiles;
+		const out: Record<string, any[]> = {};
+		for (const key of Object.keys(mediaFiles)) {
+			const arr = Array.isArray(mediaFiles[key]) ? mediaFiles[key] : [];
+			out[key] = arr.map((m: any) => ({ ...(m || {}), filename: extractFilename(m?.fileUrl) }));
+		}
+		return out;
+	};
+
+	const handleSave = async (data: unknown) => {
+		// Clear local draft/uploaded files for the customer form so edits don't persist locally
+		try {
+			localStorage.removeItem("customer_registration_draft");
+			localStorage.removeItem("customer_registration_uploaded_files");
+		} catch {}
+		setEditOpen(false);
+		if (!id) return;
+		try {
+			try {
+				await queryClient.invalidateQueries({ queryKey: ["product-request", id] });
+			} catch {
+				queryClient.invalidateQueries({ queryKey: ["product-requests"] });
+			}
+			queryClient.invalidateQueries({ queryKey: ["product-requests"] });
+			try {
+				const rawMsg = (data as any)?.message;
+				const msg = typeof rawMsg === "string" ? rawMsg.trim() : "";
+				if (msg && !["Registration saved successfully", "Registration created successfully"].includes(msg)) {
+					toast.success(msg);
+				} else if (!msg) {
+					toast.success("Changes saved");
+				}
+			} catch {
+				// toast.success("Changes saved");
+			}
+		} catch (e) {
+			toast.error("Failed to update view");
+		}
+	};
+
+	const displayedData = registrationData
+		? (() => {
+				const copy: any = { ...registrationData };
+				if (copy.customer && copy.customer.dateOfBirth) {
+					copy.customer = { ...copy.customer, dateOfBirth: formatIsoDate(copy.customer.dateOfBirth) };
+				} else if (copy.dateOfBirth) {
+					copy.dateOfBirth = formatIsoDate(copy.dateOfBirth);
+				}
+				copy.mediaFiles = transformMediaFiles(copy.mediaFiles);
+				return copy;
+		  })()
+		: undefined;
+
+	const anyGuarantorMissingState = (() => {
+		const gs = registrationData?.guarantors ?? registrationData?.customer?.guarantors ?? registrationData?.guarantor ?? [];
+		if (!Array.isArray(gs) || gs.length === 0) return false;
+		return gs.some((g: any) => !g?.stateOfOrigin);
+	})();
 
 	return (
 		<PageWrapper>
@@ -109,6 +186,14 @@ export default function ProductRequestDetails() {
 					</ActionButton>
 				</div>
 			</div>
+			{anyGuarantorMissingState && (
+				<div className="mb-4 flex justify-center">
+					<div className="w-full max-w-3xl bg-sky-300 text-white rounded-xl px-6 py-4 text-center">
+						<div className="font-semibold">Complete required fields</div>
+						<div className="text-sm mt-1">State of origin is required for all guarantors</div>
+					</div>
+				</div>
+			)}
 			<CustomCard className="p-4 sm:p-6 border-0">
 				<Tabs defaultValue="information">
 					<TabsList className={tabListStyle}>
@@ -131,23 +216,23 @@ export default function ProductRequestDetails() {
 
 					<div className="mt-6">
 						<TabsContent value="information">
-							<TabProductInformation data={registrationData} registrationId={id} />
+							<TabProductInformation data={displayedData} registrationId={id} />
 						</TabsContent>
 
 						<TabsContent value="customer">
-							<TabCustomerDetails data={registrationData} />
+							<TabCustomerDetails data={displayedData} />
 						</TabsContent>
 
 						<TabsContent value="kin">
-							<TabNextOfKin data={registrationData} />
+							<TabNextOfKin data={displayedData} />
 						</TabsContent>
 
 						<TabsContent value="employment">
-							<TabEmploymentDetails data={registrationData} />
+							<TabEmploymentDetails data={displayedData} />
 						</TabsContent>
 
 						<TabsContent value="guarantor">
-							<TabGuarantorDetails data={registrationData} />
+							<TabGuarantorDetails data={displayedData} />
 						</TabsContent>
 					</div>
 				</Tabs>
@@ -181,11 +266,6 @@ export default function ProductRequestDetails() {
 									toast.success((resultData?.message as string) || "Registration approved successfully");
 									queryClient.invalidateQueries({ queryKey: ["product-requests"] });
 									queryClient.invalidateQueries({ queryKey: ["product-request", id] });
-									if (resultData?.customerId) {
-										const cid = resultData.customerId as string;
-										const path = _router.dashboard.customerDetails.replace(":id", cid);
-										navigate(path);
-									}
 								} else {
 									await deleteMutation.mutateAsync(id);
 									toast.success("Registration deleted");
@@ -205,7 +285,21 @@ export default function ProductRequestDetails() {
 					},
 				]}
 			/>{" "}
-			<EditProductRequest open={editOpen} onOpenChange={setEditOpen} onSave={handleSave} initial={registrationData} />
+			<EditProductRequest
+				open={editOpen}
+				onOpenChange={(open) => {
+					// When the modal is being closed, clear the draft/uploaded files
+					if (!open) {
+						try {
+							localStorage.removeItem("customer_registration_draft");
+							localStorage.removeItem("customer_registration_uploaded_files");
+						} catch {}
+					}
+					setEditOpen(open);
+				}}
+				onSave={handleSave}
+				initial={registrationData}
+			/>
 		</PageWrapper>
 	);
 }

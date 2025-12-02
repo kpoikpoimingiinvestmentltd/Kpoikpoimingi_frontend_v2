@@ -182,7 +182,7 @@ export function useCustomerFormState(paymentMethod?: "once" | "installment", ini
 		};
 	}, [uploadedFiles]);
 
-	const handleChange = (key: string, value: unknown) => setForm((s) => ({ ...s, [key]: value }));
+	const handleChange = React.useCallback((key: string, value: unknown) => setForm((s) => ({ ...s, [key]: value })), [setForm]);
 
 	const resetFormCompletely = () => {
 		try {

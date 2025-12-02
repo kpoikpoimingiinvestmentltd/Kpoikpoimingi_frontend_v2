@@ -12,11 +12,14 @@ type Props = {
 export default function EditProductRequest({ open, onOpenChange, initial, onSave }: Props) {
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
-			<DialogContent className={modalContentStyle()}>
+			<DialogContent
+				className={modalContentStyle("px-4 md:px-8")}
+				// Prevent closing the modal by pressing Escape or clicking outside
+			>
 				<DialogHeader className="justify-center flex-row mt-5">
-					<h2 className="text-lg font-semibold">Edit Request Product</h2>
+					<h2 className="text-lg font-semibold">Edit Product Request</h2>
 				</DialogHeader>
-				<CustomerForm initial={initial} onSubmit={onSave} centeredContainer={() => "w-5/6 mx-auto"} />
+				<CustomerForm initial={initial} onSubmit={onSave} centeredContainer={() => "mx-auto w-full md:w-3/4"} />
 			</DialogContent>
 		</Dialog>
 	);

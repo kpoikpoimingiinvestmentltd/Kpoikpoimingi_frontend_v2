@@ -37,8 +37,9 @@ const statusClassMap: Record<string, string> = {
 	canceled: "bg-red-100 text-red-800",
 	expired: "bg-orange-100 text-orange-800",
 	terminated: "bg-red-100 text-red-800",
-	paused: "bg-blue-100 text-blue-800",
+	paused: "bg-yellow-100 text-yellow-800",
 	primary: "bg-primary/10 text-primary",
+	completed: "bg-green-800 text-white",
 };
 
 // small dot color classes keyed by normalized status
@@ -54,7 +55,8 @@ const statusDotMap: Record<string, string> = {
 	primary: "bg-primary",
 	expired: "bg-orange-500",
 	terminated: "bg-red-500",
-	paused: "bg-blue-500",
+	paused: "bg-amber-400",
+	completed: "bg-white",
 };
 
 function normalizeStatus(s: string) {

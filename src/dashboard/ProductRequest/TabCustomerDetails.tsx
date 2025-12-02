@@ -14,10 +14,20 @@ export default function TabCustomerDetails({ data }: { data: any }) {
 		whatsapp: data?.phoneNumber || "N/A",
 		dob: data?.dateOfBirth || "N/A",
 		paymentMethod: "Hire Purchase",
-		driversLicense: media.images.demoId,
-		nin: media.images.demoId,
-		indigene: media.images.demoId,
 	};
+
+	const firstFile = (keys: string[]) => {
+		const mf = data?.mediaFiles || {};
+		for (const k of keys) {
+			const arr = mf[k];
+			if (Array.isArray(arr) && arr.length > 0) return arr[0];
+		}
+		return null;
+	};
+
+	const driversLicenseFile = firstFile(["driverLicense", "driver_license"]);
+	const ninFile = firstFile(["identificationDocument", "nin", "identification"]);
+	const indigeneFile = firstFile(["indegeneCertificate", "indigeneCertificate", "indigene_certificate"]);
 
 	const [previewOpen, setPreviewOpen] = useState(false);
 	const [previewImage, setPreviewImage] = useState<string | null>(null);
@@ -49,14 +59,18 @@ export default function TabCustomerDetails({ data }: { data: any }) {
 						variant="action"
 						leftClassName="text-sm text-muted-foreground"
 						action={
-							<button
-								aria-label="View Driver's License"
-								onClick={() => openPreview(customer.driversLicense, "Driver's License")}
-								className="inline-flex items-center p-1">
-								<IconWrapper className="text-4xl sm:text-5xl">
-									<FileIcon />
-								</IconWrapper>
-							</button>
+							driversLicenseFile ? (
+								<button
+									aria-label="View Driver's License"
+									onClick={() => openPreview(driversLicenseFile.fileUrl, driversLicenseFile.filename || "Driver's License")}
+									className="inline-flex items-center p-1">
+									<IconWrapper className="text-4xl sm:text-5xl">
+										<FileIcon />
+									</IconWrapper>
+								</button>
+							) : (
+								<span className="text-sm text-muted-foreground">Driver's license not uploaded yet</span>
+							)
 						}
 					/>
 
@@ -66,11 +80,18 @@ export default function TabCustomerDetails({ data }: { data: any }) {
 						variant="action"
 						leftClassName="text-sm text-muted-foreground"
 						action={
-							<button aria-label="View NIN" onClick={() => openPreview(customer.nin, "NIN")} className="inline-flex items-center p-1">
-								<IconWrapper className="text-4xl sm:text-5xl">
-									<FileIcon />
-								</IconWrapper>
-							</button>
+							ninFile ? (
+								<button
+									aria-label="View NIN"
+									onClick={() => openPreview(ninFile.fileUrl, ninFile.filename || "NIN")}
+									className="inline-flex items-center p-1">
+									<IconWrapper className="text-4xl sm:text-5xl">
+										<FileIcon />
+									</IconWrapper>
+								</button>
+							) : (
+								<span className="text-sm text-muted-foreground">NIN not uploaded yet</span>
+							)
 						}
 					/>
 
@@ -80,14 +101,18 @@ export default function TabCustomerDetails({ data }: { data: any }) {
 						variant="action"
 						leftClassName="text-sm text-muted-foreground"
 						action={
-							<button
-								aria-label="View Indigene certificate"
-								onClick={() => openPreview(customer.indigene, "Indigene certificate")}
-								className="inline-flex items-center p-1">
-								<IconWrapper className="text-4xl sm:text-5xl">
-									<FileIcon />
-								</IconWrapper>
-							</button>
+							indigeneFile ? (
+								<button
+									aria-label="View Indigene certificate"
+									onClick={() => openPreview(indigeneFile.fileUrl, indigeneFile.filename || "Indigene certificate")}
+									className="inline-flex items-center p-1">
+									<IconWrapper className="text-4xl sm:text-5xl">
+										<FileIcon />
+									</IconWrapper>
+								</button>
+							) : (
+								<span className="text-sm text-muted-foreground">Indigene certificate not uploaded yet</span>
+							)
 						}
 					/>
 				</div>

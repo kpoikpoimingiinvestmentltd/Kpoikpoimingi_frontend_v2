@@ -11,6 +11,7 @@ import { uploadFileToPresignedUrl } from "@/utils/media-upload";
 import { useUpdateUser } from "@/api/user";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+import { modalContentStyle } from "../../components/common/commonStyles";
 
 interface EditProfileFormData {
 	fullName: string;
@@ -106,8 +107,16 @@ export default function EditProfileModal({ open, onOpenChange }: { open: boolean
 			setProfileImage(null);
 			setProfilePreview(null);
 		} catch (error: unknown) {
-			const errorMsg = (error as Record<string, unknown>)?.message ?? "Unknown error";
-			toast.error(`Failed to update profile: ${errorMsg}`);
+			// Provide richer error feedback for debugging auth/401 issues
+			console.error("Profile update failed:", error);
+			const err = error as any;
+			const status = err?.status ?? err?.response?.status;
+			const serverMessage = err?.data?.message ?? err?.message ?? err?.response?.data?.message;
+			if (status) {
+				toast.error(`Failed to update profile (status ${status}): ${serverMessage ?? "See console"}`);
+			} else {
+				toast.error(`Failed to update profile: ${serverMessage ?? "Unknown error"}`);
+			}
 		}
 	});
 
@@ -120,7 +129,7 @@ export default function EditProfileModal({ open, onOpenChange }: { open: boolean
 
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
-			<DialogContent className="max-w-md sm:max-w-lg">
+			<DialogContent className={modalContentStyle("md:max-w-xl")}>
 				<DialogHeader>
 					<DialogTitle className="text-center">Edit User Details</DialogTitle>
 				</DialogHeader>

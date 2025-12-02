@@ -38,9 +38,9 @@ export default function GuarantorSection({
 }: Props) {
 	return (
 		<div className={centeredContainer()}>
-			<h3 className={sectionTitle()}>Guarandor Details</h3>
+			<h3 className={sectionTitle()}>Guarantor Details</h3>
 
-			<div className="mt-4">
+			<div className="mt-4 flex flex-col gap-y-6">
 				{form.guarantors.map((g: InstallmentPaymentForm["guarantors"][number], idx: number) => (
 					<div key={idx}>
 						<h3 className="text-lg font-medium">Guarantor ({idx + 1})</h3>
@@ -241,7 +241,8 @@ export default function GuarantorSection({
 								isUploaded={uploadedFieldsRef.current.has(`guarantor_${idx}_doc`)}
 								uploadedFiles={
 									uploadedFiles[`guarantor_${idx}_doc`]?.map((file) => {
-										const filename = file.includes("/") ? file.split("/").pop() || "Document" : file;
+										const raw = file.includes("/") ? file.split("/").pop() || "Document" : file;
+										const filename = raw.split("?")[0];
 										const decodedName = decodeURIComponent(filename);
 										return {
 											name: decodedName,

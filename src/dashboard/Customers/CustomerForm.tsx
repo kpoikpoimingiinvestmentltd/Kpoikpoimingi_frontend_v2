@@ -76,7 +76,7 @@ export default function CustomerForm({
 
 	const updateMutation = useUpdateCustomerRegistration(
 		() => {
-			toast.success(`Registration updated successfully!`);
+			// no success toast here; parent will handle UI update
 		},
 		(err) => {
 			console.error("Error updating customer registration:", err);
@@ -87,11 +87,144 @@ export default function CustomerForm({
 	// Reference data for dropdowns
 	const { data: refData, isLoading: refLoading } = useGetReferenceData();
 
+	const didPrefillRef = React.useRef(false);
+
+	React.useEffect(() => {
+		if (didPrefillRef.current) return;
+		if (!initial) return;
+		if (paymentMethod !== "installment") return;
+		const toLocalPhone = (phone?: string | null) => {
+			if (!phone) return "";
+			const cleaned = String(phone).replace(/\D/g, "");
+			if (cleaned.startsWith("234")) return `0${cleaned.slice(3)}`;
+			if (cleaned.startsWith("0")) return cleaned;
+			if (cleaned.length === 10) return `0${cleaned}`;
+			return cleaned;
+		};
+
+		try {
+			const phoneVal = (initial as any)?.phoneNumber ?? (initial as any)?.phone;
+			handleChange("whatsapp", toLocalPhone(typeof phoneVal === "string" ? phoneVal : ""));
+		} catch {
+			// ignore
+		}
+
+		// Also normalize nextOfKin phones if present
+		try {
+			const nk = (initial as any)?.nextOfKin;
+			if (nk && typeof nk === "object") {
+				const nkPhoneVal = nk.phoneNumber ?? nk.phone ?? "";
+				const nkSpouseVal = nk.spousePhone ?? "";
+				const currNext = (form as InstallmentPaymentFormType).nextOfKin || {};
+				handleChange("nextOfKin", {
+					...currNext,
+					phone: toLocalPhone(typeof nkPhoneVal === "string" ? nkPhoneVal : ""),
+					spousePhone: toLocalPhone(typeof nkSpouseVal === "string" ? nkSpouseVal : ""),
+				});
+			}
+		} catch {
+			// ignore
+		}
+
+		// Normalize guarantor phones if present
+		try {
+			const gArr = (initial as any)?.guarantors;
+			if (Array.isArray(gArr)) {
+				// Ensure we always have two guarantor slots in edit mode
+				const existing = (form as InstallmentPaymentFormType).guarantors || [];
+				const mapped = [0, 1].map((i) => {
+					const src = gArr[i] || {};
+					const curr = existing[i] || {
+						fullName: "",
+						occupation: "",
+						phone: "",
+						email: "",
+						employmentStatus: "",
+						homeAddress: "",
+						businessAddress: "",
+						stateOfOrigin: "",
+						votersUploaded: 0,
+					};
+					return {
+						...curr,
+						fullName: src.fullName ?? curr.fullName,
+						occupation: src.occupation ?? curr.occupation,
+						phone: toLocalPhone(String(src.phoneNumber ?? src.phone ?? curr.phone ?? "")),
+						email: src.email ?? curr.email,
+						employmentStatus: String(src.employmentStatus ?? curr.employmentStatus ?? ""),
+						homeAddress: src.homeAddress ?? curr.homeAddress,
+						businessAddress: src.businessAddress ?? curr.businessAddress,
+						stateOfOrigin: src.stateOfOrigin ?? curr.stateOfOrigin,
+						votersUploaded: curr.votersUploaded ?? 0,
+					};
+				});
+				handleChange("guarantors", mapped);
+			}
+		} catch {
+			// ignore
+		}
+
+		didPrefillRef.current = true;
+	}, [initial, paymentMethod, handleChange]);
+
 	const relationshipOptions = React.useMemo(() => extractRelationshipOptions(refData), [refData]);
 	const paymentFrequencyOptions = React.useMemo(() => extractPaymentFrequencyOptions(refData), [refData]);
 	const durationUnitOptions = React.useMemo(() => extractDurationUnitOptions(refData), [refData]);
 	const employmentStatusOptions = React.useMemo(() => extractEmploymentStatusOptions(refData), [refData]);
 	const stateOfOriginOptions = React.useMemo(() => extractStateOptions(refData), [refData]);
+
+	// Ensure guarantor.stateOfOrigin uses option keys (not names) once ref data is available
+	React.useEffect(() => {
+		if (refLoading) return;
+		try {
+			const gArr = (form as InstallmentPaymentFormType).guarantors || [];
+			const mapped = gArr.map((g) => {
+				if (!g || !g.stateOfOrigin) return g;
+				// If already an option key, keep
+				if (stateOfOriginOptions.find((o) => o.key === g.stateOfOrigin)) return g;
+				// Try to match by option value (case-insensitive)
+				const found = stateOfOriginOptions.find((o) => o.value.toLowerCase() === String(g.stateOfOrigin).toLowerCase());
+				if (found) return { ...g, stateOfOrigin: found.key };
+				return g;
+			});
+			const prev = JSON.stringify(gArr || []);
+			const next = JSON.stringify(mapped || []);
+			if (prev !== next) handleChange("guarantors", mapped);
+		} catch {
+			// ignore
+		}
+	}, [refLoading, stateOfOriginOptions, handleChange]);
+
+	// Normalize guarantor phone numbers to local editable format (e.g., +234... -> 0...)
+	React.useEffect(() => {
+		if (paymentMethod !== "installment") return;
+		try {
+			const toLocalPhone = (phone?: string | null) => {
+				if (!phone) return "";
+				const cleaned = String(phone).replace(/\D/g, "");
+				if (cleaned.startsWith("234")) return `0${cleaned.slice(3)}`;
+				if (cleaned.startsWith("0")) return cleaned;
+				if (cleaned.length === 10) return `0${cleaned}`;
+				return cleaned;
+			};
+
+			const gArr = (form as InstallmentPaymentFormType).guarantors || [];
+			const mapped = gArr.map((g) => {
+				const current = g || ({} as any);
+				const rawPhone = (current.phone ?? (current as any).phoneNumber ?? "") as string;
+				const normalized = toLocalPhone(rawPhone);
+				if (normalized !== (current.phone ?? "")) {
+					return { ...current, phone: normalized };
+				}
+				return current;
+			});
+			const prev = JSON.stringify(gArr || []);
+			const next = JSON.stringify(mapped || []);
+			if (prev !== next) handleChange("guarantors", mapped);
+		} catch {
+			// ignore
+		}
+	}, [form, paymentMethod, handleChange]);
 
 	/**
 	 * Get state name from state ID using stateOfOriginOptions
@@ -287,11 +420,70 @@ export default function CustomerForm({
 
 				// Submit or update registration
 				if (isEditMode) {
-					await updateMutation.mutateAsync({
+					// Enforce two guarantors for installment/edit when required
+					if (paymentMethod === "installment") {
+						const gCount = Array.isArray((form as InstallmentPaymentFormType).guarantors)
+							? (form as InstallmentPaymentFormType).guarantors.length
+							: 0;
+						if (gCount < 2) {
+							toast.error("Please provide two guarantors before saving");
+							setIsSubmitting(false);
+							return;
+						}
+						// Require duration value before saving
+						const dur = Number((form as InstallmentPaymentFormType).paymentDuration || 0);
+						if (!dur || dur <= 0) {
+							toast.error("Duration value is required for hire purchase");
+							setIsSubmitting(false);
+							return;
+						}
+						// Require stateOfOrigin for guarantors
+						{
+							const missingIdx = ((form as InstallmentPaymentFormType).guarantors || []).findIndex(
+								(g) => !g || !g.stateOfOrigin || String(g.stateOfOrigin).trim() === ""
+							);
+							if (missingIdx >= 0) {
+								toast.error(`Guarantor ${missingIdx + 1}: State of origin is required`);
+								setIsSubmitting(false);
+								return;
+							}
+						}
+					}
+					const result = await updateMutation.mutateAsync({
 						id: initial.id,
 						payload,
 					});
+
+					if (onSubmit) onSubmit(result);
 				} else {
+					// For new registrations still enforce guarantor count for installment
+					if (paymentMethod === "installment") {
+						const gCount = Array.isArray((form as InstallmentPaymentFormType).guarantors)
+							? (form as InstallmentPaymentFormType).guarantors.length
+							: 0;
+						if (gCount < 2) {
+							toast.error("Please provide two guarantors before saving");
+							setIsSubmitting(false);
+							return;
+						}
+						const dur = Number((form as InstallmentPaymentFormType).paymentDuration || 0);
+						if (!dur || dur <= 0) {
+							toast.error("Duration value is required for hire purchase");
+							setIsSubmitting(false);
+							return;
+						}
+						// Require stateOfOrigin for guarantors
+						{
+							const missingIdx = ((form as InstallmentPaymentFormType).guarantors || []).findIndex(
+								(g) => !g || !g.stateOfOrigin || String(g.stateOfOrigin).trim() === ""
+							);
+							if (missingIdx >= 0) {
+								toast.error(`Guarantor ${missingIdx + 1}: State of origin is required`);
+								setIsSubmitting(false);
+								return;
+							}
+						}
+					}
 					const response = await createInternalCustomerRegistration(payload);
 					toast.success(`Registration created successfully! Code: ${response.registrationCode}`);
 				}
@@ -346,6 +538,29 @@ export default function CustomerForm({
 	}
 
 	// Render Installment Payment Form
+	const missingFields: string[] = React.useMemo(() => {
+		if (paymentMethod !== "installment") return [];
+		const f = form as InstallmentPaymentFormType;
+		const miss: string[] = [];
+		// Require two guarantors when applicable
+		if (!Array.isArray(f.guarantors) || f.guarantors.length < 2) {
+			miss.push("Two guarantors required");
+		}
+		// Require duration value for hire purchase
+		if (!f.paymentDuration || Number(f.paymentDuration) <= 0) {
+			miss.push("Duration value is required for hire purchase");
+		}
+		// Require stateOfOrigin for each guarantor
+		if (Array.isArray(f.guarantors)) {
+			f.guarantors.forEach((g, idx) => {
+				if (!g || !g.stateOfOrigin || String(g.stateOfOrigin).trim() === "") {
+					miss.push(`Guarantor ${idx + 1}: State of origin is required`);
+				}
+			});
+		}
+		return miss;
+	}, [form, paymentMethod]);
+
 	return (
 		<InstallmentPaymentForm
 			form={form as InstallmentPaymentFormType}
@@ -365,6 +580,7 @@ export default function CustomerForm({
 			centeredContainer={centeredContainer}
 			sectionTitle={sectionTitle}
 			setUploadedFiles={setUploadedFiles}
+			missingFields={missingFields}
 		/>
 	);
 }

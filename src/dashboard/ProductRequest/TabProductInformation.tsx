@@ -8,10 +8,13 @@ import AddProperties from "@/dashboard/Properties/AddProperties";
 import { Button } from "@/components/ui/button";
 import { modalContentStyle } from "../../components/common/commonStyles";
 
-export default function TabProductInformation({ data, registrationId }: { data?: CustomerRegistration | null; registrationId?: string | null }) {
+export default function TabProductInformation({ data }: { data?: CustomerRegistration | null; registrationId?: string | null }) {
 	const propertyInterests: PropertyInterest[] = Array.isArray(data?.propertyInterestRequest)
 		? (data!.propertyInterestRequest as PropertyInterest[])
 		: [];
+
+	// prefer the id of the first property interest request when opening AddProperties
+	const firstPropertyRequestId = propertyInterests.length > 0 ? String(propertyInterests[0].id) : undefined;
 
 	const [addOpen, setAddOpen] = useState(false);
 
@@ -40,7 +43,7 @@ export default function TabProductInformation({ data, registrationId }: { data?:
 						</div>
 						<Dialog open={addOpen} onOpenChange={setAddOpen}>
 							<DialogContent className={modalContentStyle()}>
-								<AddProperties propertyRequestId={registrationId} />
+								<AddProperties propertyRequestId={firstPropertyRequestId} onComplete={() => setAddOpen(false)} />
 							</DialogContent>
 						</Dialog>
 					</>
