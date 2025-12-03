@@ -19,23 +19,23 @@ function resolveUrl(url: string) {
 	return url.startsWith("http") ? url : `${_constants.API_URL}${url.startsWith("/") ? "" : "/"}${url}`;
 }
 
-export async function apiPost<T = any>(url: string, body: any, opts: ApiRequestOptions = {}) {
+export async function apiPost<T = unknown>(url: string, body: unknown, opts: ApiRequestOptions = {}) {
 	return apiRequest<T>(url, { method: "POST", body: JSON.stringify(body), headers: { "Content-Type": "application/json" }, ...opts });
 }
 
-export async function apiGet<T = any>(url: string, opts: ApiRequestOptions = {}) {
+export async function apiGet<T = unknown>(url: string, opts: ApiRequestOptions = {}) {
 	return apiRequest<T>(url, { method: "GET", ...opts });
 }
 
-export async function apiPut<T = any>(url: string, body: any, opts: ApiRequestOptions = {}) {
+export async function apiPut<T = unknown>(url: string, body: unknown, opts: ApiRequestOptions = {}) {
 	return apiRequest<T>(url, { method: "PUT", body: JSON.stringify(body), headers: { "Content-Type": "application/json" }, ...opts });
 }
 
-export async function apiPatch<T = any>(url: string, body: any, opts: ApiRequestOptions = {}) {
+export async function apiPatch<T = unknown>(url: string, body: unknown, opts: ApiRequestOptions = {}) {
 	return apiRequest<T>(url, { method: "PATCH", body: JSON.stringify(body), headers: { "Content-Type": "application/json" }, ...opts });
 }
 
-export async function apiDelete<T = any>(url: string, opts: ApiRequestOptions = {}) {
+export async function apiDelete<T = unknown>(url: string, opts: ApiRequestOptions = {}) {
 	return apiRequest<T>(url, { method: "DELETE", ...opts });
 }
 
@@ -79,8 +79,8 @@ function handleSessionExpired() {
 	}, 100);
 }
 
-export async function apiRequest<T = any>(url: string, opts: ApiRequestOptions = {}) {
-	const state: any = store.getState();
+export async function apiRequest<T = unknown>(url: string, opts: ApiRequestOptions = {}) {
+	const state = store.getState() as { auth?: { accessToken?: string; refreshToken?: string } };
 	const token = state?.auth?.accessToken;
 	const skipAuth = !!opts.skipAuth;
 

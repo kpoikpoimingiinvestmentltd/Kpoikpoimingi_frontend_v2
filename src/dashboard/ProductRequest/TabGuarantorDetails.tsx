@@ -7,8 +7,8 @@ import { FileIcon, IconWrapper } from "@/assets/icons";
 import { modalContentStyle } from "../../components/common/commonStyles";
 import React from "react";
 
-export default function TabGuarantorDetails({ data }: { data: any }) {
-	const guarantors = data?.guarantors || [];
+export default function TabGuarantorDetails({ data }: { data: Record<string, unknown> }) {
+	const guarantors = (data?.guarantors as Record<string, unknown>[]) || [];
 	const [previewOpen, setPreviewOpen] = React.useState(false);
 	const [previewImage, setPreviewImage] = React.useState<string | null>(null);
 	const [previewLabel, setPreviewLabel] = React.useState<string | null>(null);
@@ -25,44 +25,49 @@ export default function TabGuarantorDetails({ data }: { data: any }) {
 				<p className="text-muted-foreground">No guarantors found</p>
 			) : (
 				<div className="flex flex-col gap-y-4">
-					{guarantors.map((g: any, i: number) => (
+					{guarantors.map((g: Record<string, unknown>, i: number) => (
 						<div key={i}>
 							<SectionTitle title={`Guarantor ${i + 1}`} />
 							<CustomCard className="grid grid-cols-1 gap-y-1 mt-4 bg-card">
 								<KeyValueRow
 									label="Full name"
-									value={g.fullName || "N/A"}
+									value={(g.fullName as string) || "N/A"}
 									leftClassName="text-sm text-muted-foreground"
 									rightClassName="text-right"
 								/>
 								<KeyValueRow
 									label="Occupation"
-									value={g.occupation || "N/A"}
+									value={(g.occupation as string) || "N/A"}
 									leftClassName="text-sm text-muted-foreground"
 									rightClassName="text-right"
 								/>
 								<KeyValueRow
 									label="Phone Number"
-									value={g.phoneNumber || "N/A"}
+									value={(g.phoneNumber as string) || "N/A"}
 									leftClassName="text-sm text-muted-foreground"
 									rightClassName="text-right"
 								/>
-								<KeyValueRow label="Email" value={g.email || "N/A"} leftClassName="text-sm text-muted-foreground" rightClassName="text-right" />
+								<KeyValueRow
+									label="Email"
+									value={(g.email as string) || "N/A"}
+									leftClassName="text-sm text-muted-foreground"
+									rightClassName="text-right"
+								/>
 								<KeyValueRow
 									label="Employment Status"
-									value={g.employmentStatusId || "N/A"}
+									value={(g.employmentStatusId as string) || "N/A"}
 									leftClassName="text-sm text-muted-foreground"
 									rightClassName="text-right"
 								/>
 								<KeyValueRow
 									label="Home address"
-									value={g.homeAddress || "N/A"}
+									value={(g.homeAddress as string) || "N/A"}
 									leftClassName="text-sm text-muted-foreground"
 									rightClassName="text-right"
 								/>
 								<KeyValueRow
 									label="State Of Origin"
-									value={g.stateOfOrigin || "N/A"}
+									value={(g.stateOfOrigin as string) || "N/A"}
 									leftClassName="text-sm text-muted-foreground"
 									rightClassName="text-right"
 								/>
@@ -73,12 +78,12 @@ export default function TabGuarantorDetails({ data }: { data: any }) {
 									rightClassName="text-right"
 									variant="action"
 									action={(() => {
-										const mf = data?.mediaFiles || {};
-										const arr = mf[`guarantor_${i}_doc`];
+										const mf = (data?.mediaFiles as Record<string, unknown>) || {};
+										const arr = mf[`guarantor_${i}_doc`] as Record<string, unknown>[];
 										if (Array.isArray(arr) && arr.length > 0) {
-											const file = arr[0];
-											const url = file?.fileUrl || file;
-											const label = file?.filename || (url ? url.split("/").pop()?.split("?")[0] : `Guarantor ${i + 1} doc`);
+											const file = arr[0] as Record<string, unknown>;
+											const url = (file?.fileUrl as string) || (file?.url as string) || "";
+											const label = (file?.filename as string) || (url ? url.split("/").pop()?.split("?")[0] : `Guarantor ${i + 1} doc`);
 											return (
 												<button
 													aria-label={`View guarantor ${i + 1} document`}

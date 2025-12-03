@@ -110,14 +110,17 @@ export default function EditPropertyDetailsModal({ open, onOpenChange, initial, 
 	});
 
 	// Get the parent category and its subcategories based on the current categoryId
-	const selectedParentCategory = allCategories.find((cat: any) => {
-		return cat.children?.some((child: any) => child.id === form.categoryId);
+	const selectedParentCategory = allCategories.find((cat: unknown) => {
+		const c = cat as { children?: unknown[] };
+		return c.children?.some((child: unknown) => (child as { id: unknown }).id === form.categoryId);
 	});
-	const subcategories = selectedParentCategory?.children || [];
+	const subcategories = (selectedParentCategory as { children?: unknown[] })?.children || [];
 
 	// Check if selected parent category is a vehicle category
 	const isVehicleCategory =
-		selectedParentCategory && selectedParentCategory.category && selectedParentCategory.category.toLowerCase().includes("vehicle");
+		selectedParentCategory &&
+		(selectedParentCategory as { category?: string }).category &&
+		(selectedParentCategory as { category?: string }).category!.toLowerCase().includes("vehicle");
 
 	React.useEffect(() => {
 		const initialImgsArray = initial?.media ?? initial?.images ?? [media.images._product1, media.images._product2];
@@ -127,8 +130,9 @@ export default function EditPropertyDetailsModal({ open, onOpenChange, initial, 
 		const statusVal = getStatusValue();
 
 		// Find parent category ID based on categoryId
-		const parentCat = allCategories.find((cat: any) => {
-			return cat.children?.some((child: any) => child.id === initial?.categoryId);
+		const parentCat = allCategories.find((cat: unknown) => {
+			const c = cat as { children?: unknown[] };
+			return c.children?.some((child: unknown) => (child as { id: unknown }).id === initial?.categoryId);
 		});
 
 		setForm({
@@ -177,7 +181,7 @@ export default function EditPropertyDetailsModal({ open, onOpenChange, initial, 
 			const originalImages = currentImages.filter((img) => !img.startsWith("blob:"));
 			const allMediaKeys = [...originalImages, ...uploadedMediaKeys];
 
-			const payload: any = {
+			const payload: Record<string, unknown> = {
 				...form,
 				images: currentImages,
 				mediaKeys: allMediaKeys,
@@ -244,11 +248,14 @@ export default function EditPropertyDetailsModal({ open, onOpenChange, initial, 
 										<SelectValue placeholder="Choose Category" />
 									</SelectTrigger>
 									<SelectContent>
-										{allCategories.map((cat: any) => (
-											<SelectItem key={cat.id} value={cat.id} className="capitalize">
-												{cat.category || cat.title}
-											</SelectItem>
-										))}
+										{allCategories.map((cat: unknown) => {
+											const c = cat as { id: string; category?: string; title?: string };
+											return (
+												<SelectItem key={c.id} value={c.id} className="capitalize">
+													{c.category || c.title}
+												</SelectItem>
+											);
+										})}
 									</SelectContent>
 								</Select>
 							</div>
@@ -269,11 +276,14 @@ export default function EditPropertyDetailsModal({ open, onOpenChange, initial, 
 										/>
 									</SelectTrigger>
 									<SelectContent>
-										{subcategories.map((subcat: any) => (
-											<SelectItem key={subcat.id} value={subcat.id} className="capitalize">
-												{subcat.category || subcat.title}
-											</SelectItem>
-										))}
+										{subcategories.map((subcat: unknown) => {
+											const s = subcat as { id: string; category?: string; title?: string };
+											return (
+												<SelectItem key={s.id} value={s.id} className="capitalize">
+													{s.category || s.title}
+												</SelectItem>
+											);
+										})}
 									</SelectContent>
 								</Select>
 							</div>

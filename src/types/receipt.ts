@@ -37,8 +37,8 @@ export type ReceiptDetail = {
 	updatedAt?: string;
 	statusId?: number;
 	source?: string;
-	contract?: any;
-	customer?: any;
+	contract?: unknown;
+	customer?: unknown;
 	installmentProgress?: string;
 	totalInstallments?: number;
 };

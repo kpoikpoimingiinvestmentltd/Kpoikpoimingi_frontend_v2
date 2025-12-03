@@ -38,15 +38,17 @@ export default function Properties() {
 	const { data: propertiesData, isLoading, refetch } = useGetAllProperties();
 	const [isDeleting, setIsDeleting] = React.useState(false);
 	const updateProperty = useUpdateProperty(
-		(data: any) => {
+		(data: unknown) => {
 			refetch();
 			setEditOpen(false);
 			setPropertyToEdit(null);
-			const message = data?.message || "Property updated successfully";
+			const d = data as { message?: string };
+			const message = d?.message || "Property updated successfully";
 			toast.success(message);
 		},
-		(error: any) => {
-			toast.error(error?.message || "Failed to update property");
+		(error: unknown) => {
+			const err = error as { message?: string };
+			toast.error(err?.message || "Failed to update property");
 			console.error("Update failed:", error);
 		}
 	);
@@ -82,7 +84,8 @@ export default function Properties() {
 				refetch();
 				setConfirmOpen(false);
 				setPropertyToDelete(null);
-				const message = data?.message || "Property deleted successfully";
+				const d = data as { message?: string };
+				const message = d?.message || "Property deleted successfully";
 				toast.success(message);
 			} else if (deleteType === "bulk") {
 				const idsToDelete = Object.entries(selected)
@@ -353,7 +356,7 @@ export default function Properties() {
 											images: [media.images._product1],
 									  }
 							}
-							onSave={(formData: any) => {
+							onSave={(formData: unknown) => {
 								if (propertyToEdit?.id) {
 									const typedFormData = formData as Record<string, unknown>;
 									const mediaKeysArray = (typedFormData?.mediaKeys || []) as string[];
@@ -362,9 +365,9 @@ export default function Properties() {
 										return acc;
 									}, {});
 
-									const isVehicle = (propertyToEdit?.category as any)?.parent?.category?.toLowerCase().includes("vehicle") || false;
+									const isVehicle = propertyToEdit?.category?.parent?.category?.toLowerCase().includes("vehicle") || false;
 
-									const payload: any = {
+									const payload: Record<string, unknown> = {
 										name: typedFormData?.name,
 										categoryId: typedFormData?.categoryId,
 										price: Number(typedFormData?.price),

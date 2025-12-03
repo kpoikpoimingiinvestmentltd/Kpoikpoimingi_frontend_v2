@@ -144,7 +144,7 @@ export default function PropertyDetails() {
 										return acc;
 									}, {});
 
-									const payload: any = {
+									const payload: Record<string, unknown> = {
 										name: typedFormData?.name,
 										categoryId: typedFormData?.categoryId,
 										price: Number(typedFormData?.price),

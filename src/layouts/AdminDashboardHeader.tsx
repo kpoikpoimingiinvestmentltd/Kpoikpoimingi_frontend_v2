@@ -98,18 +98,21 @@ export default function AdminDashboardHeader({ onSidebarOpen, onLogoutOpen }: Ad
 						</button>
 					</DropdownMenuTrigger>
 					<DropdownMenuContent align="end" className="w-56">
-						{currentUserForDropdown && (
-							<div className="px-3 py-2 sm:hidden border-b">
-								<div className="flex flex-col items-start">
-									<span className="text-sm font-medium text-nowrap">
-										{currentUserForDropdown.fullName ?? currentUserForDropdown.email ?? currentUserForDropdown.username ?? "User"}
-									</span>
-									<span className="text-xs text-gray-400">
-										{typeof currentUserForDropdown.role === "string" ? currentUserForDropdown.role : currentUserForDropdown.role?.role ?? ""}
-									</span>
+						{(() => {
+							if (!currentUserForDropdown) return null;
+							const user = currentUserForDropdown as Record<string, unknown>;
+							const displayName = (user.fullName as string) ?? (user.email as string) ?? (user.username as string) ?? "User";
+							const displayRole =
+								typeof user.role === "string" ? (user.role as string) : ((user.role as Record<string, unknown>)?.role as string) ?? "";
+							return (
+								<div className="px-3 py-2 sm:hidden border-b">
+									<div className="flex flex-col items-start">
+										<span className="text-sm font-medium text-nowrap">{displayName}</span>
+										<span className="text-xs text-gray-400">{displayRole}</span>
+									</div>
 								</div>
-							</div>
-						)}
+							);
+						})()}
 						<div className="px-1.5">
 							<DropdownMenuLabel>My Account</DropdownMenuLabel>
 						</div>
@@ -188,8 +191,15 @@ function UserAvatarContent() {
 		);
 	}
 
-	const name = data.fullName ?? data.email ?? data.username ?? "User";
-	const role = typeof data.role === "string" ? data.role : data.role?.role ?? "";
+	const name =
+		((data as Record<string, unknown>).fullName as string) ??
+		((data as Record<string, unknown>).email as string) ??
+		((data as Record<string, unknown>).username as string) ??
+		"User";
+	const role =
+		typeof (data as Record<string, unknown>).role === "string"
+			? ((data as Record<string, unknown>).role as string)
+			: (((data as Record<string, unknown>).role as Record<string, unknown>)?.role as string) ?? "";
 	const initials = name
 		.split(" ")
 		.map((n) => n[0])
@@ -200,7 +210,10 @@ function UserAvatarContent() {
 	return (
 		<div className="flex items-center gap-3">
 			<Avatar className="w-9 h-9">
-				<AvatarImage src={typeof data.media === "string" ? data.media : undefined} alt={`${name}'s avatar`} />
+				<AvatarImage
+					src={typeof (data as Record<string, unknown>).media === "string" ? ((data as Record<string, unknown>).media as string) : undefined}
+					alt={`${name}'s avatar`}
+				/>
 				<AvatarFallback>{initials}</AvatarFallback>
 			</Avatar>
 			<div className="hidden sm:flex flex-col items-start">

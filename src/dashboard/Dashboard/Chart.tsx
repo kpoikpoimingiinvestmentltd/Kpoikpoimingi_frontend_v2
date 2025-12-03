@@ -128,7 +128,7 @@ export const IndexAreaChart = () => {
 	}
 
 	// Check if all values are zero
-	const totalIncome = chartData.reduce((sum: number, item: any) => sum + item.value, 0);
+	const totalIncome = chartData.reduce((sum: number, item: { value: number }) => sum + item.value, 0);
 	if (totalIncome === 0) {
 		return (
 			<div className="flex items-center justify-center h-72 text-gray-400">
@@ -147,7 +147,7 @@ export const IndexAreaChart = () => {
 		.range([0, 100]);
 
 	let yScale = scaleLinear()
-		.domain([0, max(areaChartData, (d: any) => d.value) ?? 0])
+		.domain([0, max(areaChartData, (d: { value: number }) => d.value) ?? 0])
 		.range([100, 0]);
 
 	let line = d3line<(typeof areaChartData)[number]>()

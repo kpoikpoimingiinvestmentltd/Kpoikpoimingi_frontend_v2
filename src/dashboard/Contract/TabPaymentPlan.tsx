@@ -156,67 +156,67 @@ export default function TabPaymentPlan({ contract }: { contract?: Contract }) {
 								</TableHeader>
 
 								<TableBody>
-									{displaySchedules.map((schedule: any, i: number) => (
-										<TableRow key={schedule.id} className="hover:bg-[#F6FBFF]">
+									{displaySchedules.map((schedule: Record<string, unknown>, i: number) => (
+										<TableRow key={schedule.id as string} className="hover:bg-[#F6FBFF]">
 											<TableCell className="py-6 border-r border-gray-200 text-center">{i + 1}</TableCell>
-											<TableCell className="py-6 border-r border-gray-200 text-center">{schedule.date}</TableCell>
-											<TableCell className="py-6 border-r border-gray-200 text-center">₦{schedule.amount}</TableCell>
-											<TableCell className="py-6 border-r border-gray-200 text-center">₦{schedule.lateFees}</TableCell>
-											<TableCell className="py-6 border-r border-gray-200 text-center">₦{schedule.totalDue}</TableCell>
+											<TableCell className="py-6 border-r border-gray-200 text-center">{schedule.date as string}</TableCell>
+											<TableCell className="py-6 border-r border-gray-200 text-center">₦{schedule.amount as number}</TableCell>
+											<TableCell className="py-6 border-r border-gray-200 text-center">₦{schedule.lateFees as number}</TableCell>
+											<TableCell className="py-6 border-r border-gray-200 text-center">₦{schedule.totalDue as number}</TableCell>
 											<TableCell className="py-6 text-center">
-												{schedule.isPaid ? (
+												{(schedule.isPaid as boolean) ? (
 													<div className="flex justify-center items-center gap-2 font-medium">
 														<IconWrapper className="text-2xl text-emerald-600">
 															<CheckIcon />
 														</IconWrapper>
 														<span>Paid</span>
 													</div>
-												) : schedule.isDefaulted ? (
+												) : (schedule.isDefaulted as boolean) ? (
 													<div className="flex justify-center items-center gap-3">
 														<span className="text-red-500 font-medium">Defaulted</span>
-														{schedule.paymentLinkUrl ? (
+														{(schedule.paymentLinkUrl as string) ? (
 															<>
 																<button
-																	onClick={() => handleGenerateLink(schedule.id)}
-																	disabled={loadingScheduleId === schedule.id}
+																	onClick={() => handleGenerateLink(schedule.id as string)}
+																	disabled={loadingScheduleId === (schedule.id as string)}
 																	className="active-scale bg-white text-transparent bg-clip-text bg-gradient-to-r from-[#03B4FA] to-[#026B94] px-6 py-2 rounded-l-none text-sm shadow-xl disabled:opacity-50">
-																	{loadingScheduleId === schedule.id ? "Generating..." : "Generate Link"}
+																	{loadingScheduleId === (schedule.id as string) ? "Generating..." : "Generate Link"}
 																</button>
 															</>
 														) : (
-															schedule.canGenerateLink && (
+															(schedule.canGenerateLink as boolean) && (
 																<button
-																	onClick={() => handleGenerateLink(schedule.id)}
-																	disabled={loadingScheduleId === schedule.id}
+																	onClick={() => handleGenerateLink(schedule.id as string)}
+																	disabled={loadingScheduleId === (schedule.id as string)}
 																	className="active-scale bg-white text-transparent bg-clip-text bg-gradient-to-r from-[#03B4FA] to-[#026B94] px-6 py-2 rounded-l-none text-sm shadow-xl disabled:opacity-50">
-																	{loadingScheduleId === schedule.id ? "Generating..." : "Generate Link"}
+																	{loadingScheduleId === (schedule.id as string) ? "Generating..." : "Generate Link"}
 																</button>
 															)
 														)}
 													</div>
 												) : (
 													<div>
-														{schedule.paymentLinkUrl ? (
+														{(schedule.paymentLinkUrl as string) ? (
 															<div className="flex justify-center items-center">
 																<button
-																	onClick={() => handleGenerateLink(schedule.id)}
-																	disabled={loadingScheduleId === schedule.id}
+																	onClick={() => handleGenerateLink(schedule.id as string)}
+																	disabled={loadingScheduleId === (schedule.id as string)}
 																	className={twMerge(
 																		"active-scale bg-white text-transparent bg-clip-text bg-gradient-to-r from-[#03B4FA] to-[#026B94] disabled:bg-white disabled:opacity-90 border border-stone-100 px-6 py-2 rounded-full rounded-l-none text-sm shadow-xl",
-																		loadingScheduleId === schedule.id && "opacity-50 cursor-not-allowed"
+																		loadingScheduleId === (schedule.id as string) && "opacity-50 cursor-not-allowed"
 																	)}>
-																	{loadingScheduleId === schedule.id ? "Generating..." : "Generate Link"}
+																	{loadingScheduleId === (schedule.id as string) ? "Generating..." : "Generate Link"}
 																</button>
 															</div>
 														) : (
 															<button
-																onClick={() => handleGenerateLink(schedule.id)}
-																disabled={loadingScheduleId === schedule.id}
+																onClick={() => handleGenerateLink(schedule.id as string)}
+																disabled={loadingScheduleId === (schedule.id as string)}
 																className={twMerge(
 																	"active-scale bg-white text-transparent bg-clip-text bg-gradient-to-r from-[#03B4FA] to-[#026B94] px-6 py-2 rounded-full rounded-l-none text-sm shadow-xl",
-																	loadingScheduleId === schedule.id && "opacity-50 cursor-not-allowed"
+																	loadingScheduleId === (schedule.id as string) && "opacity-50 cursor-not-allowed"
 																)}>
-																{loadingScheduleId === schedule.id ? "Generating..." : "Generate Link"}
+																{loadingScheduleId === (schedule.id as string) ? "Generating..." : "Generate Link"}
 															</button>
 														)}
 													</div>

@@ -7,7 +7,7 @@ export type Category = {
 	name?: string;
 	subs?: string[];
 	count?: number;
-	[k: string]: any;
+	[k: string]: unknown;
 };
 
 export type CategoriesState = {

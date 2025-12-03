@@ -39,7 +39,7 @@ export default function UserForm({
 	isLoading = false,
 }: {
 	values: FormShape;
-	onChange?: (k: keyof FormShape, v: any) => void;
+	onChange?: (k: keyof FormShape, v: unknown) => void;
 	onSubmit?: () => void;
 	submitLabel?: string;
 	onAvatarUploaded?: (key: string) => void;

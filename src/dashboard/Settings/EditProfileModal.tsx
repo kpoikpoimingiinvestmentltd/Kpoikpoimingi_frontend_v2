@@ -49,15 +49,15 @@ export default function EditProfileModal({ open, onOpenChange }: { open: boolean
 	useEffect(() => {
 		if (user) {
 			reset({
-				fullName: user.fullName || "",
-				email: user.email || "",
-				username: user.username || "",
-				phoneNumber: user.phoneNumber || "",
-				branchLocation: user.branchLocation || "",
+				fullName: ((user as Record<string, unknown>).fullName as string) || "",
+				email: ((user as Record<string, unknown>).email as string) || "",
+				username: ((user as Record<string, unknown>).username as string) || "",
+				phoneNumber: ((user as Record<string, unknown>).phoneNumber as string) || "",
+				branchLocation: ((user as Record<string, unknown>).branchLocation as string) || "",
 			});
 			// Set preview image if available
-			if (user.media) {
-				setProfilePreview(user.media);
+			if ((user as Record<string, unknown>).media) {
+				setProfilePreview((user as Record<string, unknown>).media as string);
 			}
 		}
 	}, [user, reset]);
@@ -95,12 +95,12 @@ export default function EditProfileModal({ open, onOpenChange }: { open: boolean
 			};
 
 			await updateUserMutation.mutateAsync({
-				id: user!.id,
+				id: (user as Record<string, unknown>).id as string,
 				payload: updatePayload,
 			});
 
 			// Invalidate current user query to refetch updated data
-			queryClient.invalidateQueries({ queryKey: ["currentUser", user!.id] });
+			queryClient.invalidateQueries({ queryKey: ["currentUser", (user as Record<string, unknown>).id as string] });
 
 			toast.success("Profile updated successfully!");
 			onOpenChange(false);
@@ -109,7 +109,12 @@ export default function EditProfileModal({ open, onOpenChange }: { open: boolean
 		} catch (error: unknown) {
 			// Provide richer error feedback for debugging auth/401 issues
 			console.error("Profile update failed:", error);
-			const err = error as any;
+			const err = error as {
+				status?: number;
+				response?: { status?: number; data?: { message?: string } };
+				data?: { message?: string };
+				message?: string;
+			};
 			const status = err?.status ?? err?.response?.status;
 			const serverMessage = err?.data?.message ?? err?.message ?? err?.response?.data?.message;
 			if (status) {
@@ -137,7 +142,11 @@ export default function EditProfileModal({ open, onOpenChange }: { open: boolean
 				<CustomCard className="border-0 p-0 bg-transparent">
 					<form onSubmit={handleSave}>
 						<div className="flex flex-col items-center gap-4 py-6">
-							<Avatar variant="editable" src={profilePreview || user?.media || null} onChange={handleAvatarChange} />
+							<Avatar
+								variant="editable"
+								src={profilePreview || ((user as Record<string, unknown>)?.media as string) || null}
+								onChange={handleAvatarChange}
+							/>
 						</div>
 
 						<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

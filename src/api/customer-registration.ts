@@ -19,11 +19,10 @@ export async function updateCustomerRegistration(id: string, payload: CustomerRe
 	return apiPut<CustomerRegistrationResponse>(API_ROUTES.customerRegistration.updateCustomerRegistration(id), payload);
 }
 
-export function useUpdateCustomerRegistration(onSuccess?: (data: CustomerRegistrationResponse) => void, onError?: (error: any) => void) {
+export function useUpdateCustomerRegistration(onSuccess?: (data: CustomerRegistrationResponse) => void, onError?: (error: unknown) => void) {
 	return useMutation<CustomerRegistrationResponse, Error, { id: string; payload: CustomerRegistrationPayload }>({
 		mutationFn: ({ id, payload }) => updateCustomerRegistration(id, payload),
 		onSuccess,
 		onError,
 	});
 }
-

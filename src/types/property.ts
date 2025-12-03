@@ -77,7 +77,7 @@ export type PropertyDto = { id: string; name: string };
 export type EditPropertyDetailsModalProps = {
 	open: boolean;
 	onOpenChange: (open: boolean) => void;
-	onSave?: (data: any) => void;
+	onSave?: (data: Record<string, unknown>) => void;
 	isLoading?: boolean;
 	initial?: {
 		id?: string;

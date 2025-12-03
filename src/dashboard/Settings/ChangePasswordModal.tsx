@@ -26,13 +26,14 @@ export default function ChangePasswordModal({ open, onOpenChange }: { open: bool
 	const handleSave = async (vals: ChangePasswordInput) => {
 		try {
 			await mutation.mutateAsync({ currentPassword: vals.currentPassword, newPassword: vals.newPassword });
-		} catch (e: any) {
-			const status = e?.status ?? e?.data?.status;
-			const serverMessage = e?.data?.message || e?.message;
+		} catch (e: unknown) {
+			const err = e as { status?: number; data?: { status?: number; message?: string }; message?: string };
+			const status = err?.status ?? err?.data?.status;
+			const serverMessage = err?.data?.message || err?.message;
 			console.error("Change password error:", e);
 			if (status) {
-				const body = e?.data ? JSON.stringify(e.data) : serverMessage;
-				toast.error(`${e?.data?.message || serverMessage || body}`);
+				const body = err?.data ? JSON.stringify(err.data) : serverMessage;
+				toast.error(`${err?.data?.message || serverMessage || body}`);
 			} else {
 				toast.error(serverMessage || "Failed to change password");
 			}

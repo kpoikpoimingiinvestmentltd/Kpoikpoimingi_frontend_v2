@@ -74,20 +74,20 @@ export function useGetCurrentUser(enabled = true) {
 	const stateData = store.getState() as Record<string, unknown>;
 	const authData = stateData?.auth as Record<string, unknown> | undefined;
 	const id = authData?.id as string | undefined;
-	return useQuery<User>({
+	return useQuery<unknown>({
 		queryKey: ["currentUser", id],
 		queryFn: async () => getUserById(id!),
 		enabled: !!id && enabled,
 	});
 }
 
-export async function updateUserRequest(id: string, payload: any) {
+export async function updateUserRequest(id: string, payload: unknown) {
 	return apiPut(API_ROUTES.user.updateUser(id), payload);
 }
 
 export function useUpdateUser() {
 	return useMutation({
-		mutationFn: async ({ id, payload }: { id: string; payload: any }) => {
+		mutationFn: async ({ id, payload }: { id: string; payload: unknown }) => {
 			const data = await updateUserRequest(id, payload);
 			return data;
 		},
@@ -95,13 +95,13 @@ export function useUpdateUser() {
 }
 
 // --- create user ---
-export async function createUserRequest(payload: any) {
+export async function createUserRequest(payload: unknown) {
 	return apiPost(API_ROUTES.user.createUser, payload);
 }
 
 export function useCreateUser() {
-	return useMutation<any, unknown, any>({
-		mutationFn: async (payload: any) => {
+	return useMutation<unknown, unknown, unknown>({
+		mutationFn: async (payload: unknown) => {
 			const data = await createUserRequest(payload);
 			return data;
 		},

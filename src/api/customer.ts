@@ -101,7 +101,7 @@ export async function sendEmailToSpecificCustomers(payload: SendEmailSpecificPay
 	return apiPost<SendEmailResponse>(API_ROUTES.customer.sendEmailSpecific, payload) as Promise<SendEmailResponse>;
 }
 
-export function useSendEmailToSpecificCustomers(onSuccess?: (data: SendEmailResponse) => void, onError?: (error: any) => void) {
+export function useSendEmailToSpecificCustomers(onSuccess?: (data: SendEmailResponse) => void, onError?: (error: unknown) => void) {
 	return useMutation<SendEmailResponse, Error, SendEmailSpecificPayload>({
 		mutationFn: (payload: SendEmailSpecificPayload) => sendEmailToSpecificCustomers(payload),
 		onSuccess,
@@ -113,7 +113,7 @@ export async function sendEmailBroadcast(payload: SendEmailBroadcastPayload) {
 	return apiPost<SendEmailResponse>(API_ROUTES.customer.sendEmailBroadcast, payload) as Promise<SendEmailResponse>;
 }
 
-export function useSendEmailBroadcast(onSuccess?: (data: SendEmailResponse) => void, onError?: (error: any) => void) {
+export function useSendEmailBroadcast(onSuccess?: (data: SendEmailResponse) => void, onError?: (error: unknown) => void) {
 	return useMutation<SendEmailResponse, Error, SendEmailBroadcastPayload>({
 		mutationFn: (payload: SendEmailBroadcastPayload) => sendEmailBroadcast(payload),
 		onSuccess,
@@ -125,7 +125,7 @@ export async function deleteCustomer(customerId: string) {
 	return apiDelete<DeleteCustomerResponse>(API_ROUTES.customer.deleteCustomer(customerId)) as Promise<DeleteCustomerResponse>;
 }
 
-export function useDeleteCustomer(onSuccess?: (data: DeleteCustomerResponse) => void, onError?: (error: any) => void) {
+export function useDeleteCustomer(onSuccess?: (data: DeleteCustomerResponse) => void, onError?: (error: unknown) => void) {
 	return useMutation<DeleteCustomerResponse, Error, string>({
 		mutationFn: (customerId: string) => deleteCustomer(customerId),
 		onSuccess,

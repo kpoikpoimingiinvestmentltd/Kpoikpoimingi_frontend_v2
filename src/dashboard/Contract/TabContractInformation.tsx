@@ -3,27 +3,28 @@ import SectionTitle from "@/components/common/SectionTitle";
 import KeyValueRow from "@/components/common/KeyValueRow";
 import Badge from "@/components/base/Badge";
 
-export default function TabContractInformation({ contract }: { contract: any }) {
+export default function TabContractInformation({ contract }: { contract: Record<string, unknown> }) {
 	const contractData = {
-		customerName: contract?.customer?.fullName || "N/A",
-		whatsapp: contract?.customer?.phoneNumber || "N/A",
-		address: contract?.customer?.houseAddress || "N/A",
-		businessAddress: contract?.customer?.businessAddress || "N/A",
-		status: contract?.status?.status || "N/A",
-		propertyName: contract?.property?.name || "N/A",
-		paymentType: contract?.paymentType?.type || "N/A",
-		downPayment: `₦${parseInt(contract?.downPayment || "0").toLocaleString()}` || "N/A",
-		paymentDuration: `${contract?.durationValue || 0} ${contract?.durationUnit?.duration || ""}` || "N/A",
-		totalPayable: `₦${parseInt(contract?.outStandingBalance || "0").toLocaleString()}` || "N/A",
-		totalProductAmount: `₦${parseInt(contract?.property?.price || "0").toLocaleString()}` || "N/A",
+		customerName: ((contract?.customer as Record<string, unknown>)?.fullName as string) || "N/A",
+		whatsapp: ((contract?.customer as Record<string, unknown>)?.phoneNumber as string) || "N/A",
+		address: ((contract?.customer as Record<string, unknown>)?.houseAddress as string) || "N/A",
+		businessAddress: ((contract?.customer as Record<string, unknown>)?.businessAddress as string) || "N/A",
+		status: ((contract?.status as Record<string, unknown>)?.status as string) || "N/A",
+		propertyName: ((contract?.property as Record<string, unknown>)?.name as string) || "N/A",
+		paymentType: ((contract?.paymentType as Record<string, unknown>)?.type as string) || "N/A",
+		downPayment: `₦${parseInt((contract?.downPayment as string) || "0").toLocaleString()}` || "N/A",
+		paymentDuration:
+			`${(contract?.durationValue as number) || 0} ${((contract?.durationUnit as Record<string, unknown>)?.duration as string) || ""}` || "N/A",
+		totalPayable: `₦${parseInt((contract?.outStandingBalance as string) || "0").toLocaleString()}` || "N/A",
+		totalProductAmount: `₦${parseInt(((contract?.property as Record<string, unknown>)?.price as string) || "0").toLocaleString()}` || "N/A",
 		contractRange:
-			contract?.startDate && contract?.endDate
-				? `${new Date(contract.startDate).toLocaleDateString()} to ${new Date(contract.endDate).toLocaleDateString()}`
+			(contract?.startDate as string) && (contract?.endDate as string)
+				? `${new Date(contract.startDate as string).toLocaleDateString()} to ${new Date(contract.endDate as string).toLocaleDateString()}`
 				: "N/A",
-		assignedStaff: contract?.createdBy?.fullName || "N/A",
-		interest: contract?.interestRate ? `${contract.interestRate}%` : "N/A",
-		vat: contract?.vatPercentage ? `${contract.vatPercentage}%` : "N/A",
-		startDate: contract?.startDate ? new Date(contract.startDate).toLocaleDateString() : "N/A",
+		assignedStaff: ((contract?.createdBy as Record<string, unknown>)?.fullName as string) || "N/A",
+		interest: (contract?.interestRate as number) ? `${contract.interestRate}%` : "N/A",
+		vat: (contract?.vatPercentage as number) ? `${contract.vatPercentage}%` : "N/A",
+		startDate: (contract?.startDate as string) ? new Date(contract.startDate as string).toLocaleDateString() : "N/A",
 	};
 	return (
 		<CustomCard className="mt-4 border-none p-0 bg-white">

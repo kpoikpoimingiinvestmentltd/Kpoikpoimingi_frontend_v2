@@ -26,7 +26,7 @@ import { _router } from "@/routes/_router";
 
 type Props = {
 	onSubmit?: (data: unknown) => void;
-	initial?: any;
+	initial?: Record<string, unknown>;
 	sectionTitle?: (additionalClasses?: string) => string;
 	centeredContainer?: (additionalClasses?: string) => string;
 	paymentMethod?: "once" | "installment";
@@ -103,7 +103,8 @@ export default function CustomerForm({
 		};
 
 		try {
-			const phoneVal = (initial as any)?.phoneNumber ?? (initial as any)?.phone;
+			const phoneVal =
+				(initial as { phoneNumber?: string; phone?: string })?.phoneNumber ?? (initial as { phoneNumber?: string; phone?: string })?.phone;
 			handleChange("whatsapp", toLocalPhone(typeof phoneVal === "string" ? phoneVal : ""));
 		} catch {
 			// ignore
@@ -111,7 +112,7 @@ export default function CustomerForm({
 
 		// Also normalize nextOfKin phones if present
 		try {
-			const nk = (initial as any)?.nextOfKin;
+			const nk = (initial as { nextOfKin?: Record<string, unknown> })?.nextOfKin;
 			if (nk && typeof nk === "object") {
 				const nkPhoneVal = nk.phoneNumber ?? nk.phone ?? "";
 				const nkSpouseVal = nk.spousePhone ?? "";
@@ -128,12 +129,13 @@ export default function CustomerForm({
 
 		// Normalize guarantor phones if present
 		try {
-			const gArr = (initial as any)?.guarantors;
+			const gArr = (initial as { guarantors?: unknown[] })?.guarantors;
 			if (Array.isArray(gArr)) {
 				// Ensure we always have two guarantor slots in edit mode
 				const existing = (form as InstallmentPaymentFormType).guarantors || [];
 				const mapped = [0, 1].map((i) => {
 					const src = gArr[i] || {};
+					const srcObj = src as Record<string, unknown>;
 					const curr = existing[i] || {
 						fullName: "",
 						occupation: "",
@@ -147,14 +149,14 @@ export default function CustomerForm({
 					};
 					return {
 						...curr,
-						fullName: src.fullName ?? curr.fullName,
-						occupation: src.occupation ?? curr.occupation,
-						phone: toLocalPhone(String(src.phoneNumber ?? src.phone ?? curr.phone ?? "")),
-						email: src.email ?? curr.email,
-						employmentStatus: String(src.employmentStatus ?? curr.employmentStatus ?? ""),
-						homeAddress: src.homeAddress ?? curr.homeAddress,
-						businessAddress: src.businessAddress ?? curr.businessAddress,
-						stateOfOrigin: src.stateOfOrigin ?? curr.stateOfOrigin,
+						fullName: srcObj.fullName ?? curr.fullName,
+						occupation: srcObj.occupation ?? curr.occupation,
+						phone: toLocalPhone(String(srcObj.phoneNumber ?? srcObj.phone ?? curr.phone ?? "")),
+						email: srcObj.email ?? curr.email,
+						employmentStatus: String(srcObj.employmentStatus ?? curr.employmentStatus ?? ""),
+						homeAddress: srcObj.homeAddress ?? curr.homeAddress,
+						businessAddress: srcObj.businessAddress ?? curr.businessAddress,
+						stateOfOrigin: srcObj.stateOfOrigin ?? curr.stateOfOrigin,
 						votersUploaded: curr.votersUploaded ?? 0,
 					};
 				});
@@ -210,8 +212,8 @@ export default function CustomerForm({
 
 			const gArr = (form as InstallmentPaymentFormType).guarantors || [];
 			const mapped = gArr.map((g) => {
-				const current = g || ({} as any);
-				const rawPhone = (current.phone ?? (current as any).phoneNumber ?? "") as string;
+				const current = g || ({} as { phone?: string });
+				const rawPhone = current.phone ?? "";
 				const normalized = toLocalPhone(rawPhone);
 				if (normalized !== (current.phone ?? "")) {
 					return { ...current, phone: normalized };
@@ -450,7 +452,7 @@ export default function CustomerForm({
 						}
 					}
 					const result = await updateMutation.mutateAsync({
-						id: initial.id,
+						id: initial.id as string,
 						payload,
 					});
 

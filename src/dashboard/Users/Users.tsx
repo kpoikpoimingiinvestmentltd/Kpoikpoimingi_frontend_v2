@@ -46,14 +46,14 @@ export default function Users() {
 			const prev = storedUsers;
 			setTimeout(() => {
 				// optimistic UI: remove user from local store immediately
-				const next = (storedUsers || []).filter((u: any) => u.id !== id);
+				const next = (storedUsers || []).filter((u: unknown) => (u as { id: string }).id !== id);
 				dispatch(setUsers(next));
 			}, 0);
 			return { prev };
 		},
-		onError: (_err: any, _id: any, context: any) => {
-			if (context?.prev) {
-				dispatch(setUsers(context.prev));
+		onError: (_err: unknown, _id: unknown, context: unknown) => {
+			if ((context as { prev?: typeof storedUsers })?.prev) {
+				dispatch(setUsers((context as { prev?: typeof storedUsers }).prev!));
 			}
 			toast.error("Failed to delete user");
 		},
@@ -66,40 +66,44 @@ export default function Users() {
 	});
 
 	const { data: rawData, isLoading } = useGetAllUsers(true);
-	const data: any = rawData;
+	const data = rawData as Record<string, unknown> | undefined;
 
 	React.useEffect(() => {
 		if (data?.data && Array.isArray(data.data)) {
-			dispatch(setUsers(data.data));
-			setTotal(data.pagination?.total || data.data.length);
+			dispatch(setUsers(data.data as User[]));
+			setTotal(((data.pagination as Record<string, unknown>)?.total as number) || (data.data as unknown[]).length);
 		}
 	}, [data, dispatch]);
 
-	const renderField = (val: any) => {
+	const renderField = (val: unknown): string => {
 		if (val === null || val === undefined) return "-";
-		if (typeof val === "string" || typeof val === "number" || typeof val === "boolean") return val;
+		if (typeof val === "string" || typeof val === "number" || typeof val === "boolean") return String(val);
 		if (typeof val === "object") {
-			if (val.name) return val.name;
-			if (val.fullName) return val.fullName;
-			if (val.phone) return val.phone;
-			if (val.role) return typeof val.role === "string" ? val.role : val.role.name ?? JSON.stringify(val.role);
-			return val.id ?? JSON.stringify(val);
+			const obj = val as Record<string, unknown>;
+			if (obj.name) return String(obj.name);
+			if (obj.fullName) return String(obj.fullName);
+			if (obj.phone) return String(obj.phone);
+			if (obj.role) return typeof obj.role === "string" ? obj.role : String((obj.role as Record<string, unknown>).name ?? JSON.stringify(obj.role));
+			return String(obj.id ?? JSON.stringify(val));
 		}
 		return String(val);
 	};
 
-	const isUser = (r: any): r is User => {
-		return !!(r && (r.fullName || r.email || r.username || r.id));
+	const isUser = (r: unknown): r is User => {
+		if (typeof r !== "object" || r === null) return false;
+		const obj = r as Record<string, unknown>;
+		return !!(obj.fullName || obj.email || obj.username || obj.id);
 	};
 
-	const getName = (r: any) => (isUser(r) ? r.fullName ?? r.username ?? r.email ?? r.id : r.name ?? "-");
-	const getPhone = (r: any) => (isUser(r) ? r.phoneNumber ?? "-" : r.phone ?? "-");
-	const getRole = (r: any) => (isUser(r) ? (typeof r.role === "string" ? r.role : r.role?.role ?? "-") : r.role ?? "-");
-	const getAssigned = (r: any) => (isUser(r) ? "-" : r.assigned ?? "-");
-	const getSalary = (r: any) => r.salaryAmount ?? "-";
+	const getName = (r: unknown) => (isUser(r) ? r.fullName ?? r.username ?? r.email ?? r.id : (r as Record<string, unknown>).name ?? "-");
+	const getPhone = (r: unknown) => (isUser(r) ? r.phoneNumber ?? "-" : (r as Record<string, unknown>).phone ?? "-");
+	const getRole = (r: unknown) =>
+		isUser(r) ? (typeof r.role === "string" ? r.role : r.role?.role ?? "-") : (r as Record<string, unknown>).role ?? "-";
+	const getAssigned = (r: unknown) => (isUser(r) ? "-" : (r as Record<string, unknown>).assigned ?? "-");
+	const getSalary = (r: unknown) => (r as Record<string, unknown>).salaryAmount ?? "-";
 
 	const normalizedQuery = query.trim().toLowerCase();
-	const visibleUsers = (storedUsers || []).filter((u: any) => {
+	const visibleUsers = (storedUsers || []).filter((u: unknown) => {
 		let matchesQuery = true;
 		if (normalizedQuery) {
 			const name = String(getName(u)).toLowerCase();
@@ -109,7 +113,8 @@ export default function Users() {
 
 		let matchesRole = true;
 		if (roleFilter) {
-			const role = (typeof u.role === "string" ? u.role : u.role?.role ?? "") as string;
+			const uObj = u as Record<string, unknown>;
+			const role = (typeof uObj.role === "string" ? uObj.role : (uObj.role as Record<string, unknown>)?.role ?? "") as string;
 			matchesRole = role === roleFilter;
 		}
 
@@ -205,12 +210,18 @@ export default function Users() {
 																	{Array.from(
 																		new Set(
 																			(storedUsers || [])
-																				.map((u: any) => (typeof u.role === "string" ? u.role : u.role?.role || u.role?.role || ""))
+																				.map((u: unknown) =>
+																					typeof (u as Record<string, unknown>).role === "string"
+																						? (u as Record<string, unknown>).role
+																						: ((u as Record<string, unknown>).role as Record<string, unknown>)?.role ||
+																						  ((u as Record<string, unknown>).role as Record<string, unknown>)?.role ||
+																						  ""
+																				)
 																				.filter(Boolean)
 																		)
-																	).map((r: string) => (
-																		<SelectItem key={r} value={r}>
-																			{r}
+																	).map((r: unknown) => (
+																		<SelectItem key={r as string} value={r as string}>
+																			{r as string}
 																		</SelectItem>
 																	))}
 																</SelectContent>
@@ -246,7 +257,7 @@ export default function Users() {
 												</TableRow>
 											</TableHeader>
 											<TableBody>
-												{visibleUsers.map((row: any, idx: number) => (
+												{visibleUsers.map((row: unknown, idx: number) => (
 													<TableRow key={idx} className="hover:bg-[#F6FBFF]">
 														<TableCell className="text-[#13121266]">{renderField(getName(row))}</TableCell>
 														<TableCell className="text-[#13121266]">{renderField(getPhone(row))}</TableCell>
@@ -268,7 +279,7 @@ export default function Users() {
 																			key: "view",
 																			label: "View Profile",
 																			danger: false,
-																			action: () => navigate(_router.dashboard.userDetails(row.id)),
+																			action: () => navigate(_router.dashboard.userDetails((row as Record<string, unknown>).id as string)),
 																		},
 																		{ key: "edit", label: "Edit Profile", danger: false },
 																		{ key: "deactivate", label: "Deactivate", danger: false },
@@ -278,7 +289,7 @@ export default function Users() {
 																			label: "Delete",
 																			danger: true,
 																			action: () => {
-																				setToDelete({ id: row.id, title: String(getName(row)) });
+																				setToDelete({ id: (row as Record<string, unknown>).id as string, title: String(getName(row)) });
 																				setConfirmOpen(true);
 																			},
 																		},

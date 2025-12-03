@@ -84,8 +84,9 @@ export default function AddProperties({ propertyRequestId, onComplete }: { prope
 				setSuccessOpen(true);
 			}
 		},
-		(error: any) => {
-			const errorMsg = error?.message || "Failed to create property";
+		(error: unknown) => {
+			const err = error as { message?: string };
+			const errorMsg = err?.message || "Failed to create property";
 			toast.error(errorMsg);
 		}
 	);

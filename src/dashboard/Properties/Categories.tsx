@@ -47,10 +47,10 @@ export default function Categories() {
 			});
 			return { prev };
 		},
-		onError: (_err: any, _newCat: any, context: any) => {
-			if (context?.prev) {
-				setCategories(context.prev);
-				dispatch(setCategoriesAction(context.prev));
+		onError: (_err: unknown, _newCat: unknown, context: unknown) => {
+			if ((context as { prev?: typeof categories })?.prev) {
+				setCategories((context as { prev?: typeof categories }).prev!);
+				dispatch(setCategoriesAction((context as { prev?: typeof categories }).prev!));
 			}
 		},
 		onSettled: () => {
@@ -76,11 +76,11 @@ export default function Categories() {
 			});
 			return { prev };
 		},
-		onError: (err: unknown, _vars: any, context: any) => {
+		onError: (err: unknown, _vars: unknown, context: unknown) => {
 			console.error("Update error:", err);
-			if (context?.prev) {
-				setCategories(context.prev);
-				dispatch(setCategoriesAction(context.prev));
+			if ((context as { prev?: typeof categories })?.prev) {
+				setCategories((context as { prev?: typeof categories }).prev!);
+				dispatch(setCategoriesAction((context as { prev?: typeof categories }).prev!));
 			}
 		},
 		onSettled: () => {
@@ -120,7 +120,7 @@ export default function Categories() {
 	const [confirmOpen, setConfirmOpen] = React.useState(false);
 	const [toDelete, setToDelete] = React.useState<{ id?: string; title?: string } | null>(null);
 
-	const deleteMutation = useMutation<any, unknown, string>({
+	const deleteMutation = useMutation<unknown, unknown, string>({
 		mutationFn: (id: string) => {
 			return deleteCategory(id);
 		},
@@ -134,10 +134,10 @@ export default function Categories() {
 			});
 			return { prev };
 		},
-		onError: (_err: any, context: any) => {
-			if (context?.prev) {
-				setCategories(context.prev);
-				dispatch(setCategoriesAction(context.prev));
+		onError: (_err: unknown, context: unknown) => {
+			if ((context as { prev?: typeof categories })?.prev) {
+				setCategories((context as { prev?: typeof categories }).prev!);
+				dispatch(setCategoriesAction((context as { prev?: typeof categories }).prev!));
 			}
 			toast.error("Failed to delete category");
 		},
@@ -360,9 +360,10 @@ export default function Categories() {
 								setEditing(null);
 							}, 500);
 						}
-					} catch (e: any) {
+					} catch (e: unknown) {
 						console.error("Save error:", e);
-						const serverMessage = e?.data?.message || e?.message || String(e);
+						const serverMessage =
+							(e as { data?: { message?: string }; message?: string })?.data?.message || (e as { message?: string })?.message || String(e);
 						toast.error(serverMessage || "Failed to save category");
 					}
 				}}

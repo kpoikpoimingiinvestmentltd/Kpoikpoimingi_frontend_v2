@@ -11,8 +11,24 @@ import { useNavigate } from "react-router";
 import { _router } from "../../routes/_router";
 import { formatPhoneNumber } from "@/lib/utils";
 
+type FormShape = {
+	fullName?: string;
+	username?: string;
+	email?: string;
+	phone?: string;
+	houseAddress?: string;
+	stateOfOrigin?: string;
+	dob?: string;
+	role?: string;
+	salary?: string;
+	accountNumber?: string;
+	accountType?: string;
+	bankName?: string;
+	avatar?: string;
+};
+
 export default function AddNewUser() {
-	const [form, setForm] = React.useState({
+	const [form, setForm] = React.useState<FormShape>({
 		fullName: "",
 		username: "",
 		email: "",
@@ -32,7 +48,7 @@ export default function AddNewUser() {
 	const [userAddedOpen, setUserAddedOpen] = useState(false);
 	const [generatedPassword, setGeneratedPassword] = useState("");
 
-	function update<K extends keyof typeof form>(key: K, value: (typeof form)[K]) {
+	function update(key: keyof FormShape, value: unknown) {
 		setForm((s) => ({ ...s, [key]: value }));
 	}
 
@@ -46,10 +62,10 @@ export default function AddNewUser() {
 			const parsedBankId = Number(form.bankName);
 			const parsedStateId = Number(form.stateOfOrigin);
 			const parsedStatusId = 1; // Default active status
-			const parsedPhoneNumber = formatPhoneNumber(form.phone);
+			const parsedPhoneNumber = form.phone ? formatPhoneNumber(form.phone) : "";
 			const parsedSalaryAmount = form.salary ? Number(form.salary) : undefined;
 
-			const payload: any = {
+			const payload: Record<string, unknown> = {
 				fullName: form.fullName,
 				email: form.email,
 				phoneNumber: parsedPhoneNumber,
@@ -119,7 +135,7 @@ export default function AddNewUser() {
 				<div className="max-w-4xl mx-auto">
 					<UserForm
 						values={form}
-						onChange={(k, v) => update(k as keyof typeof form, v)}
+						onChange={(k, v) => update(k, v)}
 						onSubmit={handleSubmit}
 						submitLabel="Add User"
 						onAvatarUploaded={(key) => setMediaKey(key)}

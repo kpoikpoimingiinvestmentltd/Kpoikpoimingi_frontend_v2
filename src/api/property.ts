@@ -10,7 +10,7 @@ export async function createPropertyRequest(payload: PropertyPayload) {
 	return apiPost(API_ROUTES.property.createProperty, payload);
 }
 
-export function useCreateProperty(onSuccess?: (data: PropertyResponse) => void, onError?: (error: any) => void) {
+export function useCreateProperty(onSuccess?: (data: PropertyResponse) => void, onError?: (error: unknown) => void) {
 	return useMutation({
 		mutationFn: async (payload: PropertyPayload) => {
 			const data = await createPropertyRequest(payload);
@@ -53,7 +53,7 @@ export async function updatePropertyRequest(id: string, payload: Partial<Propert
 	return apiPut(API_ROUTES.property.updateProperty(id), payload);
 }
 
-export function useUpdateProperty(onSuccess?: (data: any) => void, onError?: (error: any) => void) {
+export function useUpdateProperty(onSuccess?: (data: unknown) => void, onError?: (error: unknown) => void) {
 	return useMutation({
 		mutationFn: async ({ id, payload }: { id: string; payload: Partial<PropertyPayload> }) => {
 			const data = await updatePropertyRequest(id, payload);
@@ -69,7 +69,7 @@ export async function deletePropertyRequest(id: string) {
 	return apiDelete(API_ROUTES.property.deleteProperty(id));
 }
 
-export function useDeleteProperty(onSuccess?: (data: any) => void, onError?: (error: any) => void) {
+export function useDeleteProperty(onSuccess?: (data: unknown) => void, onError?: (error: unknown) => void) {
 	return useMutation({
 		mutationFn: async (id: string) => {
 			const data = await deletePropertyRequest(id);

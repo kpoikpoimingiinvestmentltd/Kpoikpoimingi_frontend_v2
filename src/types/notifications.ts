@@ -27,7 +27,7 @@ export type ApiNotification = {
 	createdAt: string;
 	isRead: boolean;
 	type?: { type?: string } | null;
-	[key: string]: any;
+	[key: string]: unknown;
 };
 
 export type NotificationsApiResponse = {

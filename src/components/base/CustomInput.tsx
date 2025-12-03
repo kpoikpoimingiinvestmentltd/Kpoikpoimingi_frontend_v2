@@ -84,7 +84,7 @@ export default function CustomInput({
 				<Input
 					{...props}
 					value={internal}
-					onChange={(e: any) => {
+					onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
 						setInternal(e.target.value);
 						if (typeof props.onChange === "function") props.onChange(e);
 					}}

@@ -48,53 +48,53 @@ export default function TabProductInformation({ data }: { data?: CustomerRegistr
 						</Dialog>
 					</>
 				)}
-				{propertyInterests.map((property: any, index: number) => (
+				{propertyInterests.map((property: Record<string, unknown>, index: number) => (
 					<div key={index}>
 						<SectionTitle title={`Property Interest ${index + 1}`} />
 						<CustomCard className="mt-6 p-0 border-0">
 							<div className="grid grid-cols-1 gap-y-0.5 text-sm">
 								<KeyValueRow
 									label="Property ID"
-									value={property.propertyId || "N/A"}
+									value={(property.propertyId as string) || "N/A"}
 									leftClassName="text-sm text-muted-foreground"
 									rightClassName="text-right"
 								/>
 								<KeyValueRow
 									label="Quantity"
-									value={String(property.quantity || 1)}
+									value={String((property.quantity as number) || 1)}
 									leftClassName="text-sm text-muted-foreground"
 									rightClassName="text-right"
 								/>
 								<KeyValueRow
 									label="Down Payment"
-									value={`₦${property.downPayment || 0}`}
+									value={`₦${(property.downPayment as number) || 0}`}
 									leftClassName="text-sm text-muted-foreground"
 									rightClassName="text-right"
 								/>
 								<KeyValueRow
 									label="Payment Interval ID"
-									value={String(property.paymentIntervalId || "N/A")}
+									value={String((property.paymentIntervalId as string) || "N/A")}
 									leftClassName="text-sm text-muted-foreground"
 									rightClassName="text-right"
 								/>
 								<KeyValueRow
 									label="Is Assigned"
-									value={property.isAssigned ? "Yes" : "No"}
+									value={(property.isAssigned as boolean) ? "Yes" : "No"}
 									leftClassName="text-sm text-muted-foreground"
 									rightClassName="text-right"
 								/>
-								{property.customPropertyName && (
+								{(property.customPropertyName as string) && (
 									<KeyValueRow
 										label="Custom Property Name"
-										value={property.customPropertyName}
+										value={property.customPropertyName as string}
 										leftClassName="text-sm text-muted-foreground"
 										rightClassName="text-right"
 									/>
 								)}
-								{property.customPropertyPrice && (
+								{(property.customPropertyPrice as number) && (
 									<KeyValueRow
 										label="Custom Property Price"
-										value={`₦${property.customPropertyPrice}`}
+										value={`₦${property.customPropertyPrice as number}`}
 										leftClassName="text-sm text-muted-foreground"
 										rightClassName="text-right"
 									/>

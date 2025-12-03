@@ -24,7 +24,7 @@ export type User = {
 	branchLocation?: string;
 	createdAt?: string;
 	phoneNumber?: string;
-	media?: any | null;
+	media?: string | null;
 };
 
 export type ResetPasswordResponse = {

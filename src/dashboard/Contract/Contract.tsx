@@ -96,29 +96,32 @@ export default function Contract() {
 										</TableRow>
 									</TableHeader>
 									<TableBody>
-										{contracts.map((contract: any, idx: number) => (
-											<TableRow key={idx} className="hover:bg-[#F6FBFF]">
-												<TableCell>{contract.customer?.customerCode || "N/A"}</TableCell>
-												<TableCell>{contract.customer?.fullName || "N/A"}</TableCell>
-												<TableCell>{contract.property?.name || "N/A"}</TableCell>
-												<TableCell>{contract.paymentType?.type || "N/A"}</TableCell>
-												<TableCell>
-													<Badge value={contract.status?.status || "N/A"} size="sm" />
-												</TableCell>
-												<TableCell>₦{parseInt(contract.outStandingBalance || "0").toLocaleString()}</TableCell>
-												<TableCell>{new Date(contract.createdAt).toLocaleDateString()}</TableCell>
-												<TableCell>
-													<div className="flex items-center">
-														<Link to={_router.dashboard.contractDetails.replace(":id", contract.id)} className=" p-2 flex items-center">
-															<IconWrapper>
-																<EditIcon />
-															</IconWrapper>
-														</Link>
-														<ExportTrigger className="text-primary" />
-													</div>
-												</TableCell>
-											</TableRow>
-										))}
+										{contracts.map((contract: unknown, idx: number) => {
+											const c = contract as Record<string, unknown>;
+											return (
+												<TableRow key={idx} className="hover:bg-[#F6FBFF]">
+													<TableCell>{((c.customer as Record<string, unknown>)?.customerCode as string) || "N/A"}</TableCell>
+													<TableCell>{((c.customer as Record<string, unknown>)?.fullName as string) || "N/A"}</TableCell>
+													<TableCell>{((c.property as Record<string, unknown>)?.name as string) || "N/A"}</TableCell>
+													<TableCell>{((c.paymentType as Record<string, unknown>)?.type as string) || "N/A"}</TableCell>
+													<TableCell>
+														<Badge value={((c.status as Record<string, unknown>)?.status as string) || "N/A"} size="sm" />
+													</TableCell>
+													<TableCell>₦{parseInt((c.outStandingBalance as string) || "0").toLocaleString()}</TableCell>
+													<TableCell>{new Date(c.createdAt as string).toLocaleDateString()}</TableCell>
+													<TableCell>
+														<div className="flex items-center">
+															<Link to={_router.dashboard.contractDetails.replace(":id", c.id as string)} className=" p-2 flex items-center">
+																<IconWrapper>
+																	<EditIcon />
+																</IconWrapper>
+															</Link>
+															<ExportTrigger className="text-primary" />
+														</div>
+													</TableCell>
+												</TableRow>
+											);
+										})}
 									</TableBody>
 								</Table>
 							</div>

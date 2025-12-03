@@ -94,34 +94,39 @@ export default function UserDetails() {
 	useEffect(() => {
 		if (!currentUser) return;
 
+		const user = currentUser as Record<string, unknown>;
+
 		// Extract IDs from objects for form fields
-		const stateOfOriginId = typeof currentUser?.stateOfOrigin === "object" ? currentUser?.stateOfOrigin?.id : currentUser?.stateOfOrigin;
-		const roleId = typeof currentUser?.role === "object" ? currentUser?.role?.id : currentUser?.role;
-		const accountTypeId = typeof currentUser?.accountType === "object" ? currentUser?.accountType?.id : currentUser?.accountType;
-		const bankNameId = typeof currentUser?.bankName === "object" ? currentUser?.bankName?.id : currentUser?.bankName;
+		const stateOfOriginId = typeof user?.stateOfOrigin === "object" ? (user?.stateOfOrigin as Record<string, unknown>)?.id : user?.stateOfOrigin;
+		const roleId = typeof user?.role === "object" ? (user?.role as Record<string, unknown>)?.id : user?.role;
+		const accountTypeId = typeof user?.accountType === "object" ? (user?.accountType as Record<string, unknown>)?.id : user?.accountType;
+		const bankNameId = typeof user?.bankName === "object" ? (user?.bankName as Record<string, unknown>)?.id : user?.bankName;
 
 		// Get media URL for avatar display
-		const avatarUrl = Array.isArray(currentUser?.media) && currentUser?.media?.length > 0 ? currentUser?.media[0]?.fileUrl : currentUser?.avatar;
+		const avatarUrl =
+			Array.isArray(user?.media) && (user?.media as unknown[])?.length > 0
+				? (((user?.media as unknown[])[0] as Record<string, unknown>)?.fileUrl as string)
+				: (user?.avatar as string);
 
 		// Format date for HTML date input (YYYY-MM-DD)
-		const dobRaw = currentUser?.dateOfBirth ?? currentUser?.dob ?? null;
+		const dobRaw = (user?.dateOfBirth as string) ?? (user?.dob as string) ?? null;
 		const dobFormatted = dobRaw ? new Date(dobRaw).toISOString().split("T")[0] : "";
 
 		// Update user status
-		const status = currentUser?.status?.status || currentUser?.statusId;
+		const status = ((user?.status as Record<string, unknown>)?.status as string) || (user?.statusId as string);
 		setUserStatus(status);
 
 		setFormValues({
-			fullName: currentUser?.fullName ?? "",
-			username: currentUser?.username ?? "",
-			email: currentUser?.email ?? "",
-			phone: currentUser?.phoneNumber ?? currentUser?.phone ?? "",
-			houseAddress: currentUser?.houseAddress ?? "",
+			fullName: (user?.fullName as string) ?? "",
+			username: (user?.username as string) ?? "",
+			email: (user?.email as string) ?? "",
+			phone: (user?.phoneNumber as string) ?? (user?.phone as string) ?? "",
+			houseAddress: (user?.houseAddress as string) ?? "",
 			stateOfOrigin: String(stateOfOriginId ?? ""),
 			dob: dobFormatted,
 			role: String(roleId ?? ""),
-			salary: currentUser?.salaryAmount ?? currentUser?.salary ?? "",
-			accountNumber: currentUser?.accountNumber ?? "",
+			salary: (user?.salaryAmount as string) ?? (user?.salary as string) ?? "",
+			accountNumber: (user?.accountNumber as string) ?? "",
 			accountType: String(accountTypeId ?? ""),
 			bankName: String(bankNameId ?? ""),
 			avatar: avatarUrl ?? null,
@@ -228,7 +233,12 @@ export default function UserDetails() {
 							<Avatar className="size-32 bg-white">
 								<AvatarImage
 									className="object-cover object-top"
-									src={Array.isArray(currentUser?.media) && currentUser?.media?.length > 0 ? currentUser?.media[0]?.fileUrl : media.images.avatar}
+									src={
+										Array.isArray((currentUser as Record<string, unknown>)?.media) &&
+										((currentUser as Record<string, unknown>)?.media as unknown[])?.length > 0
+											? ((((currentUser as Record<string, unknown>)?.media as unknown[])[0] as Record<string, unknown>)?.fileUrl as string)
+											: media.images.avatar
+									}
 									alt="avatar"
 								/>
 							</Avatar>
@@ -243,22 +253,22 @@ export default function UserDetails() {
 								value={
 									<Badge
 										value={
-											currentUser?.status?.status ??
+											(((currentUser as Record<string, unknown>)?.status as Record<string, unknown>)?.status as string) ??
 											(refData?.statuses && Array.isArray(refData.statuses)
 												? ((
-														refData.statuses.find((s: unknown) => (s as Record<string, unknown>)?.id === currentUser?.statusId) as
-															| Record<string, unknown>
-															| undefined
+														refData.statuses.find(
+															(s: unknown) => (s as Record<string, unknown>)?.id === ((currentUser as Record<string, unknown>)?.statusId as string)
+														) as Record<string, unknown> | undefined
 												  )?.status as string) ?? "Unknown"
 												: "Unknown")
 										}
 										status={
-											(currentUser?.status?.status as string) ??
+											(((currentUser as Record<string, unknown>)?.status as Record<string, unknown>)?.status as string) ??
 											(refData?.statuses && Array.isArray(refData.statuses)
 												? ((
-														refData.statuses.find((s: unknown) => (s as Record<string, unknown>)?.id === currentUser?.statusId) as
-															| Record<string, unknown>
-															| undefined
+														refData.statuses.find(
+															(s: unknown) => (s as Record<string, unknown>)?.id === ((currentUser as Record<string, unknown>)?.statusId as string)
+														) as Record<string, unknown> | undefined
 												  )?.status as string)
 												: null) ??
 											"unknown"
@@ -268,23 +278,29 @@ export default function UserDetails() {
 								}
 							/>
 							{(() => {
-								const fullName = currentUser?.fullName ?? "-";
-								const name = currentUser?.username ?? "-";
-								const email = currentUser?.email ?? "-";
-								const phone = currentUser?.phoneNumber ?? currentUser?.phone ?? "-";
-								const address = currentUser?.houseAddress ?? "-";
-								const stateObj = currentUser?.stateOfOrigin;
-								const state = typeof stateObj === "string" ? stateObj : stateObj?.state ?? "-";
-								const dobRaw = currentUser?.dateOfBirth ?? currentUser?.dob ?? null;
+								const fullName = ((currentUser as Record<string, unknown>)?.fullName as string) ?? "-";
+								const name = ((currentUser as Record<string, unknown>)?.username as string) ?? "-";
+								const email = ((currentUser as Record<string, unknown>)?.email as string) ?? "-";
+								const phone =
+									((currentUser as Record<string, unknown>)?.phoneNumber as string) ??
+									((currentUser as Record<string, unknown>)?.phone as string) ??
+									"-";
+								const address = ((currentUser as Record<string, unknown>)?.houseAddress as string) ?? "-";
+								const stateObj = (currentUser as Record<string, unknown>)?.stateOfOrigin;
+								const state = typeof stateObj === "string" ? stateObj : ((stateObj as Record<string, unknown>)?.state as string) ?? "-";
+								const dobRaw =
+									((currentUser as Record<string, unknown>)?.dateOfBirth as string) ??
+									((currentUser as Record<string, unknown>)?.dob as string) ??
+									null;
 								const dob = dobRaw ? new Date(dobRaw).toLocaleDateString() : "-";
 								const roleLabel =
-									typeof currentUser?.role === "string"
-										? currentUser.role
-										: (currentUser?.role as unknown as Record<string, unknown> | undefined)?.role ?? "-";
+									typeof (currentUser as Record<string, unknown>)?.role === "string"
+										? ((currentUser as Record<string, unknown>)?.role as string)
+										: (((currentUser as Record<string, unknown>)?.role as Record<string, unknown>)?.role as string) ?? "-";
 								const assigned =
-									(currentUser?._count as unknown as Record<string, unknown> | undefined)?.customers ??
-									currentUser?.assignedCustomersCount ??
-									currentUser?.assignedCount ??
+									(((currentUser as Record<string, unknown>)?.["_count"] as Record<string, unknown>)?.customers as number) ??
+									((currentUser as Record<string, unknown>)?.assignedCustomersCount as number) ??
+									((currentUser as Record<string, unknown>)?.assignedCount as number) ??
 									0;
 								return (
 									<>
@@ -306,16 +322,20 @@ export default function UserDetails() {
 						<hr />
 						<div className="space-y-4">
 							{(() => {
-								const salary = currentUser?.salaryAmount ?? currentUser?.salary ?? "-";
-								const accountNumber = currentUser?.accountNumber ?? "-";
+								const salary =
+									((currentUser as Record<string, unknown>)?.salaryAmount as string) ??
+									((currentUser as Record<string, unknown>)?.salary as string) ??
+									"-";
+								const accountNumber = ((currentUser as Record<string, unknown>)?.accountNumber as string) ?? "-";
 
 								// Extract account type - handle both string and object
-								const accountTypeObj = currentUser?.accountType;
-								const accountType = typeof accountTypeObj === "string" ? accountTypeObj : accountTypeObj?.type ?? "-";
+								const accountTypeObj = (currentUser as Record<string, unknown>)?.accountType;
+								const accountType =
+									typeof accountTypeObj === "string" ? accountTypeObj : ((accountTypeObj as Record<string, unknown>)?.type as string) ?? "-";
 
 								// Extract bank name - handle both string and object
-								const bankNameObj = currentUser?.bankName;
-								const bankName = typeof bankNameObj === "string" ? bankNameObj : bankNameObj?.name ?? "-";
+								const bankNameObj = (currentUser as Record<string, unknown>)?.bankName;
+								const bankName = typeof bankNameObj === "string" ? bankNameObj : ((bankNameObj as Record<string, unknown>)?.name as string) ?? "-";
 
 								return (
 									<>
@@ -362,7 +382,7 @@ export default function UserDetails() {
 					</DialogHeader>
 					<UserForm
 						values={formValues}
-						onChange={(k: string, v: unknown) => setFormValues((s: any) => ({ ...(s ?? {}), [k]: v }))}
+						onChange={(k: string, v: unknown) => setFormValues((s: Record<string, unknown>) => ({ ...(s ?? {}), [k]: v }))}
 						onAvatarUploaded={(key) => setAvatarMediaKey(key)}
 						onSubmit={async () => {
 							if (!userId) {
@@ -405,7 +425,12 @@ export default function UserDetails() {
 								setEditOpen(false);
 							} catch (e) {
 								console.error("Update user failed:", e);
-								const err = e as any;
+								const err = e as {
+									status?: number;
+									response?: { status?: number; data?: { message?: string } };
+									data?: { message?: string };
+									message?: string;
+								};
 								const status = err?.status ?? err?.response?.status;
 								const serverMessage = err?.data?.message ?? err?.message ?? err?.response?.data?.message;
 								if (status) {

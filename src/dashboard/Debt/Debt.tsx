@@ -126,32 +126,35 @@ export default function Debt() {
 										</TableRow>
 									</TableHeader>
 									<TableBody>
-										{debtors.map((r: any, i: number) => (
-											<TableRow key={i}>
-												<TableCell className="text-[#13121266]">{r.contractCode}</TableCell>
-												<TableCell className="text-[#13121266]">{r.customerName}</TableCell>
-												<TableCell className="text-[#13121266]">{r.propertyName}</TableCell>
-												<TableCell className="text-[#13121266]">NGN {(r.amountPaid || 0).toLocaleString()}</TableCell>
-												<TableCell className="text-[#13121266]">NGN {(r.totalDebt || 0).toLocaleString()}</TableCell>
-												<TableCell className="text-[#13121266]">{r.date}</TableCell>
-												<TableCell>
-													<span
-														className={twMerge(
-															"px-3 py-1 rounded-full text-xs font-medium",
-															r.isOverdue ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"
-														)}>
-														{r.isOverdue ? "Overdue" : "Current"}
-													</span>
-												</TableCell>
-												<TableCell className="text-right">
-													<Link to={_router.dashboard.debtDetails.replace(":id", r.id)} className="p-2 flex items-center">
-														<IconWrapper className="text-xl">
-															<EyeIcon />
-														</IconWrapper>
-													</Link>
-												</TableCell>
-											</TableRow>
-										))}
+										{debtors.map((r: unknown, i: number) => {
+											const row = r as Record<string, unknown>;
+											return (
+												<TableRow key={i}>
+													<TableCell className="text-[#13121266]">{row.contractCode as string}</TableCell>
+													<TableCell className="text-[#13121266]">{row.customerName as string}</TableCell>
+													<TableCell className="text-[#13121266]">{row.propertyName as string}</TableCell>
+													<TableCell className="text-[#13121266]">NGN {((row.amountPaid as number) || 0).toLocaleString()}</TableCell>
+													<TableCell className="text-[#13121266]">NGN {((row.totalDebt as number) || 0).toLocaleString()}</TableCell>
+													<TableCell className="text-[#13121266]">{row.date as string}</TableCell>
+													<TableCell>
+														<span
+															className={twMerge(
+																"px-3 py-1 rounded-full text-xs font-medium",
+																(row.isOverdue as boolean) ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"
+															)}>
+															{(row.isOverdue as boolean) ? "Overdue" : "Current"}
+														</span>
+													</TableCell>
+													<TableCell className="text-right">
+														<Link to={_router.dashboard.debtDetails.replace(":id", row.id as string)} className="p-2 flex items-center">
+															<IconWrapper className="text-xl">
+																<EyeIcon />
+															</IconWrapper>
+														</Link>
+													</TableCell>
+												</TableRow>
+											);
+										})}
 									</TableBody>
 								</Table>
 							</div>

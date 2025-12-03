@@ -17,11 +17,11 @@ export type PaginatedResult<T> = {
 export async function getAllCategories(page = 1, limit = 10) {
 	const qs = `?page=${encodeURIComponent(page)}&limit=${encodeURIComponent(limit)}`;
 	const url = `${API_ROUTES.propertyCategories.getAllCategories}${qs}`;
-	return apiGet(url) as Promise<PaginatedResult<any>>;
+	return apiGet(url) as Promise<PaginatedResult<unknown>>;
 }
 
 export async function createCategory(payload: { category?: string; description?: string; parentId?: string | null; subcategories?: string[] }) {
-	const body: any = {
+	const body: Record<string, unknown> = {
 		category: payload.category,
 		description: payload.description,
 	};
@@ -29,18 +29,18 @@ export async function createCategory(payload: { category?: string; description?:
 		body.subcategories = payload.subcategories.map((name) => ({ name }));
 	}
 	if (payload.parentId) body.parentId = payload.parentId;
-	return apiPost(API_ROUTES.propertyCategories.createCategory, body) as Promise<any>;
+	return apiPost(API_ROUTES.propertyCategories.createCategory, body) as Promise<unknown>;
 }
 
 export async function updateCategory(id: string, payload: { category?: string; description?: string; subcategories?: string[] }) {
-	const body: any = {
+	const body: Record<string, unknown> = {
 		category: payload.category,
 		description: payload.description,
 	};
 	if (payload.subcategories && Array.isArray(payload.subcategories)) {
 		body.subcategories = payload.subcategories.map((name) => ({ name }));
 	}
-	return apiPatch(API_ROUTES.propertyCategories.updateCategory(id), body) as Promise<any>;
+	return apiPatch(API_ROUTES.propertyCategories.updateCategory(id), body) as Promise<unknown>;
 }
 
 export function useGetAllCategories(page = 1, limit = 10, enabled = true) {
@@ -50,5 +50,5 @@ export function useGetAllCategories(page = 1, limit = 10, enabled = true) {
 export default { getAllCategories, createCategory, updateCategory };
 
 export async function deleteCategory(id: string) {
-	return apiDelete(API_ROUTES.propertyCategories.deleteCategory(id)) as Promise<any>;
+	return apiDelete(API_ROUTES.propertyCategories.deleteCategory(id)) as Promise<unknown>;
 }

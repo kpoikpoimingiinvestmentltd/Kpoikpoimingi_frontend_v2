@@ -30,25 +30,35 @@ export default function Profile() {
 		);
 	}
 
-	const initials = user.fullName
-		? user.fullName
+	const initials = (user as Record<string, unknown>).fullName
+		? ((user as Record<string, unknown>).fullName as string)
 				.split(" ")
 				.map((n) => n[0])
 				.join("")
 				.toUpperCase()
 				.slice(0, 2)
 		: "U";
-	const userRole = typeof user.role === "string" ? user.role : user.role?.role ?? "N/A";
+	const userRole =
+		typeof (user as Record<string, unknown>).role === "string"
+			? ((user as Record<string, unknown>).role as string)
+			: (((user as Record<string, unknown>).role as Record<string, unknown>)?.role as string) ?? "N/A";
 
 	return (
 		<CustomCard className="mt-4 border-none p-5 sm:p-6 bg-[#fafafa]">
 			<div className="flex flex-col gap-6">
 				<div className="w-28 h-28 rounded-full overflow-hidden">
-					{user.media ? (
-						<Image src={user.media} alt={user.fullName} className="w-full h-full object-cover" />
+					{(user as Record<string, unknown>).media ? (
+						<Image
+							src={(user as Record<string, unknown>).media as string}
+							alt={(user as Record<string, unknown>).fullName as string}
+							className="w-full h-full object-cover"
+						/>
 					) : (
 						<Avatar className="w-full h-full">
-							<AvatarImage src={user.media || undefined} alt={user.fullName} />
+							<AvatarImage
+								src={((user as Record<string, unknown>).media as string) || undefined}
+								alt={(user as Record<string, unknown>).fullName as string}
+							/>
 							<AvatarFallback className="text-2xl">{initials}</AvatarFallback>
 						</Avatar>
 					)}
@@ -56,13 +66,33 @@ export default function Profile() {
 
 				<div className="flex-1 mt-3">
 					<div className="grid grid-cols-1 gap-2 items-center">
-						<KeyValueRow label="Full Name" value={user.fullName} leftClassName="text-sm text-muted-foreground" rightClassName="text-right" />
-						<KeyValueRow label="Email" value={user.email} leftClassName="text-sm text-muted-foreground" rightClassName="text-right" />
-						<KeyValueRow label="Username" value={user.username} leftClassName="text-sm text-muted-foreground" rightClassName="text-right" />
-						<KeyValueRow label="Phone Number" value={user.phoneNumber} leftClassName="text-sm text-muted-foreground" rightClassName="text-right" />
+						<KeyValueRow
+							label="Full Name"
+							value={(user as Record<string, unknown>).fullName as string}
+							leftClassName="text-sm text-muted-foreground"
+							rightClassName="text-right"
+						/>
+						<KeyValueRow
+							label="Email"
+							value={(user as Record<string, unknown>).email as string}
+							leftClassName="text-sm text-muted-foreground"
+							rightClassName="text-right"
+						/>
+						<KeyValueRow
+							label="Username"
+							value={(user as Record<string, unknown>).username as string}
+							leftClassName="text-sm text-muted-foreground"
+							rightClassName="text-right"
+						/>
+						<KeyValueRow
+							label="Phone Number"
+							value={(user as Record<string, unknown>).phoneNumber as string}
+							leftClassName="text-sm text-muted-foreground"
+							rightClassName="text-right"
+						/>
 						<KeyValueRow
 							label="Branch Location"
-							value={user.branchLocation}
+							value={(user as Record<string, unknown>).branchLocation as string}
 							leftClassName="text-sm text-muted-foreground"
 							rightClassName="text-right"
 						/>

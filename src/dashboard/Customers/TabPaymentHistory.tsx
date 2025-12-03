@@ -55,7 +55,7 @@ export default function TabPaymentHistory({ payments }: { payments?: PaymentDto[
 												<PaymentCard
 													key={p.id}
 													p={{ id: p.id, status: p.status === "PAID" || p.status === "SUCCESS" ? "Successful" : "Failed", date: p.createdAt ?? "" }}
-													onView={(_: any) => handleView(p)}
+													onView={(_: unknown) => handleView(p)}
 													icon={<FileIcon />}
 												/>
 											))

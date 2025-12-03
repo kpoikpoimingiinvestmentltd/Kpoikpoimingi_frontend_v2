@@ -30,8 +30,14 @@ export default function ProductRequestDetails() {
 
 	const { data: registrationData } = useGetProductRequestById(id || "");
 
-	const showApprove = registrationData ? registrationData.isContractSent && !registrationData.approved : false;
-	const showSendContract = registrationData ? !registrationData.isContractSent && !registrationData.approved : false;
+	const showApprove = registrationData
+		? ((registrationData as Record<string, unknown>).isContractSent as boolean) &&
+		  !((registrationData as Record<string, unknown>).approved as boolean)
+		: false;
+	const showSendContract = registrationData
+		? !((registrationData as Record<string, unknown>).isContractSent as boolean) &&
+		  !((registrationData as Record<string, unknown>).approved as boolean)
+		: false;
 
 	const queryClient = useQueryClient();
 	const deleteMutation = useDeleteRegistration();
@@ -62,12 +68,15 @@ export default function ProductRequestDetails() {
 		}
 	};
 
-	const transformMediaFiles = (mediaFiles: Record<string, any> | undefined) => {
+	const transformMediaFiles = (mediaFiles: Record<string, unknown> | undefined) => {
 		if (!mediaFiles) return mediaFiles;
-		const out: Record<string, any[]> = {};
+		const out: Record<string, unknown[]> = {};
 		for (const key of Object.keys(mediaFiles)) {
-			const arr = Array.isArray(mediaFiles[key]) ? mediaFiles[key] : [];
-			out[key] = arr.map((m: any) => ({ ...(m || {}), filename: extractFilename(m?.fileUrl) }));
+			const arr = Array.isArray(mediaFiles[key]) ? (mediaFiles[key] as unknown[]) : [];
+			out[key] = arr.map((m: unknown) => ({
+				...((m as Record<string, unknown>) || {}),
+				filename: extractFilename((m as Record<string, unknown>)?.fileUrl as string),
+			}));
 		}
 		return out;
 	};
@@ -88,7 +97,7 @@ export default function ProductRequestDetails() {
 			}
 			queryClient.invalidateQueries({ queryKey: ["product-requests"] });
 			try {
-				const rawMsg = (data as any)?.message;
+				const rawMsg = (data as { message?: string })?.message;
 				const msg = typeof rawMsg === "string" ? rawMsg.trim() : "";
 				if (msg && !["Registration saved successfully", "Registration created successfully"].includes(msg)) {
 					toast.success(msg);
@@ -105,21 +114,28 @@ export default function ProductRequestDetails() {
 
 	const displayedData = registrationData
 		? (() => {
-				const copy: any = { ...registrationData };
-				if (copy.customer && copy.customer.dateOfBirth) {
-					copy.customer = { ...copy.customer, dateOfBirth: formatIsoDate(copy.customer.dateOfBirth) };
+				const copy: Record<string, unknown> = { ...registrationData };
+				if ((copy.customer as Record<string, unknown>) && (copy.customer as Record<string, unknown>).dateOfBirth) {
+					copy.customer = {
+						...(copy.customer as Record<string, unknown>),
+						dateOfBirth: formatIsoDate((copy.customer as Record<string, unknown>).dateOfBirth as string),
+					};
 				} else if (copy.dateOfBirth) {
-					copy.dateOfBirth = formatIsoDate(copy.dateOfBirth);
+					copy.dateOfBirth = formatIsoDate(copy.dateOfBirth as string);
 				}
-				copy.mediaFiles = transformMediaFiles(copy.mediaFiles);
+				copy.mediaFiles = transformMediaFiles(copy.mediaFiles as Record<string, unknown> | undefined);
 				return copy;
 		  })()
 		: undefined;
 
 	const anyGuarantorMissingState = (() => {
-		const gs = registrationData?.guarantors ?? registrationData?.customer?.guarantors ?? registrationData?.guarantor ?? [];
+		const gs =
+			((registrationData as Record<string, unknown>)?.guarantors as unknown[]) ??
+			(((registrationData as Record<string, unknown>)?.customer as Record<string, unknown>)?.guarantors as unknown[]) ??
+			((registrationData as Record<string, unknown>)?.guarantor as unknown[]) ??
+			[];
 		if (!Array.isArray(gs) || gs.length === 0) return false;
-		return gs.some((g: any) => !g?.stateOfOrigin);
+		return gs.some((g: unknown) => !((g as Record<string, unknown>)?.stateOfOrigin as string));
 	})();
 
 	return (
@@ -216,23 +232,23 @@ export default function ProductRequestDetails() {
 
 					<div className="mt-6">
 						<TabsContent value="information">
-							<TabProductInformation data={displayedData} registrationId={id} />
+							<TabProductInformation data={displayedData as Record<string, unknown>} registrationId={id} />
 						</TabsContent>
 
 						<TabsContent value="customer">
-							<TabCustomerDetails data={displayedData} />
+							<TabCustomerDetails data={displayedData as Record<string, unknown>} />
 						</TabsContent>
 
 						<TabsContent value="kin">
-							<TabNextOfKin data={displayedData} />
+							<TabNextOfKin data={displayedData as Record<string, unknown>} />
 						</TabsContent>
 
 						<TabsContent value="employment">
-							<TabEmploymentDetails data={displayedData} />
+							<TabEmploymentDetails data={displayedData as Record<string, unknown>} />
 						</TabsContent>
 
 						<TabsContent value="guarantor">
-							<TabGuarantorDetails data={displayedData} />
+							<TabGuarantorDetails data={displayedData as Record<string, unknown>} />
 						</TabsContent>
 					</div>
 				</Tabs>
@@ -298,7 +314,7 @@ export default function ProductRequestDetails() {
 					setEditOpen(open);
 				}}
 				onSave={handleSave}
-				initial={registrationData}
+				initial={registrationData as Record<string, unknown>}
 			/>
 		</PageWrapper>
 	);

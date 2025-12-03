@@ -7,20 +7,20 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { media } from "@/resources/images";
 import { modalContentStyle } from "../../components/common/commonStyles";
 
-export default function TabCustomerDetails({ data }: { data: any }) {
+export default function TabCustomerDetails({ data }: { data: Record<string, unknown> }) {
 	const customer = {
-		name: data?.fullName || "N/A",
-		email: data?.email || "N/A",
-		whatsapp: data?.phoneNumber || "N/A",
-		dob: data?.dateOfBirth || "N/A",
+		name: (data?.fullName as string) || "N/A",
+		email: (data?.email as string) || "N/A",
+		whatsapp: (data?.phoneNumber as string) || "N/A",
+		dob: (data?.dateOfBirth as string) || "N/A",
 		paymentMethod: "Hire Purchase",
 	};
 
 	const firstFile = (keys: string[]) => {
-		const mf = data?.mediaFiles || {};
+		const mf = (data?.mediaFiles as Record<string, unknown>) || {};
 		for (const k of keys) {
-			const arr = mf[k];
-			if (Array.isArray(arr) && arr.length > 0) return arr[0];
+			const arr = mf[k] as Record<string, unknown>[];
+			if (Array.isArray(arr) && arr.length > 0) return arr[0] as Record<string, unknown>;
 		}
 		return null;
 	};
@@ -62,7 +62,7 @@ export default function TabCustomerDetails({ data }: { data: any }) {
 							driversLicenseFile ? (
 								<button
 									aria-label="View Driver's License"
-									onClick={() => openPreview(driversLicenseFile.fileUrl, driversLicenseFile.filename || "Driver's License")}
+									onClick={() => openPreview(driversLicenseFile.fileUrl as string, (driversLicenseFile.filename as string) || "Driver's License")}
 									className="inline-flex items-center p-1">
 									<IconWrapper className="text-4xl sm:text-5xl">
 										<FileIcon />
@@ -83,7 +83,7 @@ export default function TabCustomerDetails({ data }: { data: any }) {
 							ninFile ? (
 								<button
 									aria-label="View NIN"
-									onClick={() => openPreview(ninFile.fileUrl, ninFile.filename || "NIN")}
+									onClick={() => openPreview(ninFile.fileUrl as string, (ninFile.filename as string) || "NIN")}
 									className="inline-flex items-center p-1">
 									<IconWrapper className="text-4xl sm:text-5xl">
 										<FileIcon />
@@ -104,7 +104,7 @@ export default function TabCustomerDetails({ data }: { data: any }) {
 							indigeneFile ? (
 								<button
 									aria-label="View Indigene certificate"
-									onClick={() => openPreview(indigeneFile.fileUrl, indigeneFile.filename || "Indigene certificate")}
+									onClick={() => openPreview(indigeneFile.fileUrl as string, (indigeneFile.filename as string) || "Indigene certificate")}
 									className="inline-flex items-center p-1">
 									<IconWrapper className="text-4xl sm:text-5xl">
 										<FileIcon />
