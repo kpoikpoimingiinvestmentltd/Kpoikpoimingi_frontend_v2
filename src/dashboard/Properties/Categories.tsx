@@ -134,12 +134,16 @@ export default function Categories() {
 			});
 			return { prev };
 		},
-		onError: (_err: unknown, context: unknown) => {
+		onError: (err: unknown, _vars: unknown, context: unknown) => {
 			if ((context as { prev?: typeof categories })?.prev) {
 				setCategories((context as { prev?: typeof categories }).prev!);
 				dispatch(setCategoriesAction((context as { prev?: typeof categories }).prev!));
 			}
-			toast.error("Failed to delete category");
+			const serverMessage =
+				(err as { data?: { message?: string }; message?: string })?.data?.message ||
+				(err as { message?: string })?.message ||
+				"Failed to delete category";
+			toast.error(serverMessage);
 		},
 		onSuccess: () => {
 			toast.success("Category deleted");

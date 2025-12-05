@@ -18,6 +18,75 @@ type Props = {
 
 export default function AddCategoryModal({ open, onOpenChange, mode = "add", initial, onSave, savingStatus }: Props) {
 	const [category, setCategory] = React.useState(initial?.category ?? "");
+
+	// Available category labels (value uses the exact visible label)
+	const CATEGORIES: string[] = [
+		"Electronics",
+		"Phones & Accessories",
+		"Computers & Laptops",
+		"Computer Accessories",
+		"Tablets & iPads",
+		"TVs & Audio",
+		"Cameras & Photography",
+		"Gaming & Consoles",
+		"Home Appliances",
+		"Kitchen Appliances", // Fashion & Lifestyle
+		"Fashion",
+		"Men's Fashion",
+		"Women's Fashion",
+		"Children's Fashion",
+		"Shoes & Footwear",
+		"Bags & Luggage",
+		"Watches & Sunglasses",
+		"Jewelry & Accessories",
+		"Beauty & Personal Care",
+		"Health & Wellness", // Home, Furniture & Outdoors
+		"Home & Kitchen",
+		"Furniture & Décor",
+		"Bedding & Bath",
+		"Lighting & Fans",
+		"Garden & Outdoors",
+		"Tools & Home Improvement",
+		"Hardware & Construction", // Babies, Kids & Toys
+		"Babies, Kids & Toys",
+		"Baby Products",
+		"Toys & Games",
+		"School Supplies", // Vehicles & Automotive
+		"Vehicles & Automobiles",
+		"Motorcycles & Scooters",
+		"Vehicle Parts & Accessories",
+		"Car Electronics", // Sports, Fitness & Leisure
+		"Sports & Fitness",
+		"Gym & Exercise Equipment",
+		"Outdoor & Adventure",
+		"Musical Instruments",
+		"Grocery & Supermarket",
+		"Food & Beverages",
+		"Drinks & Alcohol",
+		"Fresh Produce",
+		"Frozen & Dairy",
+		"Properties",
+		"Land & Plots",
+		"Commercial Property",
+		"Services",
+		"Jobs & Recruitment",
+		"Office Supplies & Stationery",
+		"Industrial & Scientific",
+		"Agriculture & Farming",
+		"Manufacturing Equipment",
+		"Books, Movies & Music",
+		"Arts & Crafts",
+		"Collectibles & Antiques",
+		"Pet Supplies",
+		"Mobile Phones & Tablets",
+		"Solar & Power Solutions",
+		"Generators & Power Backup",
+		"Event Tickets & Experiences",
+		"Gift Cards & Vouchers",
+		"Religious & Spiritual Items",
+		"Wedding & Events",
+		"Travel & Tourism",
+	];
 	// store subcategories as objects with stable ids to avoid index-based key issues
 	const makeId = () => `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 	const [subCats, setSubCats] = React.useState<{ id: string; name: string }[]>(() => {
@@ -50,6 +119,16 @@ export default function AddCategoryModal({ open, onOpenChange, mode = "add", ini
 	const saving = (savingStatus ?? "idle") as "idle" | "pending" | "success" | "error";
 	const isSaveDisabled = saving === "pending" || !String(category).trim();
 
+	// search/filter state for the category select
+	const [categoryFilter, setCategoryFilter] = React.useState("");
+	const filteredCategories = React.useMemo(() => {
+		const q = String(categoryFilter || "")
+			.trim()
+			.toLowerCase();
+		if (!q) return CATEGORIES;
+		return CATEGORIES.filter((c) => c.toLowerCase().includes(q));
+	}, [categoryFilter]);
+
 	const handleSave = () => {
 		onSave?.({ category, subCategories: subCats.map((s) => s.name) });
 	};
@@ -75,18 +154,20 @@ export default function AddCategoryModal({ open, onOpenChange, mode = "add", ini
 								<SelectValue placeholder="Enter Category type" className="text-sm" />
 							</SelectTrigger>
 							<SelectContent>
-								<SelectItem value="electronics">Electronics</SelectItem>
-								<SelectItem value="vehicles">Vehicles & Automobiles</SelectItem>
-								<SelectItem value="fashion">Fashion</SelectItem>
-								<SelectItem value="home">Home & Kitchen</SelectItem>
-								<SelectItem value="babies">Babies, Kids & Toys</SelectItem>
-								<SelectItem value="phones">Phones & Accessories</SelectItem>
-								<SelectItem value="computer">Computer & Accessories</SelectItem>
-								<SelectItem value="sport">Sport & Fitness</SelectItem>
-								<SelectItem value="books">Books & Stationaries</SelectItem>
-								<SelectItem value="properties">Properties</SelectItem>
-								<SelectItem value="tools">Tools & Hardware</SelectItem>
-								<SelectItem value="services">Services</SelectItem>
+								<div className="bg-white sticky top-0 z-1 mb-4 px-2">
+									<CustomInput
+										value={categoryFilter}
+										onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCategoryFilter(e.target.value || "")}
+										onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => e.stopPropagation()}
+										placeholder="Search categories"
+										className="w-full"
+									/>
+								</div>
+								{filteredCategories.map((c) => (
+									<SelectItem key={c} value={c}>
+										{c}
+									</SelectItem>
+								))}
 							</SelectContent>
 						</Select>
 					</div>

@@ -144,15 +144,10 @@ export default function GuarantorSection({
 										<SelectValue placeholder="Select status" />
 									</SelectTrigger>
 									<SelectContent>
-										{refLoading ? (
-											<div className="p-3 text-center">
-												<Spinner className="size-4" />
-											</div>
-										) : employmentStatusOptions.length === 0 ? (
+										{employmentStatusOptions.length === 0 ? (
 											<>
-												<SelectItem value="Civil servant">Civil servant</SelectItem>
-												<SelectItem value="Self employer">Self employer</SelectItem>
-												<SelectItem value="Unemployed">Unemployed</SelectItem>
+												<SelectItem value="1">EMPLOYED</SelectItem>
+												<SelectItem value="2">SELF EMPLOYED</SelectItem>
 											</>
 										) : (
 											employmentStatusOptions.map((it) => (
@@ -216,7 +211,7 @@ export default function GuarantorSection({
 											</>
 										) : (
 											stateOfOriginOptions?.map((it) => (
-												<SelectItem key={it.key} value={it.key}>
+												<SelectItem key={it.key} value={it.value}>
 													{it.value}
 												</SelectItem>
 											))

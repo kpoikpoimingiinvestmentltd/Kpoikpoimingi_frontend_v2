@@ -28,7 +28,7 @@ export default function ProductRequestDetails() {
 	const id = params.id;
 	const navigate = useNavigate();
 
-	const { data: registrationData } = useGetProductRequestById(id || "");
+	const { data: registrationData, isLoading: registrationLoading } = useGetProductRequestById(id || "");
 
 	const showApprove = registrationData
 		? ((registrationData as Record<string, unknown>).isContractSent as boolean) &&
@@ -40,6 +40,16 @@ export default function ProductRequestDetails() {
 		: false;
 
 	const queryClient = useQueryClient();
+
+	const handlePropertyAdded = () => {
+		if (!id) return;
+		try {
+			queryClient.invalidateQueries({ queryKey: ["product-request", id] });
+		} catch {
+			queryClient.invalidateQueries({ queryKey: ["product-requests"] });
+		}
+		queryClient.invalidateQueries({ queryKey: ["product-requests"] });
+	};
 	const deleteMutation = useDeleteRegistration();
 	const approveMutation = useApproveRegistration();
 	const sendMutation = useSendContractDocument();
@@ -232,7 +242,11 @@ export default function ProductRequestDetails() {
 
 					<div className="mt-6">
 						<TabsContent value="information">
-							<TabProductInformation data={displayedData as Record<string, unknown>} registrationId={id} />
+							<TabProductInformation
+								data={displayedData as Record<string, unknown>}
+								loading={registrationLoading}
+								onPropertyAdded={handlePropertyAdded}
+							/>
 						</TabsContent>
 
 						<TabsContent value="customer">
@@ -304,7 +318,6 @@ export default function ProductRequestDetails() {
 			<EditProductRequest
 				open={editOpen}
 				onOpenChange={(open) => {
-					// When the modal is being closed, clear the draft/uploaded files
 					if (!open) {
 						try {
 							localStorage.removeItem("customer_registration_draft");

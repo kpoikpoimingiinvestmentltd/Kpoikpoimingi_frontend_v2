@@ -54,7 +54,9 @@ export default function PropertyDetailsSection({
 				const unitToSet = isWeekly ? "1" : "2"; // Assuming 1=weeks, 2=months
 				if (form.paymentDurationUnit !== unitToSet) {
 					handleChange("paymentDurationUnit", unitToSet);
-					handleChange("paymentDuration", ""); // Reset duration when unit changes
+					if (!form.paymentDuration) {
+						handleChange("paymentDuration", "");
+					}
 				}
 			}
 		}

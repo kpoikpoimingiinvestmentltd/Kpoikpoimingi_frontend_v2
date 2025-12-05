@@ -26,6 +26,7 @@ export default function AddProperties({ propertyRequestId, onComplete }: { prope
 		control,
 		handleSubmit: handleHookFormSubmit,
 		formState: { errors, isValid },
+		reset,
 	} = useForm<PropertyFormData>({
 		defaultValues: {
 			name: "",
@@ -73,6 +74,15 @@ export default function AddProperties({ propertyRequestId, onComplete }: { prope
 			// close the modal. Otherwise show the local success dialog.
 			const successMsg = "Property created successfully!";
 			toast.success(successMsg);
+			// Clear form state and uploaded images/keys
+			try {
+				reset();
+			} catch (e) {
+				console.debug("reset failed:", e);
+			}
+			setUploadedImages([]);
+			setUploadedMediaKeys([]);
+			setSelectedParentCategoryId("");
 			if (onComplete) {
 				try {
 					onComplete();

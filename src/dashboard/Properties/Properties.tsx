@@ -103,9 +103,20 @@ export default function Properties() {
 					toast.success(`${idsToDelete.length} properties deleted successfully`);
 				}
 			}
-		} catch (error) {
-			const message = deleteType === "single" ? "Failed to delete property" : "Failed to delete some properties";
-			toast.error(message);
+		} catch (error: unknown) {
+			// Prefer server-provided error messages when available
+			let serverMessage: string | undefined;
+			if (error && typeof error === "object") {
+				const errObj = error as Record<string, unknown>;
+				if (typeof errObj.message === "string") serverMessage = errObj.message as string;
+				else if (errObj.data && typeof (errObj.data as Record<string, unknown>)?.message === "string")
+					serverMessage = ((errObj.data as Record<string, unknown>).message as string) || undefined;
+			} else if (typeof error === "string") {
+				serverMessage = error;
+			}
+
+			const fallback = deleteType === "single" ? "Failed to delete property" : "Failed to delete some properties";
+			toast.error(serverMessage || fallback);
 			console.error("Delete failed:", error);
 		} finally {
 			setIsDeleting(false);

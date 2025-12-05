@@ -88,6 +88,44 @@ export default function CustomerForm({
 	const { data: refData, isLoading: refLoading } = useGetReferenceData();
 
 	const didPrefillRef = React.useRef(false);
+	const nextPrefilledRef = React.useRef(false);
+
+	React.useEffect(() => {
+		if (!initial) return;
+		if (nextPrefilledRef.current) return;
+		nextPrefilledRef.current = true;
+		try {
+			const nk = (initial as { nextOfKin?: Record<string, unknown> })?.nextOfKin;
+			if (!nk || typeof nk !== "object") return;
+
+			const toLocalPhone = (phone?: string | null) => {
+				if (!phone) return "";
+				const cleaned = String(phone).replace(/\D/g, "");
+				if (cleaned.startsWith("234")) return `0${cleaned.slice(3)}`;
+				if (cleaned.startsWith("0")) return cleaned;
+				if (cleaned.length === 10) return `0${cleaned}`;
+				return cleaned;
+			};
+
+			// Build desired nextOfKin object from initial
+			const desired = {
+				fullName: (nk.fullName as string) || "",
+				phone: toLocalPhone((nk.phoneNumber as string) || (nk.phone as string) || ""),
+				relationship: (nk.relationship as string) || "",
+				spouseName:
+					(nk.spouseFullName as string) ||
+					(nk.spouseName as string) ||
+					(((nk.relationship as string) || "").toLowerCase().includes("spouse") ? (nk.fullName as string) : undefined) ||
+					"",
+				spousePhone: toLocalPhone((nk.spousePhone as string) || (nk.phoneNumber as string) || (nk.phone as string) || ""),
+				address: (nk.spouseAddress as string) || (nk.address as string) || "" || "",
+			};
+
+			handleChange("nextOfKin", desired);
+		} catch {
+			// ignore
+		}
+	}, [initial]);
 
 	React.useEffect(() => {
 		if (didPrefillRef.current) return;
@@ -115,7 +153,7 @@ export default function CustomerForm({
 			const nk = (initial as { nextOfKin?: Record<string, unknown> })?.nextOfKin;
 			if (nk && typeof nk === "object") {
 				const nkPhoneVal = nk.phoneNumber ?? nk.phone ?? "";
-				const nkSpouseVal = nk.spousePhone ?? "";
+				const nkSpouseVal = nk.spousePhone ?? nk.phoneNumber ?? nk.phone ?? "";
 				const currNext = (form as InstallmentPaymentFormType).nextOfKin || {};
 				handleChange("nextOfKin", {
 					...currNext,
@@ -175,18 +213,15 @@ export default function CustomerForm({
 	const employmentStatusOptions = React.useMemo(() => extractEmploymentStatusOptions(refData), [refData]);
 	const stateOfOriginOptions = React.useMemo(() => extractStateOptions(refData), [refData]);
 
-	// Ensure guarantor.stateOfOrigin uses option keys (not names) once ref data is available
 	React.useEffect(() => {
 		if (refLoading) return;
 		try {
 			const gArr = (form as InstallmentPaymentFormType).guarantors || [];
 			const mapped = gArr.map((g) => {
 				if (!g || !g.stateOfOrigin) return g;
-				// If already an option key, keep
 				if (stateOfOriginOptions.find((o) => o.key === g.stateOfOrigin)) return g;
-				// Try to match by option value (case-insensitive)
 				const found = stateOfOriginOptions.find((o) => o.value.toLowerCase() === String(g.stateOfOrigin).toLowerCase());
-				if (found) return { ...g, stateOfOrigin: found.key };
+				if (found) return { ...g, stateOfOrigin: found.value };
 				return g;
 			});
 			const prev = JSON.stringify(gArr || []);
@@ -227,15 +262,6 @@ export default function CustomerForm({
 			// ignore
 		}
 	}, [form, paymentMethod, handleChange]);
-
-	/**
-	 * Get state name from state ID using stateOfOriginOptions
-	 */
-	const getStateNameById = (stateId: string): string => {
-		if (!stateId) return "";
-		const state = stateOfOriginOptions.find((o) => o.key === stateId);
-		return state?.value || stateId;
-	};
 
 	/**
 	 * Handle file upload for media documents
@@ -374,7 +400,7 @@ export default function CustomerForm({
 						occupation: g.occupation,
 						employmentStatusId: Number(g.employmentStatus) || 0,
 						address: g.homeAddress,
-						stateOfOrigin: getStateNameById(g.stateOfOrigin),
+						stateOfOrigin: g.stateOfOrigin,
 						phoneNumber: formatPhoneNumber(g.phone),
 						companyAddress: g.businessAddress,
 						homeAddress: g.homeAddress,

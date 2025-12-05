@@ -1,7 +1,6 @@
 import CustomInput from "@/components/base/CustomInput";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
-import { Spinner } from "@/components/ui/spinner";
 import { inputStyle, labelStyle } from "@/components/common/commonStyles";
 import { twMerge } from "tailwind-merge";
 import type { InstallmentPaymentForm } from "@/types/customerRegistration";
@@ -39,15 +38,10 @@ export default function EmploymentDetailsSection({
 							<SelectValue placeholder="Select status" />
 						</SelectTrigger>
 						<SelectContent>
-							{refLoading ? (
-								<div className="p-3 text-center">
-									<Spinner className="size-4" />
-								</div>
-							) : employmentStatusOptions.length === 0 ? (
+							{employmentStatusOptions.length === 0 ? (
 								<>
-									<SelectItem value="Civil servant">Civil servant</SelectItem>
-									<SelectItem value="Self employer">Self employer</SelectItem>
-									<SelectItem value="Unemployed">Unemployed</SelectItem>
+									<SelectItem value="1">EMPLOYED</SelectItem>
+									<SelectItem value="2">SELF EMPLOYED</SelectItem>
 								</>
 							) : (
 								employmentStatusOptions.map((it) => (

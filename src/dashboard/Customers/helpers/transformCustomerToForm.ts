@@ -34,6 +34,15 @@ export function transformMediaToUploadedFiles(mediaFiles: unknown): FileUploadSt
  * Transform API customer response to InstallmentPaymentForm structure
  */
 export function transformCustomerToInstallmentForm(customer: unknown): InstallmentPaymentForm {
+	const toLocalPhone = (phone?: string | null) => {
+		if (!phone) return "";
+		const cleaned = String(phone).replace(/\D/g, "");
+		if (cleaned.startsWith("234")) return `0${cleaned.slice(3)}`;
+		if (cleaned.startsWith("0")) return cleaned;
+		if (cleaned.length === 10) return `0${cleaned}`;
+		return cleaned;
+	};
+
 	const empty: InstallmentPaymentForm = {
 		fullName: "",
 		email: "",
@@ -82,22 +91,29 @@ export function transformCustomerToInstallmentForm(customer: unknown): Installme
 	return {
 		fullName: (c.fullName || c.name || "") as string,
 		email: (c.email || "") as string,
-		whatsapp: (c.phoneNumber || c.phone || "") as string,
+		whatsapp: toLocalPhone((c.phoneNumber || c.phone || "") as string),
 		dob: toDateInput(c.dateOfBirth ?? c.dob),
 		address: (c.homeAddress || (c.employmentDetails && (c.employmentDetails as Record<string, unknown>).homeAddress) || c.address || "") as string,
 		isDriver: c.isDriver === "Yes" || c.isDriver === true ? true : c.isDriver === "No" || c.isDriver === false ? false : undefined,
-		nextOfKin: {
-			fullName: ((c.nextOfKin && (c.nextOfKin as Record<string, unknown>).fullName) || "") as string,
-			phone: ((c.nextOfKin && ((c.nextOfKin as Record<string, unknown>).phoneNumber || (c.nextOfKin as Record<string, unknown>).phone)) ||
-				"") as string,
-			relationship: ((c.nextOfKin && (c.nextOfKin as Record<string, unknown>).relationship) || "") as string,
-			spouseName: ((c.nextOfKin &&
-				((c.nextOfKin as Record<string, unknown>).spouseFullName || (c.nextOfKin as Record<string, unknown>).spouseName)) ||
-				"") as string,
-			spousePhone: ((c.nextOfKin && (c.nextOfKin as Record<string, unknown>).spousePhone) || "") as string,
-			address: ((c.nextOfKin && ((c.nextOfKin as Record<string, unknown>).spouseAddress || (c.nextOfKin as Record<string, unknown>).address)) ||
-				"") as string,
-		},
+		nextOfKin: (() => {
+			const nk = (c.nextOfKin as Record<string, unknown>) || {};
+			const rel = (nk.relationship as string) || "";
+			const full = (nk.fullName as string) || "";
+			const phoneNum = (nk.phoneNumber as string) || (nk.phone as string) || "";
+			const spouseFull = (nk.spouseFullName as string) || (nk.spouseName as string) || "";
+			const spousePhoneRaw = (nk.spousePhone as string) || "";
+
+			const isSpouse = typeof rel === "string" && rel.toLowerCase().includes("spouse");
+
+			return {
+				fullName: full,
+				phone: toLocalPhone(phoneNum),
+				relationship: rel,
+				spouseName: (spouseFull || (isSpouse ? full : "")) as string,
+				spousePhone: toLocalPhone(spousePhoneRaw || (isSpouse ? phoneNum : "")),
+				address: ((nk.spouseAddress as string) || (nk.address as string) || "") as string,
+			};
+		})(),
 		propertyName: (firstInterest && (firstInterest.customPropertyName as string)) || "",
 		propertyId: (firstInterest && (firstInterest.propertyId as string)) || "",
 		isCustomProperty: Boolean(firstInterest && (firstInterest.isCustomProperty as boolean)),
@@ -144,7 +160,7 @@ export function transformCustomerToInstallmentForm(customer: unknown): Installme
 			return {
 				fullName: (gg.fullName || "") as string,
 				occupation: (gg.occupation || "") as string,
-				phone: (gg.phoneNumber || gg.phone || "") as string,
+				phone: toLocalPhone((gg.phoneNumber || gg.phone || "") as string),
 				email: (gg.email || "") as string,
 				employmentStatus: String(gg.employmentStatusId || ""),
 				homeAddress: (gg.homeAddress || gg.address || "") as string,

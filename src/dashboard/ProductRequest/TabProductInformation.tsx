@@ -7,13 +7,28 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import AddProperties from "@/dashboard/Properties/AddProperties";
 import { Button } from "@/components/ui/button";
 import { modalContentStyle } from "../../components/common/commonStyles";
+import { CardSkeleton } from "@/components/common/Skeleton";
 
-export default function TabProductInformation({ data }: { data?: CustomerRegistration | null; registrationId?: string | null }) {
+export default function TabProductInformation({
+	data,
+	loading,
+	onPropertyAdded,
+}: {
+	data?: CustomerRegistration | null;
+	loading?: boolean;
+	onPropertyAdded?: () => void;
+}) {
+	if (loading) {
+		return (
+			<CustomCard className="mt-4 border-none p-0 bg-white">
+				<CardSkeleton lines={6} />
+			</CustomCard>
+		);
+	}
 	const propertyInterests: PropertyInterest[] = Array.isArray(data?.propertyInterestRequest)
 		? (data!.propertyInterestRequest as PropertyInterest[])
 		: [];
 
-	// prefer the id of the first property interest request when opening AddProperties
 	const firstPropertyRequestId = propertyInterests.length > 0 ? String(propertyInterests[0].id) : undefined;
 
 	const [addOpen, setAddOpen] = useState(false);
@@ -42,9 +57,17 @@ export default function TabProductInformation({ data }: { data?: CustomerRegistr
 							</div>
 						</div>
 						<Dialog open={addOpen} onOpenChange={setAddOpen}>
-							<DialogContent className={modalContentStyle()}>
-								<AddProperties propertyRequestId={firstPropertyRequestId} onComplete={() => setAddOpen(false)} />
-							</DialogContent>
+							<Dialog open={addOpen} onOpenChange={setAddOpen}>
+								<DialogContent className={modalContentStyle()}>
+									<AddProperties
+										propertyRequestId={firstPropertyRequestId}
+										onComplete={() => {
+											setAddOpen(false);
+											onPropertyAdded?.();
+										}}
+									/>
+								</DialogContent>
+							</Dialog>
 						</Dialog>
 					</>
 				)}
