@@ -1,14 +1,6 @@
 import { createSlice } from "@reduxjs/toolkit";
 import type { PayloadAction } from "@reduxjs/toolkit";
-
-type NotificationItem = {
-	id: string;
-	title: string;
-	subtitle?: string;
-	time?: string;
-	read?: boolean;
-	type?: string;
-};
+import type { NotificationItem } from "@/types/notifications";
 
 type Pagination = {
 	page: number;
@@ -36,6 +28,10 @@ const slice = createSlice({
 		setNotifications(state, action: PayloadAction<NotificationItem[]>) {
 			state.items = action.payload;
 		},
+		addNotification(state, action: PayloadAction<NotificationItem>) {
+			state.items.unshift(action.payload);
+			state.pagination.total = Math.max(0, state.pagination.total + 1);
+		},
 		setPagination(state, action: PayloadAction<Pagination>) {
 			state.pagination = action.payload;
 		},
@@ -49,5 +45,5 @@ const slice = createSlice({
 	},
 });
 
-export const { setNotifications, setPagination, setLoading, clearNotifications } = slice.actions;
+export const { setNotifications, addNotification, setPagination, setLoading, clearNotifications } = slice.actions;
 export default slice.reducer;

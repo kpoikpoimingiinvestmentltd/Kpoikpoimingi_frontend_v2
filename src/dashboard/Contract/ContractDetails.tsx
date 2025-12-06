@@ -8,7 +8,7 @@ import TabContractInformation from "./TabContractInformation";
 import TabPaymentPlan from "./TabPaymentPlan";
 import TabReceiptHistory from "./TabReceiptHistory";
 import PageWrapper from "../../components/common/PageWrapper";
-import { EditIcon, IconWrapper } from "../../assets/icons";
+// import { EditIcon, IconWrapper } from "../../assets/icons";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
@@ -127,7 +127,7 @@ export default function ContractDetails() {
 
 				<div className="flex items-center gap-3">
 					<ExportTrigger className="text-primary" />
-					<ActionButton
+					{/* <ActionButton
 						variant="ghost"
 						className="underline px-1"
 						leftIcon={
@@ -136,7 +136,7 @@ export default function ContractDetails() {
 							</IconWrapper>
 						}>
 						Edit
-					</ActionButton>
+					</ActionButton> */}
 					{!contract?.isPaused ? (
 						<ActionButton className="px-6 font-normal rounded-sm" variant="danger" onClick={() => setPauseOpen(true)}>
 							Pause

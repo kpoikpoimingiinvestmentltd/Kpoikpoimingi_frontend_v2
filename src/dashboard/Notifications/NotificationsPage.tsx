@@ -104,7 +104,12 @@ export default function NotificationsPage() {
 							<h3 className="text-lg font-semibold">Today</h3>
 							<div className="flex flex-col gap-3">
 								{notifications.map((n, i) => (
-									<NotificationItem key={n.id ?? i} title={n.title} time={new Date(n.time || "").toLocaleString()} type={n.type} />
+									<NotificationItem
+										key={n.id || `temp-${i}`}
+										title={n.title || "Notification"}
+										time={n.time ? new Date(n.time).toLocaleString() : "Unknown time"}
+										type={n.type}
+									/>
 								))}
 							</div>
 
@@ -141,7 +146,7 @@ function NotificationItem({ title, time, type }: Notification) {
 	};
 	const icon = iconMap[type ?? "default"] ?? iconMap.default;
 	return (
-		<div className="flex items-start sm:items-center gap-4 p-5 rounded-md bg-card">
+		<div className="flex items-start gap-4 p-5 rounded-md bg-card">
 			<IconWrapper className="bg-[#1312120D] w-10 h-10 text-xl text-primary rounded-md">{icon}</IconWrapper>
 			<div className="flex-1">
 				<div className="flex justify-between items-center gap-5 flex-wrap">

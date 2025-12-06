@@ -1,7 +1,6 @@
 import React from "react";
 import CustomInput from "@/components/base/CustomInput";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
-import { Spinner } from "@/components/ui/spinner";
 import { inputStyle, labelStyle } from "@/components/common/commonStyles";
 import { twMerge } from "tailwind-merge";
 import CheckboxField from "@/components/base/CheckboxField";
@@ -17,7 +16,6 @@ type Props = {
 	handleFileUpload: (file: File, fieldKey: string) => Promise<string | null>;
 	employmentStatusOptions: Array<{ key: string; value: string }>;
 	stateOfOriginOptions: Array<{ key: string; value: string }>;
-	refLoading: boolean;
 	centeredContainer: (additionalClasses?: string) => string;
 	sectionTitle: (additionalClasses?: string) => string;
 	setUploadedFiles: React.Dispatch<React.SetStateAction<FileUploadState>>;
@@ -31,7 +29,6 @@ export default function GuarantorSection({
 	handleFileUpload,
 	employmentStatusOptions,
 	stateOfOriginOptions,
-	refLoading,
 	centeredContainer,
 	sectionTitle,
 	setUploadedFiles,
@@ -201,11 +198,7 @@ export default function GuarantorSection({
 										<SelectValue placeholder="Select state" />
 									</SelectTrigger>
 									<SelectContent>
-										{refLoading ? (
-											<div className="p-3 text-center">
-												<Spinner className="size-4" />
-											</div>
-										) : stateOfOriginOptions?.length === 0 ? (
+										{stateOfOriginOptions?.length === 0 ? (
 											<>
 												<SelectItem value="error">Error</SelectItem>
 											</>

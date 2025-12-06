@@ -24,7 +24,15 @@ export default function TabPaymentPlan({ contract }: { contract?: Contract }) {
 	const [generatedLink, setGeneratedLink] = useState<PaymentLinkResponse | null>(null);
 	const [loadingScheduleId, setLoadingScheduleId] = useState<string | null>(null);
 
-	const { data: schedules = [], isLoading, isFetching } = useGetPaymentSchedules(contract?.id || "");
+	const {
+		data: schedules = [],
+		isLoading,
+		isFetching,
+	} = useGetPaymentSchedules(
+		contract?.id || "",
+		true,
+		5 * 60 * 1000 // 5 minutes in milliseconds
+	);
 
 	const generateLinkMutation = useGeneratePaymentLink(
 		(data) => {
@@ -64,16 +72,6 @@ export default function TabPaymentPlan({ contract }: { contract?: Contract }) {
 	const totalAmount = (Array.isArray(schedules) ? schedules : [])
 		.reduce((sum: number, s: Record<string, unknown>) => sum + Number(s.amount as number), 0)
 		.toLocaleString();
-
-	// Payment modal state for opening existing payment links
-	// const [paymentModalOpen, setPaymentModalOpen] = useState(false);
-	// const [paymentModalLink, setPaymentModalLink] = useState<string | null>(null);
-
-	// const openPaymentModal = (link?: string | null) => {
-	// 	if (!link) return;
-	// 	setPaymentModalLink(link);
-	// 	setPaymentModalOpen(true);
-	// };
 
 	return (
 		<CustomCard className="mt-4 border-none p-0 bg-white">

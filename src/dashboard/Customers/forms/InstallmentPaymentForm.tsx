@@ -162,7 +162,6 @@ export default function InstallmentPaymentFormComponent({
 					handleFileUpload={handleFileUpload}
 					employmentStatusOptions={employmentStatusOptions}
 					stateOfOriginOptions={stateOfOriginOptions}
-					refLoading={refLoading}
 					centeredContainer={centeredContainer}
 					sectionTitle={sectionTitle}
 					setUploadedFiles={setUploadedFiles}

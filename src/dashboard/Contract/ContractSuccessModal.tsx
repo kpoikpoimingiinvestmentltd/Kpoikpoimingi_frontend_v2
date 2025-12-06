@@ -35,7 +35,11 @@ export default function ContractSuccessModal({ open, onOpenChange, link, onSend 
 
 					<div className="mb-3">
 						<span className="text-sm font-medium mb-1">Link</span>
-						<p className="text-sm [word-break:break-all] text-muted-foreground">{link}</p>
+						<p className="text-sm [word-break:break-all] text-muted-foreground">
+							<a href={link} target="_blank" rel="noopener noreferrer" className="text-primary underline hover:text-primary">
+								{link}
+							</a>
+						</p>
 					</div>
 
 					<div className="flex gap-3 justify-center mt-4">

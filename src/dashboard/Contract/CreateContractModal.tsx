@@ -1,9 +1,9 @@
 import React from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog";
-import CheckboxField from "@/components/base/CheckboxField";
 import { Label } from "@/components/ui/label";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
-import { inputStyle, labelStyle, modalContentStyle, selectTriggerStyle } from "../../components/common/commonStyles";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { inputStyle, labelStyle, modalContentStyle, selectTriggerStyle, radioStyle } from "../../components/common/commonStyles";
 import { useGetReferenceData } from "@/api/reference";
 import { Spinner } from "@/components/ui/spinner";
 import { useForm, Controller } from "react-hook-form";
@@ -68,8 +68,7 @@ export default function CreateContractModal({ open, onOpenChange }: { open: bool
 				durationUnitId: "",
 				startDate: "",
 				remarks: "",
-				isCash: false,
-				isPaymentLink: false,
+				paymentMethod: "",
 			};
 		}
 
@@ -85,8 +84,7 @@ export default function CreateContractModal({ open, onOpenChange }: { open: bool
 			durationUnitId: String(propertyInterest?.durationUnitId || ""),
 			startDate: "",
 			remarks: "",
-			isCash: false,
-			isPaymentLink: false,
+			paymentMethod: "",
 		};
 	};
 
@@ -111,15 +109,17 @@ export default function CreateContractModal({ open, onOpenChange }: { open: bool
 	const watchedDurationValue = watch("durationValue");
 	const watchedDurationUnitId = watch("durationUnitId");
 	const watchedStartDate = watch("startDate");
+	const watchedPaymentMethod = watch("paymentMethod");
 
 	const canCreate = React.useMemo(() => {
 		const hasCustomer = typeof watchedCustomerId === "string" && watchedCustomerId.trim() !== "";
 		const hasPaymentType = paymentTypeId != null && String(paymentTypeId) !== "";
 		const hasStartDate = typeof watchedStartDate === "string" && watchedStartDate.trim() !== "";
+		const hasPaymentMethod = typeof watchedPaymentMethod === "string" && watchedPaymentMethod.trim() !== "";
 		const isHire = String(paymentTypeId) === "1";
 		const hireFieldsOk = !isHire || (String(watchedIntervalId) !== "" && watchedDurationValue != null && String(watchedDurationUnitId) !== "");
-		return Boolean(hasCustomer && hasPaymentType && hasStartDate && hireFieldsOk);
-	}, [watchedCustomerId, paymentTypeId, watchedStartDate, watchedIntervalId, watchedDurationValue, watchedDurationUnitId]);
+		return Boolean(hasCustomer && hasPaymentType && hasStartDate && hireFieldsOk && hasPaymentMethod);
+	}, [watchedCustomerId, paymentTypeId, watchedStartDate, watchedIntervalId, watchedDurationValue, watchedDurationUnitId, watchedPaymentMethod]);
 
 	// Reset form when customer is selected
 	React.useEffect(() => {
@@ -200,8 +200,8 @@ export default function CreateContractModal({ open, onOpenChange }: { open: bool
 					: undefined,
 			startDate: typeof values.startDate === "string" && values.startDate ? new Date(values.startDate).toISOString() : undefined,
 			remarks: typeof values.remarks === "string" ? values.remarks : undefined,
-			isCash: !!values.isCash,
-			isPaymentLink: !!values.isPaymentLink,
+			isCash: values.paymentMethod === "cash",
+			isPaymentLink: values.paymentMethod === "link",
 		};
 
 		// Client-side validation for hire-purchase contracts to avoid server 400s
@@ -233,6 +233,10 @@ export default function CreateContractModal({ open, onOpenChange }: { open: bool
 				linkStr = r.link;
 			} else if (r.data && typeof (r.data as Record<string, unknown>).link === "string") {
 				linkStr = (r.data as Record<string, unknown>).link as string;
+			} else if (typeof r.downPaymentLink === "string") {
+				linkStr = r.downPaymentLink;
+			} else if (r.data && typeof (r.data as Record<string, unknown>).downPaymentLink === "string") {
+				linkStr = (r.data as Record<string, unknown>).downPaymentLink as string;
 			}
 			// Show success toast if server returned a friendly message
 			const successMsg =
@@ -344,6 +348,7 @@ export default function CreateContractModal({ open, onOpenChange }: { open: bool
 										<CustomInput
 											label="Quantity"
 											type="number"
+											min="1"
 											value={String(field.value)}
 											onChange={(e) => field.onChange(Number(e.target.value))}
 										/>
@@ -457,38 +462,34 @@ export default function CreateContractModal({ open, onOpenChange }: { open: bool
 										<CustomInput
 											label="Amount available for down payment"
 											type="number"
+											min="0"
 											value={String(field.value)}
 											onChange={(e) => field.onChange(Number(e.target.value))}
 										/>
 									)}
 								/>
 
-								{/* Checkboxes */}
-								<div className="col-span-2 flex items-center gap-4">
+								{/* Payment Method */}
+								<div className="col-span-2">
+									<Label className={labelStyle()}>Payment Method*</Label>
 									<Controller
 										control={control}
-										name="isPaymentLink"
+										name="paymentMethod"
 										render={({ field }) => (
-											<CheckboxField
-												id="payment-link"
-												label="Generate Payment Link"
-												checked={field.value}
-												onCheckedChange={field.onChange}
-												wrapperClassName=""
-											/>
-										)}
-									/>
-									<Controller
-										control={control}
-										name="isCash"
-										render={({ field }) => (
-											<CheckboxField
-												id="cash-payment"
-												label="Cash Payment"
-												checked={field.value}
-												onCheckedChange={field.onChange}
-												wrapperClassName=""
-											/>
+											<RadioGroup value={field.value} onValueChange={field.onChange} className="flex items-center gap-6 mt-2">
+												<div className="flex items-center space-x-2">
+													<RadioGroupItem value="link" id="link" className={radioStyle} />
+													<Label htmlFor="link" className="text-sm cursor-pointer">
+														Generate Payment Link
+													</Label>
+												</div>
+												<div className="flex items-center space-x-2">
+													<RadioGroupItem value="cash" id="cash" className={radioStyle} />
+													<Label htmlFor="cash" className="text-sm cursor-pointer">
+														Cash Payment
+													</Label>
+												</div>
+											</RadioGroup>
 										)}
 									/>
 								</div>
@@ -512,19 +513,27 @@ export default function CreateContractModal({ open, onOpenChange }: { open: bool
 									)}
 								/>
 
-								{/* Generate Link Checkbox */}
+								{/* Payment Method */}
 								<div className="col-span-2">
+									<Label className={labelStyle()}>Payment Method*</Label>
 									<Controller
 										control={control}
-										name="isPaymentLink"
+										name="paymentMethod"
 										render={({ field }) => (
-											<CheckboxField
-												id="payment-link-full"
-												label="Generate Payment Link"
-												checked={field.value}
-												onCheckedChange={field.onChange}
-												wrapperClassName=""
-											/>
+											<RadioGroup value={field.value} onValueChange={field.onChange} className="flex items-center gap-6 mt-2">
+												<div className="flex items-center space-x-2">
+													<RadioGroupItem value="link" id="link-full" className={radioStyle} />
+													<Label htmlFor="link-full" className="text-sm cursor-pointer">
+														Generate Payment Link
+													</Label>
+												</div>
+												<div className="flex items-center space-x-2">
+													<RadioGroupItem value="cash" id="cash-full" className={radioStyle} />
+													<Label htmlFor="cash-full" className="text-sm cursor-pointer">
+														Cash Payment
+													</Label>
+												</div>
+											</RadioGroup>
 										)}
 									/>
 								</div>

@@ -157,11 +157,12 @@ export async function getPaymentSchedules(contractId: string) {
 	return apiGet(API_ROUTES.paymentSchedule.getPaymentSchedules(contractId)) as Promise<Record<string, unknown>[]>;
 }
 
-export function useGetPaymentSchedules(contractId: string, enabled = true) {
+export function useGetPaymentSchedules(contractId: string, enabled = true, staleTimeMs = 5 * 60 * 1000) {
 	return useQuery<Record<string, unknown>[], unknown>({
 		queryKey: ["payment-schedules", contractId],
 		queryFn: () => getPaymentSchedules(contractId),
 		enabled: !!contractId && enabled,
+		staleTime: staleTimeMs,
 	});
 }
 
