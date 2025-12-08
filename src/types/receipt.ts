@@ -37,8 +37,8 @@ export type ReceiptDetail = {
 	updatedAt?: string;
 	statusId?: number;
 	source?: string;
-	contract?: unknown;
-	customer?: unknown;
+	contract?: { id?: string; contractCode?: string; property?: { name?: string; price?: string }; durationValue?: number };
+	customer?: { id?: string; fullName?: string; phoneNumber?: string };
 	installmentProgress?: string;
 	totalInstallments?: number;
 };
