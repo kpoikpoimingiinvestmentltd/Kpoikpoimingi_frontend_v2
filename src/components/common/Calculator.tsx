@@ -71,6 +71,12 @@ export default function Calculator() {
 	const [interval, setInterval] = React.useState("daily");
 	const [duration, setDuration] = React.useState(0);
 	const [total, setTotal] = React.useState<number | null>(null);
+	const [position, setPosition] = React.useState({
+		x: typeof window !== "undefined" ? window.innerWidth - 100 : 0,
+		y: typeof window !== "undefined" ? window.innerHeight - 80 : 0,
+	});
+	const [isDragging, setIsDragging] = React.useState(false);
+	const [dragOffset, setDragOffset] = React.useState({ x: 0, y: 0 });
 
 	// Get max duration based on interval
 	const getMaxDuration = () => {
@@ -108,15 +114,60 @@ export default function Calculator() {
 		setTotal(result);
 	};
 
+	const handleMouseDown = (e: React.MouseEvent<HTMLButtonElement>) => {
+		if ((e.target as HTMLElement).closest("button")) {
+			setIsDragging(true);
+			setDragOffset({
+				x: e.clientX - position.x,
+				y: e.clientY - position.y,
+			});
+		}
+	};
+
+	const handleMouseMove = React.useCallback(
+		(e: MouseEvent) => {
+			if (!isDragging) return;
+			setPosition({
+				x: e.clientX - dragOffset.x,
+				y: e.clientY - dragOffset.y,
+			});
+		},
+		[isDragging, dragOffset]
+	);
+
+	const handleMouseUp = () => {
+		setIsDragging(false);
+	};
+
+	React.useEffect(() => {
+		if (isDragging) {
+			document.addEventListener("mousemove", handleMouseMove);
+			document.addEventListener("mouseup", handleMouseUp);
+			return () => {
+				document.removeEventListener("mousemove", handleMouseMove);
+				document.removeEventListener("mouseup", handleMouseUp);
+			};
+		}
+	}, [isDragging, handleMouseMove]);
+
 	return (
 		<div>
 			<Popover open={open} onOpenChange={setOpen}>
 				<div
-					className={`fixed right-6 bottom-6 z-50 before:content-[''] before:inset-0 before:fixed ${
+					className={`fixed z-50 right-6 bottom-6 before:content-[''] before:inset-0 before:fixed ${
 						open ? "before:z-[29] before:bg-black/50 before:pointer-events-auto" : "before:pointer-events-none"
-					}`}>
+					}`}
+					style={{
+						left: `${position.x}px`,
+						top: `${position.y}px`,
+						cursor: isDragging ? "grabbing" : "grab",
+						transition: isDragging ? "none" : "none",
+					}}>
 					<PopoverTrigger asChild>
-						<button className="w-14 h-14 z-50 rounded-full bg-gradient-to-t from-[#134DC1] to-[#03B4FA] shadow-lg flex items-center relative justify-center text-white">
+						<button
+							className="w-14 h-14 z-50 rounded-full bg-gradient-to-t from-[#134DC1] to-[#03B4FA] shadow-lg flex items-center relative justify-center text-white"
+							onMouseDown={handleMouseDown}
+							style={{ cursor: isDragging ? "grabbing" : "grab" }}>
 							<div className="absolute w-4/5 h-4/5 flex items-center justify-center bg-white rounded-full text-primary">
 								<IconWrapper className="text-xl">
 									<CalculatorIcon />
