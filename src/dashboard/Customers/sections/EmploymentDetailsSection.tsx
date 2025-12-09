@@ -2,6 +2,7 @@ import CustomInput from "@/components/base/CustomInput";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { inputStyle, labelStyle } from "@/components/common/commonStyles";
+import ValidationErrorDisplay from "@/components/common/ValidationErrorDisplay";
 import { twMerge } from "tailwind-merge";
 import type { InstallmentPaymentForm } from "@/types/customerRegistration";
 
@@ -12,15 +13,16 @@ type Props = {
 	refLoading: boolean;
 	centeredContainer: (additionalClasses?: string) => string;
 	sectionTitle: (additionalClasses?: string) => string;
+	missingFields?: string[];
 };
 
 export default function EmploymentDetailsSection({
 	form,
 	handleChange,
 	employmentStatusOptions,
-	refLoading,
 	centeredContainer,
 	sectionTitle,
+	missingFields = [],
 }: Props) {
 	const isSelfEmployed =
 		form.employment.status &&
@@ -105,6 +107,11 @@ export default function EmploymentDetailsSection({
 					</>
 				)}
 			</div>
+
+			<ValidationErrorDisplay
+				missingFields={missingFields}
+				filter={(field) => ["Employment status"].some((keyword) => field.toLowerCase().includes(keyword.toLowerCase()))}
+			/>
 		</div>
 	);
 }

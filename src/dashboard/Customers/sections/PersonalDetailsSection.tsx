@@ -2,6 +2,7 @@ import CustomInput from "@/components/base/CustomInput";
 import { inputStyle, labelStyle } from "@/components/common/commonStyles";
 import { twMerge } from "tailwind-merge";
 import { CalendarIcon, EmailIcon, WhatsappIcon } from "@/assets/icons";
+import ValidationErrorDisplay from "@/components/common/ValidationErrorDisplay";
 import type { InstallmentPaymentForm } from "@/types/customerRegistration";
 
 type Props = {
@@ -9,9 +10,10 @@ type Props = {
 	handleChange: (key: string, value: unknown) => void;
 	centeredContainer: (additionalClasses?: string) => string;
 	sectionTitle: (additionalClasses?: string) => string;
+	missingFields?: string[];
 };
 
-export default function PersonalDetailsSection({ form, handleChange, centeredContainer, sectionTitle }: Props) {
+export default function PersonalDetailsSection({ form, handleChange, centeredContainer, sectionTitle, missingFields = [] }: Props) {
 	return (
 		<div className={centeredContainer()}>
 			<h3 className={sectionTitle()}>Personal details</h3>
@@ -63,6 +65,13 @@ export default function PersonalDetailsSection({ form, handleChange, centeredCon
 				<label className={labelStyle()}>Home Address*</label>
 				<CustomInput value={form.address} onChange={(e) => handleChange("address", e.target.value)} className={twMerge(inputStyle)} />
 			</div>
+
+			<ValidationErrorDisplay
+				missingFields={missingFields}
+				filter={(field) =>
+					["Full name", "Email", "WhatsApp", "Date of birth", "Home address"].some((keyword) => field.toLowerCase().includes(keyword.toLowerCase()))
+				}
+			/>
 		</div>
 	);
 }

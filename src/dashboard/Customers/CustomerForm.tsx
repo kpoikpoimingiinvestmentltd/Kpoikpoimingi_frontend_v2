@@ -26,6 +26,7 @@ import { _router } from "@/routes/_router";
 
 type Props = {
 	onSubmit?: (data: unknown) => void;
+	onClose?: () => void;
 	initial?: Record<string, unknown>;
 	sectionTitle?: (additionalClasses?: string) => string;
 	centeredContainer?: (additionalClasses?: string) => string;
@@ -34,6 +35,7 @@ type Props = {
 
 export default function CustomerForm({
 	onSubmit,
+	onClose,
 	initial,
 	sectionTitle: sectionTitleProp,
 	centeredContainer: centeredContainerProp,
@@ -303,7 +305,7 @@ export default function CustomerForm({
 				// Track uploaded file
 				setUploadedFiles((prev) => ({
 					...prev,
-					[fieldKey]: [...(prev[fieldKey] ?? []), mediaKey],
+					[fieldKey]: fieldKey === "contract" ? [mediaKey] : [...(prev[fieldKey] ?? []), mediaKey],
 				}));
 
 				// Mark field as uploaded
@@ -477,12 +479,14 @@ export default function CustomerForm({
 							}
 						}
 					}
-					const result = await updateMutation.mutateAsync({
+					await updateMutation.mutateAsync({
 						id: initial.id as string,
 						payload,
 					});
 
-					if (onSubmit) onSubmit(result);
+					toast.success("Registration updated successfully!");
+					onClose?.();
+					if (onSubmit) onSubmit({ message: "Registration updated successfully" });
 				} else {
 					// For new registrations still enforce guarantor count for installment
 					if (paymentMethod === "installment") {
@@ -518,11 +522,6 @@ export default function CustomerForm({
 
 				resetFormCompletely();
 				if (!isEditMode) navigate(_router.dashboard.customers);
-
-				// Call parent onSubmit if provided
-				if (onSubmit) {
-					onSubmit({ message: "Registration saved successfully" });
-				}
 			}
 		} catch (err: unknown) {
 			console.error("Submission failed", err);

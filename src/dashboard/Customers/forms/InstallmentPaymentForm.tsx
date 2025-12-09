@@ -11,7 +11,6 @@ import PropertyDetailsSection from "../sections/PropertyDetailsSection";
 import ClarificationDetailsSection from "../sections/ClarificationDetailsSection";
 import GuarantorSection from "../sections/GuarantorSection";
 import type { InstallmentPaymentForm, FileUploadState } from "@/types/customerRegistration";
-import { toast } from "sonner";
 
 type Props = {
 	form: InstallmentPaymentForm;
@@ -56,27 +55,18 @@ export default function InstallmentPaymentFormComponent({
 }: Props) {
 	const formRef = React.useRef<HTMLFormElement | null>(null);
 
-	const focusFieldByLabel = (labelText: string) => {
-		const root = formRef.current;
-		if (!root || !labelText) return;
-		const labels = Array.from(root.querySelectorAll("label")) as HTMLLabelElement[];
-		const match = labels.find((l) => l.textContent && l.textContent.trim().toLowerCase().includes(labelText.toLowerCase()));
-		if (!match) return;
-		const container = match.nextElementSibling as HTMLElement | null;
-		if (!container) return;
-		const input = container.querySelector("input, textarea, select") as HTMLElement | null;
-		if (input && typeof input.focus === "function") {
-			input.focus();
-			input.scrollIntoView({ behavior: "smooth", block: "center" });
-		}
-	};
-
 	const disabled = isSubmitting || (missingFields && missingFields.length > 0);
 
 	return (
 		<form ref={formRef} onSubmit={onSubmit} className="space-y-6">
 			{/* Personal details */}
-			<PersonalDetailsSection form={form} handleChange={handleChange} centeredContainer={centeredContainer} sectionTitle={sectionTitle} />
+			<PersonalDetailsSection
+				form={form}
+				handleChange={handleChange}
+				centeredContainer={centeredContainer}
+				sectionTitle={sectionTitle}
+				missingFields={missingFields}
+			/>
 			<div className={centeredContainer()}>
 				<IndigeneCertificateSection
 					uploadedFiles={uploadedFiles}
@@ -107,6 +97,7 @@ export default function InstallmentPaymentFormComponent({
 				refLoading={refLoading}
 				centeredContainer={centeredContainer}
 				sectionTitle={sectionTitle}
+				missingFields={missingFields}
 			/>
 
 			{/* Employment Details */}
@@ -117,6 +108,7 @@ export default function InstallmentPaymentFormComponent({
 				refLoading={refLoading}
 				centeredContainer={centeredContainer}
 				sectionTitle={sectionTitle}
+				missingFields={missingFields}
 			/>
 
 			{/* Authorization Agreement */}
@@ -147,6 +139,7 @@ export default function InstallmentPaymentFormComponent({
 				paymentMethod={paymentMethod}
 				centeredContainer={centeredContainer}
 				sectionTitle={sectionTitle}
+				missingFields={missingFields}
 			/>
 			<hr className="my-6" />
 
@@ -165,38 +158,21 @@ export default function InstallmentPaymentFormComponent({
 					centeredContainer={centeredContainer}
 					sectionTitle={sectionTitle}
 					setUploadedFiles={setUploadedFiles}
+					missingFields={missingFields}
 				/>
 			</div>
 
-			<div className="flex justify-center mt-8 relative">
-				<ActionButton type="submit" className="w-full py-4 md:w-2/3 bg-primary text-white" disabled={disabled}>
+			<div className="flex justify-center mt-8">
+				<ActionButton type="submit" className="w-full md:w-2/3 bg-primary text-white py-3" disabled={disabled}>
 					{isSubmitting ? (
 						<>
 							<Spinner className="size-4" />
 							<span>Processing...</span>
 						</>
-					) : disabled && missingFields && missingFields.length > 0 ? (
-						<div className="flex flex-col">
-							<span>Complete required fields</span>
-							<span className="text-xs opacity-90">{missingFields[0]}</span>
-						</div>
 					) : (
 						"Save Changes"
 					)}
 				</ActionButton>
-
-				{disabled && missingFields && missingFields.length > 0 && (
-					<div
-						role="button"
-						aria-hidden={false}
-						onClick={(e) => {
-							e.preventDefault();
-							toast.error(`Please complete: ${missingFields[0]}`);
-							focusFieldByLabel(missingFields[0]);
-						}}
-						className="absolute inset-0 flex items-center justify-center cursor-pointer"
-					/>
-				)}
 			</div>
 		</form>
 	);

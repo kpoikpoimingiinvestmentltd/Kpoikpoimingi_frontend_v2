@@ -5,6 +5,7 @@ import { inputStyle, labelStyle } from "@/components/common/commonStyles";
 import { twMerge } from "tailwind-merge";
 import CheckboxField from "@/components/base/CheckboxField";
 import UploadBox from "@/components/base/UploadBox";
+import ValidationErrorDisplay from "@/components/common/ValidationErrorDisplay";
 import { PhoneIcon, EmailIcon } from "@/assets/icons";
 import type { InstallmentPaymentForm, FileUploadState } from "@/types/customerRegistration";
 
@@ -19,6 +20,7 @@ type Props = {
 	centeredContainer: (additionalClasses?: string) => string;
 	sectionTitle: (additionalClasses?: string) => string;
 	setUploadedFiles: React.Dispatch<React.SetStateAction<FileUploadState>>;
+	missingFields?: string[];
 };
 
 export default function GuarantorSection({
@@ -32,6 +34,7 @@ export default function GuarantorSection({
 	centeredContainer,
 	sectionTitle,
 	setUploadedFiles,
+	missingFields = [],
 }: Props) {
 	return (
 		<div className={centeredContainer()}>
@@ -254,6 +257,11 @@ export default function GuarantorSection({
 					</div>
 				))}
 			</div>
+
+			<ValidationErrorDisplay
+				missingFields={missingFields}
+				filter={(field) => ["Guarantor", "Two guarantors"].some((keyword) => field.toLowerCase().includes(keyword.toLowerCase()))}
+			/>
 		</div>
 	);
 }

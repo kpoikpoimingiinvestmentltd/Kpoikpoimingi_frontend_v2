@@ -3,6 +3,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
 import { inputStyle, labelStyle } from "@/components/common/commonStyles";
+import ValidationErrorDisplay from "@/components/common/ValidationErrorDisplay";
 import { twMerge } from "tailwind-merge";
 import { PhoneIcon } from "@/assets/icons";
 import type { InstallmentPaymentForm } from "@/types/customerRegistration";
@@ -14,9 +15,18 @@ type Props = {
 	refLoading: boolean;
 	centeredContainer: (additionalClasses?: string) => string;
 	sectionTitle: (additionalClasses?: string) => string;
+	missingFields?: string[];
 };
 
-export default function NextOfKinSection({ form, handleChange, relationshipOptions, refLoading, centeredContainer, sectionTitle }: Props) {
+export default function NextOfKinSection({
+	form,
+	handleChange,
+	relationshipOptions,
+	refLoading,
+	centeredContainer,
+	sectionTitle,
+	missingFields = [],
+}: Props) {
 	const isSpouse =
 		form.nextOfKin.relationship &&
 		(form.nextOfKin.relationship === "Spouse" ||
@@ -175,6 +185,11 @@ export default function NextOfKinSection({ form, handleChange, relationshipOptio
 								</Select>
 							</div>
 						</div>
+
+						<ValidationErrorDisplay
+							missingFields={missingFields}
+							filter={(field) => ["Next of Kin", "Spouse", "relationship"].some((keyword) => field.toLowerCase().includes(keyword.toLowerCase()))}
+						/>
 					</>
 				)}
 			</div>

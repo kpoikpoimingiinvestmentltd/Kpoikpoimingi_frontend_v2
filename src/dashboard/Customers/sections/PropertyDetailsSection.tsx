@@ -3,6 +3,7 @@ import CustomInput from "@/components/base/CustomInput";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
 import { inputStyle, labelStyle } from "@/components/common/commonStyles";
+import ValidationErrorDisplay from "@/components/common/ValidationErrorDisplay";
 import { twMerge } from "tailwind-merge";
 import { useGetAllProperties } from "@/api/property";
 import type { InstallmentPaymentForm } from "@/types/customerRegistration";
@@ -18,6 +19,7 @@ type Props = {
 	paymentMethod?: "once" | "installment";
 	centeredContainer: (additionalClasses?: string) => string;
 	sectionTitle: (additionalClasses?: string) => string;
+	missingFields?: string[];
 };
 
 export default function PropertyDetailsSection({
@@ -29,6 +31,7 @@ export default function PropertyDetailsSection({
 	employmentStatusOptions,
 	centeredContainer,
 	sectionTitle,
+	missingFields = [],
 }: Props) {
 	// Keep prop available for consumers; no-op to avoid unused variable linting when not needed
 	void employmentStatusOptions;
@@ -285,6 +288,11 @@ export default function PropertyDetailsSection({
 					className={twMerge(inputStyle)}
 				/>
 			</div>
+
+			<ValidationErrorDisplay
+				missingFields={missingFields}
+				filter={(field) => ["Property name", "Payment duration"].some((keyword) => field.toLowerCase().includes(keyword.toLowerCase()))}
+			/>
 		</div>
 	);
 }
