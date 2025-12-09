@@ -81,6 +81,64 @@ export function useGetAuditLogsGrouped(page = 1, limit = 10, search?: string, so
 	});
 }
 
+export async function getAuditLogs(
+	page = 1,
+	limit = 10,
+	search?: string,
+	startDate?: string,
+	endDate?: string,
+	sortBy = "createdAt",
+	sortOrder = "desc"
+) {
+	const params = new URLSearchParams();
+	params.append("page", String(page));
+	params.append("limit", String(limit));
+	if (search) params.append("search", search);
+	if (startDate) params.append("startDate", startDate);
+	if (endDate) params.append("endDate", endDate);
+	params.append("sortBy", sortBy);
+	params.append("sortOrder", sortOrder);
+
+	const qs = `?${params.toString()}`;
+	const url = `${API_ROUTES.auditLogs.getAuditLogs}${qs}`;
+	return apiGet(url) as Promise<any>;
+}
+
+export function useGetAuditLogs(
+	page = 1,
+	limit = 10,
+	search?: string,
+	startDate?: string,
+	endDate?: string,
+	sortBy = "createdAt",
+	sortOrder = "desc",
+	enabled = true
+) {
+	return useQuery({
+		queryKey: ["auditLogs", page, limit, search, startDate, endDate, sortBy, sortOrder],
+		queryFn: async () => getAuditLogs(page, limit, search, startDate, endDate, sortBy, sortOrder),
+		enabled,
+		staleTime: 5 * 60 * 1000,
+	});
+}
+
+export async function exportAuditLogs(startDate?: string, endDate?: string, search?: string) {
+	const params = new URLSearchParams();
+	if (startDate) params.append("startDate", startDate);
+	if (endDate) params.append("endDate", endDate);
+	if (search) params.append("search", search);
+
+	const qs = params.toString();
+	const url = `${API_ROUTES.auditLogs.exportAuditLogs}${qs ? `?${qs}` : ""}`;
+	return apiGetFile(url) as Promise<Blob>;
+}
+
+export function useExportAuditLogs() {
+	return useMutation<Blob, unknown, { startDate?: string; endDate?: string; search?: string }, unknown>({
+		mutationFn: (payload) => exportAuditLogs(payload?.startDate, payload?.endDate, payload?.search),
+	});
+}
+
 export async function getPenalties(page = 1, limit = 10, search?: string, sortBy = "createdAt", sortOrder = "desc"): Promise<PenaltiesResponse> {
 	const params = new URLSearchParams();
 	params.append("page", String(page));

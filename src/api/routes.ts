@@ -37,6 +37,7 @@ export const API_ROUTES = {
 	auditLogs: {
 		getAuditLogs: "/audit-logs",
 		getAuditLogsGrouped: "/audit-logs/grouped",
+		exportAuditLogs: "/audit-logs/export/csv",
 	},
 	customer: {
 		getAllCustomers: "/customer",

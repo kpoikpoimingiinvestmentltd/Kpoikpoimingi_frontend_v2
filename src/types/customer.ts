@@ -3,13 +3,60 @@ export type CustomerDto = { id: string; name: string; email?: string };
 
 export type Customer = {
 	id: string;
-	name: string;
+	customerCode: string;
 	email: string;
-	phone?: string;
-	address?: string;
-	status?: string;
+	fullName: string;
+	phoneNumber?: string;
 	createdAt?: string;
-	updatedAt?: string;
+	contracts?: Array<{
+		status: {
+			status: string;
+		};
+		property: {
+			price: string;
+		};
+	}>;
+	registrations?: Array<{
+		id: string;
+		registrationCode: string;
+		approved: boolean;
+		approvedAt?: string;
+		source: string;
+		paymentType: {
+			id: number;
+			type: string;
+		};
+		propertyInterestRequest: Array<{
+			id: string;
+			propertyId: string;
+			isAssigned: boolean;
+			property: {
+				id: string;
+				propertyCode: string;
+				name: string;
+				categoryId: string;
+				price: string;
+				quantityTotal: number;
+				quantityAssigned: number;
+				quantityAvailable: number;
+				statusId: number;
+				description: string;
+				isPublic: boolean;
+				vehicleMake?: string | null;
+				vehicleModel?: string | null;
+				vehicleYear?: string | null;
+				vehicleColor?: string | null;
+				vehicleChassisNumber?: string | null;
+				vehicleType?: string | null;
+				vehicleRegistrationNumber?: string | null;
+				condition: string;
+				addedById: string;
+				dateAdded: string;
+				createdAt: string;
+				updatedAt: string;
+			};
+		}>;
+	}>;
 };
 
 export type GetAllCustomersResponse = {
