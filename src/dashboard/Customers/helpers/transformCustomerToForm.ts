@@ -114,7 +114,7 @@ export function transformCustomerToInstallmentForm(customer: unknown): Installme
 				address: ((nk.spouseAddress as string) || (nk.address as string) || "") as string,
 			};
 		})(),
-		propertyName: (firstInterest && (firstInterest.customPropertyName as string)) || "",
+		propertyName: (firstInterest && ((firstInterest.customPropertyName as string) || (firstInterest.propertyName as string))) || "",
 		propertyId: (firstInterest && (firstInterest.propertyId as string)) || "",
 		isCustomProperty: Boolean(firstInterest && (firstInterest.isCustomProperty as boolean)),
 		customPropertyPrice: String((firstInterest && (firstInterest.customPropertyPrice as number)) || ""),
@@ -162,7 +162,7 @@ export function transformCustomerToInstallmentForm(customer: unknown): Installme
 				occupation: (gg.occupation || "") as string,
 				phone: toLocalPhone((gg.phoneNumber || gg.phone || "") as string),
 				email: (gg.email || "") as string,
-				employmentStatus: String(gg.employmentStatusId || ""),
+				employmentStatus: String(gg.employmentStatusId || gg.employmentStatus || ""),
 				homeAddress: (gg.homeAddress || gg.address || "") as string,
 				businessAddress: (gg.companyAddress || gg.businessAddress || "") as string,
 				stateOfOrigin: String(gg.stateOfOrigin || ""),

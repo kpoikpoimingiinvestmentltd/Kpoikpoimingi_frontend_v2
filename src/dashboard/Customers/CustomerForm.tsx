@@ -536,9 +536,17 @@ export default function CustomerForm({
 	const isOnceValid = () => {
 		if (paymentMethod !== "once") return true;
 		const f = form as OncePaymentFormType;
-		if (!f.fullName || !f.email || !f.whatsapp || !f.numberOfProperties) return false;
+		// Check all required fields
+		if (!f.fullName || String(f.fullName).trim() === "") return false;
+		if (!f.email || String(f.email).trim() === "") return false;
+		if (!f.whatsapp || String(f.whatsapp).trim() === "") return false;
+		if (!f.numberOfProperties || String(f.numberOfProperties).trim() === "") return false;
+		// Check that at least one property is filled
+		if (!Array.isArray(f.properties) || f.properties.length === 0) return false;
+		// Check each property has required fields
 		for (const p of f.properties) {
-			if (!p.propertyName || !p.quantity || Number(p.quantity) < 1) return false;
+			if (!p.propertyName || String(p.propertyName).trim() === "") return false;
+			if (!p.quantity || Number(p.quantity) < 1) return false;
 		}
 		return true;
 	};
@@ -570,22 +578,81 @@ export default function CustomerForm({
 		if (paymentMethod !== "installment") return [];
 		const f = form as InstallmentPaymentFormType;
 		const miss: string[] = [];
-		// Require two guarantors when applicable
+
+		// Personal details validation
+		if (!f.fullName || String(f.fullName).trim() === "") {
+			miss.push("Full name is required");
+		}
+		if (!f.email || String(f.email).trim() === "") {
+			miss.push("Email is required");
+		}
+		if (!f.whatsapp || String(f.whatsapp).trim() === "") {
+			miss.push("WhatsApp number is required");
+		}
+		if (!f.address || String(f.address).trim() === "") {
+			miss.push("Home address is required");
+		}
+		if (!f.dob || String(f.dob).trim() === "") {
+			miss.push("Date of birth is required");
+		}
+
+		// Next of Kin validation
+		if (!f.nextOfKin || !f.nextOfKin.fullName || String(f.nextOfKin.fullName).trim() === "") {
+			miss.push("Next of Kin full name is required");
+		}
+		if (!f.nextOfKin || !f.nextOfKin.relationship || String(f.nextOfKin.relationship).trim() === "") {
+			miss.push("Next of Kin relationship is required");
+		}
+		if (!f.nextOfKin || !f.nextOfKin.phone || String(f.nextOfKin.phone).trim() === "") {
+			miss.push("Next of Kin phone is required");
+		}
+
+		// Guarantors validation
 		if (!Array.isArray(f.guarantors) || f.guarantors.length < 2) {
 			miss.push("Two guarantors required");
-		}
-		// Require duration value for hire purchase
-		if (!f.paymentDuration || Number(f.paymentDuration) <= 0) {
-			miss.push("Duration value is required for hire purchase");
-		}
-		// Require stateOfOrigin for each guarantor
-		if (Array.isArray(f.guarantors)) {
+		} else {
 			f.guarantors.forEach((g, idx) => {
-				if (!g || !g.stateOfOrigin || String(g.stateOfOrigin).trim() === "") {
+				if (!g) return;
+				if (!g.fullName || String(g.fullName).trim() === "") {
+					miss.push(`Guarantor ${idx + 1}: Full name is required`);
+				}
+				if (!g.occupation || String(g.occupation).trim() === "") {
+					miss.push(`Guarantor ${idx + 1}: Occupation is required`);
+				}
+				if (!g.phone || String(g.phone).trim() === "") {
+					miss.push(`Guarantor ${idx + 1}: Phone number is required`);
+				}
+				if (!g.email || String(g.email).trim() === "") {
+					miss.push(`Guarantor ${idx + 1}: Email is required`);
+				}
+				if (!g.employmentStatus || String(g.employmentStatus).trim() === "") {
+					miss.push(`Guarantor ${idx + 1}: Employment status is required`);
+				}
+				if (!g.homeAddress || String(g.homeAddress).trim() === "") {
+					miss.push(`Guarantor ${idx + 1}: Home address is required`);
+				}
+				if (!g.stateOfOrigin || String(g.stateOfOrigin).trim() === "") {
 					miss.push(`Guarantor ${idx + 1}: State of origin is required`);
 				}
 			});
 		}
+
+		// Employment details validation
+		if (!f.employment || !f.employment.status || String(f.employment.status).trim() === "") {
+			miss.push("Employment status is required");
+		}
+		if ((!f.propertyName || String(f.propertyName).trim() === "") && (!f.propertyId || String(f.propertyId).trim() === "")) {
+			miss.push("Property name is required");
+		}
+
+		// Hire purchase specific validation
+		if (!f.paymentDuration || Number(f.paymentDuration) <= 0) {
+			miss.push("Payment duration is required for hire purchase");
+		}
+		if (!f.downPayment || Number(f.downPayment) < 0) {
+			miss.push("Down payment is required");
+		}
+
 		return miss;
 	}, [form, paymentMethod]);
 

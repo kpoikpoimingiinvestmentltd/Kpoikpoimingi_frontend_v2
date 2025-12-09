@@ -92,7 +92,6 @@ export default function ProductRequestDetails() {
 	};
 
 	const handleSave = async (data: unknown) => {
-		// Clear local draft/uploaded files for the customer form so edits don't persist locally
 		try {
 			localStorage.removeItem("customer_registration_draft");
 			localStorage.removeItem("customer_registration_uploaded_files");
