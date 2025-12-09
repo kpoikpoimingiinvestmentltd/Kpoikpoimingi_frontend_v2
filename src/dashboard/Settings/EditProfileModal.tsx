@@ -481,7 +481,7 @@ export default function EditProfileModal({ open, onOpenChange }: { open: boolean
 									name="accountTypeId"
 									render={({ field }) => (
 										<Select value={field.value ?? "none"} onValueChange={(v) => field.onChange(v === "none" ? "" : v)}>
-											<SelectTrigger className={twMerge(inputStyle, "min-h-11")}>
+											<SelectTrigger className={twMerge(inputStyle, "min-h-11 text-sm")}>
 												<SelectValue placeholder="Select account type" />
 											</SelectTrigger>
 											<SelectContent>
@@ -492,7 +492,7 @@ export default function EditProfileModal({ open, onOpenChange }: { open: boolean
 													</>
 												) : (
 													accountCandidates.map((a) => (
-														<SelectItem key={a.key} value={a.key}>
+														<SelectItem key={a.key} value={a.key} className="text-sm capitalize">
 															{a.value}
 														</SelectItem>
 													))

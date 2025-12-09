@@ -52,6 +52,7 @@ export const API_ROUTES = {
 		getCustomerReceipts: (customerId: string) => `/customer/receipts/${customerId}`,
 		sendEmailSpecific: "/customer/send-email/specific",
 		sendEmailBroadcast: "/customer/send-email/broadcast",
+		exportCustomers: "/customer/export/csv",
 	},
 	customerRegistration: {
 		createExternalCustomerRegistration: "/customer-registration",
@@ -119,6 +120,7 @@ export const API_ROUTES = {
 	},
 	duePayment: {
 		getAllDuePayments: "/due-payments",
+		exportDuePayments: "/due-payments/export/csv",
 	},
 	settings: {
 		getSystemSettings: "/settings",

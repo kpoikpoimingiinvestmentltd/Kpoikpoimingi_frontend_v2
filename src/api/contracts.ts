@@ -101,6 +101,60 @@ export function useGetAllContractDebts(page = 1, limit = 10, search = "", sortBy
 	});
 }
 
+export interface ContractDebtDetail {
+	contractInfo: {
+		contractId: string;
+		contractCode: string;
+		customerName: string;
+		customerEmail: string;
+		propertyName: string;
+		propertyAmount: string;
+		contractStatus: number;
+		phoneNumber: string;
+		productQuantity: number;
+		propertyImage: string;
+	};
+	paymentSummary: {
+		totalAmountPaid: number;
+		outstandingBalance: number;
+		totalUnpaidAmount: number;
+		installmentProgress: string;
+		completedInstallments: number;
+		totalInstallments: number;
+		progressPercentage: number;
+		paidPayments: number;
+		unpaidPayments: number;
+		overduePayments: number;
+	};
+	nextPayment: {
+		amount: number;
+		dueDate: string;
+		paymentNumber: number;
+		isOverdue: boolean;
+	};
+	paymentSchedule: Array<{
+		paymentNumber: number;
+		amount: number;
+		dueDate: string;
+		isOverdue: boolean;
+		isPaid: boolean;
+		paidAmount: number;
+		status: string;
+	}>;
+}
+
+export async function getContractDebtDetails(contractId: string) {
+	return apiGet(API_ROUTES.contracts.getContractDebtDetails(contractId)) as Promise<ContractDebtDetail>;
+}
+
+export function useGetContractDebtDetails(contractId: string, enabled = true) {
+	return useQuery<ContractDebtDetail, unknown>({
+		queryKey: ["contract-debt-details", contractId],
+		queryFn: () => getContractDebtDetails(contractId),
+		enabled: !!contractId && enabled,
+	});
+}
+
 export async function getContractById(id: string) {
 	return apiGet(API_ROUTES.contracts.getContractHistory(id)) as Promise<CustomerContract>;
 }

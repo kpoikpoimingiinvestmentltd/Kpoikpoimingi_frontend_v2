@@ -54,7 +54,6 @@ export default function SearchWithFilters({
 	const handleApply = () => {
 		const cleaned: Record<string, string> = {};
 		Object.entries(values).forEach(([k, v]) => {
-			// ignore empty strings and our sentinel value used for the placeholder
 			if (v != null && String(v).trim() !== "" && String(v) !== "__NONE__") cleaned[k] = String(v).trim();
 		});
 		onApply(cleaned);
@@ -80,7 +79,7 @@ export default function SearchWithFilters({
 			{showFilter && (
 				<Popover open={open} onOpenChange={setOpen}>
 					<PopoverTrigger asChild>
-						<ActionButton type="button" className={`${preTableButtonStyle} text-white bg-primary ml-auto`}>
+						<ActionButton type="button" className={`${preTableButtonStyle} text-white bg-primary`}>
 							<IconWrapper className="text-base">
 								<FilterIcon />
 							</IconWrapper>
@@ -88,7 +87,10 @@ export default function SearchWithFilters({
 						</ActionButton>
 					</PopoverTrigger>
 
-					<PopoverContent className="w-[360px] p-3">
+					<PopoverContent className="w-[320px] max-h-[400px] overflow-y-auto px-3.5 py-3">
+						<div className="mb-4">
+							<h5 className="text-sm text-gray-600">Filter Options</h5>
+						</div>
 						<div className="space-y-3">
 							{fields.map((f) => (
 								<div key={f.key}>
@@ -114,15 +116,15 @@ export default function SearchWithFilters({
 
 										{f.type === "select" && (
 											<Select value={values[f.key] || ""} onValueChange={(v) => handleChange(f.key, v)}>
-												<SelectTrigger className="w-full mt-0 cursor-pointer">
+												<SelectTrigger className="text-sm w-full mt-0 cursor-pointer">
 													<SelectValue placeholder={`Select ${f.label}`} />
 												</SelectTrigger>
 												<SelectContent>
-													<SelectItem className="cursor-pointer" value="__NONE__">
+													<SelectItem className="text-xs cursor-pointer" value="__NONE__">
 														--
 													</SelectItem>
 													{(f.options || []).map((o) => (
-														<SelectItem className="cursor-pointer" key={o.value} value={o.value}>
+														<SelectItem className="text-xs cursor-pointer" key={o.value} value={o.value}>
 															{o.label}
 														</SelectItem>
 													))}
@@ -132,15 +134,15 @@ export default function SearchWithFilters({
 
 										{f.type === "sortBy" && (
 											<Select value={values[f.key] || ""} onValueChange={(v) => handleChange(f.key, v)}>
-												<SelectTrigger className="w-full mt-0 cursor-pointer">
+												<SelectTrigger className="text-sm w-full mt-0 cursor-pointer">
 													<SelectValue placeholder={`Select ${f.label}`} />
 												</SelectTrigger>
 												<SelectContent>
-													<SelectItem className="cursor-pointer" value="__NONE__">
+													<SelectItem className="text-xs cursor-pointer" value="__NONE__">
 														--
 													</SelectItem>
 													{(f.options || []).map((o) => (
-														<SelectItem className="cursor-pointer" key={o.value} value={o.value}>
+														<SelectItem className="text-xs cursor-pointer" key={o.value} value={o.value}>
 															{o.label}
 														</SelectItem>
 													))}
@@ -150,17 +152,17 @@ export default function SearchWithFilters({
 
 										{f.type === "sortOrder" && (
 											<Select value={values[f.key] || ""} onValueChange={(v) => handleChange(f.key, v)}>
-												<SelectTrigger className="w-full mt-0 cursor-pointer">
+												<SelectTrigger className="text-sm w-full mt-0 cursor-pointer">
 													<SelectValue placeholder={`Select ${f.label}`} />
 												</SelectTrigger>
 												<SelectContent>
-													<SelectItem className="cursor-pointer" value="__NONE__">
+													<SelectItem className="text-xs cursor-pointer" value="__NONE__">
 														--
 													</SelectItem>
-													<SelectItem className="cursor-pointer" value="asc">
+													<SelectItem className="text-xs cursor-pointer" value="asc">
 														asc
 													</SelectItem>
-													<SelectItem className="cursor-pointer" value="desc">
+													<SelectItem className="text-xs cursor-pointer" value="desc">
 														desc
 													</SelectItem>
 												</SelectContent>
@@ -169,17 +171,17 @@ export default function SearchWithFilters({
 
 										{f.type === "boolean" && (
 											<Select value={values[f.key] || ""} onValueChange={(v) => handleChange(f.key, v)}>
-												<SelectTrigger className="w-full mt-0 cursor-pointer">
+												<SelectTrigger className="text-sm w-full mt-0 cursor-pointer">
 													<SelectValue placeholder={`Select ${f.label}`} />
 												</SelectTrigger>
 												<SelectContent>
-													<SelectItem className="cursor-pointer" value="__NONE__">
+													<SelectItem className="text-xs cursor-pointer" value="__NONE__">
 														--
 													</SelectItem>
-													<SelectItem className="cursor-pointer" value="true">
+													<SelectItem className="text-xs cursor-pointer" value="true">
 														true
 													</SelectItem>
-													<SelectItem className="cursor-pointer" value="false">
+													<SelectItem className="text-xs cursor-pointer" value="false">
 														false
 													</SelectItem>
 												</SelectContent>
@@ -189,7 +191,7 @@ export default function SearchWithFilters({
 								</div>
 							))}
 
-							<div className="flex items-center justify-between gap-2 pt-2">
+							<div className="flex bg-white sticky -bottom-3 py-2 items-center justify-between gap-2 pt-2">
 								<ActionButton type="button" variant="ghost" className="px-3 py-2 text-xs" onClick={handleReset}>
 									Reset
 								</ActionButton>

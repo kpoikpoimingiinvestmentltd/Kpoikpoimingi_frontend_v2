@@ -25,12 +25,12 @@ import Properties from "../dashboard/Properties/Properties";
 import UserDetails from "../dashboard/Users/UserDetails";
 import ReportAnalytics from "../dashboard/ReportAnalytics/ReportAnalytics";
 import Debt from "../dashboard/Debt/Debt";
-import ViewDebtDetails from "../dashboard/Debt/ViewDebtDetails";
 import PropertyDetails from "../dashboard/Properties/PropertyDetails";
 import Categories from "../dashboard/Properties/Categories";
 import ContractDetails from "../dashboard/Contract/ContractDetails";
 import ProductRequestDetails from "../dashboard/ProductRequest/ProductRequestDetails";
 import SelectPaymentMethod from "../dashboard/Customers/SelectPaymentMethod";
+import DebtDetails from "../dashboard/Debt/DebtDetails";
 
 export const appRouter = createBrowserRouter([
 	{
@@ -148,7 +148,7 @@ export const appRouter = createBrowserRouter([
 			},
 			{
 				path: _router.dashboard.debtDetails,
-				element: <ViewDebtDetails />,
+				element: <DebtDetails />,
 			},
 			{
 				path: _router.dashboard.reportAnalytics,

@@ -3,7 +3,7 @@ import ReceiptWrapper from "@/components/common/ReceiptWrapper";
 import ReceiptContent from "@/components/common/ReceiptContent";
 import { useParams } from "react-router";
 import { useGetReceiptById } from "@/api/receipt";
-import { TableSkeleton } from "@/components/common/Skeleton";
+import { CardSkeleton, RectangleSkeleton } from "@/components/common/Skeleton";
 import type { ReceiptDetail } from "@/types/receipt";
 import { useRef } from "react";
 import { handleDownloadPDF as downloadPDF, handleSharePDF as sharePDF } from "@/utils/pdfUtils";
@@ -17,9 +17,22 @@ export default function ReceiptDetails() {
 
 	if (isLoading) {
 		return (
-			<CustomCard className="mt-4 p-6">
-				<TableSkeleton rows={6} cols={2} />
-			</CustomCard>
+			<div className="max-w-4xl mx-auto">
+				<div className="flex items-center justify-between flex-wrap gap-4 mb-6">
+					<div className="flex-1">
+						<RectangleSkeleton className="h-8 w-32 bg-gray-200 rounded" />
+					</div>
+					<div className="flex gap-3">
+						<RectangleSkeleton className="h-10 w-24 bg-gray-200 rounded" />
+						<RectangleSkeleton className="h-10 w-24 bg-gray-200 rounded" />
+						<RectangleSkeleton className="h-10 w-24 bg-gray-200 rounded" />
+					</div>
+				</div>
+
+				<CustomCard className="bg-white w-full rounded-lg p-6 border border-gray-100">
+					<CardSkeleton lines={8} />
+				</CustomCard>
+			</div>
 		);
 	}
 

@@ -1,5 +1,5 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { apiGet, apiPost, apiDelete } from "@/services/apiClient";
+import { apiGet, apiPost, apiDelete, apiGetFile } from "@/services/apiClient";
 import { API_ROUTES } from "./routes";
 import type { GetAllCustomersResponse, Customer, DeleteCustomerResponse } from "@/types/customer";
 import type { SendEmailSpecificPayload, SendEmailBroadcastPayload, SendEmailResponse } from "@/types/email";
@@ -130,5 +130,20 @@ export function useDeleteCustomer(onSuccess?: (data: DeleteCustomerResponse) => 
 		mutationFn: (customerId: string) => deleteCustomer(customerId),
 		onSuccess,
 		onError,
+	});
+}
+
+export async function exportCustomersAsCSV(search?: string) {
+	const params = new URLSearchParams();
+	if (search) params.append("search", search);
+
+	const qs = params.toString();
+	const url = `${API_ROUTES.customer.exportCustomers}${qs ? `?${qs}` : ""}`;
+	return apiGetFile(url) as Promise<Blob>;
+}
+
+export function useExportCustomersAsCSV() {
+	return useMutation<Blob, unknown, { search?: string }, unknown>({
+		mutationFn: (payload) => exportCustomersAsCSV(payload?.search),
 	});
 }
