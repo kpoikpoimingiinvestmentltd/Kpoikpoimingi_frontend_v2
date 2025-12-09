@@ -3,7 +3,8 @@ import CustomInput from "@/components/base/CustomInput";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
-import { inputStyle } from "@/components/common/commonStyles";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { inputStyle, radioStyle } from "@/components/common/commonStyles";
 import { useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { IconWrapper, CheckIcon } from "@/assets/icons";
@@ -33,6 +34,7 @@ export default function AddProperties({ propertyRequestId, onComplete }: { prope
 			categoryId: "",
 			price: 0,
 			quantityTotal: 1,
+			isPublic: true,
 			vehicleMake: "",
 			vehicleModel: "",
 			vehicleYear: 0,
@@ -183,6 +185,7 @@ export default function AddProperties({ propertyRequestId, onComplete }: { prope
 			quantityTotal: Number(formData.quantityTotal),
 			condition: formData.condition,
 			description: formData.description.trim(),
+			isPublic: formData.isPublic,
 			mediaKeys: mediaKeysObject,
 			...(isVehicleCategory && {
 				vehicleMake: formData.vehicleMake,
@@ -204,34 +207,61 @@ export default function AddProperties({ propertyRequestId, onComplete }: { prope
 			<PageTitles title="Add Property" description="Fill in the details to add property for sales" />
 			<div className="bg-white max-w-5xl px-4 py-6 lg:py-12 rounded-lg">
 				<div className="w-full lg:w-10/12 mx-auto">
-					<ImageGallery
-						mode="upload"
-						placeholderText="Upload Property Image"
-						uploadButtonText="Upload"
-						className="min-h-28 mb-8"
-						containerBorder="dashed"
-						thumbBg="bg-primary/10"
-						thumbVariant="dashed"
-						isUploading={isUploadingImage}
-						uploadedImages={uploadedImages.map((img, idx) => {
-							return {
-								src: img.src,
-								onRemove: () => {
-									const newImages = uploadedImages.filter((_, i) => i !== idx);
-									const newKeys = uploadedMediaKeys.filter((_, i) => i !== idx);
-									setUploadedImages(newImages);
-									setUploadedMediaKeys(newKeys);
-								},
-							};
-						})}
-						onChange={async (files) => {
-							if (files && files.length > 0) {
-								await Promise.all(Array.from(files).map((file) => handleSingleImageUpload(file)));
-							}
-						}}
-					/>
-
 					<form className="space-y-5" onSubmit={handleHookFormSubmit(onSubmit)}>
+						{/* Property Type - Public or Private */}
+						<div className="mb-8">
+							<label className="block text-sm font-medium text-gray-700 mb-4">Property Type*</label>
+							<Controller
+								name="isPublic"
+								control={control}
+								render={({ field: { value, onChange } }) => (
+									<RadioGroup value={value ? "true" : "false"} onValueChange={(val) => onChange(val === "true")} className="flex gap-8">
+										<div className="flex items-center gap-3">
+											<RadioGroupItem value="true" id="public" className={radioStyle} />
+											<label htmlFor="public" className="text-sm cursor-pointer">
+												Public property
+											</label>
+										</div>
+										<div className="flex items-center gap-3">
+											<RadioGroupItem value="false" id="private" className={radioStyle} />
+											<label htmlFor="private" className="text-sm cursor-pointer">
+												Private property
+											</label>
+										</div>
+									</RadioGroup>
+								)}
+							/>
+						</div>{" "}
+						{/* Image Gallery */}
+						<div>
+							<label className="block text-sm font-medium text-gray-700 mb-2">Upload Images*</label>
+							<ImageGallery
+								mode="upload"
+								placeholderText="Upload Property Image"
+								uploadButtonText="Upload"
+								className="min-h-28"
+								containerBorder="dashed"
+								thumbBg="bg-primary/10"
+								thumbVariant="dashed"
+								isUploading={isUploadingImage}
+								uploadedImages={uploadedImages.map((img, idx) => {
+									return {
+										src: img.src,
+										onRemove: () => {
+											const newImages = uploadedImages.filter((_, i) => i !== idx);
+											const newKeys = uploadedMediaKeys.filter((_, i) => i !== idx);
+											setUploadedImages(newImages);
+											setUploadedMediaKeys(newKeys);
+										},
+									};
+								})}
+								onChange={async (files) => {
+									if (files && files.length > 0) {
+										await Promise.all(Array.from(files).map((file) => handleSingleImageUpload(file)));
+									}
+								}}
+							/>
+						</div>
 						{/* Property Name */}
 						<div>
 							<Controller
@@ -252,7 +282,6 @@ export default function AddProperties({ propertyRequestId, onComplete }: { prope
 								)}
 							/>
 						</div>
-
 						{/* Category and Sub Category */}
 						<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 							<div>
@@ -311,7 +340,6 @@ export default function AddProperties({ propertyRequestId, onComplete }: { prope
 								/>
 							</div>
 						</div>
-
 						{/* Price and Quantity */}
 						<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 							<div>
@@ -360,7 +388,6 @@ export default function AddProperties({ propertyRequestId, onComplete }: { prope
 								/>
 							</div>
 						</div>
-
 						{/* Vehicle-specific fields */}
 						{isVehicleCategory && (
 							<>
@@ -506,7 +533,6 @@ export default function AddProperties({ propertyRequestId, onComplete }: { prope
 								</div>
 							</>
 						)}
-
 						{/* Description */}
 						<div>
 							<Controller
@@ -522,7 +548,6 @@ export default function AddProperties({ propertyRequestId, onComplete }: { prope
 								)}
 							/>
 						</div>
-
 						{/* Condition */}
 						<div className="grid">
 							<div>
@@ -545,7 +570,6 @@ export default function AddProperties({ propertyRequestId, onComplete }: { prope
 								/>
 							</div>
 						</div>
-
 						<div className="flex justify-center mt-16">
 							<Button
 								type="submit"

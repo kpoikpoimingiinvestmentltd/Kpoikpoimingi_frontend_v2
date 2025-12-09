@@ -19,7 +19,6 @@ export const _router = {
 		settings: "/dashboard/settings",
 		contract: "/dashboard/contract",
 		contractDetails: "/dashboard/contract/:id",
-		contractReceipt: "/dashboard/contract/:id/receipt",
 		productRequest: "/dashboard/product-request",
 		productRequestDetails: "/dashboard/product-request/:id",
 		debt: "/dashboard/debt",

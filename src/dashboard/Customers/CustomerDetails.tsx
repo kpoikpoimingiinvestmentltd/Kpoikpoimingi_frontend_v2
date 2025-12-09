@@ -180,7 +180,7 @@ export default function CustomerDetails() {
 							/>
 						</TabsContent>
 						<TabsContent value="payments">
-							<TabPaymentHistory payments={payments} />
+							<TabPaymentHistory payments={payments} customerId={id} />
 						</TabsContent>
 						<TabsContent value="receipt">
 							<TabReceipt receipts={receipts} />

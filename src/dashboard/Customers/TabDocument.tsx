@@ -2,6 +2,7 @@ import CustomCard from "@/components/base/CustomCard";
 import SectionTitle from "@/components/common/SectionTitle";
 import Image from "@/components/base/Image";
 import { media } from "@/resources/images";
+import { Link } from "react-router";
 // Link import kept for potential future use
 
 export default function TabDocument({ documents }: { documents?: Record<string, unknown> | undefined }) {
@@ -41,10 +42,10 @@ export default function TabDocument({ documents }: { documents?: Record<string, 
 						return (
 							<div key={i} className="flex flex-col items-start gap-2.5 w-36">
 								{url ? (
-									<a href={url as string} target="_blank" rel="noreferrer" download className="flex flex-col items-start gap-2.5">
+									<Link to={url as string} target="_blank" rel="noreferrer" download className="flex flex-col items-start gap-2.5">
 										<Image src={isPdf ? media.images.pdfImage : (url as string)} className={isPdf ? "w-14 rounded-md" : "max-w-sm rounded-md"} />
 										<div className="text-xs text-muted-foreground text-start break-words">{label}</div>
-									</a>
+									</Link>
 								) : (
 									<div className="flex flex-col items-start gap-2.5">
 										<Image src={media.images.noDocument} alt="No Document" className="w-16" />

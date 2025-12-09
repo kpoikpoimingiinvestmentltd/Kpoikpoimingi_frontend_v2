@@ -3,13 +3,21 @@ import type { PayloadAction } from "@reduxjs/toolkit";
 
 interface ReportAnalyticsState {
 	tab: "vat" | "interest";
-	page: number;
-	search: string;
-	fromDate: string | null;
-	toDate: string | null;
+	// VAT specific
+	vatPage: number;
+	vatLimit: number;
+	vatSortBy: string;
+	vatSortOrder: string;
+	vatFromDate: string | null;
+	vatToDate: string | null;
 	isFilterApplied: boolean;
-	sortBy: string;
-	sortOrder: string;
+	// Penalties specific
+	penaltyPage: number;
+	penaltySearch: string;
+	penaltyLimit: number;
+	penaltySortBy: string;
+	penaltySortOrder: string;
+	// Periods
 	incomePeriod: string;
 	vatPeriod: string;
 	penaltyPeriod: string;
@@ -17,13 +25,21 @@ interface ReportAnalyticsState {
 
 const initialState: ReportAnalyticsState = {
 	tab: "vat",
-	page: 1,
-	search: "",
-	fromDate: null,
-	toDate: null,
+	// VAT specific
+	vatPage: 1,
+	vatLimit: 10,
+	vatSortBy: "createdAt",
+	vatSortOrder: "desc",
+	vatFromDate: null,
+	vatToDate: null,
 	isFilterApplied: false,
-	sortBy: "createdAt",
-	sortOrder: "desc",
+	// Penalties specific
+	penaltyPage: 1,
+	penaltySearch: "",
+	penaltyLimit: 10,
+	penaltySortBy: "name",
+	penaltySortOrder: "asc",
+	// Periods
 	incomePeriod: "daily",
 	vatPeriod: "daily",
 	penaltyPeriod: "daily",
@@ -36,26 +52,48 @@ const reportAnalyticsSlice = createSlice({
 		setTab: (state, action: PayloadAction<"vat" | "interest">) => {
 			state.tab = action.payload;
 		},
-		setPage: (state, action: PayloadAction<number>) => {
-			state.page = action.payload;
+		setVatPage: (state, action: PayloadAction<number>) => {
+			state.vatPage = action.payload;
 		},
-		setSearch: (state, action: PayloadAction<string>) => {
-			state.search = action.payload;
+		setVatLimit: (state, action: PayloadAction<number>) => {
+			state.vatLimit = action.payload;
 		},
-		setFromDate: (state, action: PayloadAction<string | null>) => {
-			state.fromDate = action.payload;
+		setVatSortBy: (state, action: PayloadAction<string>) => {
+			state.vatSortBy = action.payload;
 		},
-		setToDate: (state, action: PayloadAction<string | null>) => {
-			state.toDate = action.payload;
+		setVatSortOrder: (state, action: PayloadAction<string>) => {
+			state.vatSortOrder = action.payload;
+		},
+		setVatFromDate: (state, action: PayloadAction<string | null>) => {
+			state.vatFromDate = action.payload;
+		},
+		setVatToDate: (state, action: PayloadAction<string | null>) => {
+			state.vatToDate = action.payload;
 		},
 		setIsFilterApplied: (state, action: PayloadAction<boolean>) => {
 			state.isFilterApplied = action.payload;
 		},
-		setSortBy: (state, action: PayloadAction<string>) => {
-			state.sortBy = action.payload;
+		setPenaltyPage: (state, action: PayloadAction<number>) => {
+			state.penaltyPage = action.payload;
 		},
-		setSortOrder: (state, action: PayloadAction<string>) => {
-			state.sortOrder = action.payload;
+		setPenaltySearch: (state, action: PayloadAction<string>) => {
+			state.penaltySearch = action.payload;
+		},
+		setPenaltyLimit: (state, action: PayloadAction<number>) => {
+			state.penaltyLimit = action.payload;
+		},
+		setPenaltySortBy: (state, action: PayloadAction<string>) => {
+			state.penaltySortBy = action.payload;
+		},
+		setPenaltySortOrder: (state, action: PayloadAction<string>) => {
+			state.penaltySortOrder = action.payload;
+		},
+		clearPenaltyFilters: (state) => {
+			state.penaltyPage = 1;
+			state.penaltySearch = "";
+			state.penaltyLimit = 10;
+			state.penaltySortBy = "name";
+			state.penaltySortOrder = "asc";
 		},
 		setIncomePeriod: (state, action: PayloadAction<string>) => {
 			state.incomePeriod = action.payload;
@@ -67,12 +105,12 @@ const reportAnalyticsSlice = createSlice({
 			state.penaltyPeriod = action.payload;
 		},
 		clearFilters: (state) => {
-			state.fromDate = null;
-			state.toDate = null;
-			state.sortBy = "createdAt";
-			state.sortOrder = "desc";
-			state.search = "";
-			state.page = 1;
+			state.vatFromDate = null;
+			state.vatToDate = null;
+			state.vatSortBy = "createdAt";
+			state.vatSortOrder = "desc";
+			state.vatPage = 1;
+			state.vatLimit = 10;
 			state.isFilterApplied = false;
 		},
 	},
@@ -80,17 +118,23 @@ const reportAnalyticsSlice = createSlice({
 
 export const {
 	setTab,
-	setPage,
-	setSearch,
-	setFromDate,
-	setToDate,
+	setVatPage,
+	setVatLimit,
+	setVatSortBy,
+	setVatSortOrder,
+	setVatFromDate,
+	setVatToDate,
 	setIsFilterApplied,
-	setSortBy,
-	setSortOrder,
+	setPenaltyPage,
+	setPenaltySearch,
+	setPenaltyLimit,
+	setPenaltySortBy,
+	setPenaltySortOrder,
 	setIncomePeriod,
 	setVatPeriod,
 	setPenaltyPeriod,
 	clearFilters,
+	clearPenaltyFilters,
 } = reportAnalyticsSlice.actions;
 
 export default reportAnalyticsSlice.reducer;

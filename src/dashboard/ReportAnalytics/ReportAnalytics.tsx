@@ -2,17 +2,23 @@ import { useDispatch, useSelector } from "react-redux";
 import type { RootState } from "@/store";
 import {
 	setTab,
-	setPage,
-	setSearch,
-	setFromDate,
-	setToDate,
+	setVatPage,
+	setVatLimit,
+	setVatSortBy,
+	setVatSortOrder,
+	setVatFromDate,
+	setVatToDate,
 	setIsFilterApplied,
-	setSortBy,
-	setSortOrder,
+	setPenaltyPage,
+	setPenaltySearch,
+	setPenaltyLimit,
+	setPenaltySortBy,
+	setPenaltySortOrder,
 	setIncomePeriod,
 	setVatPeriod,
 	setPenaltyPeriod,
 	clearFilters,
+	clearPenaltyFilters,
 } from "@/store/reportAnalyticsSlice";
 import PageTitles from "@/components/common/PageTitles";
 import CustomCard from "@/components/base/CustomCard";
@@ -20,8 +26,10 @@ import StatCard from "@/components/base/StatCard";
 import CustomInput from "@/components/base/CustomInput";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { inputStyle, preTableButtonStyle, tabListStyle, tabStyle } from "@/components/common/commonStyles";
-import { FilterIcon, IconWrapper, SearchIcon, CalendarIcon } from "@/assets/icons";
+import { FilterIcon, IconWrapper, SearchIcon, CalendarIcon, CloseIcon } from "@/assets/icons";
 import ExportTrigger from "@/components/common/ExportTrigger";
+import { useExportInterestPenalties } from "@/api/analytics";
+import { toast } from "sonner";
 import EmptyData from "@/components/common/EmptyData";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent } from "@/components/ui/dropdown-menu";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -33,9 +41,24 @@ import { TableSkeleton } from "@/components/common/Skeleton";
 
 export default function ReportAnalytics() {
 	const dispatch = useDispatch();
-	const { tab, page, search, fromDate, toDate, isFilterApplied, sortBy, sortOrder, incomePeriod, vatPeriod, penaltyPeriod } = useSelector(
-		(state: RootState) => state.reportAnalytics
-	);
+	const {
+		tab,
+		vatPage,
+		vatLimit,
+		vatSortBy,
+		vatSortOrder,
+		vatFromDate,
+		vatToDate,
+		isFilterApplied,
+		incomePeriod,
+		vatPeriod,
+		penaltyPeriod,
+		penaltyPage,
+		penaltySearch,
+		penaltyLimit,
+		penaltySortBy,
+		penaltySortOrder,
+	} = useSelector((state: RootState) => state.reportAnalytics);
 
 	const isEmpty = false;
 
@@ -46,12 +69,12 @@ export default function ReportAnalytics() {
 	const { data: interestPenaltiesData, isLoading: isInterestPenaltiesLoading } = useGetInterestPenalties(penaltyPeriod);
 
 	const { data: vatData, isLoading: isVATLoading } = useGetVATRecords(
-		page,
-		10,
-		isFilterApplied ? fromDate || undefined : undefined,
-		isFilterApplied ? toDate || undefined : undefined,
-		sortBy,
-		sortOrder,
+		vatPage,
+		vatLimit,
+		isFilterApplied ? vatFromDate || undefined : undefined,
+		isFilterApplied ? vatToDate || undefined : undefined,
+		vatSortBy,
+		vatSortOrder,
 		tab === "vat"
 	);
 
@@ -59,11 +82,11 @@ export default function ReportAnalytics() {
 	const vatTotalPages = vatData?.pagination?.totalPages || 1;
 
 	const { data: penaltiesData, isLoading: isPenaltiesLoading } = useGetPenalties(
-		page,
-		10,
-		search || undefined,
-		sortBy,
-		sortOrder,
+		penaltyPage,
+		penaltyLimit,
+		penaltySearch || undefined,
+		penaltySortBy,
+		penaltySortOrder,
 		tab === "interest"
 	);
 
@@ -72,6 +95,41 @@ export default function ReportAnalytics() {
 
 	const handleClearFilter = () => {
 		dispatch(clearFilters());
+	};
+
+	// Hook for exporting interest penalties CSV
+	const exportInterestMutation = useExportInterestPenalties();
+
+	const handleExport = async (format: "csv" | "pdf") => {
+		if (format !== "csv") return; // only CSV supported for now
+		if (tab !== "interest") {
+			toast.error("Export available only for Interest Penalties tab.");
+			return;
+		}
+
+		try {
+			const blob = await exportInterestMutation.mutateAsync({
+				page: penaltyPage || 1,
+				limit: penaltyLimit || 10,
+				search: penaltySearch || "",
+				sortBy: penaltySortBy || "createdAt",
+				sortOrder: penaltySortOrder || "desc",
+				period: penaltyPeriod || "daily",
+			});
+			const fileName = `interest-penalties-${new Date().toISOString().slice(0, 10)}.csv`;
+			const url = URL.createObjectURL(blob);
+			const link = document.createElement("a");
+			link.href = url;
+			link.download = fileName;
+			document.body.appendChild(link);
+			link.click();
+			link.remove();
+			URL.revokeObjectURL(url);
+			toast.success("Export started; check your downloads");
+		} catch (err) {
+			console.error("Failed to export interest penalties:", err);
+			toast.error("Failed to export interest penalties");
+		}
 	};
 
 	// Dynamic stats data from API
@@ -113,7 +171,12 @@ export default function ReportAnalytics() {
 			<div className="flex items-center justify-between flex-wrap gap-4 mb-4">
 				<PageTitles title="Report Analytics" description="Overview of financial and operational reports" />
 				<div className="flex items-center gap-3">
-					<ExportTrigger title="Export" />
+					<ExportTrigger
+						title="Export"
+						onSelect={(format) => {
+							handleExport(format);
+						}}
+					/>
 				</div>
 			</div>
 
@@ -153,19 +216,22 @@ export default function ReportAnalytics() {
 									</div>
 
 									<div className="flex items-center gap-2">
-										<div className="relative md:w-80">
-											<CustomInput
-												placeholder="Search reports by id, metric or source"
-												aria-label="Search reports"
-												value={search}
-												onChange={(e) => {
-													dispatch(setSearch((e.target as HTMLInputElement).value));
-													dispatch(setPage(1));
-												}}
-												className={`max-w-[320px] ${inputStyle} h-10 pl-9`}
-												iconLeft={<SearchIcon />}
-											/>
-										</div>
+										{tab === "interest" && (
+											<div className="relative md:w-80">
+												<CustomInput
+													placeholder="Search by contract code"
+													aria-label="Search penalties"
+													value={penaltySearch}
+													onChange={(e) => {
+														const v = (e.target as HTMLInputElement).value;
+														dispatch(setPenaltySearch(v));
+														dispatch(setPenaltyPage(1));
+													}}
+													className={`max-w-[320px] ${inputStyle} h-10 pl-9`}
+													iconLeft={<SearchIcon />}
+												/>
+											</div>
+										)}
 
 										<div className="flex items-center gap-2">
 											<DropdownMenu>
@@ -181,21 +247,58 @@ export default function ReportAnalytics() {
 												<DropdownMenuContent className="w-80 p-4 mr-4">
 													<div className="grid grid-cols-1 gap-4">
 														<div>
-															<label className="text-xs font-medium text-gray-700 mb-2 block">Sort By Field</label>
+															<label className="text-xs font-medium text-gray-700 mb-2 block">Items per page</label>
 															<Select
-																value={sortBy}
-																onValueChange={(value) => {
-																	dispatch(setSortBy(value));
-																	dispatch(setPage(1));
+																value={tab === "interest" ? String(penaltyLimit) : String(vatLimit)}
+																onValueChange={(v) => {
+																	if (tab === "interest") {
+																		dispatch(setPenaltyLimit(Number(v)));
+																		dispatch(setPenaltyPage(1));
+																	} else {
+																		dispatch(setVatLimit(Number(v)));
+																		dispatch(setVatPage(1));
+																	}
 																}}>
 																<SelectTrigger className="w-full h-9">
 																	<SelectValue />
 																</SelectTrigger>
 																<SelectContent>
-																	<SelectItem value="createdAt">Created At</SelectItem>
-																	<SelectItem value="name">Name</SelectItem>
-																	<SelectItem value="price">Price</SelectItem>
-																	<SelectItem value="updatedAt">Updated At</SelectItem>
+																	<SelectItem value="5">5</SelectItem>
+																	<SelectItem value="10">10</SelectItem>
+																	<SelectItem value="20">20</SelectItem>
+																	<SelectItem value="50">50</SelectItem>
+																</SelectContent>
+															</Select>
+														</div>
+														<div>
+															<label className="text-xs font-medium text-gray-700 mb-2 block">Sort By Field</label>
+															<Select
+																value={tab === "interest" ? penaltySortBy : vatSortBy}
+																onValueChange={(value) => {
+																	if (tab === "interest") {
+																		dispatch(setPenaltySortBy(value));
+																		dispatch(setPenaltyPage(1));
+																	} else {
+																		dispatch(setVatSortBy(value));
+																		dispatch(setVatPage(1));
+																	}
+																}}>
+																<SelectTrigger className="w-full h-9">
+																	<SelectValue />
+																</SelectTrigger>
+																<SelectContent>
+																	{tab === "interest" ? (
+																		<>
+																			<SelectItem value="name">Name</SelectItem>
+																			<SelectItem value="price">Price</SelectItem>
+																		</>
+																	) : (
+																		<>
+																			<SelectItem value="createdAt">Created At</SelectItem>
+																			<SelectItem value="amount">Amount</SelectItem>
+																			<SelectItem value="vatAmount">VAT Amount</SelectItem>
+																		</>
+																	)}
 																</SelectContent>
 															</Select>
 														</div>
@@ -203,10 +306,15 @@ export default function ReportAnalytics() {
 														<div>
 															<label className="text-xs font-medium text-gray-700 mb-2 block">Sort Order</label>
 															<Select
-																value={sortOrder}
+																value={tab === "interest" ? penaltySortOrder : vatSortOrder}
 																onValueChange={(value) => {
-																	dispatch(setSortOrder(value));
-																	dispatch(setPage(1));
+																	if (tab === "interest") {
+																		dispatch(setPenaltySortOrder(value));
+																		dispatch(setPenaltyPage(1));
+																	} else {
+																		dispatch(setVatSortOrder(value));
+																		dispatch(setVatPage(1));
+																	}
 																}}>
 																<SelectTrigger className="w-full h-9">
 																	<SelectValue />
@@ -218,45 +326,66 @@ export default function ReportAnalytics() {
 															</Select>
 														</div>
 
-														<div>
-															<CustomInput
-																type="date"
-																label="From"
-																value={fromDate ?? ""}
-																onChange={(e) => dispatch(setFromDate((e.target as HTMLInputElement).value))}
-																className="w-full h-9 text-sm"
-																iconRight={<CalendarIcon />}
-															/>
-														</div>
-														<div>
-															<CustomInput
-																type="date"
-																label="To"
-																value={toDate ?? ""}
-																onChange={(e) => dispatch(setToDate((e.target as HTMLInputElement).value))}
-																className="w-full h-9 text-sm"
-																iconRight={<CalendarIcon />}
-															/>
-														</div>
-														<div className="pt-2 border-t">
+														{tab === "vat" && (
+															<>
+																<div>
+																	<CustomInput
+																		type="date"
+																		label="From"
+																		value={vatFromDate ?? ""}
+																		onChange={(e) => dispatch(setVatFromDate((e.target as HTMLInputElement).value || null))}
+																		className="w-full h-9 text-sm"
+																		iconRight={<CalendarIcon />}
+																	/>
+																</div>
+																<div>
+																	<CustomInput
+																		type="date"
+																		label="To"
+																		value={vatToDate ?? ""}
+																		onChange={(e) => dispatch(setVatToDate((e.target as HTMLInputElement).value || null))}
+																		className="w-full h-9 text-sm"
+																		iconRight={<CalendarIcon />}
+																	/>
+																</div>
+															</>
+														)}
+														<div className="pt-2 border-t flex items-center justify-between gap-2">
 															<button
+																type="button"
 																onClick={() => {
-																	dispatch(setPage(1));
+																	// reset filters
+																	if (tab === "interest") {
+																		dispatch(clearPenaltyFilters());
+																	} else {
+																		dispatch(clearFilters());
+																	}
+																}}
+																className="px-4 py-2 text-sm rounded border border-gray-200 hover:bg-gray-100">
+																Reset
+															</button>
+															<button
+																type="button"
+																onClick={() => {
+																	if (tab === "interest") {
+																		dispatch(setPenaltyPage(1));
+																	} else {
+																		dispatch(setVatPage(1));
+																	}
 																	dispatch(setIsFilterApplied(true));
 																}}
-																className="w-full bg-primary text-white px-4 text-sm py-2 rounded">
-																Enter
+																className="px-4 py-2 bg-primary text-white text-sm rounded">
+																Apply
 															</button>
 														</div>
 													</div>
 												</DropdownMenuContent>
 											</DropdownMenu>
 											{isFilterApplied && (
-												<button
-													type="button"
-													onClick={handleClearFilter}
-													className={`${preTableButtonStyle} text-gray-700 bg-gray-200 hover:bg-gray-300`}>
-													<span>Clear</span>
+												<button type="button" onClick={handleClearFilter} className={`p-2 rounded-full text-gray-700 bg-gray-200 hover:bg-gray-300`}>
+													<IconWrapper>
+														<CloseIcon />
+													</IconWrapper>
 												</button>
 											)}
 										</div>
@@ -267,9 +396,11 @@ export default function ReportAnalytics() {
 									<div className="flex flex-col justify-between">
 										<div className="text-sm flex gap-3 items-center flex-wrap text-gray-500">
 											<span>{tab === "vat" ? "Total VAT Amount" : "Total Penalties Amount"}</span>
-											<span className="text-xs">
-												From {fromDate ?? "2-4-2025"} To {toDate ?? "12-7-2025"}
-											</span>
+											{tab === "vat" && isFilterApplied && vatFromDate && vatToDate && (
+												<span className="text-xs">
+													From {vatFromDate} To {vatToDate}
+												</span>
+											)}
 										</div>
 										<div className="mt-3 text-2xl font-medium">NGN 50,000,000</div>
 									</div>
@@ -284,7 +415,7 @@ export default function ReportAnalytics() {
 												<EmptyData text="No VAT records found for the selected filters." />
 											</div>
 										) : (
-											<VATCollected rows={vatRows} page={page} pages={vatTotalPages} onPageChange={(p) => dispatch(setPage(p))} />
+											<VATCollected rows={vatRows} page={vatPage} pages={vatTotalPages} onPageChange={(p) => dispatch(setVatPage(p))} />
 										)
 									) : isPenaltiesLoading ? (
 										<TableSkeleton rows={5} cols={7} />
@@ -295,9 +426,9 @@ export default function ReportAnalytics() {
 									) : (
 										<InterestPenalties
 											rows={penaltyRows}
-											page={page}
+											page={penaltyPage}
 											pages={totalPages}
-											onPageChange={(p) => dispatch(setPage(p))}
+											onPageChange={(p) => dispatch(setPenaltyPage(p))}
 											pagination={penaltiesData?.pagination}
 										/>
 									)}

@@ -8,19 +8,21 @@ import type {
 	DeleteRegistrationResponse,
 } from "@/types/productRequest";
 
-export async function getProductRequests(page = 1, limit = 10, search = "") {
+export async function getProductRequests(page = 1, limit = 10, search = "", sortBy?: string, sortOrder?: string) {
 	const params = new URLSearchParams();
 	params.append("page", String(page));
 	params.append("limit", String(limit));
 	if (search) params.append("search", String(search));
+	if (sortBy) params.append("sortBy", String(sortBy));
+	if (sortOrder) params.append("sortOrder", String(sortOrder));
 	const res = await apiGet(`${API_ROUTES.customerRegistration.getExternalCustomerRegistrations}?${params.toString()}`);
 	return res as ProductRequestResponse;
 }
 
-export function useGetProductRequests(page = 1, limit = 10, search = "", enabled = true) {
+export function useGetProductRequests(page = 1, limit = 10, search = "", sortBy?: string, sortOrder?: string, enabled = true) {
 	return useQuery<ProductRequestResponse, unknown>({
-		queryKey: ["product-requests", page, limit, search],
-		queryFn: () => getProductRequests(page, limit, search),
+		queryKey: ["product-requests", page, limit, search, sortBy, sortOrder],
+		queryFn: () => getProductRequests(page, limit, search, sortBy, sortOrder),
 		enabled,
 	});
 }

@@ -44,6 +44,8 @@ export default function CustomInput({
 
 	React.useEffect(() => {
 		const v = props.value as string | number | undefined;
+		// If no explicit value is provided (undefined), don't override internal state
+		if (typeof v === "undefined") return;
 		const normalized = v == null ? "" : String(v);
 		setInternal(normalized);
 	}, [props.value]);

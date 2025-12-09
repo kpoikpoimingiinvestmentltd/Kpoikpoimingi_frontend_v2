@@ -2,11 +2,16 @@ import Image from "@/components/base/Image";
 import KeyValueRow from "@/components/common/KeyValueRow";
 import CustomCard from "../../components/base/CustomCard";
 import { useGetCurrentUser } from "@/api/user";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { useState } from "react";
+import EditProfileModal from "./EditProfileModal";
+import ActionButton from "@/components/base/ActionButton";
+import { preTableButtonStyle } from "@/components/common/commonStyles";
+import { IconWrapper, EditIcon } from "@/assets/icons";
 
 export default function Profile() {
 	const { data: user, isLoading } = useGetCurrentUser(true);
-
+	const [editOpen, setEditOpen] = useState(false);
 	if (isLoading) {
 		return (
 			<CustomCard className="mt-4 border-none p-5 sm:p-6 bg-[#fafafa]">
@@ -46,22 +51,35 @@ export default function Profile() {
 	return (
 		<CustomCard className="mt-4 border-none p-5 sm:p-6 bg-[#fafafa]">
 			<div className="flex flex-col gap-6">
-				<div className="w-28 h-28 rounded-full overflow-hidden">
-					{(user as Record<string, unknown>).media ? (
-						<Image
-							src={(user as Record<string, unknown>).media as string}
-							alt={(user as Record<string, unknown>).fullName as string}
-							className="w-full h-full object-cover"
-						/>
-					) : (
-						<Avatar className="w-full h-full">
-							<AvatarImage
-								src={((user as Record<string, unknown>).media as string) || undefined}
-								alt={(user as Record<string, unknown>).fullName as string}
-							/>
-							<AvatarFallback className="text-2xl">{initials}</AvatarFallback>
-						</Avatar>
-					)}
+				<div className="w-28 h-28 rounded-full overflow-hidden relative">
+					{(() => {
+						const media = (user as Record<string, unknown>).media;
+						let src: string | undefined | null = undefined;
+						if (Array.isArray(media) && media.length > 0) {
+							src = (media[0] as Record<string, unknown>)?.fileUrl as string | undefined;
+						} else if (typeof media === "string") {
+							src = media as string;
+						} else if (media && typeof (media as Record<string, unknown>).fileUrl === "string") {
+							src = ((media as Record<string, unknown>).fileUrl as string) || undefined;
+						}
+
+						return src ? (
+							<Image src={src} alt={(user as Record<string, unknown>).fullName as string} className="w-full h-full object-cover" />
+						) : (
+							<Avatar className="w-full h-full">
+								<AvatarFallback className="text-2xl">{initials}</AvatarFallback>
+							</Avatar>
+						);
+					})()}
+
+					{/* Edit button overlay */}
+					<button type="button" className="absolute -right-2 -bottom-2" onClick={() => setEditOpen(true)}>
+						<ActionButton type="button" className={`${preTableButtonStyle} text-white bg-primary`}>
+							<IconWrapper>
+								<EditIcon />
+							</IconWrapper>
+						</ActionButton>
+					</button>
 				</div>
 
 				<div className="flex-1 mt-3">
@@ -97,15 +115,73 @@ export default function Profile() {
 							rightClassName="text-right"
 						/>
 						<KeyValueRow
-							label="User Role"
-							value={userRole}
+							label="Account Number"
+							value={(user as Record<string, unknown>).accountNumber as string}
 							leftClassName="text-sm text-muted-foreground"
 							rightClassName="text-right"
-							variant="files"
-							files={[{ url: "#", label: userRole }]}
 						/>
+						<KeyValueRow
+							label="Salary Amount"
+							value={(user as Record<string, unknown>).salaryAmount as string}
+							leftClassName="text-sm text-muted-foreground"
+							rightClassName="text-right"
+						/>
+						<KeyValueRow
+							label="Date of Birth"
+							value={
+								((user as Record<string, unknown>).dateOfBirth as string)
+									? new Date((user as Record<string, unknown>).dateOfBirth as string).toLocaleDateString()
+									: "N/A"
+							}
+							leftClassName="text-sm text-muted-foreground"
+							rightClassName="text-right"
+						/>
+						<KeyValueRow
+							label="House Address"
+							value={(user as Record<string, unknown>).houseAddress as string}
+							leftClassName="text-sm text-muted-foreground"
+							rightClassName="text-right"
+						/>
+						<KeyValueRow
+							label="Account Type"
+							value={((user as Record<string, unknown>).accountType as Record<string, unknown>)?.type as string}
+							leftClassName="text-sm text-muted-foreground"
+							rightClassName="text-right"
+						/>
+						<KeyValueRow
+							label="Bank Name"
+							value={((user as Record<string, unknown>).bankName as Record<string, unknown>)?.name as string}
+							leftClassName="text-sm text-muted-foreground"
+							rightClassName="text-right"
+						/>
+						<KeyValueRow
+							label="State of Origin"
+							value={((user as Record<string, unknown>).stateOfOrigin as Record<string, unknown>)?.state as string}
+							leftClassName="text-sm text-muted-foreground"
+							rightClassName="text-right"
+						/>
+						<KeyValueRow
+							label="Assigned Customers"
+							value={String((user as Record<string, unknown>).numberOfAssignedCustomers ?? "0")}
+							leftClassName="text-sm text-muted-foreground"
+							rightClassName="text-right"
+						/>
+						<KeyValueRow
+							label="Created At"
+							value={
+								((user as Record<string, unknown>).createdAt as string)
+									? new Date((user as Record<string, unknown>).createdAt as string).toLocaleString()
+									: "N/A"
+							}
+							leftClassName="text-sm text-muted-foreground"
+							rightClassName="text-right"
+						/>
+						<KeyValueRow label="User Role" value={userRole} leftClassName="text-sm text-muted-foreground" rightClassName="text-right" />
 					</div>
 				</div>
+
+				{/* Edit modal */}
+				<EditProfileModal open={editOpen} onOpenChange={setEditOpen} />
 			</div>
 		</CustomCard>
 	);

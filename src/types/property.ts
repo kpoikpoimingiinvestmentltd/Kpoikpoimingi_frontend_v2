@@ -4,6 +4,7 @@ export type PropertyFormData = {
 	categoryId: string;
 	price: number;
 	quantityTotal: number;
+	isPublic: boolean;
 	vehicleMake?: string;
 	vehicleModel?: string;
 	vehicleYear?: number;
@@ -22,6 +23,7 @@ export type PropertyPayload = {
 	categoryId: string;
 	price: number;
 	quantityTotal: number;
+	isPublic: boolean;
 	condition: string;
 	mediaKeys: Record<string, string>;
 	vehicleMake?: string;
@@ -107,6 +109,7 @@ export type EditPropertyDetailsModalProps = {
 		vehicleChassisNumber?: string;
 		condition?: string;
 		description?: string;
+		isPublic?: boolean;
 		images?: string[];
 		media?: string[];
 	};

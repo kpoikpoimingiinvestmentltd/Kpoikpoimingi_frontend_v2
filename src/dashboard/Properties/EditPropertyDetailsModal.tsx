@@ -1,12 +1,13 @@
 import React from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import CustomInput from "@/components/base/CustomInput";
 import ActionButton from "@/components/base/ActionButton";
 import ImageGallery from "@/components/base/ImageGallery";
 import { Textarea } from "@/components/ui/textarea";
 import { media } from "@/resources/images";
-import { inputStyle, modalContentStyle } from "../../components/common/commonStyles";
+import { inputStyle, modalContentStyle, radioStyle } from "../../components/common/commonStyles";
 import { useGetAllCategories } from "@/api/categories";
 import { usePresignUploadMutation } from "@/api/presign-upload.api";
 import { uploadFileToPresignedUrl } from "@/utils/media-upload";
@@ -100,6 +101,7 @@ export default function EditPropertyDetailsModal({ open, onOpenChange, initial, 
 		parentCategoryId: "",
 		condition: initial?.condition ?? "",
 		description: initial?.description ?? "",
+		isPublic: initial?.isPublic ?? true,
 		vehicleMake: initial?.vehicleMake ?? "",
 		vehicleModel: initial?.vehicleModel ?? "",
 		vehicleYear: String(initial?.vehicleYear ?? ""),
@@ -109,20 +111,20 @@ export default function EditPropertyDetailsModal({ open, onOpenChange, initial, 
 		vehicleRegistrationNumber: initial?.vehicleRegistrationNumber ?? "",
 	});
 
-	// Get the parent category and its subcategories based on the current categoryId
 	const selectedParentCategory = allCategories.find((cat: unknown) => {
 		const c = cat as { children?: unknown[] };
 		return c.children?.some((child: unknown) => (child as { id: unknown }).id === form.categoryId);
 	});
 	const subcategories = (selectedParentCategory as { children?: unknown[] })?.children || [];
 
-	// Check if selected parent category is a vehicle category
 	const isVehicleCategory =
 		selectedParentCategory &&
 		(selectedParentCategory as { category?: string }).category &&
 		(selectedParentCategory as { category?: string }).category!.toLowerCase().includes("vehicle");
 
 	React.useEffect(() => {
+		if (!open) return;
+
 		const initialImgsArray = initial?.media ?? initial?.images ?? [media.images._product1, media.images._product2];
 		setCurrentImages(Array.isArray(initialImgsArray) ? initialImgsArray : [initialImgsArray as string]);
 		setUploadedMediaKeys([]);
@@ -147,6 +149,7 @@ export default function EditPropertyDetailsModal({ open, onOpenChange, initial, 
 			parentCategoryId: parentCat?.id ?? "",
 			condition: initial?.condition ?? "",
 			description: initial?.description ?? "",
+			isPublic: initial?.isPublic ?? true,
 			vehicleMake: initial?.vehicleMake ?? "",
 			vehicleModel: initial?.vehicleModel ?? "",
 			vehicleYear: String(initial?.vehicleYear ?? ""),
@@ -155,9 +158,9 @@ export default function EditPropertyDetailsModal({ open, onOpenChange, initial, 
 			vehicleType: initial?.vehicleType ?? "",
 			vehicleRegistrationNumber: initial?.vehicleRegistrationNumber ?? "",
 		});
-	}, [initial, open, allCategories]);
+	}, [open, allCategories]);
 
-	const handleChange = (k: string) => (v: string) => {
+	const handleChange = (k: string) => (v: string | boolean) => {
 		setForm((s) => ({ ...s, [k]: v }));
 	};
 
@@ -229,6 +232,28 @@ export default function EditPropertyDetailsModal({ open, onOpenChange, initial, 
 								onChange={(e) => handleChange("name")(e.target.value)}
 								className={twMerge(inputStyle)}
 							/>
+						</div>
+
+						{/* Property Type - Public or Private */}
+						<div>
+							<label className="block text-sm font-medium text-gray-700 mb-4">Property Type*</label>
+							<RadioGroup
+								value={form.isPublic ? "true" : "false"}
+								onValueChange={(val) => handleChange("isPublic")(val === "true")}
+								className="flex gap-8">
+								<div className="flex items-center gap-3">
+									<RadioGroupItem value="true" id="edit-public" className={radioStyle} />
+									<label htmlFor="edit-public" className="text-sm cursor-pointer">
+										Public property
+									</label>
+								</div>
+								<div className="flex items-center gap-3">
+									<RadioGroupItem value="false" id="edit-private" className={radioStyle} />
+									<label htmlFor="edit-private" className="text-sm cursor-pointer">
+										Private property
+									</label>
+								</div>
+							</RadioGroup>
 						</div>
 
 						{/* Category and Sub Category */}

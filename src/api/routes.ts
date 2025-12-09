@@ -78,6 +78,7 @@ export const API_ROUTES = {
 		getSignedContract: (id: string) => `/contracts/${id}/signed-contract`,
 		getAllContracts: "/contracts",
 		getAllContractDebts: "/contracts/debts",
+		getAllContractDebtsExport: "/contracts/debts/export/csv",
 		getContractHistory: (id: string) => `/contracts/${id}`,
 		getContractDebtDetails: (id: string) => `/contracts/debt/${id}`,
 		terminateContract: (id: string) => `/contracts/terminate/${id}`,
@@ -88,6 +89,9 @@ export const API_ROUTES = {
 		generatePaymentLink: (scheduleId: string) => `/payment-schedule/generate-link/${scheduleId}`,
 		getPaymentSchedules: (id: string) => `/payment-schedule/${id}`,
 		getNextPayment: (id: string) => `/payment-schedule/next-payment/${id}`,
+	},
+	paymentLink: {
+		create: "/payment-link/create",
 	},
 	payment: {
 		getPendingPayments: "/payment/pending",
@@ -109,6 +113,7 @@ export const API_ROUTES = {
 		getIncomeEarned: (period: string) => `/reports/income-earned/${period}`,
 		getVatCollected: (period: string) => `/reports/vat-collected/${period}`,
 		getInterestPenalties: (period: string) => `/reports/interest-penalties/${period}`,
+		getInterestPenaltiesExport: "/reports/interest-penalties/export/csv",
 		getPenalties: "/reports/penalties",
 	},
 	duePayment: {

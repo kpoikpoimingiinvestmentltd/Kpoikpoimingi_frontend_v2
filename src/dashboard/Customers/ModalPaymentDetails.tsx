@@ -10,6 +10,9 @@ type Payment = {
 	outstanding: string;
 	penalty: string;
 	status: string;
+	contractCode?: string;
+	propertyName?: string;
+	propertyPrice?: string | number;
 };
 
 export default function ModalPaymentDetails({
@@ -31,6 +34,14 @@ export default function ModalPaymentDetails({
 				</DialogHeader>
 
 				<CustomCard className="px-6 py-4 max-w-full bg-card">
+					{payment.contractCode && (
+						<div className="mb-4">
+							<div className="text-sm text-muted-foreground">Contract</div>
+							<div className="font-medium">
+								{payment.contractCode} — {payment.propertyName}
+							</div>
+						</div>
+					)}
 					<div className="grid grid-cols-1 gap-3">
 						<KeyValueRow label="Payment date" value={payment.date} leftClassName="text-sm text-muted-foreground" rightClassName="text-right" />
 						<KeyValueRow label="Payment method" value={payment.method} leftClassName="text-sm text-muted-foreground" rightClassName="text-right" />

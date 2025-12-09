@@ -4,34 +4,59 @@ import Image from "../../components/base/Image";
 import { media } from "../../resources/images";
 import CustomCard from "@/components/base/CustomCard";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { tableHeaderRowStyle, inputStyle, preTableButtonStyle } from "@/components/common/commonStyles";
+import { tableHeaderRowStyle } from "@/components/common/commonStyles";
 import CompactPagination from "@/components/ui/compact-pagination";
-import CustomInput from "@/components/base/CustomInput";
-import { SearchIcon, FilterIcon, EyeIcon, IconWrapper } from "@/assets/icons";
+import { EyeIcon, IconWrapper } from "@/assets/icons";
 import { Link } from "react-router";
 import { _router } from "@/routes/_router";
 import React from "react";
 import PageWrapper from "../../components/common/PageWrapper";
-import { useGetAllContractDebts } from "@/api/contracts";
+import { useGetAllContractDebts, useExportAllContractDebts } from "@/api/contracts";
 import { TableSkeleton } from "@/components/common/Skeleton";
-import EmptyData from "@/components/common/EmptyData";
 import { twMerge } from "tailwind-merge";
+import SearchWithFilters from "@/components/common/SearchWithFilters";
+import type { FilterField } from "@/components/common/SearchWithFilters";
+import { useDebounceSearch } from "@/hooks/useDebounceSearch";
 
 export default function Debt() {
 	const [page, setPage] = React.useState(1);
-	const [searchInput, setSearchInput] = React.useState("");
-	const [search, setSearch] = React.useState("");
+	const [limit, setLimit] = React.useState<number>(10);
+	const [searchQuery, setSearchQuery] = React.useState<string>("");
+	const debouncedSearch = useDebounceSearch(searchQuery, 400);
+	const [sortBy, setSortBy] = React.useState<string>("createdAt");
+	const [sortOrder, setSortOrder] = React.useState<string>("desc");
 
-	// Debounce search input
-	React.useEffect(() => {
-		const timer = setTimeout(() => {
-			setSearch(searchInput);
-		}, 500);
+	const { data: debtData = {} as Record<string, unknown>, isLoading } = useGetAllContractDebts(
+		page,
+		limit,
+		debouncedSearch || undefined,
+		sortBy,
+		sortOrder
+	);
 
-		return () => clearTimeout(timer);
-	}, [searchInput]);
+	const exportMutation = useExportAllContractDebts();
 
-	const { data: debtData = {} as Record<string, unknown>, isLoading } = useGetAllContractDebts(page, 10, search);
+	const handleExport = async (format: "csv" | "pdf") => {
+		if (format === "csv") {
+			try {
+				const blob = await exportMutation.mutateAsync({ search: debouncedSearch || "" });
+				// Create a download link and trigger
+				const fileName = `contract-debts-${new Date().toISOString().slice(0, 10)}.csv`;
+				const url = URL.createObjectURL(blob);
+				const link = document.createElement("a");
+				link.href = url;
+				link.download = fileName;
+				document.body.appendChild(link);
+				link.click();
+				link.remove();
+				URL.revokeObjectURL(url);
+			} catch (err) {
+				// Optionally report the error, kept simple for now
+				console.error("Failed to export debts:", err);
+			}
+		}
+		// TODO: implement PDF export when endpoint is available
+	};
 
 	const debtorsData = (debtData.data as unknown[]) || [];
 	const debtors = debtorsData.map((d: unknown) => {
@@ -58,13 +83,14 @@ export default function Debt() {
 
 	const paginationData = (debtData.pagination as Record<string, unknown>) || {};
 	const pages = Math.max(1, (paginationData.totalPages as number) ?? 1);
+	const total = (paginationData.total as number) ?? 0;
 
 	return (
 		<PageWrapper>
 			<div className="flex items-center justify-between flex-wrap gap-4 mb-4">
 				<PageTitles title="Debt" description="This contains all customers owing for product they signed to buy on installment" />
 				<div className="flex items-center gap-3">
-					<ExportTrigger title="Export" />
+					<ExportTrigger title="Export" onSelect={handleExport} />
 				</div>
 			</div>
 
@@ -83,35 +109,69 @@ export default function Debt() {
 			</div>
 
 			{/* Debtors table */}
-			<div className="min-h-96 flex">
-				{isLoading ? (
-					<CustomCard className="bg-white flex-grow w-full rounded-lg p-4 border border-gray-100">
-						<TableSkeleton rows={10} />
-					</CustomCard>
-				) : debtors.length > 0 ? (
-					<CustomCard className="bg-white flex-grow w-full rounded-lg p-4 border border-gray-100">
-						<div className="w-full">
-							<div className="flex items-center justify-between flex-wrap gap-6">
-								<h2 className="font-semibold">All Debtors ( Customers Owning )</h2>
-								<div className="flex items-center gap-2">
-									<div className="relative md:w-80">
-										<CustomInput
-											placeholder="Search by contract code, customer name, or property name"
-											aria-label="Search"
-											value={searchInput}
-											onChange={(e) => setSearchInput(e.target.value)}
-											className={`max-w-[320px] ${inputStyle} h-10 pl-9`}
-											iconLeft={<SearchIcon />}
-										/>
-									</div>
-									<button type="button" className={`${preTableButtonStyle} text-white bg-primary ml-auto`}>
-										<FilterIcon />
-										<span className="hidden sm:inline">Filter</span>
-									</button>
-								</div>
-							</div>
+			<CustomCard className="bg-white flex-grow w-full rounded-lg p-4 border border-gray-100">
+				<div className="w-full">
+					<div className="flex items-center justify-between mb-4">
+						<h2 className="font-semibold">All Debtors ( Customers Owning )</h2>
+						<div className="flex items-center gap-2">
+							<SearchWithFilters
+								search={searchQuery}
+								onSearchChange={(v) => {
+									setSearchQuery(v);
+									setPage(1);
+								}}
+								setPage={setPage}
+								placeholder="Search by contract code, customer name, or property name"
+								fields={
+									[
+										{
+											key: "limit",
+											label: "Items per page",
+											type: "select",
+											options: [
+												{ value: "5", label: "5" },
+												{ value: "10", label: "10" },
+												{ value: "20", label: "20" },
+												{ value: "50", label: "50" },
+											],
+										},
+										{
+											key: "sortBy",
+											label: "Sort By",
+											type: "sortBy",
+											options: [
+												{ value: "name", label: "name" },
+												{ value: "price", label: "price" },
+												{ value: "createdAt", label: "createdAt" },
+												{ value: "updatedAt", label: "updatedAt" },
+											],
+										},
+										{ key: "sortOrder", label: "Sort Order", type: "sortOrder" },
+									] as FilterField[]
+								}
+								initialValues={{ limit: String(limit), sortBy: sortBy || "", sortOrder: sortOrder || "" }}
+								onApply={(filters) => {
+									setLimit(filters.limit ? Number(filters.limit) : 10);
+									setSortBy(filters.sortBy || "createdAt");
+									setSortOrder(filters.sortOrder || "desc");
+									setPage(1);
+								}}
+								onReset={() => {
+									setSearchQuery("");
+									setLimit(10);
+									setSortBy("createdAt");
+									setSortOrder("desc");
+									setPage(1);
+								}}
+							/>
+						</div>
+					</div>
 
-							<div className="overflow-x-auto w-full mt-8">
+					<div className="overflow-x-auto w-full mt-8">
+						{isLoading ? (
+							<TableSkeleton rows={10} />
+						) : debtors.length > 0 ? (
+							<>
 								<Table>
 									<TableHeader className={tableHeaderRowStyle}>
 										<TableRow className="bg-[#EAF6FF] h-12 overflow-hidden py-4 rounded-lg">
@@ -157,27 +217,26 @@ export default function Debt() {
 										})}
 									</TableBody>
 								</Table>
-							</div>
 
-							<div className="mt-8 flex flex-col md:flex-row text-center md:text-start justify-center items-center">
-								<span className="text-sm text-nowrap">
-									Showing{" "}
-									<span className="font-medium">
-										{Math.min((page - 1) * 10 + 1, (paginationData.total as number) ?? 0)}-
-										{Math.min(page * 10, (paginationData.total as number) ?? 0)}
-									</span>{" "}
-									of <span className="font-medium">{(paginationData.total as number) ?? 0}</span> results
-								</span>
-								<div className="ml-auto">
-									<CompactPagination page={page} pages={pages} onPageChange={setPage} />
+								<div className="mt-8 flex flex-col md:flex-row text-center md:text-start justify-center items-center">
+									<span className="text-sm text-nowrap">
+										Showing{" "}
+										<span className="font-medium">
+											{Math.min((page - 1) * limit + 1, total)}- {Math.min(page * limit, total)}
+										</span>{" "}
+										of <span className="font-medium">{total}</span> results
+									</span>
+									<div className="ml-auto">
+										<CompactPagination page={page} pages={pages} onPageChange={setPage} />
+									</div>
 								</div>
-							</div>
-						</div>
-					</CustomCard>
-				) : (
-					<EmptyData text="No debtors at the moment" />
-				)}
-			</div>
+							</>
+						) : (
+							<div className="text-center py-8 text-muted-foreground">No debtors found</div>
+						)}
+					</div>
+				</div>
+			</CustomCard>
 		</PageWrapper>
 	);
 }

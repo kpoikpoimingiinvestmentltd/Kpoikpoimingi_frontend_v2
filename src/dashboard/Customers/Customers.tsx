@@ -1,14 +1,16 @@
 import CustomCard from "@/components/base/CustomCard";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { EditIcon, FilterIcon, IconWrapper, PlusIcon, SearchIcon, SendEmailIcon, TrashIcon } from "@/assets/icons";
+import { EditIcon, IconWrapper, PlusIcon, SendEmailIcon, TrashIcon } from "@/assets/icons";
 import { _router } from "@/routes/_router";
 import Badge from "@/components/base/Badge";
 import PageTitles from "@/components/common/PageTitles";
-import { inputStyle, preTableButtonStyle, tableHeaderRowStyle } from "@/components/common/commonStyles";
-import CustomInput from "@/components/base/CustomInput";
+import { tableHeaderRowStyle } from "@/components/common/commonStyles";
+import SearchWithFilters from "@/components/common/SearchWithFilters";
+import type { FilterField } from "@/components/common/SearchWithFilters";
 import { Link } from "react-router";
 import CompactPagination from "@/components/ui/compact-pagination";
 import React from "react";
+import { useDebounceSearch } from "@/hooks/useDebounceSearch";
 import type { CustomerRow } from "@/types/customer";
 import DeleteModal from "@/dashboard/Customers/DeleteModal";
 import SendEmailModal from "@/dashboard/Customers/SendEmailModal";
@@ -21,15 +23,20 @@ import { extractErrorMessage } from "@/lib/utils";
 
 export default function Customers() {
 	const [page, setPage] = React.useState(1);
-	const { data: customersData, isLoading, refetch } = useGetAllCustomers(page, 10, undefined, "createdAt", "desc");
+	const [limit, setLimit] = React.useState<number>(10);
+	const [search, setSearch] = React.useState<string>("");
+	const debouncedSearch = useDebounceSearch(search, 400);
+	const [sortBy, setSortBy] = React.useState<string>("createdAt");
+	const [sortOrder, setSortOrder] = React.useState<string>("desc");
+
+	const { data: customersData, isLoading, refetch } = useGetAllCustomers(page, limit, debouncedSearch || undefined, sortBy, sortOrder);
 	const [deleteOpen, setDeleteOpen] = React.useState(false);
 	const [isSendEmailOpen, setIsSendEmailOpen] = React.useState(false);
 	const [selectedCustomerId, setSelectedCustomerId] = React.useState<string | null>(null);
 
 	// Delete customer mutation
 	const deleteCustomerMutation = useDeleteCustomer(
-		(res) => {
-			console.log("Customer deleted successfully:", res);
+		() => {
 			toast.success("Customer deleted successfully");
 			setSelectedCustomerId(null);
 			setDeleteOpen(false); // Close modal after successful deletion
@@ -66,8 +73,8 @@ export default function Customers() {
 		if (!customersData || typeof customersData !== "object") return 1;
 		const cd = customersData as { pagination?: { total?: number } };
 		const total = (cd.pagination && typeof cd.pagination.total === "number" ? cd.pagination.total : 0) || 0;
-		return Math.max(1, Math.ceil(total / 10));
-	}, [customersData]);
+		return Math.max(1, Math.ceil(total / limit));
+	}, [customersData, limit]);
 
 	return (
 		<div className="flex flex-col gap-y-6">
@@ -90,37 +97,67 @@ export default function Customers() {
 					</Link>
 				</div>
 			</div>
-			<div className="min-h-96 flex">
-				{isLoading ? (
-					<CustomCard className="bg-white flex-grow w-full rounded-lg p-4 border border-gray-100">
+			<CustomCard className="bg-white flex-grow w-full rounded-lg p-4 border border-gray-100">
+				<div className="flex items-center justify-between flex-wrap gap-6">
+					<h2 className="font-semibold">All Customers</h2>
+					<div className="flex items-center gap-2">
+						<SearchWithFilters
+							search={search}
+							onSearchChange={(v) => {
+								setSearch(v);
+								setPage(1);
+							}}
+							setPage={setPage}
+							placeholder="Search by name or email"
+							fields={
+								[
+									{
+										key: "limit",
+										label: "Items per page",
+										type: "select",
+										options: [
+											{ value: "5", label: "5" },
+											{ value: "10", label: "10" },
+											{ value: "20", label: "20" },
+											{ value: "50", label: "50" },
+										],
+									},
+									{
+										key: "sortBy",
+										label: "Sort By",
+										type: "sortBy",
+										options: [
+											{ value: "name", label: "name" },
+											{ value: "price", label: "price" },
+											{ value: "createdAt", label: "createdAt" },
+											{ value: "updatedAt", label: "updatedAt" },
+										],
+									},
+									{ key: "sortOrder", label: "Sort Order", type: "sortOrder" },
+								] as FilterField[]
+							}
+							initialValues={{ limit: String(limit), sortBy: sortBy || "", sortOrder: sortOrder || "" }}
+							onApply={(filters) => {
+								setLimit(filters.limit ? Number(filters.limit) : 10);
+								setSortBy(filters.sortBy || "createdAt");
+								setSortOrder(filters.sortOrder || "desc");
+								setPage(1);
+							}}
+							onReset={() => setSearch("")}
+						/>
+					</div>
+				</div>
+				<div className="min-h-96 flex">
+					{isLoading ? (
 						<TableSkeleton rows={10} cols={7} />
-					</CustomCard>
-				) : customersList.length === 0 ? (
-					<EmptyData text="No Customers at the moment" />
-				) : (
-					<CustomCard className="bg-white flex-grow w-full rounded-lg p-4 border border-gray-100">
-						<>
+					) : customersList.length === 0 ? (
+						<div className="flex-grow flex items-center justify-center">
+							<EmptyData text="No Customers at the moment" />
+						</div>
+					) : (
+						<div className="flex-grow w-full flex flex-col gap-y-8 rounded-lg mt-8">
 							<div className="w-full">
-								<div className="flex items-center justify-between flex-wrap gap-6">
-									<h2 className="font-semibold">All Customers</h2>
-									<div className="flex items-center gap-2">
-										<div className="relative md:w-80">
-											<CustomInput
-												placeholder="Search by name or property"
-												aria-label="Search by name or property"
-												className={`max-w-[320px] ${inputStyle} h-10 pl-9`}
-												iconLeft={<SearchIcon />}
-											/>
-										</div>
-										<button type="button" className={`${preTableButtonStyle} text-white bg-primary ml-auto`}>
-											<IconWrapper className="text-base">
-												<FilterIcon />
-											</IconWrapper>
-											<span className="hidden sm:inline">Filter</span>
-										</button>
-									</div>
-								</div>
-								<div className="overflow-x-auto w-full mt-8">
+								<div className="overflow-x-auto w-full">
 									<Table>
 										<TableHeader className={tableHeaderRowStyle}>
 											<TableRow className="bg-[#EAF6FF] h-12 overflow-hidden py-4 rounded-lg">
@@ -168,41 +205,48 @@ export default function Customers() {
 									</Table>
 								</div>
 							</div>
-						</>
 
-						<DeleteModal
-							open={deleteOpen}
-							onOpenChange={setDeleteOpen}
-							title="Delete customer"
-							description="Are you sure you want to delete this customer? This action cannot be undone."
-							onConfirm={async () => {
-								if (selectedCustomerId) {
-									await deleteCustomerMutation.mutateAsync(selectedCustomerId);
-								}
-							}}
-							isLoading={deleteCustomerMutation.isPending}
-						/>
-						<div className="">
-							<CompactPagination showRange page={page} pages={pages} onPageChange={setPage} />
+							<div className="mt-auto flex flex-col md:flex-row text-center md:text-start justify-center items-center">
+								<span className="text-sm text-nowrap">
+									Showing <span className="font-medium">{(page - 1) * limit + 1}</span>-
+									<span className="font-medium">{Math.min(page * limit, (customersData as any)?.pagination?.total || 0)}</span> of{" "}
+									<span className="font-medium">{(customersData as any)?.pagination?.total || 0}</span> results
+								</span>
+								<div className="ml-auto">
+									<CompactPagination page={page} pages={pages} onPageChange={setPage} />
+								</div>
+							</div>
 						</div>
-					</CustomCard>
-				)}
-
-				<SendEmailModal
-					open={isSendEmailOpen}
-					onOpenChange={setIsSendEmailOpen}
-					customers={customersList.map((c) => ({ id: c.id, email: c.email, name: c.fullName }))}
-					onSend={async (data) => {
-						try {
-							console.log("Sending email with data:", data);
-							// TODO: Call your email API here
-							// Example: await sendEmailAPI(data);
-						} catch (error) {
-							console.error("Failed to send email:", error);
+					)}
+				</div>
+				<DeleteModal
+					open={deleteOpen}
+					onOpenChange={setDeleteOpen}
+					title="Delete customer"
+					description="Are you sure you want to delete this customer? This action cannot be undone."
+					onConfirm={async () => {
+						if (selectedCustomerId) {
+							await deleteCustomerMutation.mutateAsync(selectedCustomerId);
 						}
 					}}
+					isLoading={deleteCustomerMutation.isPending}
 				/>
-			</div>
+			</CustomCard>
+
+			<SendEmailModal
+				open={isSendEmailOpen}
+				onOpenChange={setIsSendEmailOpen}
+				customers={customersList.map((c) => ({ id: c.id, email: c.email, name: c.fullName }))}
+				onSend={async (data) => {
+					try {
+						console.log("Sending email with data:", data);
+						// TODO: Call your email API here
+						// Example: await sendEmailAPI(data);
+					} catch (error) {
+						console.error("Failed to send email:", error);
+					}
+				}}
+			/>
 		</div>
 	);
 }

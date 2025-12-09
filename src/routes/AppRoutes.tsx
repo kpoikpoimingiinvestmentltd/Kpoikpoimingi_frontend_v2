@@ -29,7 +29,6 @@ import ViewDebtDetails from "../dashboard/Debt/ViewDebtDetails";
 import PropertyDetails from "../dashboard/Properties/PropertyDetails";
 import Categories from "../dashboard/Properties/Categories";
 import ContractDetails from "../dashboard/Contract/ContractDetails";
-import ContractReceipt from "../dashboard/Contract/ContractReceipt";
 import ProductRequestDetails from "../dashboard/ProductRequest/ProductRequestDetails";
 import SelectPaymentMethod from "../dashboard/Customers/SelectPaymentMethod";
 
@@ -98,10 +97,6 @@ export const appRouter = createBrowserRouter([
 			{
 				path: _router.dashboard.contractDetails,
 				element: <ContractDetails />,
-			},
-			{
-				path: _router.dashboard.contractReceipt,
-				element: <ContractReceipt />,
 			},
 			{
 				path: _router.dashboard.properties,

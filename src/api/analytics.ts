@@ -1,6 +1,6 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import type { UseQueryResult } from "@tanstack/react-query";
-import { apiGet } from "@/services/apiClient";
+import { apiGet, apiGetFile } from "@/services/apiClient";
 import { API_ROUTES } from "./routes";
 import type { IncomeAnalytics } from "@/types/analytics";
 import type { PenaltiesResponse, VATResponse, IncomeEarnedResponse, VatCollectedResponse, InterestPenaltiesResponse } from "@/types/reports";
@@ -183,4 +183,36 @@ export function useGetInterestPenalties(period = "daily", enabled = true): UseQu
 		queryFn: async () => getInterestPenalties(period),
 		enabled,
 	}) as UseQueryResult<InterestPenaltiesResponse, unknown>;
+}
+
+export async function exportInterestPenalties(page = 1, limit = 10, search = "", sortBy = "createdAt", sortOrder = "desc", period = "daily") {
+	const params = new URLSearchParams();
+	params.append("page", String(page));
+	params.append("limit", String(limit));
+	if (search) params.append("search", search);
+	params.append("sortBy", sortBy);
+	params.append("sortOrder", sortOrder);
+	params.append("period", period);
+	const query = params.toString();
+	const url = `${API_ROUTES.reports.getInterestPenaltiesExport}${query ? `?${query}` : ""}`;
+	return apiGetFile(url) as Promise<Blob>;
+}
+
+export function useExportInterestPenalties() {
+	return useMutation<
+		Blob,
+		unknown,
+		{ page?: number; limit?: number; search?: string; sortBy?: string; sortOrder?: string; period?: string },
+		unknown
+	>({
+		mutationFn: (payload) =>
+			exportInterestPenalties(
+				payload?.page || 1,
+				payload?.limit || 10,
+				payload?.search || "",
+				payload?.sortBy || "createdAt",
+				payload?.sortOrder || "desc",
+				payload?.period || "daily"
+			),
+	});
 }

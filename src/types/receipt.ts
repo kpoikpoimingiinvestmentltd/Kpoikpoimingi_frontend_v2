@@ -30,6 +30,7 @@ export type ReceiptDetail = {
 	paymentMethodId?: number;
 	issuedById?: string;
 	vatAmount?: string | number;
+	vatUsed?: string | number;
 	totalAmount?: string | number;
 	interest?: number;
 	nextPaymentDate?: string;
@@ -37,7 +38,13 @@ export type ReceiptDetail = {
 	updatedAt?: string;
 	statusId?: number;
 	source?: string;
-	contract?: { id?: string; contractCode?: string; property?: { name?: string; price?: string }; durationValue?: number };
+	contract?: {
+		id?: string;
+		contractCode?: string;
+		property?: { name?: string; price?: string };
+		durationValue?: number;
+		durationUnit?: { duration?: string };
+	};
 	customer?: { id?: string; fullName?: string; phoneNumber?: string };
 	installmentProgress?: string;
 	totalInstallments?: number;

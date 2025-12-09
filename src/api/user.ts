@@ -57,14 +57,22 @@ export function useSuspendUser() {
 }
 
 // --- users list ---
-export async function getAllUsers(): Promise<User[]> {
-	return apiGet(API_ROUTES.user.getAllUsers) as Promise<User[]>;
+export async function getAllUsers(page?: number, limit?: number, search?: string, sortBy?: string, sortOrder?: string): Promise<unknown> {
+	const qs = new URLSearchParams();
+	if (typeof page === "number") qs.append("page", String(page));
+	if (typeof limit === "number") qs.append("limit", String(limit));
+	if (search) qs.append("search", search);
+	if (sortBy) qs.append("sortBy", sortBy);
+	if (sortOrder) qs.append("sortOrder", sortOrder);
+
+	const url = `${API_ROUTES.user.getAllUsers}${qs.toString() ? `?${qs.toString()}` : ""}`;
+	return apiGet(url);
 }
 
-export function useGetAllUsers(enabled = true) {
-	return useQuery<User[]>({
-		queryKey: ["users"],
-		queryFn: async () => getAllUsers(),
+export function useGetAllUsers(page = 1, limit = 10, search?: string, sortBy?: string, sortOrder?: string, enabled = true) {
+	return useQuery({
+		queryKey: ["users", page, limit, search || "", sortBy || "", sortOrder || ""],
+		queryFn: async () => getAllUsers(page, limit, search, sortBy, sortOrder),
 		enabled,
 		staleTime: 5 * 60 * 1000,
 	});

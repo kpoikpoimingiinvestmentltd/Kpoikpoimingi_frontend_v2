@@ -5,12 +5,28 @@ import ModalPaymentDetails from "./ModalPaymentDetails";
 import PaymentCard from "@/components/base/PaymentCard";
 import type { PaymentDto, ApiPaymentItem, ApiContractPayments } from "@/types/payment";
 import { FileIcon } from "@/assets/icons";
+import { useGetCustomerPayments } from "@/api/customer";
 
-export default function TabPaymentHistory({ payments }: { payments?: PaymentDto[] | undefined }) {
+export default function TabPaymentHistory({ payments, customerId }: { payments?: PaymentDto[] | undefined; customerId?: string }) {
 	const [selected, setSelected] = React.useState<ApiPaymentItem | null>(null);
 	const [open, setOpen] = React.useState(false);
 
+	const { data: allPayments } = useGetCustomerPayments(customerId, !!customerId);
+
 	const handleView = (p: ApiPaymentItem) => {
+		if (allPayments && (allPayments as any)?.payments) {
+			const groups = (allPayments as any).payments as ApiContractPayments[];
+			for (const grp of groups) {
+				const found = (grp.payments ?? []).find((it) => it.id === p.id);
+				if (found) {
+					setSelected(found as ApiPaymentItem);
+					setOpen(true);
+					return;
+				}
+			}
+		}
+
+		// fallback to provided object
 		setSelected(p);
 		setOpen(true);
 	};
@@ -44,8 +60,6 @@ export default function TabPaymentHistory({ payments }: { payments?: PaymentDto[
 					((payments as unknown as Record<string, unknown>).payments as unknown[]).length > 0 ? (
 						((payments as unknown as Record<string, unknown>).payments as ApiContractPayments[]).map((grp: ApiContractPayments) => {
 							const title = `${grp.contractCode ?? grp.contractId ?? "Contract"} — ${grp.propertyName ?? ""}`;
-							// items variable removed; we render directly from grp.payments below
-
 							return (
 								<div key={grp.contractId ?? grp.contractCode ?? title}>
 									<div className="bg-[#F7F7F7] p-3 rounded-sm text-sm mb-4">{title}</div>

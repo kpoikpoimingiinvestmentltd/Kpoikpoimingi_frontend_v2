@@ -16,7 +16,7 @@ export default function PaymentCard({
 	icon?: React.ReactNode;
 }) {
 	return (
-		<div className="bg-card py-6 rounded-lg border border-dashed border-gray-200 p-3 flex flex-col gap-y-2 items-center justify-center">
+		<div className="bg-card py-6 rounded-lg border border-dashed border-gray-200 p-3 flex flex-col items-center gap-y-2 text-center justify-center">
 			{variant === "icon" ? (
 				<>
 					<div className="text-3xl text-primary">{icon ?? <FileIcon />}</div>

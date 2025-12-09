@@ -25,7 +25,6 @@ const PAGES_WITH_BACK_BUTTON = [
 	_router.dashboard.receiptDetails,
 	_router.dashboard.userDetailsPath,
 	_router.dashboard.customerDetailsReceipt,
-	_router.dashboard.contractReceipt,
 ];
 
 interface AdminDashboardHeaderProps {
@@ -51,14 +50,14 @@ export default function AdminDashboardHeader({ onSidebarOpen, onLogoutOpen }: Ad
 			<div className="flex items-center gap-1">
 				{shouldShowBackButton && (
 					<button
-						className="flex bg-primary text-white p-2 sm:gap-1 active-scale rounded-lg items-center justify-center shadow-lg"
+						className="flex bg-primary text-white p-2 px-2.5 sm:gap-1 active-scale rounded-lg items-center justify-center shadow-lg"
 						type="button"
 						onClick={() => navigate(-1)}
 						title="Go back to previous page">
-						<IconWrapper className="sm:text-2xl">
+						<IconWrapper className="sm:text-lg">
 							<ChevronLeftIcon />
 						</IconWrapper>
-						<span className="hidden min-[480px]:inline">Go Back</span>
+						<span className="hidden min-[480px]:inline text-sm">Go back</span>
 					</button>
 				)}
 				<button className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-neutral-800 xl:hidden" onClick={onSidebarOpen} aria-label="Open sidebar">

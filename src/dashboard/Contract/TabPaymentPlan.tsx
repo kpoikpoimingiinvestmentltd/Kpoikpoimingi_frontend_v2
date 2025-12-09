@@ -4,6 +4,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { CheckIcon, IconWrapper } from "../../assets/icons";
 import { useState } from "react";
 import ContractSuccessModal from "./ContractSuccessModal";
+import GenerateCustomPaymentLinkModal from "./GenerateCustomPaymentLinkModal";
 // import { Dialog, DialogContent } from "@/components/ui/dialog";
 // import ActionButton from "@/components/base/ActionButton";
 import { toast } from "sonner";
@@ -23,6 +24,7 @@ export default function TabPaymentPlan({ contract }: { contract?: Contract }) {
 	const [linkOpen, setLinkOpen] = useState(false);
 	const [generatedLink, setGeneratedLink] = useState<PaymentLinkResponse | null>(null);
 	const [loadingScheduleId, setLoadingScheduleId] = useState<string | null>(null);
+	const [customLinkOpen, setCustomLinkOpen] = useState(false);
 
 	const {
 		data: schedules = [],
@@ -236,7 +238,9 @@ export default function TabPaymentPlan({ contract }: { contract?: Contract }) {
 						</div>
 
 						<div className="mt-6 flex items-center flex-col max-w-md w-full mx-auto gap-y-3">
-							<button className="w-full max-w-md mx-auto bg-primary px-4 py-2.5 active-scale transition text-white rounded-md">
+							<button
+								onClick={() => setCustomLinkOpen(true)}
+								className="w-full max-w-md mx-auto bg-primary px-4 py-2.5 active-scale transition text-white rounded-md">
 								Generate Custom Payment Link
 							</button>
 							<p className="text-xs font-medium text-muted-foreground text-center mt-2">
@@ -256,6 +260,25 @@ export default function TabPaymentPlan({ contract }: { contract?: Contract }) {
 					onSend={() => toast.success("Email sent!")}
 				/>
 			)}
+
+			{/* Generate custom payment link modal */}
+			<GenerateCustomPaymentLinkModal
+				open={customLinkOpen}
+				onOpenChange={setCustomLinkOpen}
+				contract={contract}
+				onSuccess={(data) => {
+					setGeneratedLink({
+						paymentLink: data.paymentLink,
+						reference: data.reference,
+						amount: 0,
+						dueDate: "",
+						scheduleNumber: 0,
+						status: "",
+						breakdown: { principalAmount: 0, lateFees: 0, vatAmount: 0, totalAmount: 0, systemAmount: 0 },
+					});
+					setLinkOpen(true);
+				}}
+			/>
 
 			{/* Payment modal for existing payment links */}
 			{/* {paymentModalLink && (

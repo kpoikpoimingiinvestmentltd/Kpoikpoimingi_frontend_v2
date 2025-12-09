@@ -1,5 +1,6 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiPost, apiGet } from "@/services/apiClient";
+import { apiGetFile } from "@/services/apiClient";
 import { API_ROUTES } from "./routes";
 import type { InternalFullPaymentRegistrationPayload, FullPaymentRegistrationResponse } from "@/types/customerRegistration";
 
@@ -25,20 +26,35 @@ export function useCreateContract(onSuccess?: (data: unknown) => void, onError?:
 	});
 }
 
-export async function getAllContracts(page = 1, limit = 10, search = "", sortBy = "createdAt", sortOrder = "desc") {
+export async function getAllContracts(page = 1, limit = 10, search = "", sortBy = "createdAt", sortOrder = "desc", filters?: Record<string, string>) {
 	const params = new URLSearchParams();
 	params.append("page", String(page));
 	params.append("limit", String(limit));
 	if (search) params.append("search", search);
 	params.append("sortBy", sortBy);
 	params.append("sortOrder", sortOrder);
+	if (filters) {
+		Object.entries(filters).forEach(([key, value]) => {
+			if (value && key !== "sortBy" && key !== "sortOrder") {
+				params.append(key, value);
+			}
+		});
+	}
 	return apiGet(`${API_ROUTES.contracts.getAllContracts}?${params.toString()}`) as Promise<ListResponse>;
 }
 
-export function useGetAllContracts(page = 1, limit = 10, search = "", sortBy = "createdAt", sortOrder = "desc", enabled = true) {
+export function useGetAllContracts(
+	page = 1,
+	limit = 10,
+	search = "",
+	sortBy = "createdAt",
+	sortOrder = "desc",
+	filters?: Record<string, string>,
+	enabled = true
+) {
 	return useQuery<ListResponse, unknown>({
-		queryKey: ["contracts", page, limit, search, sortBy, sortOrder],
-		queryFn: () => getAllContracts(page, limit, search, sortBy, sortOrder),
+		queryKey: ["contracts", page, limit, search, sortBy, sortOrder, filters],
+		queryFn: () => getAllContracts(page, limit, search, sortBy, sortOrder, filters),
 		enabled,
 	});
 }
@@ -61,6 +77,20 @@ export async function getAllContractDebts(page = 1, limit = 10, search = "", sor
 			};
 		}
 	>;
+}
+
+export async function exportAllContractDebts(search = "") {
+	const params = new URLSearchParams();
+	if (search) params.append("search", search);
+	const query = params.toString();
+	const url = `${API_ROUTES.contracts.getAllContractDebtsExport}${query ? `?${query}` : ""}`;
+	return apiGetFile(url) as Promise<Blob>;
+}
+
+export function useExportAllContractDebts() {
+	return useMutation<Blob, unknown, { search?: string }, unknown>({
+		mutationFn: (payload: { search?: string }) => exportAllContractDebts(payload?.search || ""),
+	});
 }
 
 export function useGetAllContractDebts(page = 1, limit = 10, search = "", sortBy = "createdAt", sortOrder = "desc", enabled = true) {
@@ -318,5 +348,30 @@ export function useGetCustomerContracts(customerId: string, enabled = true) {
 		queryKey: ["customer-contracts", customerId],
 		queryFn: () => getCustomerContracts(customerId),
 		enabled: !!customerId && enabled,
+	});
+}
+
+// Create a custom (one-off) payment link for a contract
+export type CreateCustomPaymentLinkPayload = {
+	contractId: string;
+	customerId: string;
+	amount: number | string;
+	paymentMethodId: number | string;
+	dueDate: string;
+	remarks?: string;
+};
+
+export async function createPaymentLink(payload: CreateCustomPaymentLinkPayload) {
+	return apiPost<{ paymentLink: string; reference: string }>(API_ROUTES.paymentLink.create, payload) as Promise<{
+		paymentLink: string;
+		reference: string;
+	}>;
+}
+
+export function useCreatePaymentLink(onSuccess?: (data: { paymentLink: string; reference: string }) => void, onError?: (err: unknown) => void) {
+	return useMutation<{ paymentLink: string; reference: string }, unknown, CreateCustomPaymentLinkPayload>({
+		mutationFn: (payload) => createPaymentLink(payload),
+		onSuccess: (data) => onSuccess?.(data),
+		onError: (err) => onError?.(err),
 	});
 }
