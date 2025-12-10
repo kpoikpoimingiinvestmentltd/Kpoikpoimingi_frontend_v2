@@ -33,28 +33,23 @@ export default function PropertyDetailsSection({
 	sectionTitle,
 	missingFields = [],
 }: Props) {
-	// Keep prop available for consumers; no-op to avoid unused variable linting when not needed
 	void employmentStatusOptions;
-	// Get all properties for the select dropdown
 	const { data: propertiesData, isLoading: propertiesLoading } = useGetAllProperties();
 	const properties: PropertyData[] = React.useMemo(() => {
 		if (!propertiesData || typeof propertiesData !== "object") return [];
-		// Handle different response formats
 		if (Array.isArray(propertiesData)) return propertiesData as PropertyData[];
-		// Handle paginated response format: { pagination: {...}, data: [...] }
 		const dataObj = propertiesData as Record<string, unknown>;
 		if (Array.isArray(dataObj.data as unknown)) return dataObj.data as unknown as PropertyData[];
 		if (Array.isArray(dataObj.items as unknown)) return dataObj.items as unknown as PropertyData[];
 		return [];
 	}, [propertiesData]);
 
-	// Auto-sync duration unit with payment frequency
 	React.useEffect(() => {
 		if (form.paymentFrequency) {
 			const selectedFrequency = paymentFrequencyOptions.find((o) => o.key === form.paymentFrequency);
 			if (selectedFrequency) {
 				const isWeekly = selectedFrequency.value.toUpperCase().includes("WEEK");
-				const unitToSet = isWeekly ? "1" : "2"; // Assuming 1=weeks, 2=months
+				const unitToSet = isWeekly ? "1" : "2";
 				if (form.paymentDurationUnit !== unitToSet) {
 					handleChange("paymentDurationUnit", unitToSet);
 					if (!form.paymentDuration) {
@@ -65,7 +60,6 @@ export default function PropertyDetailsSection({
 		}
 	}, [form.paymentFrequency]);
 
-	// Get the duration label based on payment frequency
 	const getDurationLabel = () => {
 		const selectedFrequency = paymentFrequencyOptions.find((o) => o.key === form.paymentFrequency);
 		if (selectedFrequency) {
@@ -75,7 +69,6 @@ export default function PropertyDetailsSection({
 		return "For how many months*";
 	};
 
-	// Get duration options based on payment frequency
 	const getDurationOptions = () => {
 		const selectedFrequency = paymentFrequencyOptions.find((o) => o.key === form.paymentFrequency);
 		if (selectedFrequency) {
@@ -88,7 +81,6 @@ export default function PropertyDetailsSection({
 	};
 
 	const handlePropertySelect = (propertyId: string) => {
-		// Select existing property
 		const selectedProperty = properties.find((p) => p.id === propertyId);
 		if (selectedProperty) {
 			handleChange("propertyId", selectedProperty.id);
@@ -100,11 +92,9 @@ export default function PropertyDetailsSection({
 	return (
 		<div className={centeredContainer()}>
 			<h3 className={sectionTitle()}>Property Details</h3>
-			{/* Property Name - Combo Input (Select + Custom Input) */}
 			<div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
 				<div>
 					<label className={labelStyle()}>Property Name*</label>
-					{/* Show select if not custom property, or if no property is selected yet */}
 					{!form.isCustomProperty ? (
 						<>
 							<Select value={form.propertyId} onValueChange={handlePropertySelect}>

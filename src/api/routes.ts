@@ -104,6 +104,7 @@ export const API_ROUTES = {
 	receipt: {
 		getAllReceipts: "/receipt",
 		getReceiptsById: (id: string) => `/receipt/${id}`,
+		generateReceipt: "/generate-receipt",
 	},
 	analytics: {
 		getAnalyticsOverview: "/analytics",

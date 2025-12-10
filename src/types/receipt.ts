@@ -1,6 +1,15 @@
 // Types for receipt
 export type ReceiptDto = { id: string; amount: number };
 
+export type GenerateReceiptPayload = {
+	customerId: string;
+	amount: string | number;
+	paymentMethodId: string | number;
+	paymentDate: string;
+	generatedBy: string;
+	notes?: string;
+};
+
 export type ReceiptListItem = {
 	id: string;
 	receiptNumber?: string;

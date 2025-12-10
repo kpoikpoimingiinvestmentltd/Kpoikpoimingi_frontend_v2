@@ -1,6 +1,7 @@
-import { useQuery } from "@tanstack/react-query";
-import { apiGet } from "@/services/apiClient";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { apiGet, apiPost } from "@/services/apiClient";
 import { API_ROUTES } from "./routes";
+import type { GenerateReceiptPayload } from "@/types/receipt";
 
 export async function getReceipts(page = 1, limit = 10, search?: string, sortBy = "createdAt", sortOrder = "desc") {
 	const params = new URLSearchParams();
@@ -31,5 +32,16 @@ export function useGetReceiptById(id?: string, enabled = true) {
 		queryKey: ["receipt", id],
 		queryFn: () => getReceiptById(id!),
 		enabled: !!id && enabled,
+	});
+}
+
+export async function generateReceipt(payload: GenerateReceiptPayload) {
+	const url = API_ROUTES.receipt.generateReceipt;
+	return apiPost(url, payload) as Promise<any>;
+}
+
+export function useGenerateReceipt() {
+	return useMutation({
+		mutationFn: (payload: GenerateReceiptPayload) => generateReceipt(payload),
 	});
 }
