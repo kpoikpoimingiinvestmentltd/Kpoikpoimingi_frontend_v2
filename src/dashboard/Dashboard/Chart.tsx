@@ -63,8 +63,13 @@ export function IndexPieChart() {
 
 	const colors = ["#751BE314", "#751BE3", "#E3901B"];
 
+	// Format number with commas
+	const formatAmount = (num: number) => {
+		return num.toLocaleString("en-US");
+	};
+
 	return (
-		<div className="relative">
+		<div className="relative flex flex-col items-center">
 			<svg viewBox={`-${radius} -${radius} ${radius * 2} ${radius * 2}`} className="max-w-[14.5rem] mx-auto">
 				{/* Define clip paths and colors for each slice */}
 				<defs>
@@ -93,6 +98,19 @@ export function IndexPieChart() {
 						{/* labels removed per design (no text inside curved bars) */}
 					</g>
 				))}
+
+				<text x="0" y="-30" textAnchor="middle" fill="#1F2937" style={{ fontSize: "150px", fontWeight: "600" }}>
+					{formatAmount(incomeData?.totalIncome ?? 0)}
+				</text>
+				<text x="0" y="80" textAnchor="middle" fill="#6B7280" style={{ fontSize: "70px", fontWeight: "400" }}>
+					Total income
+				</text>
+
+				{/* Yearly badge */}
+				<rect x="-110" y="140" width="220" height="80" rx="50" fill="#F3E9FF" />
+				<text x="0" y="195" textAnchor="middle" fill="#9CA3AF" style={{ fontSize: "50px", fontWeight: "400" }}>
+					Yearly
+				</text>
 			</svg>
 		</div>
 	);
