@@ -38,7 +38,6 @@ export default function NextOfKinSection({
 				<h3 className={sectionTitle()}>Next Of Kin Details</h3>
 
 				{isSpouse ? (
-					// SPOUSE MODE: Show spouse fields
 					<>
 						<div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
 							<CustomInput

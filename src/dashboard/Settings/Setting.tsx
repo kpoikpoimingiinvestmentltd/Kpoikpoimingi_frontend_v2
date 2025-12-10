@@ -7,7 +7,6 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import CustomCard from "@/components/base/CustomCard";
 import Profile from "./Profile";
 import VatInterest from "./VatInterest";
-// import TermsAndConditions from "@/components/common/TermsAndConditions";
 import { tabListStyle, tabStyle } from "../../components/common/commonStyles";
 import LogoutModal from "../../components/common/LogoutModal";
 import PageWrapper from "../../components/common/PageWrapper";

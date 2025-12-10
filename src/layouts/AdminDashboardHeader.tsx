@@ -39,7 +39,6 @@ export default function AdminDashboardHeader({ onSidebarOpen, onLogoutOpen }: Ad
 	const location = useLocation();
 	const navigate = useNavigate();
 
-	// Fetch current user once for dropdown mobile display (cached by react-query)
 	const { data: currentUserForDropdown } = useGetCurrentUser(true);
 
 	const shouldShowBackButton = PAGES_WITH_BACK_BUTTON.some((pattern) => {
@@ -252,7 +251,6 @@ function NotificationBell() {
 				</span>
 			)}
 
-			{/* loading state: small pulse */}
 			{isLoading && <span className="absolute -top-0.5 -right-0.5 inline-block w-3 h-3 bg-primary rounded-full animate-pulse" />}
 		</div>
 	);

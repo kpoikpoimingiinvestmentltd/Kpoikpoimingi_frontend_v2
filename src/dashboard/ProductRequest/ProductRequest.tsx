@@ -2,6 +2,7 @@ import React from "react";
 import { useDebounceSearch } from "@/hooks/useDebounceSearch";
 import PageTitles from "@/components/common/PageTitles";
 import CustomCard from "@/components/base/CustomCard";
+import Badge from "@/components/base/Badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import CompactPagination from "@/components/ui/compact-pagination";
 import SearchWithFilters from "@/components/common/SearchWithFilters";
@@ -30,10 +31,6 @@ export default function ProductRequest() {
 	const items = ((query.data as ProductRequestResponse | undefined)?.data ?? []) as ProductRequestItem[];
 	const pagination = (query.data as ProductRequestResponse | undefined)?.pagination;
 
-	// actions
-	// const queryClient = useQueryClient();
-	// const approveMutation = useApproveRegistration();
-	// const declineMutation = useDeclineRegistration();
 	const deleteMutation = useDeleteRegistration();
 
 	const [toDelete, setToDelete] = React.useState<{ id?: string; title?: string } | null>(null);
@@ -127,12 +124,7 @@ export default function ProductRequest() {
 													<TableCell>{item.paymentMethod}</TableCell>
 													<TableCell>{item.totalAmount.toLocaleString()}</TableCell>
 													<TableCell>
-														<span
-															className={`rounded-md capitalize px-3 py-1 text-sm ${
-																item.status === "unapproved" ? "bg-yellow-100 text-yellow-700" : "bg-green-100 text-green-700"
-															}`}>
-															{item.status}
-														</span>
+														<Badge value={item.status} status={item.status === "unapproved" ? "pending" : "success"} size="sm" />
 													</TableCell>
 													<TableCell>{new Date(item.dateCreated).toLocaleDateString()}</TableCell>
 													<TableCell>
