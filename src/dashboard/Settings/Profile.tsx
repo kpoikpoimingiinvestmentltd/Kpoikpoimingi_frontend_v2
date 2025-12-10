@@ -6,8 +6,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useState } from "react";
 import EditProfileModal from "./EditProfileModal";
 import ActionButton from "@/components/base/ActionButton";
-import { preTableButtonStyle } from "@/components/common/commonStyles";
-import { IconWrapper, EditIcon } from "@/assets/icons";
+import { IconWrapper, CameraIcon } from "@/assets/icons";
 
 export default function Profile() {
 	const { data: user, isLoading } = useGetCurrentUser(true);
@@ -51,7 +50,7 @@ export default function Profile() {
 	return (
 		<CustomCard className="mt-4 border-none p-5 sm:p-6 bg-[#fafafa]">
 			<div className="flex flex-col gap-6">
-				<div className="w-28 h-28 rounded-full overflow-hidden relative">
+				<div className="w-28 h-28 group rounded-full overflow-hidden relative">
 					{(() => {
 						const media = (user as Record<string, unknown>).media;
 						let src: string | undefined | null = undefined;
@@ -73,13 +72,15 @@ export default function Profile() {
 					})()}
 
 					{/* Edit button overlay */}
-					<button type="button" className="absolute -right-2 -bottom-2" onClick={() => setEditOpen(true)}>
-						<ActionButton type="button" className={`${preTableButtonStyle} text-white bg-primary`}>
-							<IconWrapper>
-								<EditIcon />
-							</IconWrapper>
-						</ActionButton>
-					</button>
+					<ActionButton
+						type="button"
+						className={`text-white flex flex-col absolute inset-0 bg-black/50 hover:bg-black/30 opacity-0 group-hover:opacity-100 items-center justify-center gap-1 transition-opacity`}
+						onClick={() => setEditOpen(true)}>
+						<IconWrapper>
+							<CameraIcon />
+						</IconWrapper>
+						<span>Upload</span>
+					</ActionButton>
 				</div>
 
 				<div className="flex-1 mt-3">

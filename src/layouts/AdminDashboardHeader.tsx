@@ -14,6 +14,7 @@ import { useGetUnreadNotificationCount } from "@/api/notifications";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { AvatarSkeleton, RectangleSkeleton } from "@/components/common/Skeleton";
 import GenerateReceiptModal from "@/dashboard/Receipt/GenerateReceiptModal";
+import EditProfileModal from "@/dashboard/Settings/EditProfileModal";
 import { Link, NavLink, useLocation, useNavigate } from "react-router";
 
 const PAGES_WITH_BACK_BUTTON = [
@@ -34,6 +35,7 @@ interface AdminDashboardHeaderProps {
 
 export default function AdminDashboardHeader({ onSidebarOpen, onLogoutOpen }: AdminDashboardHeaderProps) {
 	const [receiptOpen, setReceiptOpen] = React.useState(false);
+	const [profileOpen, setProfileOpen] = React.useState(false);
 	const location = useLocation();
 	const navigate = useNavigate();
 
@@ -118,13 +120,13 @@ export default function AdminDashboardHeader({ onSidebarOpen, onLogoutOpen }: Ad
 
 						<DropdownMenuSeparator />
 						<div className="p-1 flex flex-col gap-y-0.5">
-							<DropdownMenuItem>
-								<Link to={_router.dashboard.settings} className="flex items-center gap-0.5 w-full">
+							<DropdownMenuItem onSelect={() => setProfileOpen(true)}>
+								<button className="flex items-center gap-0.5 w-full">
 									<IconWrapper>
 										<UserIcon />
 									</IconWrapper>
 									<span>Profile</span>
-								</Link>
+								</button>
 							</DropdownMenuItem>
 							<DropdownMenuItem>
 								<Link to={_router.dashboard.settings} className="flex items-center gap-0.5 w-full">
@@ -156,6 +158,7 @@ export default function AdminDashboardHeader({ onSidebarOpen, onLogoutOpen }: Ad
 				</DropdownMenu>
 
 				<GenerateReceiptModal open={receiptOpen} onOpenChange={setReceiptOpen} />
+				<EditProfileModal open={profileOpen} onOpenChange={setProfileOpen} />
 			</div>
 		</div>
 	);

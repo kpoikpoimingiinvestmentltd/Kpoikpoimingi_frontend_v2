@@ -99,7 +99,7 @@ export function IndexPieChart() {
 					</g>
 				))}
 
-				<text x="0" y="-30" textAnchor="middle" fill="#1F2937" style={{ fontSize: "150px", fontWeight: "600" }}>
+				<text x="0" y="-30" textAnchor="middle" fill="#1F2937" style={{ fontSize: "150px", fontWeight: "500" }}>
 					{formatAmount(incomeData?.totalIncome ?? 0)}
 				</text>
 				<text x="0" y="80" textAnchor="middle" fill="#6B7280" style={{ fontSize: "70px", fontWeight: "400" }}>

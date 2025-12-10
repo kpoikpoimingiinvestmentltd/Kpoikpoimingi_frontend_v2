@@ -7,7 +7,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import CustomCard from "@/components/base/CustomCard";
 import Profile from "./Profile";
 import VatInterest from "./VatInterest";
-import TermsAndConditions from "@/components/common/TermsAndConditions";
+// import TermsAndConditions from "@/components/common/TermsAndConditions";
 import { tabListStyle, tabStyle } from "../../components/common/commonStyles";
 import LogoutModal from "../../components/common/LogoutModal";
 import PageWrapper from "../../components/common/PageWrapper";
@@ -52,9 +52,9 @@ export default function Setting() {
 						<TabsTrigger value="vat" className={tabStyle}>
 							VAT & Interest
 						</TabsTrigger>
-						<TabsTrigger value="terms" className={tabStyle}>
+						{/* <TabsTrigger value="terms" className={tabStyle}>
 							Terms & Conditions
-						</TabsTrigger>
+						</TabsTrigger> */}
 					</TabsList>
 
 					<TabsContent value="profile">
@@ -65,9 +65,9 @@ export default function Setting() {
 						<VatInterest />
 					</TabsContent>
 
-					<TabsContent value="terms">
+					{/* <TabsContent value="terms">
 						<TermsAndConditions />
-					</TabsContent>
+					</TabsContent> */}
 				</Tabs>
 			</CustomCard>
 			<EditProfileModal open={editOpen} onOpenChange={setEditOpen} />
