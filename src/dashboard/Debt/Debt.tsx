@@ -1,4 +1,3 @@
-import ExportTrigger from "../../components/common/ExportTrigger";
 import PageTitles from "../../components/common/PageTitles";
 import Image from "../../components/base/Image";
 import { media } from "../../resources/images";
@@ -11,17 +10,21 @@ import { Link } from "react-router";
 import { _router } from "@/routes/_router";
 import React from "react";
 import PageWrapper from "../../components/common/PageWrapper";
-import { useGetAllContractDebts, useExportAllContractDebts } from "@/api/contracts";
+import { useGetAllContractDebts } from "@/api/contracts";
 import { TableSkeleton } from "@/components/common/Skeleton";
 import { twMerge } from "tailwind-merge";
 import SearchWithFilters from "@/components/common/SearchWithFilters";
 import type { FilterField } from "@/components/common/SearchWithFilters";
 import { useDebounceSearch } from "@/hooks/useDebounceSearch";
+import CsvExportModal from "@/components/common/CsvExportModal";
+import type { CsvField } from "@/components/common/CsvExportModal";
+import { useExportAllContractDebts } from "@/api/contracts";
 
 export default function Debt() {
 	const [page, setPage] = React.useState(1);
 	const [limit, setLimit] = React.useState<number>(10);
 	const [searchQuery, setSearchQuery] = React.useState<string>("");
+	const [csvModalOpen, setCsvModalOpen] = React.useState(false);
 	const debouncedSearch = useDebounceSearch(searchQuery, 400);
 	const [sortBy, setSortBy] = React.useState<string>("createdAt");
 	const [sortOrder, setSortOrder] = React.useState<string>("desc");
@@ -36,26 +39,27 @@ export default function Debt() {
 
 	const exportMutation = useExportAllContractDebts();
 
-	const handleExport = async (format: "csv" | "pdf") => {
-		if (format === "csv") {
-			try {
-				const blob = await exportMutation.mutateAsync({ search: debouncedSearch || "" });
-				// Create a download link and trigger
-				const fileName = `contract-debts-${new Date().toISOString().slice(0, 10)}.csv`;
-				const url = URL.createObjectURL(blob);
-				const link = document.createElement("a");
-				link.href = url;
-				link.download = fileName;
-				document.body.appendChild(link);
-				link.click();
-				link.remove();
-				URL.revokeObjectURL(url);
-			} catch (err) {
-				// Optionally report the error, kept simple for now
-				console.error("Failed to export debts:", err);
-			}
+	const debtCsvFields: CsvField[] = [
+		{ key: "search", label: "Search", type: "text", placeholder: "Contract code, customer name, or property name", required: false },
+	];
+
+	const handleCsvExport = async (formData: Record<string, string>) => {
+		try {
+			const blob = await exportMutation.mutateAsync({
+				search: formData.search || undefined,
+			});
+			const url = URL.createObjectURL(blob);
+			return {
+				success: true,
+				downloadUrl: url,
+			};
+		} catch (err) {
+			console.error("Failed to export contract debts:", err);
+			return {
+				success: false,
+				message: "Failed to export contract debts",
+			};
 		}
-		// TODO: implement PDF export when endpoint is available
 	};
 
 	const debtorsData = (debtData.data as unknown[]) || [];
@@ -90,7 +94,15 @@ export default function Debt() {
 			<div className="flex items-center justify-between flex-wrap gap-4 mb-4">
 				<PageTitles title="Debt" description="This contains all customers owing for product they signed to buy on installment" />
 				<div className="flex items-center gap-3">
-					<ExportTrigger title="Export" onSelect={handleExport} />
+					<CsvExportModal
+						open={csvModalOpen}
+						onOpenChange={setCsvModalOpen}
+						title="Export Contract Debts As CSV"
+						subtitle="Export all contract debts with optional search filter"
+						fields={debtCsvFields}
+						onExport={handleCsvExport}
+						downloadFileName={`contract-debts-${new Date().toISOString().slice(0, 10)}.csv`}
+					/>
 				</div>
 			</div>
 

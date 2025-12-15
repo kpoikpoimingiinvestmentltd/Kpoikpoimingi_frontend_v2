@@ -57,7 +57,7 @@ export default function DebtDetails() {
 			<CustomCard className="bg-white w-full rounded-lg p-6 border border-gray-100 mb-6">
 				<div className="flex flex-col md:flex-row gap-6">
 					{/* Property Image */}
-					<div className="flex-shrink-0">
+					<div className="flex-shrink-0 flex items-center justify-center">
 						<Image src={contractInfo.propertyImage} alt={contractInfo.propertyName} className="w-40 h-40 object-cover rounded-lg" />
 					</div>
 

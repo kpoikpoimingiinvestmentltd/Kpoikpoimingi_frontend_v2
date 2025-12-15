@@ -93,6 +93,21 @@ export function useExportAllContractDebts() {
 	});
 }
 
+export async function exportAllContracts(search?: string, statusId?: string) {
+	const params = new URLSearchParams();
+	if (search) params.append("search", search);
+	if (statusId) params.append("statusId", statusId);
+	const query = params.toString();
+	const url = `${API_ROUTES.contracts.exportAllContracts}${query ? `?${query}` : ""}`;
+	return apiGetFile(url) as Promise<Blob>;
+}
+
+export function useExportAllContracts() {
+	return useMutation<Blob, unknown, { search?: string; statusId?: string }, unknown>({
+		mutationFn: (payload: { search?: string; statusId?: string }) => exportAllContracts(payload?.search, payload?.statusId),
+	});
+}
+
 export function useGetAllContractDebts(page = 1, limit = 10, search = "", sortBy = "createdAt", sortOrder = "desc", enabled = true) {
 	return useQuery<ListResponse & { summary: Record<string, unknown> }, unknown>({
 		queryKey: ["contract-debts", page, limit, search, sortBy, sortOrder],

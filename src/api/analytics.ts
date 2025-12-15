@@ -274,3 +274,18 @@ export function useExportInterestPenalties() {
 			),
 	});
 }
+
+export async function exportVATRecords(startDate?: string, endDate?: string) {
+	const params = new URLSearchParams();
+	if (startDate) params.append("startDate", startDate);
+	if (endDate) params.append("endDate", endDate);
+	const query = params.toString();
+	const url = `${API_ROUTES.reports.exportVATRecords}${query ? `?${query}` : ""}`;
+	return apiGetFile(url) as Promise<Blob>;
+}
+
+export function useExportVATRecords() {
+	return useMutation<Blob, unknown, { startDate?: string; endDate?: string }, unknown>({
+		mutationFn: (payload) => exportVATRecords(payload?.startDate, payload?.endDate),
+	});
+}

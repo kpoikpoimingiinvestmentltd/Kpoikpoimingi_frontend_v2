@@ -4,11 +4,14 @@ import EmptyData from "@/components/common/EmptyData";
 import CustomCard from "@/components/base/CustomCard";
 import { useGetAuditLogsGrouped, useExportAuditLogs } from "@/api/analytics";
 import PageTitles from "@/components/common/PageTitles";
-import ExportTrigger from "@/components/common/ExportTrigger";
 import { CardSkeleton } from "@/components/common/Skeleton";
 import SearchWithFilters from "@/components/common/SearchWithFilters";
 import type { FilterField } from "@/components/common/SearchWithFilters";
 import { useDebounceSearch } from "@/hooks/useDebounceSearch";
+import CsvExportModal from "@/components/common/CsvExportModal";
+import type { CsvField } from "@/components/common/CsvExportModal";
+import { ExportFileIcon, IconWrapper } from "@/assets/icons";
+import { twMerge } from "tailwind-merge";
 
 export default function AuditCompliance() {
 	const [page, setPage] = useState(1);
@@ -16,6 +19,7 @@ export default function AuditCompliance() {
 	const [searchQuery, setSearchQuery] = useState<string>("");
 	const [startDate, setStartDate] = useState<string>("");
 	const [endDate, setEndDate] = useState<string>("");
+	const [csvModalOpen, setCsvModalOpen] = useState(false);
 
 	const debouncedSearch = useDebounceSearch(searchQuery, 400);
 
@@ -30,29 +34,31 @@ export default function AuditCompliance() {
 
 	const exportMutation = useExportAuditLogs();
 
-	const handleExport = async (format: "csv" | "pdf") => {
-		if (format === "csv") {
-			try {
-				const blob = await exportMutation.mutateAsync({
-					search: debouncedSearch || undefined,
-					startDate: startDate || undefined,
-					endDate: endDate || undefined,
-				});
-				// Create a download link and trigger
-				const fileName = `audit-logs-${new Date().toISOString().slice(0, 10)}.csv`;
-				const url = URL.createObjectURL(blob);
-				const link = document.createElement("a");
-				link.href = url;
-				link.download = fileName;
-				document.body.appendChild(link);
-				link.click();
-				link.remove();
-				URL.revokeObjectURL(url);
-			} catch (err) {
-				console.error("Failed to export audit logs:", err);
-			}
+	const auditCsvFields: CsvField[] = [
+		{ key: "startDate", label: "From", type: "date", placeholder: "01-01-2025" },
+		{ key: "endDate", label: "To", type: "date", placeholder: "31-12-2025" },
+		{ key: "search", label: "Search", type: "text", placeholder: "John Doe" },
+	];
+
+	const handleCsvExport = async (formData: Record<string, string>) => {
+		try {
+			const blob = await exportMutation.mutateAsync({
+				search: formData.search || undefined,
+				startDate: formData.startDate || undefined,
+				endDate: formData.endDate || undefined,
+			});
+			const url = URL.createObjectURL(blob);
+			return {
+				success: true,
+				downloadUrl: url,
+			};
+		} catch (err) {
+			console.error("Failed to export audit logs:", err);
+			return {
+				success: false,
+				message: "Failed to export audit logs",
+			};
 		}
-		// TODO: implement PDF export when endpoint is available
 	};
 
 	const filterFields: FilterField[] = [
@@ -85,7 +91,23 @@ export default function AuditCompliance() {
 			<div className="flex items-center justify-between flex-wrap gap-4 mb-4">
 				<PageTitles title="Audit & Compliance" description="This Contains all activities done indicating who performed the action" />
 				<div className="flex items-center gap-3">
-					<ExportTrigger title="Export" onSelect={handleExport} />
+					<CsvExportModal
+						open={csvModalOpen}
+						onOpenChange={setCsvModalOpen}
+						title="Export Audit Logs As CSV"
+						subtitle="Filter audit logs by date range and search"
+						fields={auditCsvFields}
+						onExport={handleCsvExport}
+						downloadFileName={`audit-logs-${new Date().toISOString().slice(0, 10)}.csv`}
+						triggerButton={
+							<button className={twMerge("flex items-center gap-2 underline-offset-[4px] underline")}>
+								<IconWrapper>
+									<ExportFileIcon />
+								</IconWrapper>
+								<span>Export</span>
+							</button>
+						}
+					/>
 				</div>
 			</div>
 
@@ -159,7 +181,7 @@ function RowItem({ action, staffName, date, time }: { action: string; staffName:
 		<div className="rounded-lg bg-white p-5 border border-gray-100 flex items-start justify-between">
 			<div>
 				<h4 className="font-medium">{action}</h4>
-				<p className="text-sm text-muted-foreground mt-2">Staff Name: {staffName}</p>
+				<p className="text-sm text-muted-foreground mt-2">Staff Name: {staffName || "N/A"}</p>
 			</div>
 			<div className="text-right text-sm text-muted-foreground">
 				<div>{date}</div>

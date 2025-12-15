@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiGet, apiPost, apiPut, apiDelete } from "@/services/apiClient";
+import { apiGet, apiPost, apiPut, apiDelete, apiGetFile } from "@/services/apiClient";
 import { API_ROUTES } from "./routes";
 import type {
 	ProductRequestResponse,
@@ -76,5 +76,19 @@ export function useDeleteRegistration() {
 	return useMutation<DeleteRegistrationResponse, unknown, string>({
 		mutationFn: (id: string) => deleteRegistration(id),
 		onSuccess: () => qc.invalidateQueries({ queryKey: ["product-requests"] }),
+	});
+}
+
+export async function exportProductRequests(search?: string) {
+	const params = new URLSearchParams();
+	if (search) params.append("search", search);
+	const query = params.toString();
+	const url = `${API_ROUTES.customerRegistration.exportCustomerRegistrations}${query ? `?${query}` : ""}`;
+	return apiGetFile(url) as Promise<Blob>;
+}
+
+export function useExportProductRequests() {
+	return useMutation<Blob, unknown, { search?: string }, unknown>({
+		mutationFn: (payload) => exportProductRequests(payload?.search),
 	});
 }

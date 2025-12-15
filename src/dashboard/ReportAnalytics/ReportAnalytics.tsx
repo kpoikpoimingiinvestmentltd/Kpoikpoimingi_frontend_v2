@@ -1,4 +1,5 @@
 import { useDispatch, useSelector } from "react-redux";
+import { useState } from "react";
 import type { RootState } from "@/store";
 import {
 	setTab,
@@ -26,10 +27,11 @@ import StatCard from "@/components/base/StatCard";
 import CustomInput from "@/components/base/CustomInput";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { inputStyle, preTableButtonStyle, tabListStyle, tabStyle } from "@/components/common/commonStyles";
-import { FilterIcon, IconWrapper, SearchIcon, CalendarIcon, CloseIcon } from "@/assets/icons";
-import ExportTrigger from "@/components/common/ExportTrigger";
-import { useExportInterestPenalties } from "@/api/analytics";
-import { toast } from "sonner";
+import { FilterIcon, IconWrapper, SearchIcon, CalendarIcon, CloseIcon, ExportFileIcon } from "@/assets/icons";
+import { useExportInterestPenalties, useExportVATRecords } from "@/api/analytics";
+import CsvExportModal from "@/components/common/CsvExportModal";
+import type { CsvField } from "@/components/common/CsvExportModal";
+import { twMerge } from "tailwind-merge";
 import EmptyData from "@/components/common/EmptyData";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent } from "@/components/ui/dropdown-menu";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -61,6 +63,8 @@ export default function ReportAnalytics() {
 	} = useSelector((state: RootState) => state.reportAnalytics);
 
 	const isEmpty = false;
+	const [vatCsvModalOpen, setVatCsvModalOpen] = useState(false);
+	const [penaltyCsvModalOpen, setPenaltyCsvModalOpen] = useState(false);
 
 	const { data: incomeData, isLoading: isIncomeLoading } = useGetIncomeEarned(incomePeriod);
 
@@ -97,38 +101,62 @@ export default function ReportAnalytics() {
 		dispatch(clearFilters());
 	};
 
-	// Hook for exporting interest penalties CSV
+	// Hooks for exporting CSV
+	const exportVATMutation = useExportVATRecords();
 	const exportInterestMutation = useExportInterestPenalties();
 
-	const handleExport = async (format: "csv" | "pdf") => {
-		if (format !== "csv") return; // only CSV supported for now
-		if (tab !== "interest") {
-			toast.error("Export available only for Interest Penalties tab.");
-			return;
-		}
+	// CSV fields for VAT export (date range only)
+	const vatCsvFields: CsvField[] = [
+		{ key: "startDate", label: "Start Date", type: "date", placeholder: "01-01-2025", required: false },
+		{ key: "endDate", label: "End Date", type: "date", placeholder: "31-12-2025", required: false },
+	];
 
+	// CSV fields for penalties export (search only)
+	const penaltyCsvFields: CsvField[] = [
+		{ key: "search", label: "Search", type: "text", placeholder: "Contract code, customer name, or property name", required: false },
+	];
+
+	const handleVATExport = async (formData: Record<string, string>) => {
+		try {
+			const blob = await exportVATMutation.mutateAsync({
+				startDate: formData.startDate || undefined,
+				endDate: formData.endDate || undefined,
+			});
+			const url = URL.createObjectURL(blob);
+			return {
+				success: true,
+				downloadUrl: url,
+			};
+		} catch (err) {
+			console.error("Failed to export VAT records:", err);
+			return {
+				success: false,
+				message: "Failed to export VAT records",
+			};
+		}
+	};
+
+	const handlePenaltyExport = async (formData: Record<string, string>) => {
 		try {
 			const blob = await exportInterestMutation.mutateAsync({
 				page: penaltyPage || 1,
 				limit: penaltyLimit || 10,
-				search: penaltySearch || "",
+				search: formData.search || "",
 				sortBy: penaltySortBy || "createdAt",
 				sortOrder: penaltySortOrder || "desc",
 				period: penaltyPeriod || "daily",
 			});
-			const fileName = `interest-penalties-${new Date().toISOString().slice(0, 10)}.csv`;
 			const url = URL.createObjectURL(blob);
-			const link = document.createElement("a");
-			link.href = url;
-			link.download = fileName;
-			document.body.appendChild(link);
-			link.click();
-			link.remove();
-			URL.revokeObjectURL(url);
-			toast.success("Export started; check your downloads");
+			return {
+				success: true,
+				downloadUrl: url,
+			};
 		} catch (err) {
 			console.error("Failed to export interest penalties:", err);
-			toast.error("Failed to export interest penalties");
+			return {
+				success: false,
+				message: "Failed to export interest penalties",
+			};
 		}
 	};
 
@@ -171,12 +199,44 @@ export default function ReportAnalytics() {
 			<div className="flex items-center justify-between flex-wrap gap-4 mb-4">
 				<PageTitles title="Report Analytics" description="Overview of financial and operational reports" />
 				<div className="flex items-center gap-3">
-					<ExportTrigger
-						title="Export"
-						onSelect={(format) => {
-							handleExport(format);
-						}}
-					/>
+					{tab === "vat" && (
+						<CsvExportModal
+							open={vatCsvModalOpen}
+							onOpenChange={setVatCsvModalOpen}
+							title="Export VAT Records As CSV"
+							subtitle="Filter VAT records by date range"
+							fields={vatCsvFields}
+							onExport={handleVATExport}
+							downloadFileName={`vat-records-${new Date().toISOString().slice(0, 10)}.csv`}
+							triggerButton={
+								<button className={twMerge("flex items-center gap-2 underline-offset-[4px] underline")}>
+									<IconWrapper>
+										<ExportFileIcon />
+									</IconWrapper>
+									<span>Export</span>
+								</button>
+							}
+						/>
+					)}
+					{tab === "interest" && (
+						<CsvExportModal
+							open={penaltyCsvModalOpen}
+							onOpenChange={setPenaltyCsvModalOpen}
+							title="Export Interest Penalties As CSV"
+							subtitle="Filter interest penalties by search"
+							fields={penaltyCsvFields}
+							onExport={handlePenaltyExport}
+							downloadFileName={`interest-penalties-${new Date().toISOString().slice(0, 10)}.csv`}
+							triggerButton={
+								<button className={twMerge("flex items-center gap-2 underline-offset-[4px] underline")}>
+									<IconWrapper>
+										<ExportFileIcon />
+									</IconWrapper>
+									<span>Export</span>
+								</button>
+							}
+						/>
+					)}
 				</div>
 			</div>
 
@@ -392,8 +452,8 @@ export default function ReportAnalytics() {
 									</div>
 								</div>
 
-								<div className="mt-6 rounded-md bg-[#F3FBFF] p-4">
-									<div className="flex flex-col justify-between">
+								{/* <div className="mt-6 rounded-md bg-[#F3FBFF] p-4"> */}
+								{/* <div className="flex flex-col justify-between">
 										<div className="text-sm flex gap-3 items-center flex-wrap text-gray-500">
 											<span>{tab === "vat" ? "Total VAT Amount" : "Total Penalties Amount"}</span>
 											{tab === "vat" && isFilterApplied && vatFromDate && vatToDate && (
@@ -403,8 +463,8 @@ export default function ReportAnalytics() {
 											)}
 										</div>
 										<div className="mt-3 text-2xl font-medium">NGN 50,000,000</div>
-									</div>
-								</div>
+									</div> */}
+								{/* </div> */}
 
 								<CustomCard className="mt-4 bg-card p-3">
 									{tab === "vat" ? (

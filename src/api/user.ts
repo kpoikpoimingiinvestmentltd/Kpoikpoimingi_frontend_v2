@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiGet, apiPost, apiDelete, apiPut } from "@/services/apiClient";
 import { API_ROUTES } from "./routes";
 import { store } from "@/store";
-import type { ChangePasswordInput, User, ResetPasswordResponse } from "@/types/user";
+import type { ChangePasswordInput, ResetPasswordResponse } from "@/types/user";
 
 export async function resetPasswordRequest(userId: string) {
 	return apiPost(API_ROUTES.user.resetPassword(userId), {});

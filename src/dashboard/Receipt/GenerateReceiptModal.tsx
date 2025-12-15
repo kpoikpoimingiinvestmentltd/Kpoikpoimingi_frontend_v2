@@ -208,7 +208,6 @@ export default function GenerateReceiptModal({ open, onOpenChange }: { open: boo
 											<SelectContent>
 												<SelectItem value="1">Hire Purchase</SelectItem>
 												<SelectItem value="2">Full Payment</SelectItem>
-												<SelectItem value="3">Other</SelectItem>
 											</SelectContent>
 										</Select>
 									</div>

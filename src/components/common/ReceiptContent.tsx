@@ -61,7 +61,7 @@ export default function ReceiptContent({ receipt }: ReceiptContentProps) {
 
 				<footer className="border-t-2 border-dashed pb-4 pt-3 text-center">
 					<p className="text-stone-700 text-[.9rem]">
-						Receipt issued by: <span className="font-medium text-black">{receipt.issuedById ?? "-"}</span>
+						Receipt issued by: <span className="font-medium text-black">{receipt.issuedBy?.fullName ?? receipt.issuedById ?? "-"}</span>
 					</p>
 				</footer>
 			</main>

@@ -9,18 +9,22 @@ import SearchWithFilters from "@/components/common/SearchWithFilters";
 import type { FilterField } from "@/components/common/SearchWithFilters";
 import { _router } from "@/routes/_router";
 import { Link } from "react-router";
-import { useGetProductRequests, useDeleteRegistration } from "@/api/productRequest";
+import { useGetProductRequests, useDeleteRegistration, useExportProductRequests } from "@/api/productRequest";
 import type { ProductRequestItem, ProductRequestResponse } from "@/types/productRequest";
 import ConfirmModal from "@/components/common/ConfirmModal";
 import { TableSkeleton } from "@/components/common/Skeleton";
-import { IconWrapper, EditIcon, TrashIcon } from "@/assets/icons";
+import { IconWrapper, EditIcon, TrashIcon, ExportFileIcon } from "@/assets/icons";
 import { toast } from "sonner";
 import EmptyData from "@/components/common/EmptyData";
+import CsvExportModal from "@/components/common/CsvExportModal";
+import type { CsvField } from "@/components/common/CsvExportModal";
+import { twMerge } from "tailwind-merge";
 
 export default function ProductRequest() {
 	const [page, setPage] = React.useState(1);
 	const [limit, setLimit] = React.useState(10);
 	const [search, setSearch] = React.useState("");
+	const [csvModalOpen, setCsvModalOpen] = React.useState(false);
 	const debouncedSearch = useDebounceSearch(search, 400);
 	const [sortBy, setSortBy] = React.useState<string | undefined>(undefined);
 	const [sortOrder, setSortOrder] = React.useState<string | undefined>(undefined);
@@ -32,14 +36,57 @@ export default function ProductRequest() {
 	const pagination = (query.data as ProductRequestResponse | undefined)?.pagination;
 
 	const deleteMutation = useDeleteRegistration();
+	const exportMutation = useExportProductRequests();
 
 	const [toDelete, setToDelete] = React.useState<{ id?: string; title?: string } | null>(null);
 	const [confirmOpen, setConfirmOpen] = React.useState(false);
+
+	const productRequestCsvFields: CsvField[] = [
+		{ key: "search", label: "Search", type: "text", placeholder: "Registration code, customer name, or email", required: false },
+	];
+
+	const handleCsvExport = async (formData: Record<string, string>) => {
+		try {
+			const blob = await exportMutation.mutateAsync({
+				search: formData.search || undefined,
+			});
+			const url = URL.createObjectURL(blob);
+			return {
+				success: true,
+				downloadUrl: url,
+			};
+		} catch (err) {
+			console.error("Failed to export product requests:", err);
+			return {
+				success: false,
+				message: "Failed to export product requests",
+			};
+		}
+	};
 
 	return (
 		<div className="flex flex-col gap-y-6">
 			<div className="flex items-center justify-between flex-wrap gap-4 mb-4">
 				<PageTitles title="Product Request" description="This is all the product request from customers" />
+				<div className="flex items-center gap-3">
+					<CsvExportModal
+						open={csvModalOpen}
+						onOpenChange={setCsvModalOpen}
+						title="Export Customer Registrations As CSV"
+						subtitle="Export all customer registrations with optional search filter"
+						fields={productRequestCsvFields}
+						onExport={handleCsvExport}
+						downloadFileName={`customer-registrations-${new Date().toISOString().slice(0, 10)}.csv`}
+						triggerButton={
+							<button className={twMerge("flex items-center gap-2 underline-offset-[4px] underline")}>
+								<IconWrapper>
+									<ExportFileIcon />
+								</IconWrapper>
+								<span>Export</span>
+							</button>
+						}
+					/>
+				</div>
 			</div>
 
 			<CustomCard className="bg-white flex-grow w-full rounded-lg p-4 border border-gray-100">

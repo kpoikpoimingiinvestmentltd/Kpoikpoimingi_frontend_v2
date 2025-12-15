@@ -20,6 +20,8 @@ import { useGetAllCustomers, useDeleteCustomer, useExportCustomersAsCSV } from "
 import { TableSkeleton } from "@/components/common/Skeleton";
 import { toast } from "sonner";
 import { extractErrorMessage } from "@/lib/utils";
+import CsvExportModal from "@/components/common/CsvExportModal";
+import type { CsvField } from "@/components/common/CsvExportModal";
 
 export default function Customers() {
 	const [page, setPage] = React.useState(1);
@@ -33,7 +35,27 @@ export default function Customers() {
 	const [deleteOpen, setDeleteOpen] = React.useState(false);
 	const [isSendEmailOpen, setIsSendEmailOpen] = React.useState(false);
 	const [selectedCustomerId, setSelectedCustomerId] = React.useState<string | null>(null);
+	const [csvModalOpen, setCsvModalOpen] = React.useState(false);
 	const exportMutation = useExportCustomersAsCSV();
+
+	const customerCsvFields: CsvField[] = [{ key: "search", label: "Search", type: "text", placeholder: "Justin Dunsin" }];
+
+	const handleCsvExport = async (formData: Record<string, string>) => {
+		try {
+			const blob = await exportMutation.mutateAsync({ search: formData.search || undefined });
+			const url = URL.createObjectURL(blob);
+			return {
+				success: true,
+				downloadUrl: url,
+			};
+		} catch (err) {
+			console.error("Failed to export customers:", err);
+			return {
+				success: false,
+				message: "Failed to export customers",
+			};
+		}
+	};
 
 	// Delete customer mutation
 	const deleteCustomerMutation = useDeleteCustomer(
@@ -82,27 +104,7 @@ export default function Customers() {
 			<div className="flex items-center justify-between flex-wrap gap-4 mb-4">
 				<PageTitles title="Customers" description="List of people who patronize Kpo kpoi mingi investment" />
 				<div className="flex items-center gap-3">
-					<ActionButton
-						type="button"
-						className="bg-primary/10 text-primary gap-2 hover:bg-primary/20"
-						onClick={async () => {
-							try {
-								const blob = await exportMutation.mutateAsync({ search: debouncedSearch || undefined });
-								const fileName = `customers-${new Date().toISOString().slice(0, 10)}.csv`;
-								const url = URL.createObjectURL(blob);
-								const link = document.createElement("a");
-								link.href = url;
-								link.download = fileName;
-								document.body.appendChild(link);
-								link.click();
-								link.remove();
-								URL.revokeObjectURL(url);
-								toast.success("Customers exported successfully");
-							} catch (err) {
-								console.error("Failed to export customers:", err);
-								toast.error("Failed to export customers");
-							}
-						}}>
+					<ActionButton type="button" className="bg-primary/10 text-primary gap-2 hover:bg-primary/20" onClick={() => setCsvModalOpen(true)}>
 						<span className="text-sm">Export CSV</span>
 					</ActionButton>
 					<ActionButton type="button" className="bg-primary/10 text-primary gap-2 hover:bg-primary/20" onClick={() => setIsSendEmailOpen(true)}>
@@ -270,6 +272,16 @@ export default function Customers() {
 						console.error("Failed to send email:", error);
 					}
 				}}
+			/>
+
+			<CsvExportModal
+				open={csvModalOpen}
+				onOpenChange={setCsvModalOpen}
+				title="Export Customers As CSV"
+				subtitle="Filter customers to export"
+				fields={customerCsvFields}
+				onExport={handleCsvExport}
+				downloadFileName={`customers-${new Date().toISOString().slice(0, 10)}.csv`}
 			/>
 		</div>
 	);

@@ -4,27 +4,27 @@ import Badge from "@/components/base/Badge";
 import PageTitles from "@/components/common/PageTitles";
 import { tableHeaderRowStyle } from "@/components/common/commonStyles";
 import CompactPagination from "@/components/ui/compact-pagination";
-import React from "react";
 import EmptyData from "@/components/common/EmptyData";
-import ExportTrigger from "../../components/common/ExportTrigger";
 import SearchWithFilters from "@/components/common/SearchWithFilters";
 import type { FilterField } from "@/components/common/SearchWithFilters";
 import { useGetAllDuePayments, useExportDuePayments } from "@/api/duePayment";
 import { useDebounceSearch } from "@/hooks/useDebounceSearch";
 import { TableSkeleton } from "@/components/common/Skeleton";
+import CsvExportModal from "@/components/common/CsvExportModal";
+import type { CsvField } from "@/components/common/CsvExportModal";
+import { ExportFileIcon, IconWrapper } from "@/assets/icons";
+import { twMerge } from "tailwind-merge";
+import { useDispatch, useSelector } from "react-redux";
+import type { RootState } from "@/store";
+import { setPage, setSearch, setCsvModalOpen, applyFilters, resetFilters } from "@/store/duePaymentSlice";
 
 export default function Payments() {
-	const [page, setPage] = React.useState(1);
-	const [search, setSearch] = React.useState<string>("");
+	const dispatch = useDispatch();
+	const { page, search, csvModalOpen, sortBy, sortOrder, dueDateFrom, dueDateTo, dateFrom, dateTo, isOverdue, statusId } = useSelector(
+		(state: RootState) => state.duePayment
+	);
+
 	const debouncedSearch = useDebounceSearch(search, 400);
-	const [sortBy, setSortBy] = React.useState<string>("dueDate");
-	const [sortOrder, setSortOrder] = React.useState<string>("asc");
-	const [dueDateFrom, setDueDateFrom] = React.useState<string>("");
-	const [dueDateTo, setDueDateTo] = React.useState<string>("");
-	const [dateFrom, setDateFrom] = React.useState<string>("");
-	const [dateTo, setDateTo] = React.useState<string>("");
-	const [isOverdue, setIsOverdue] = React.useState<boolean | undefined>(undefined);
-	const [statusId, setStatusId] = React.useState<number | undefined>(undefined);
 
 	const { data: paymentsData = {}, isLoading } = useGetAllDuePayments(
 		page,
@@ -101,56 +101,73 @@ export default function Payments() {
 	];
 
 	const handleFilterApply = (filters: Record<string, string>) => {
-		setDueDateFrom(filters.dueDateFrom || "");
-		setDueDateTo(filters.dueDateTo || "");
-		setDateFrom(filters.dateFrom || "");
-		setDateTo(filters.dateTo || "");
-		setIsOverdue(filters.isOverdue ? filters.isOverdue === "true" : undefined);
-		setStatusId(filters.statusId ? Number(filters.statusId) : undefined);
-		setSortBy(filters.sortBy || "dueDate");
-		setSortOrder(filters.sortOrder || "asc");
-		setPage(1);
+		dispatch(
+			applyFilters({
+				dueDateFrom: filters.dueDateFrom || "",
+				dueDateTo: filters.dueDateTo || "",
+				dateFrom: filters.dateFrom || "",
+				dateTo: filters.dateTo || "",
+				isOverdue: filters.isOverdue ? filters.isOverdue === "true" : undefined,
+				statusId: filters.statusId ? Number(filters.statusId) : undefined,
+				sortBy: filters.sortBy || "dueDate",
+				sortOrder: filters.sortOrder || "asc",
+			})
+		);
 	};
 
 	const handleFilterReset = () => {
-		setDueDateFrom("");
-		setDueDateTo("");
-		setDateFrom("");
-		setDateTo("");
-		setIsOverdue(undefined);
-		setStatusId(undefined);
-		setSortBy("dueDate");
-		setSortOrder("asc");
-		setSearch("");
-		setPage(1);
+		dispatch(resetFilters());
 	};
 
-	const handleExport = async (format: "csv" | "pdf") => {
-		if (format === "csv") {
-			try {
-				const blob = await exportMutation.mutateAsync({
-					dueDateFrom: dueDateFrom || undefined,
-					dueDateTo: dueDateTo || undefined,
-					dateFrom: dateFrom || undefined,
-					dateTo: dateTo || undefined,
-					contractCode: debouncedSearch || undefined,
-					customerName: debouncedSearch || undefined,
-					customerEmail: debouncedSearch || undefined,
-					isOverdue: isOverdue,
-					statusId: statusId,
-				});
-				const fileName = `due-payments-${new Date().toISOString().slice(0, 10)}.csv`;
-				const url = URL.createObjectURL(blob);
-				const link = document.createElement("a");
-				link.href = url;
-				link.download = fileName;
-				document.body.appendChild(link);
-				link.click();
-				link.remove();
-				URL.revokeObjectURL(url);
-			} catch (err) {
-				console.error("Failed to export due payments:", err);
-			}
+	const duePaymentCsvFields: CsvField[] = [
+		{ key: "dueDateFrom", label: "Payment Due From", type: "date", placeholder: "01-01-2025" },
+		{ key: "dueDateTo", label: "Payment Due To", type: "date", placeholder: "31-12-2025" },
+		{ key: "dateFrom", label: "Reminder Sent From", type: "date", placeholder: "01-01-2025" },
+		{ key: "dateTo", label: "Reminder Sent To", type: "date", placeholder: "31-12-2025" },
+		{ key: "contractCode", label: "Contract Code", type: "text", placeholder: "Contract code" },
+		{ key: "customerName", label: "Customer Name", type: "text", placeholder: "John Doe" },
+		{ key: "customerEmail", label: "Customer Email", type: "text", placeholder: "john@example.com" },
+		{
+			key: "isOverdue",
+			label: "Status",
+			type: "select",
+			options: [
+				{ value: "true", label: "Overdue" },
+				{ value: "false", label: "Current" },
+			],
+		},
+		{
+			key: "statusId",
+			label: "Payment Status",
+			type: "text",
+			placeholder: "Status ID",
+		},
+	];
+
+	const handleCsvExport = async (formData: Record<string, string>) => {
+		try {
+			const blob = await exportMutation.mutateAsync({
+				dueDateFrom: formData.dueDateFrom || undefined,
+				dueDateTo: formData.dueDateTo || undefined,
+				dateFrom: formData.dateFrom || undefined,
+				dateTo: formData.dateTo || undefined,
+				contractCode: formData.contractCode || undefined,
+				customerName: formData.customerName || undefined,
+				customerEmail: formData.customerEmail || undefined,
+				isOverdue: formData.isOverdue ? formData.isOverdue === "true" : undefined,
+				statusId: formData.statusId ? Number(formData.statusId) : undefined,
+			});
+			const url = URL.createObjectURL(blob);
+			return {
+				success: true,
+				downloadUrl: url,
+			};
+		} catch (err) {
+			console.error("Failed to export due payments:", err);
+			return {
+				success: false,
+				message: "Failed to export due payments",
+			};
 		}
 	};
 
@@ -159,7 +176,23 @@ export default function Payments() {
 			<div className="flex items-center justify-between flex-wrap gap-4 mb-4">
 				<PageTitles title="Due Payments" description="The list of all paid debt and pending payment" />
 				<div className="flex items-center gap-3">
-					<ExportTrigger title="Export" onSelect={handleExport} />
+					<CsvExportModal
+						open={csvModalOpen}
+						onOpenChange={(open) => dispatch(setCsvModalOpen(open))}
+						title="Export Due Payments As CSV"
+						subtitle="Filter due payments by date range, customer, or status"
+						fields={duePaymentCsvFields}
+						onExport={handleCsvExport}
+						downloadFileName={`due-payments-${new Date().toISOString().slice(0, 10)}.csv`}
+						triggerButton={
+							<button className={twMerge("flex items-center gap-2 underline-offset-[4px] underline")}>
+								<IconWrapper>
+									<ExportFileIcon />
+								</IconWrapper>
+								<span>Export</span>
+							</button>
+						}
+					/>
 				</div>
 			</div>
 
@@ -168,10 +201,10 @@ export default function Payments() {
 					<SearchWithFilters
 						search={search}
 						onSearchChange={(v) => {
-							setSearch(v);
-							setPage(1);
+							dispatch(setSearch(v));
+							dispatch(setPage(1));
 						}}
-						setPage={setPage}
+						setPage={(newPage) => dispatch(setPage(newPage))}
 						placeholder="Search by contract code, customer name, or email"
 						showFilter={true}
 						fields={filterFields}
@@ -252,7 +285,7 @@ export default function Payments() {
 									<span className="font-medium">{(paginationData?.totalCount as number) || 0}</span> results
 								</span>
 								<div className="ml-auto">
-									<CompactPagination page={page} pages={pages} onPageChange={setPage} />
+									<CompactPagination page={page} pages={pages} onPageChange={(newPage) => dispatch(setPage(newPage))} />
 								</div>
 							</div>
 						</CustomCard>

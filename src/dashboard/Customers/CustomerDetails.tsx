@@ -58,7 +58,7 @@ export default function CustomerDetails() {
 	const displayName = customer
 		? hasFullName(customer) && customer.fullName
 			? customer.fullName
-			: customer.name ?? getStringField(Array.isArray(approvedRegistrations) ? approvedRegistrations[0] : approvedRegistrations, "fullName") ?? ""
+			: getStringField(Array.isArray(approvedRegistrations) ? approvedRegistrations[0] : approvedRegistrations, "fullName") ?? ""
 		: "";
 
 	const registrationForEdit = Array.isArray(approvedRegistrations) ? approvedRegistrations[0] : approvedRegistrations || customer;
@@ -155,8 +155,7 @@ export default function CustomerDetails() {
 												fullName:
 													hasFullName(customer) && customer.fullName
 														? customer.fullName
-														: customer.name ??
-														  getStringField(Array.isArray(approvedRegistrations) ? approvedRegistrations[0] : approvedRegistrations, "fullName"),
+														: getStringField(Array.isArray(approvedRegistrations) ? approvedRegistrations[0] : approvedRegistrations, "fullName"),
 												email: getStringField(customer, "email") ?? customer?.email,
 												phoneNumber:
 													getStringField(customer, "phoneNumber") ??

@@ -3,7 +3,6 @@ import CustomCard from "@/components/base/CustomCard";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { selectTriggerStyle, tabListStyle, tabStyle } from "@/components/common/commonStyles";
 import ActionButton from "@/components/base/ActionButton";
-import ExportTrigger from "@/components/common/ExportTrigger";
 import TabContractInformation from "./TabContractInformation";
 import TabPaymentPlan from "./TabPaymentPlan";
 import TabReceiptHistory from "./TabReceiptHistory";
@@ -126,7 +125,6 @@ export default function ContractDetails() {
 				<PageTitles title="Contract" description="The contracts transaction between Kpo kpoi mingi investment and it customers" />
 
 				<div className="flex items-center gap-3">
-					<ExportTrigger className="text-primary" />
 					{/* <ActionButton
 						variant="ghost"
 						className="underline px-1"

@@ -120,7 +120,7 @@ export default function AdminDashboardHeader({ onSidebarOpen, onLogoutOpen }: Ad
 						<DropdownMenuSeparator />
 						<div className="p-1 flex flex-col gap-y-0.5">
 							<DropdownMenuItem onSelect={() => setProfileOpen(true)}>
-								<button className="flex items-center gap-0.5 w-full">
+								<button className="flex items-center gap-1 w-full">
 									<IconWrapper>
 										<UserIcon />
 									</IconWrapper>
@@ -128,7 +128,7 @@ export default function AdminDashboardHeader({ onSidebarOpen, onLogoutOpen }: Ad
 								</button>
 							</DropdownMenuItem>
 							<DropdownMenuItem>
-								<Link to={_router.dashboard.settings} className="flex items-center gap-0.5 w-full">
+								<Link to={_router.dashboard.settings} className="flex items-center gap-1 w-full">
 									<IconWrapper>
 										<SettingIcon />
 									</IconWrapper>

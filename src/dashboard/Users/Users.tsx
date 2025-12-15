@@ -107,7 +107,6 @@ export default function Users() {
 	const total = paginationData?.total || 0;
 	const pages = paginationData?.totalPages || 1;
 
-	// Populate form values when a user is selected for editing
 	React.useEffect(() => {
 		if (!selectedUser) {
 			setFormValues({});
@@ -118,10 +117,10 @@ export default function Users() {
 
 		const stateOfOriginId = typeof user?.stateOfOrigin === "object" ? (user?.stateOfOrigin as Record<string, unknown>)?.id : user?.stateOfOrigin;
 		const roleId = typeof user?.role === "object" ? (user?.role as Record<string, unknown>)?.id : user?.role;
-		const accountTypeId = typeof user?.accountType === "object" ? (user?.accountType as Record<string, unknown>)?.id : user?.accountType;
+		const accountTypeId =
+			typeof user?.accountType === "object" ? (user?.accountType as Record<string, unknown>)?.id : user?.accountTypeId || user?.accountType;
 		const bankNameId = typeof user?.bankName === "object" ? (user?.bankName as Record<string, unknown>)?.id : user?.bankName;
 
-		// Get media URL for avatar display
 		let avatarUrl: string | null = null;
 		if (Array.isArray(user?.media) && (user?.media as unknown[])?.length > 0) {
 			const mediaItem = (user?.media as unknown[])[0] as Record<string, unknown>;

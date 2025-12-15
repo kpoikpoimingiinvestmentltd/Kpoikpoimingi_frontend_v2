@@ -65,6 +65,7 @@ export const API_ROUTES = {
 		getCustomerRegistrationById: (registrationId: string) => `/customer-registration/${registrationId}`,
 		updateCustomerRegistration: (id: string) => `/customer-registration/${id}`,
 		declineCustomerRegistration: (id: string) => `/customer-registration/${id}/decline`,
+		exportCustomerRegistrations: "/customer-registration/export/csv",
 	},
 	contractDocument: {
 		send: "/contract-document/send",
@@ -81,6 +82,7 @@ export const API_ROUTES = {
 		getAllContracts: "/contracts",
 		getAllContractDebts: "/contracts/debts",
 		getAllContractDebtsExport: "/contracts/debts/export/csv",
+		exportAllContracts: "/contracts/export/csv",
 		getContractHistory: (id: string) => `/contracts/${id}`,
 		getContractDebtDetails: (id: string) => `/contracts/debt/${id}`,
 		terminateContract: (id: string) => `/contracts/terminate/${id}`,
@@ -116,6 +118,7 @@ export const API_ROUTES = {
 		getIncomeEarned: (period: string) => `/reports/income-earned/${period}`,
 		getVatCollected: (period: string) => `/reports/vat-collected/${period}`,
 		getInterestPenalties: (period: string) => `/reports/interest-penalties/${period}`,
+		exportVATRecords: "/reports/export/csv",
 		getInterestPenaltiesExport: "/reports/interest-penalties/export/csv",
 		getPenalties: "/reports/penalties",
 	},

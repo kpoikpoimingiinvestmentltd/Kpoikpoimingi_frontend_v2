@@ -10,13 +10,15 @@ import { Link } from "react-router";
 import CompactPagination from "@/components/ui/compact-pagination";
 import React from "react";
 import EmptyData from "@/components/common/EmptyData";
-import ExportTrigger from "../../components/common/ExportTrigger";
-import { useGetAllContracts } from "@/api/contracts";
+import { useGetAllContracts, useExportAllContracts } from "@/api/contracts";
 import { TableSkeleton } from "@/components/common/Skeleton";
 import { useDebounceSearch } from "@/hooks/useDebounceSearch";
+import CsvExportModal from "@/components/common/CsvExportModal";
+import type { CsvField } from "@/components/common/CsvExportModal";
 
 export default function Contract() {
 	const [createOpen, setCreateOpen] = React.useState(false);
+	const [csvModalOpen, setCsvModalOpen] = React.useState(false);
 	const [page, setPage] = React.useState(1);
 	const [search, setSearch] = React.useState("");
 	const debouncedSearch = useDebounceSearch(search);
@@ -35,11 +37,60 @@ export default function Contract() {
 	const contracts = Array.isArray(dataTyped?.data) ? (dataTyped?.data as unknown[]) : [];
 	const paginationData = dataTyped?.pagination as Record<string, unknown> | undefined;
 	const pages = (paginationData?.totalPages as number) || 1;
+
+	const exportMutation = useExportAllContracts();
+
+	const contractCsvFields: CsvField[] = [
+		{
+			key: "statusId",
+			label: "Status",
+			type: "select",
+			options: [
+				{ value: "1", label: "Pending" },
+				{ value: "2", label: "Paused" },
+				{ value: "3", label: "Active" },
+				{ value: "4", label: "Completed" },
+				{ value: "5", label: "Terminated" },
+				{ value: "6", label: "Cancelled" },
+				{ value: "7", label: "Pending Down Payment" },
+			],
+		},
+		{ key: "search", label: "Search", type: "text", placeholder: "Contract code or name" },
+	];
+
+	const handleCsvExport = async (formData: Record<string, string>) => {
+		try {
+			const blob = await exportMutation.mutateAsync({
+				search: formData.search || undefined,
+				statusId: formData.statusId || undefined,
+			});
+			const url = URL.createObjectURL(blob);
+			return {
+				success: true,
+				downloadUrl: url,
+			};
+		} catch (err) {
+			console.error("Failed to export contracts:", err);
+			return {
+				success: false,
+				message: "Failed to export contracts",
+			};
+		}
+	};
 	return (
 		<div className="flex flex-col gap-y-6">
 			<div className="flex items-center justify-between flex-wrap gap-4 mb-4">
 				<PageTitles title="Contract" description="The contracts transaction between Kpo kpoi mingi investment and it customers" />
 				<div className="flex items-center gap-3">
+					<CsvExportModal
+						open={csvModalOpen}
+						onOpenChange={setCsvModalOpen}
+						title="Export Contracts As CSV"
+						subtitle="Filter contracts by status or search criteria"
+						fields={contractCsvFields}
+						onExport={handleCsvExport}
+						downloadFileName={`contracts-${new Date().toISOString().slice(0, 10)}.csv`}
+					/>
 					<button
 						type="button"
 						onClick={() => setCreateOpen(true)}
@@ -143,7 +194,6 @@ export default function Contract() {
 																		<EditIcon />
 																	</IconWrapper>
 																</Link>
-																<ExportTrigger className="text-primary" />
 															</div>
 														</TableCell>
 													</TableRow>
@@ -166,9 +216,10 @@ export default function Contract() {
 							</div>
 						</div>
 					)}
-					<CreateContractModal open={createOpen} onOpenChange={setCreateOpen} />
 				</div>
 			</CustomCard>
+
+			<CreateContractModal open={createOpen} onOpenChange={setCreateOpen} />
 		</div>
 	);
 }

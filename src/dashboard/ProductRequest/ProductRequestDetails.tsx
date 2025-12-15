@@ -12,12 +12,12 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useParams, useNavigate } from "react-router";
 import { _router } from "@/routes/_router";
-import ExportTrigger from "@/components/common/ExportTrigger";
 import TabProductInformation from "./TabProductInformation";
 import TabCustomerDetails from "./TabCustomerDetails";
 import TabNextOfKin from "./TabNextOfKin";
 import TabEmploymentDetails from "./TabEmploymentDetails";
 import TabGuarantorDetails from "./TabGuarantorDetails";
+import TabFullPaymentDetails from "./TabFullPaymentDetails";
 import { EditIcon, IconWrapper } from "@/assets/icons";
 import EditProductRequest from "./EditProductRequestModal";
 
@@ -30,14 +30,15 @@ export default function ProductRequestDetails() {
 
 	const { data: registrationData, isLoading: registrationLoading } = useGetProductRequestById(id || "");
 
-	const showApprove = registrationData
-		? ((registrationData as Record<string, unknown>).isContractSent as boolean) &&
-		  !((registrationData as Record<string, unknown>).approved as boolean)
-		: false;
-	const showSendContract = registrationData
-		? !((registrationData as Record<string, unknown>).isContractSent as boolean) &&
-		  !((registrationData as Record<string, unknown>).approved as boolean)
-		: false;
+	const paymentTypeId = (registrationData as Record<string, unknown>)?.paymentTypeId as number;
+	const isContractSent = (registrationData as Record<string, unknown>)?.isContractSent as boolean;
+	const isApproved = (registrationData as Record<string, unknown>)?.approved as boolean;
+
+	// For Hire Purchase (1): Show approve only if contract is sent and not approved
+	// For Full Payment (2): Show approve directly if not approved
+	const showApprove = registrationData ? (paymentTypeId === 2 ? !isApproved : isContractSent && !isApproved) : false;
+
+	const showSendContract = registrationData ? !isContractSent && !isApproved && paymentTypeId === 1 : false;
 
 	const queryClient = useQueryClient();
 
@@ -150,10 +151,12 @@ export default function ProductRequestDetails() {
 	return (
 		<PageWrapper>
 			<div className="flex items-center justify-between flex-wrap gap-4">
-				<PageTitles title="Product Request (Hire purchase)" description="This is all the product request from customers" />
+				<PageTitles
+					title={`Product Request (${(registrationData as Record<string, unknown>)?.paymentTypeId === 1 ? "Hire Purchase" : "Full Payment"})`}
+					description="This is all the product request from customers"
+				/>
 
 				<div className="flex items-center flex-wrap gap-3">
-					<ExportTrigger className="text-primary" />
 					<ActionButton
 						variant="ghost"
 						className="underline px-1"
@@ -219,53 +222,65 @@ export default function ProductRequestDetails() {
 					</div>
 				</div>
 			)}
-			<CustomCard className="p-4 sm:p-6 border-0">
-				<Tabs defaultValue="information">
-					<TabsList className={tabListStyle}>
-						<TabsTrigger value="information" className={tabStyle}>
-							Property Details
-						</TabsTrigger>
-						<TabsTrigger value="customer" className={tabStyle}>
-							Customer Details
-						</TabsTrigger>
-						<TabsTrigger value="kin" className={tabStyle}>
-							Next of Kin
-						</TabsTrigger>
-						<TabsTrigger value="employment" className={tabStyle}>
-							Employment Details
-						</TabsTrigger>
-						<TabsTrigger value="guarantor" className={tabStyle}>
-							Guarantor Details
-						</TabsTrigger>
-					</TabsList>
+			{/* Full Payment Details UI */}
+			{(registrationData as Record<string, unknown>)?.paymentTypeId === 2 ? (
+				<CustomCard className="p-4 sm:p-6 border-0">
+					<TabFullPaymentDetails
+						data={displayedData as Record<string, unknown>}
+						loading={registrationLoading}
+						onPropertyAdded={handlePropertyAdded}
+					/>
+				</CustomCard>
+			) : (
+				/* Hire Purchase Details UI */
+				<CustomCard className="p-4 sm:p-6 border-0">
+					<Tabs defaultValue="information">
+						<TabsList className={tabListStyle}>
+							<TabsTrigger value="information" className={tabStyle}>
+								Property Details
+							</TabsTrigger>
+							<TabsTrigger value="customer" className={tabStyle}>
+								Customer Details
+							</TabsTrigger>
+							<TabsTrigger value="kin" className={tabStyle}>
+								Next of Kin
+							</TabsTrigger>
+							<TabsTrigger value="employment" className={tabStyle}>
+								Employment Details
+							</TabsTrigger>
+							<TabsTrigger value="guarantor" className={tabStyle}>
+								Guarantor Details
+							</TabsTrigger>
+						</TabsList>
 
-					<div className="mt-6">
-						<TabsContent value="information">
-							<TabProductInformation
-								data={displayedData as Record<string, unknown>}
-								loading={registrationLoading}
-								onPropertyAdded={handlePropertyAdded}
-							/>
-						</TabsContent>
+						<div className="mt-6">
+							<TabsContent value="information">
+								<TabProductInformation
+									data={displayedData as Record<string, unknown>}
+									loading={registrationLoading}
+									onPropertyAdded={handlePropertyAdded}
+								/>
+							</TabsContent>
 
-						<TabsContent value="customer">
-							<TabCustomerDetails data={displayedData as Record<string, unknown>} />
-						</TabsContent>
+							<TabsContent value="customer">
+								<TabCustomerDetails data={displayedData as Record<string, unknown>} />
+							</TabsContent>
 
-						<TabsContent value="kin">
-							<TabNextOfKin data={displayedData as Record<string, unknown>} />
-						</TabsContent>
+							<TabsContent value="kin">
+								<TabNextOfKin data={displayedData as Record<string, unknown>} />
+							</TabsContent>
 
-						<TabsContent value="employment">
-							<TabEmploymentDetails data={displayedData as Record<string, unknown>} />
-						</TabsContent>
+							<TabsContent value="employment">
+								<TabEmploymentDetails data={displayedData as Record<string, unknown>} />
+							</TabsContent>
 
-						<TabsContent value="guarantor">
-							<TabGuarantorDetails data={displayedData as Record<string, unknown>} />
-						</TabsContent>
-					</div>
-				</Tabs>
-			</CustomCard>
+							<TabsContent value="guarantor">
+								<TabGuarantorDetails data={displayedData as Record<string, unknown>} />
+							</TabsContent>
+						</div>
+					</Tabs>
+				</CustomCard>
+			)}
 			<ConfirmModal
 				open={confirmOpen}
 				onOpenChange={(o) => setConfirmOpen(o)}

@@ -30,7 +30,7 @@ export const labelStyle = (style?: string) => {
 };
 
 export const selectTriggerStyle = (style?: string) => {
-	return twMerge(inputStyle, "min-h-11", style);
+	return twMerge(inputStyle, "min-h-11 text-sm", style);
 };
 
 export const modalContentStyle = (style?: string) => {
