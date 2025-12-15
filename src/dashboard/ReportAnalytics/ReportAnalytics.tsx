@@ -165,7 +165,7 @@ export default function ReportAnalytics() {
 		{
 			id: "income",
 			title: "Total Income Earned",
-			value: incomeData?.totalIncomeEarned || 0,
+			value: (incomeData?.totalIncomeEarned || 0).toFixed(2),
 			currency: "NGN",
 			variant: "income" as const,
 			loading: isIncomeLoading,
@@ -175,7 +175,7 @@ export default function ReportAnalytics() {
 		{
 			id: "vat",
 			title: "Total VAT Collected",
-			value: vatCollectedData?.totalVatCollected || 0,
+			value: (vatCollectedData?.totalVatCollected || 0).toFixed(2),
 			currency: "NGN",
 			variant: "income" as const,
 			loading: isVatCollectedLoading,
@@ -185,7 +185,7 @@ export default function ReportAnalytics() {
 		{
 			id: "interest",
 			title: "Total Interest Penalties",
-			value: interestPenaltiesData?.totalInterestPenalties || 0,
+			value: (interestPenaltiesData?.totalInterestPenalties || 0).toFixed(2),
 			currency: "NGN",
 			variant: "income" as const,
 			loading: isInterestPenaltiesLoading,
