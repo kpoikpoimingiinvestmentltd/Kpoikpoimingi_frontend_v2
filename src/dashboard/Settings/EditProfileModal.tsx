@@ -425,23 +425,8 @@ export default function EditProfileModal({ open, onOpenChange }: { open: boolean
 								/>
 							</div>
 
-							<div>
-								<Controller
-									control={control}
-									name="salaryAmount"
-									render={({ field }) => (
-										<CustomInput
-											label="Salary Amount"
-											labelClassName="block text-sm text-muted-foreground mb-2"
-											value={field.value ?? ""}
-											onChange={(e) => field.onChange(e)}
-											error={errors.salaryAmount?.message}
-										/>
-									)}
-								/>
-							</div>
-
-							<div>
+							{/* Hidden Fields: Salary Amount, Account Type, Bank Name */}
+							<div className="hidden">
 								<Controller
 									control={control}
 									name="dateOfBirth"
@@ -474,22 +459,37 @@ export default function EditProfileModal({ open, onOpenChange }: { open: boolean
 								/>
 							</div>
 
-							<div>
+							<div className="hidden">
+								<label className="text-sm block mb-2">Salary Amount</label>
+								<Controller
+									control={control}
+									name="salaryAmount"
+									render={({ field }) => (
+										<CustomInput
+											label="Salary Amount"
+											labelClassName="block text-sm text-muted-foreground mb-2"
+											type="number"
+											value={field.value ?? ""}
+											onChange={(e) => field.onChange(e.target.value)}
+											error={errors.salaryAmount?.message}
+										/>
+									)}
+								/>
+							</div>
+
+							<div className="hidden">
 								<label className="text-sm block mb-2">Account Type</label>
 								<Controller
 									control={control}
 									name="accountTypeId"
 									render={({ field }) => (
 										<Select value={field.value ?? "none"} onValueChange={(v) => field.onChange(v === "none" ? "" : v)}>
-											<SelectTrigger className={twMerge(inputStyle, "min-h-11 text-sm")}>
+											<SelectTrigger className={twMerge(inputStyle, "min-h-11")}>
 												<SelectValue placeholder="Select account type" />
 											</SelectTrigger>
 											<SelectContent>
 												{accountCandidates.length === 0 ? (
-													<>
-														<SelectItem value="savings">Savings</SelectItem>
-														<SelectItem value="current">Current</SelectItem>
-													</>
+													<SelectItem value="none">Select</SelectItem>
 												) : (
 													accountCandidates.map((a) => (
 														<SelectItem key={a.key} value={a.key} className="text-sm capitalize">
@@ -503,7 +503,7 @@ export default function EditProfileModal({ open, onOpenChange }: { open: boolean
 								/>
 							</div>
 
-							<div>
+							<div className="hidden">
 								<label className="text-sm block mb-2">Bank Name</label>
 								<Controller
 									control={control}

@@ -26,7 +26,7 @@ export const generatePDF = async (element: HTMLElement, filename: string, isForS
 		const canvas = await html2canvas(element, {
 			useCORS: true,
 			allowTaint: true,
-			scale: 1.5,
+			scale: 1.3,
 			backgroundColor: "#ffffff",
 			logging: false,
 			onclone: (clonedDocument) => {
@@ -57,11 +57,13 @@ export const generatePDF = async (element: HTMLElement, filename: string, isForS
 
 		const pdf = new jsPDF("p", "mm", "a4");
 		const pdfWidth = pdf.internal.pageSize.getWidth();
+		const margin = 10;
+		const contentWidth = pdfWidth - margin * 2;
 
-		const imgHeight = (canvas.height * pdfWidth) / canvas.width;
+		const imgHeight = (canvas.height * contentWidth) / canvas.width;
 		const imgData = canvas.toDataURL("image/jpeg", 0.85);
 
-		pdf.addImage(imgData, "JPEG", 0, 0, pdfWidth, imgHeight);
+		pdf.addImage(imgData, "JPEG", margin, margin, contentWidth, imgHeight);
 
 		if (isForSharing) {
 			const pdfBlob = pdf.output("blob");
@@ -128,8 +130,21 @@ export const handleSendPDFViaEmail = async (element: HTMLElement, receiptId: str
 			return false;
 		}
 
+		// Convert PDF to base64
+		const reader = new FileReader();
+		const pdfBase64 = await new Promise<string>((resolve, reject) => {
+			reader.onload = () => {
+				const result = reader.result as string;
+				// Extract base64 string (remove data:application/pdf;base64, prefix)
+				const base64String = result.split(",")[1];
+				resolve(base64String);
+			};
+			reader.onerror = reject;
+			reader.readAsDataURL(pdfFile);
+		});
+
 		// Send PDF via API endpoint
-		await sendReceiptPdfToEmail(receiptId, pdfFile, recipientEmail);
+		await sendReceiptPdfToEmail(receiptId, pdfBase64, recipientEmail);
 
 		toast.dismiss(loadingToastId);
 		toast.success("Receipt sent via email successfully!");

@@ -131,7 +131,7 @@ export default function ReceiptContent({ receipt }: ReceiptContentProps) {
 				{/* Payment Breakdown Section */}
 				<section className="mt-6 flex flex-col gap-y-4">
 					<header className="flex items-center justify-between bg-primary/10 px-4 md:px-6 py-2.5 rounded-md">
-						<h5 className="text-start text-xs sm:text-base">Payment Breakdown</h5>
+						<h5 className="text-start text-xs sm:text-sm font-medium">Payment Breakdown</h5>
 						<span className="text-xs sm:text-sm text-end font-medium">
 							Payment duration ({receipt.contract?.durationValue ?? receipt.totalInstallments ?? "-"}{" "}
 							{receipt.contract?.durationUnit?.duration?.toLowerCase() === "weeks" ? "weeks" : "months"})

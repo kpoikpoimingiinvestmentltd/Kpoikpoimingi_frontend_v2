@@ -11,7 +11,7 @@ import {
 import { ChevronLeftIcon, IconWrapper, LogoutIcon, MenuIcon, NotificationIcon, ReceiptPlusIcon, SettingIcon, UserIcon } from "@/assets/icons";
 import { useGetCurrentUser } from "@/api/user";
 import { useGetUnreadNotificationCount } from "@/api/notifications";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { AvatarSkeleton, RectangleSkeleton } from "@/components/common/Skeleton";
 import GenerateReceiptModal from "@/dashboard/Receipt/GenerateReceiptModal";
 import EditProfileModal from "@/dashboard/Settings/EditProfileModal";
@@ -210,13 +210,27 @@ function UserAvatarContent() {
 
 	return (
 		<div className="flex items-center gap-3">
-			<Avatar className="w-9 h-9">
-				<AvatarImage
-					src={typeof (data as Record<string, unknown>).media === "string" ? ((data as Record<string, unknown>).media as string) : undefined}
-					alt={`${name}'s avatar`}
-				/>
-				<AvatarFallback>{initials}</AvatarFallback>
-			</Avatar>
+			<div className="w-9 h-9 rounded-full overflow-hidden relative flex-shrink-0">
+				{(() => {
+					const media = (data as Record<string, unknown>).media;
+					let src: string | undefined | null = undefined;
+					if (Array.isArray(media) && media.length > 0) {
+						src = (media[0] as Record<string, unknown>)?.fileUrl as string | undefined;
+					} else if (typeof media === "string") {
+						src = media as string;
+					} else if (media && typeof (media as Record<string, unknown>).fileUrl === "string") {
+						src = ((media as Record<string, unknown>).fileUrl as string) || undefined;
+					}
+
+					return src ? (
+						<img src={src} alt={`${name}'s avatar`} className="w-full h-full object-cover" />
+					) : (
+						<Avatar className="w-full h-full">
+							<AvatarFallback>{initials}</AvatarFallback>
+						</Avatar>
+					);
+				})()}
+			</div>
 			<div className="hidden sm:flex flex-col items-start">
 				<span className="text-sm font-medium text-nowrap">{name}</span>
 				<span className="text-xs text-gray-400">{role}</span>

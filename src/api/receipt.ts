@@ -57,20 +57,18 @@ export function useSendReceiptToEmail() {
 	});
 }
 
-export async function sendReceiptPdfToEmail(id: string, pdfFile: File, recipientEmail?: string) {
-	const formData = new FormData();
-	formData.append("pdf", pdfFile);
-	if (recipientEmail) {
-		formData.append("recipientEmail", recipientEmail);
-	}
-
+export async function sendReceiptPdfToEmail(id: string, pdfBase64: string, recipientEmail?: string) {
 	const url = API_ROUTES.receipt.sendToEmail(id);
-	return apiPost(url, formData) as Promise<any>;
+	const payload = {
+		pdfBase64,
+		...(recipientEmail && { recipientEmail }),
+	};
+	return apiPost(url, payload) as Promise<any>;
 }
 
 export function useSendReceiptPdfToEmail() {
 	return useMutation({
-		mutationFn: ({ id, pdfFile, recipientEmail }: { id: string; pdfFile: File; recipientEmail?: string }) =>
-			sendReceiptPdfToEmail(id, pdfFile, recipientEmail),
+		mutationFn: ({ id, pdfBase64, recipientEmail }: { id: string; pdfBase64: string; recipientEmail?: string }) =>
+			sendReceiptPdfToEmail(id, pdfBase64, recipientEmail),
 	});
 }
