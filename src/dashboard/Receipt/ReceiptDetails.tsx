@@ -47,10 +47,6 @@ export default function ReceiptDetails() {
 		);
 	}
 
-	const handlePrint = () => {
-		window.print();
-	};
-
 	const handleDownloadPDF = async () => {
 		await downloadPDF(receiptRef.current!, receipt.receiptNumber, receipt.id);
 	};
@@ -66,7 +62,6 @@ export default function ReceiptDetails() {
 				emailSubject="Receipt from Kpoikpoimingi"
 				emailBody="Please find attached the receipt."
 				onDownload={handleDownloadPDF}
-				onPrint={handlePrint}
 				onShare={handleSharePDF}
 				receiptId={id}>
 				<ReceiptContent receipt={receipt} />
