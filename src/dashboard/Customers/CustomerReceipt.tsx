@@ -1,5 +1,5 @@
 import { useRef } from "react";
-import { useSearchParams } from "react-router";
+import { useParams, useSearchParams } from "react-router";
 import CustomCard from "@/components/base/CustomCard";
 import ReceiptWrapper from "@/components/common/ReceiptWrapper";
 import ReceiptContent from "@/components/common/ReceiptContent";
@@ -9,8 +9,11 @@ import type { ReceiptDetail } from "@/types/receipt";
 import { handleDownloadPDF as downloadPDF, handleSharePDF as sharePDF } from "@/utils/pdfUtils";
 
 export default function CustomerReceipt() {
+	const params = useParams();
 	const [searchParams] = useSearchParams();
-	const receiptId = searchParams.get("receiptId") ?? undefined;
+
+	// Get receipt ID from either query params or path params
+	const receiptId = searchParams.get("receiptId") ?? params.id ?? undefined;
 	const { data, isLoading } = useGetReceiptById(receiptId);
 	const receipt: ReceiptDetail | null = data ?? null;
 	const receiptRef = useRef<HTMLDivElement>(null);
@@ -64,7 +67,8 @@ export default function CustomerReceipt() {
 				emailBody="Please find attached the receipt."
 				onDownload={handleDownloadPDF}
 				onPrint={handlePrint}
-				onShare={handleSharePDF}>
+				onShare={handleSharePDF}
+				receiptId={receiptId}>
 				<ReceiptContent receipt={receipt} />
 			</ReceiptWrapper>
 		</div>

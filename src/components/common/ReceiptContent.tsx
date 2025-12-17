@@ -34,7 +34,7 @@ export default function ReceiptContent({ receipt }: ReceiptContentProps) {
 			<>
 				<ReceiptHeader receiptNumber={receipt.receiptNumber ?? receipt.id} />
 				<main className="flex-grow">
-					<section className="flex flex-col gap-y-3 my-6">
+					<section className="flex flex-col gap-y-1 my-6">
 						<h3 className="text-center text-lg font-medium text-primary mb-4">Invoice With Full Payment</h3>
 						<KeyValueRow label="Name" value={receipt.customer?.fullName ?? receipt.id ?? "-"} />
 						<KeyValueRow label="Email" value={receipt.customer?.email ?? "-"} />
@@ -58,7 +58,7 @@ export default function ReceiptContent({ receipt }: ReceiptContentProps) {
 							<h5 className="text-start font-medium">Payment Breakdown</h5>
 							<span className="text-sm text-end font-medium">Payment duration (One time)</span>
 						</header>
-						<CustomCard className="grid grid-cols-1 gap-y-3 px-4 py-5 bg-card border-0">
+						<CustomCard className="grid grid-cols-1 gap-y-1 px-4 py-5 bg-card border-0">
 							<KeyValueRow
 								label="Property Name"
 								value={receipt.contract?.property?.name ?? receipt.propertyName ?? "-"}
@@ -137,7 +137,7 @@ export default function ReceiptContent({ receipt }: ReceiptContentProps) {
 							{receipt.contract?.durationUnit?.duration?.toLowerCase() === "weeks" ? "weeks" : "months"})
 						</span>
 					</header>
-					<CustomCard className="grid grid-cols-1 gap-y-3 px-4 py-5 bg-card border-0">
+					<CustomCard className="grid grid-cols-1 gap-y-1 px-4 py-5 bg-card border-0">
 						<KeyValueRow
 							label="Property Name"
 							value={receipt.contract?.property?.name ?? receipt.propertyName ?? "-"}
@@ -202,7 +202,7 @@ export default function ReceiptContent({ receipt }: ReceiptContentProps) {
 				</section>
 
 				{/* Next Payment Information */}
-				<section className="md:w-11/12 mx-auto mt-8 text-center py-4 px-4">
+				<section className="md:w-11/12 mx-auto mt-4 text-center py-4 px-4">
 					<p className="text-xs sm:text-[.9rem] text-gray-700">
 						Next payment is due on the{" "}
 						<span className="font-semibold">{receipt.nextPaymentDate ? new Date(receipt.nextPaymentDate).toLocaleDateString("en-GB") : "-"}</span>.

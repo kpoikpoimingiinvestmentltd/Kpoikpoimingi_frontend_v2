@@ -1,7 +1,7 @@
 import CustomCard from "@/components/base/CustomCard";
 import ReceiptWrapper from "@/components/common/ReceiptWrapper";
 import ReceiptContent from "@/components/common/ReceiptContent";
-import { useParams } from "react-router";
+import { useParams, useSearchParams } from "react-router";
 import { useGetReceiptById } from "@/api/receipt";
 import { CardSkeleton, RectangleSkeleton } from "@/components/common/Skeleton";
 import type { ReceiptDetail } from "@/types/receipt";
@@ -10,7 +10,10 @@ import { handleDownloadPDF as downloadPDF, handleSharePDF as sharePDF } from "@/
 
 export default function ReceiptDetails() {
 	const params = useParams();
-	const id = params.id ?? undefined;
+	const [searchParams] = useSearchParams();
+
+	// Get receipt ID from either path params or query params
+	const id = searchParams.get("receiptId") ?? params.id ?? undefined;
 	const { data, isLoading } = useGetReceiptById(id);
 	const receipt: ReceiptDetail | null = data ?? null;
 	const receiptRef = useRef<HTMLDivElement>(null);
