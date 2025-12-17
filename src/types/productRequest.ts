@@ -62,4 +62,6 @@ export type PropertyInterest = {
 
 export type CustomerRegistration = {
 	propertyInterestRequest?: PropertyInterest[];
+	purposeOfProperty?: string;
+	[key: string]: unknown;
 };

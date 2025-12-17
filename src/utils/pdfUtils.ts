@@ -1,6 +1,7 @@
 import { toast } from "sonner";
 import html2canvas from "html2canvas";
 import { jsPDF } from "jspdf";
+import { sendReceiptPdfToEmail } from "@/api/receipt";
 
 export const generatePDF = async (element: HTMLElement, filename: string, isForSharing = false) => {
 	if (!element) return null;
@@ -9,22 +10,15 @@ export const generatePDF = async (element: HTMLElement, filename: string, isForS
 		const styleEl = document.createElement("style");
 		styleEl.id = isForSharing ? "pdf-color-override-share" : "pdf-color-override";
 		styleEl.textContent = `
-			* {
-				color: inherit !important;
-				border-color: ${isForSharing ? "transparent" : "inherit"} !important;
-			}
 			.receipt-content {
 				border: none !important;
 				box-shadow: none !important;
 				display: flex;
 				flex-direction: column;
 			}
-			[class*="CustomCard"] {
-				border: none !important;
-				background-color: #f5f5f5 !important;
-			}
-			[class*="bg-\\["] {
-				background-color: rgba(3, 180, 250, 0.2) !important;
+			table tr td, table tr th {
+				vertical-align: middle !important;
+				padding: 8px !important;
 			}
 		`;
 		document.head.appendChild(styleEl);
@@ -36,13 +30,24 @@ export const generatePDF = async (element: HTMLElement, filename: string, isForS
 			backgroundColor: "#ffffff",
 			logging: false,
 			onclone: (clonedDocument) => {
-				// Remove oklch colors by setting fallback hex colors
 				const allElements = clonedDocument.querySelectorAll("*");
 				allElements.forEach((el) => {
+					const htmlEl = el as HTMLElement;
 					const styles = window.getComputedStyle(el);
+
 					const bgColor = styles.backgroundColor;
-					if (bgColor && bgColor.includes("oklch")) {
-						(el as HTMLElement).style.backgroundColor = "#f5f5f5";
+					if (bgColor && (bgColor.includes("oklch") || bgColor.includes("oklab"))) {
+						htmlEl.style.backgroundColor = "#f3fbff";
+					}
+
+					const textColor = styles.color;
+					if (textColor && (textColor.includes("oklch") || textColor.includes("oklab"))) {
+						htmlEl.style.color = "#1f2937";
+					}
+
+					const borderColor = styles.borderColor;
+					if (borderColor && (borderColor.includes("oklch") || borderColor.includes("oklab"))) {
+						htmlEl.style.borderColor = "#d1d5db";
 					}
 				});
 			},
@@ -52,22 +57,11 @@ export const generatePDF = async (element: HTMLElement, filename: string, isForS
 
 		const pdf = new jsPDF("p", "mm", "a4");
 		const pdfWidth = pdf.internal.pageSize.getWidth();
-		const pdfHeight = pdf.internal.pageSize.getHeight();
 
-		// Scale image to fit on a single page
 		const imgHeight = (canvas.height * pdfWidth) / canvas.width;
 		const imgData = canvas.toDataURL("image/jpeg", 0.85);
 
-		if (imgHeight <= pdfHeight) {
-			// Fits on one page
-			pdf.addImage(imgData, "JPEG", 0, 0, pdfWidth, imgHeight);
-		} else {
-			// Scale down to fit on one page
-			const scale = pdfHeight / imgHeight;
-			const scaledHeight = pdfHeight;
-			const scaledWidth = pdfWidth * scale;
-			pdf.addImage(imgData, "JPEG", 0, 0, scaledWidth, scaledHeight);
-		}
+		pdf.addImage(imgData, "JPEG", 0, 0, pdfWidth, imgHeight);
 
 		if (isForSharing) {
 			const pdfBlob = pdf.output("blob");
@@ -110,5 +104,41 @@ export const handleSharePDF = async (element: HTMLElement, receiptNumber?: strin
 			const errMsg = err instanceof Error ? err.message : String(err);
 			toast.error(`Sharing failed: ${errMsg}`);
 		}
+	}
+};
+
+export const handleSendPDFViaEmail = async (element: HTMLElement, receiptId: string, receiptNumber?: string | number, recipientEmail?: string) => {
+	if (!element) {
+		toast.error("Receipt element not found");
+		return false;
+	}
+
+	try {
+		// Show loading state
+		const loadingToastId = toast.loading("Generating and sending receipt...");
+
+		const filename = `receipt-${receiptNumber || receiptId || "unknown"}.pdf`;
+
+		// Generate PDF file
+		const pdfFile = await generatePDF(element, filename, true);
+
+		if (!pdfFile) {
+			toast.dismiss(loadingToastId);
+			toast.error("Failed to generate PDF");
+			return false;
+		}
+
+		// Send PDF via API endpoint
+		await sendReceiptPdfToEmail(receiptId, pdfFile, recipientEmail);
+
+		toast.dismiss(loadingToastId);
+		toast.success("Receipt sent via email successfully!");
+		return true;
+	} catch (err) {
+		const errMsg = err instanceof Error ? err.message : String(err);
+		console.error("Failed to send receipt via email:", errMsg, err);
+		toast.dismiss();
+		toast.error(`Failed to send receipt: ${errMsg}`);
+		return false;
 	}
 };

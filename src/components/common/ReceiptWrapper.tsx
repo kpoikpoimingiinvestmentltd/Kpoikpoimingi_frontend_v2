@@ -3,7 +3,9 @@ import CustomCard from "@/components/base/CustomCard";
 import Image from "@/components/base/Image";
 import { media } from "@/resources/images";
 import ReceiptActions from "@/components/common/ReceiptActions";
-import React from "react";
+import React, { useCallback } from "react";
+import { handleSendPDFViaEmail } from "@/utils/pdfUtils";
+import { toast } from "sonner";
 
 // Add print styles to center receipt on A4
 const printStyles = `
@@ -63,8 +65,6 @@ const printStyles = `
 
 export default function ReceiptWrapper({
 	children,
-	emailSubject,
-	emailBody,
 	shouldPrint = true,
 	shouldShare = true,
 	shouldDownload = true,
@@ -72,6 +72,7 @@ export default function ReceiptWrapper({
 	onPrint,
 	onShare,
 	contentRef,
+	receiptId,
 }: {
 	children: React.ReactNode;
 	emailSubject?: string;
@@ -83,6 +84,7 @@ export default function ReceiptWrapper({
 	onPrint?: () => void;
 	onShare?: () => void;
 	contentRef?: React.Ref<HTMLDivElement>;
+	receiptId?: string;
 }) {
 	const handlePrint = () => {
 		if (onPrint) {
@@ -92,15 +94,31 @@ export default function ReceiptWrapper({
 		}
 	};
 
+	const handleEmailSend = useCallback(async () => {
+		if (!receiptId) {
+			toast.error("Receipt ID not available");
+			return;
+		}
+
+		if (!contentRef || !(contentRef as any)?.current) {
+			toast.error("Receipt content not available");
+			return;
+		}
+
+		// Generate PDF and send via API endpoint
+		const success = await handleSendPDFViaEmail((contentRef as any).current, receiptId);
+
+		if (!success) {
+			// Error toast is already handled in handleSendPDFViaEmail
+			return;
+		}
+	}, [receiptId, contentRef]);
+
 	const shareItems = [
 		{
 			label: "Email",
 			src: media.images.gmail,
-			onSelect: () => {
-				const subject = encodeURIComponent(emailSubject ?? "Receipt from Kpoikpoimingi");
-				const body = encodeURIComponent(emailBody ?? "Please find attached the receipt.");
-				window.open(`mailto:?subject=${subject}&body=${body}`, "_blank");
-			},
+			onSelect: handleEmailSend,
 		},
 		{
 			label: "Whatsapp",
@@ -118,22 +136,6 @@ export default function ReceiptWrapper({
 				window.open(`https://wa.me/?text=${text}`, "_blank");
 			},
 		},
-		// Share PDF action will call the provided onShare handler if available
-		...(onShare
-			? [
-					{
-						label: "Share PDF",
-						src: media.images.pdfImage,
-						onSelect: () => {
-							try {
-								onShare();
-							} catch (e) {
-								// swallow
-							}
-						},
-					},
-			  ]
-			: []),
 	];
 
 	return (

@@ -115,18 +115,18 @@ export default function Profile() {
 							leftClassName="text-sm text-muted-foreground"
 							rightClassName="text-right"
 						/>
-						<KeyValueRow
-							label="Account Number"
-							value={(user as Record<string, unknown>).accountNumber as string}
-							leftClassName="text-sm text-muted-foreground"
-							rightClassName="text-right"
-						/>
-						<KeyValueRow
-							label="Salary Amount"
-							value={(user as Record<string, unknown>).salaryAmount as string}
-							leftClassName="text-sm text-muted-foreground"
-							rightClassName="text-right"
-						/>
+						{/* <KeyValueRow
+						label="Account Number"
+						value={(user as Record<string, unknown>).accountNumber as string}
+						leftClassName="text-sm text-muted-foreground"
+						rightClassName="text-right"
+					/>
+					<KeyValueRow
+						label="Salary Amount"
+						value={(user as Record<string, unknown>).salaryAmount as string}
+						leftClassName="text-sm text-muted-foreground"
+						rightClassName="text-right"
+					/> */}
 						<KeyValueRow
 							label="Date of Birth"
 							value={
@@ -149,12 +149,12 @@ export default function Profile() {
 							leftClassName="text-sm text-muted-foreground"
 							rightClassName="text-right"
 						/>
-						<KeyValueRow
-							label="Bank Name"
-							value={((user as Record<string, unknown>).bankName as Record<string, unknown>)?.name as string}
-							leftClassName="text-sm text-muted-foreground"
-							rightClassName="text-right"
-						/>
+						{/* <KeyValueRow
+						label="Bank Name"
+						value={((user as Record<string, unknown>).bankName as Record<string, unknown>)?.name as string}
+						leftClassName="text-sm text-muted-foreground"
+						rightClassName="text-right"
+					/> */}
 						<KeyValueRow
 							label="State of Origin"
 							value={((user as Record<string, unknown>).stateOfOrigin as Record<string, unknown>)?.state as string}

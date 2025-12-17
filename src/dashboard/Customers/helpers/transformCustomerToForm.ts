@@ -189,7 +189,11 @@ export function transformCustomerToOnceForm(customer: unknown): OncePaymentForm 
 		numberOfProperties: String(propsArr.length || 0),
 		properties: propsArr.map((prop) => {
 			const p = prop && typeof prop === "object" ? (prop as Record<string, unknown>) : {};
-			return { propertyName: (p.customPropertyName || "") as string, quantity: (p.quantity as number) || 1 };
+			const nestedProperty = p.property && typeof p.property === "object" ? (p.property as Record<string, unknown>) : {};
+			return {
+				propertyName: (p.customPropertyName || nestedProperty.name || "") as string,
+				quantity: (p.quantity as number) || 1,
+			};
 		}),
 	};
 }

@@ -34,8 +34,6 @@ export default function ProductRequestDetails() {
 	const isContractSent = (registrationData as Record<string, unknown>)?.isContractSent as boolean;
 	const isApproved = (registrationData as Record<string, unknown>)?.approved as boolean;
 
-	// For Hire Purchase (1): Show approve only if contract is sent and not approved
-	// For Full Payment (2): Show approve directly if not approved
 	const showApprove = registrationData ? (paymentTypeId === 2 ? !isApproved : isContractSent && !isApproved) : false;
 
 	const showSendContract = registrationData ? !isContractSent && !isApproved && paymentTypeId === 1 : false;

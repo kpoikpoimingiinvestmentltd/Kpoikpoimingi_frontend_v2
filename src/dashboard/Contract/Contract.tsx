@@ -13,12 +13,14 @@ import EmptyData from "@/components/common/EmptyData";
 import { useGetAllContracts, useExportAllContracts } from "@/api/contracts";
 import { TableSkeleton } from "@/components/common/Skeleton";
 import { useDebounceSearch } from "@/hooks/useDebounceSearch";
-import CsvExportModal from "@/components/common/CsvExportModal";
-import type { CsvField } from "@/components/common/CsvExportModal";
+import ExportConfirmModal from "@/components/common/ExportConfirmModal";
+import ActionButton from "@/components/base/ActionButton";
+import { toast } from "sonner";
+import { extractErrorMessage } from "@/lib/utils";
 
 export default function Contract() {
 	const [createOpen, setCreateOpen] = React.useState(false);
-	const [csvModalOpen, setCsvModalOpen] = React.useState(false);
+	const [exportConfirmOpen, setExportConfirmOpen] = React.useState(false);
 	const [page, setPage] = React.useState(1);
 	const [search, setSearch] = React.useState("");
 	const debouncedSearch = useDebounceSearch(search);
@@ -40,41 +42,92 @@ export default function Contract() {
 
 	const exportMutation = useExportAllContracts();
 
-	const contractCsvFields: CsvField[] = [
-		{
-			key: "statusId",
-			label: "Status",
-			type: "select",
-			options: [
-				{ value: "1", label: "Pending" },
-				{ value: "2", label: "Paused" },
-				{ value: "3", label: "Active" },
-				{ value: "4", label: "Completed" },
-				{ value: "5", label: "Terminated" },
-				{ value: "6", label: "Cancelled" },
-				{ value: "7", label: "Pending Down Payment" },
-			],
-		},
-		{ key: "search", label: "Search", type: "text", placeholder: "Contract code or name" },
-	];
+	const statusMap: Record<string, string> = {
+		"1": "Pending",
+		"2": "Paused",
+		"3": "Active",
+		"4": "Completed",
+		"5": "Terminated",
+		"6": "Cancelled",
+		"7": "Pending Down Payment",
+	};
 
-	const handleCsvExport = async (formData: Record<string, string>) => {
+	const hasActiveFilters = Boolean(debouncedSearch || filters.statusId);
+
+	const getFilterLabels = () => {
+		const labels: Record<string, string> = {};
+		if (filters.statusId) {
+			labels["Status"] = statusMap[filters.statusId] || filters.statusId;
+		}
+		return labels;
+	};
+
+	const handleExportClick = async () => {
+		if (!hasActiveFilters) {
+			// No active filters, export all directly
+			try {
+				const blob = await exportMutation.mutateAsync({
+					search: undefined,
+					statusId: undefined,
+				});
+				const url = URL.createObjectURL(blob);
+				const link = document.createElement("a");
+				link.href = url;
+				link.download = `contracts-${new Date().toISOString().slice(0, 10)}.csv`;
+				document.body.appendChild(link);
+				link.click();
+				document.body.removeChild(link);
+				URL.revokeObjectURL(url);
+				toast.success("CSV exported successfully");
+			} catch (err) {
+				console.error("Failed to export contracts:", err);
+				toast.error(extractErrorMessage(err, "Failed to export contracts"));
+			}
+		} else {
+			// Show confirmation dialog
+			setExportConfirmOpen(true);
+		}
+	};
+
+	const handleExportFiltered = async () => {
 		try {
 			const blob = await exportMutation.mutateAsync({
-				search: formData.search || undefined,
-				statusId: formData.statusId || undefined,
+				search: debouncedSearch || undefined,
+				statusId: filters.statusId || undefined,
 			});
 			const url = URL.createObjectURL(blob);
-			return {
-				success: true,
-				downloadUrl: url,
-			};
+			const link = document.createElement("a");
+			link.href = url;
+			link.download = `contracts-filtered-${new Date().toISOString().slice(0, 10)}.csv`;
+			document.body.appendChild(link);
+			link.click();
+			document.body.removeChild(link);
+			URL.revokeObjectURL(url);
+			toast.success("CSV exported with filters");
 		} catch (err) {
 			console.error("Failed to export contracts:", err);
-			return {
-				success: false,
-				message: "Failed to export contracts",
-			};
+			toast.error(extractErrorMessage(err, "Failed to export contracts"));
+		}
+	};
+
+	const handleExportAll = async () => {
+		try {
+			const blob = await exportMutation.mutateAsync({
+				search: undefined,
+				statusId: undefined,
+			});
+			const url = URL.createObjectURL(blob);
+			const link = document.createElement("a");
+			link.href = url;
+			link.download = `contracts-${new Date().toISOString().slice(0, 10)}.csv`;
+			document.body.appendChild(link);
+			link.click();
+			document.body.removeChild(link);
+			URL.revokeObjectURL(url);
+			toast.success("CSV exported successfully");
+		} catch (err) {
+			console.error("Failed to export contracts:", err);
+			toast.error(extractErrorMessage(err, "Failed to export contracts"));
 		}
 	};
 	return (
@@ -82,15 +135,13 @@ export default function Contract() {
 			<div className="flex items-center justify-between flex-wrap gap-4 mb-4">
 				<PageTitles title="Contract" description="The contracts transaction between Kpo kpoi mingi investment and it customers" />
 				<div className="flex items-center gap-3">
-					<CsvExportModal
-						open={csvModalOpen}
-						onOpenChange={setCsvModalOpen}
-						title="Export Contracts As CSV"
-						subtitle="Filter contracts by status or search criteria"
-						fields={contractCsvFields}
-						onExport={handleCsvExport}
-						downloadFileName={`contracts-${new Date().toISOString().slice(0, 10)}.csv`}
-					/>
+					<ActionButton
+						type="button"
+						className="bg-primary/10 text-primary hover:bg-primary/20"
+						onClick={handleExportClick}
+						disabled={exportMutation.isPending}>
+						<span className="text-sm">{exportMutation.isPending ? "Exporting..." : "Export CSV"}</span>
+					</ActionButton>
 					<button
 						type="button"
 						onClick={() => setCreateOpen(true)}
@@ -124,7 +175,6 @@ export default function Contract() {
 									],
 								},
 								{ key: "sortOrder", label: "Sort order", type: "sortOrder" },
-								{ key: "contractCode", label: "Contract code", type: "text", placeholder: "contract code" },
 								{
 									key: "statusId",
 									label: "Status",
@@ -204,22 +254,23 @@ export default function Contract() {
 								</div>
 							</div>
 
-							<div className="mt-auto flex flex-col md:flex-row text-center md:text-start justify-center items-center">
-								<span className="text-sm text-nowrap">
-									Showing <span className="font-medium">{(page - 1) * 10 + 1}</span>-
-									<span className="font-medium">{Math.min(page * 10, (paginationData?.total as number) || 0)}</span> of{" "}
-									<span className="font-medium">{(paginationData?.total as number) || 0}</span> results
-								</span>
-								<div className="ml-auto">
-									<CompactPagination page={page} pages={pages} onPageChange={setPage} />
-								</div>
-							</div>
+							<CompactPagination page={page} pages={pages} showRange onPageChange={setPage} />
 						</div>
 					)}
 				</div>
 			</CustomCard>
 
 			<CreateContractModal open={createOpen} onOpenChange={setCreateOpen} />
+
+			<ExportConfirmModal
+				open={exportConfirmOpen}
+				onOpenChange={setExportConfirmOpen}
+				searchTerm={debouncedSearch}
+				filterLabels={getFilterLabels()}
+				onExportFiltered={handleExportFiltered}
+				onExportAll={handleExportAll}
+				isLoading={exportMutation.isPending}
+			/>
 		</div>
 	);
 }

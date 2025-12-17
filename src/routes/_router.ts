@@ -1,5 +1,5 @@
 export const _router = {
-	auth: { index: "/auth", login: "/auth/login", forgotpassword: "/auth/forgot-password", resetpassword: "/auth/reset-password" },
+	auth: { index: "/", login: "/auth/login", forgotpassword: "/auth/forgot-password", resetpassword: "/auth/reset-password" },
 	dashboard: {
 		index: "/dashboard",
 		notifications: "/dashboard/notifications",

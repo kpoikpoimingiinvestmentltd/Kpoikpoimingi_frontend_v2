@@ -25,6 +25,7 @@ export type User = {
 	createdAt?: string;
 	phoneNumber?: string;
 	media?: string | null;
+	numberOfAssignedCustomers?: number;
 };
 
 export type ResetPasswordResponse = {

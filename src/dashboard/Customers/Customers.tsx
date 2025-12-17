@@ -20,8 +20,7 @@ import { useGetAllCustomers, useDeleteCustomer, useExportCustomersAsCSV } from "
 import { TableSkeleton } from "@/components/common/Skeleton";
 import { toast } from "sonner";
 import { extractErrorMessage } from "@/lib/utils";
-import CsvExportModal from "@/components/common/CsvExportModal";
-import type { CsvField } from "@/components/common/CsvExportModal";
+import ExportConfirmModal from "@/components/common/ExportConfirmModal";
 
 export default function Customers() {
 	const [page, setPage] = React.useState(1);
@@ -35,27 +34,8 @@ export default function Customers() {
 	const [deleteOpen, setDeleteOpen] = React.useState(false);
 	const [isSendEmailOpen, setIsSendEmailOpen] = React.useState(false);
 	const [selectedCustomerId, setSelectedCustomerId] = React.useState<string | null>(null);
-	const [csvModalOpen, setCsvModalOpen] = React.useState(false);
+	const [exportConfirmOpen, setExportConfirmOpen] = React.useState(false);
 	const exportMutation = useExportCustomersAsCSV();
-
-	const customerCsvFields: CsvField[] = [{ key: "search", label: "Search", type: "text", placeholder: "Justin Dunsin" }];
-
-	const handleCsvExport = async (formData: Record<string, string>) => {
-		try {
-			const blob = await exportMutation.mutateAsync({ search: formData.search || undefined });
-			const url = URL.createObjectURL(blob);
-			return {
-				success: true,
-				downloadUrl: url,
-			};
-		} catch (err) {
-			console.error("Failed to export customers:", err);
-			return {
-				success: false,
-				message: "Failed to export customers",
-			};
-		}
-	};
 
 	// Delete customer mutation
 	const deleteCustomerMutation = useDeleteCustomer(
@@ -70,6 +50,66 @@ export default function Customers() {
 			toast.error(extractErrorMessage(err, "Failed to delete customer"));
 		}
 	);
+
+	const handleExportClick = async () => {
+		if (!debouncedSearch) {
+			// No active search, export all directly
+			try {
+				const blob = await exportMutation.mutateAsync({ search: undefined });
+				const url = URL.createObjectURL(blob);
+				const link = document.createElement("a");
+				link.href = url;
+				link.download = `customers-${new Date().toISOString().slice(0, 10)}.csv`;
+				document.body.appendChild(link);
+				link.click();
+				document.body.removeChild(link);
+				URL.revokeObjectURL(url);
+				toast.success("CSV exported successfully");
+			} catch (err) {
+				console.error("Failed to export customers:", err);
+				toast.error(extractErrorMessage(err, "Failed to export customers"));
+			}
+		} else {
+			// Show confirmation dialog
+			setExportConfirmOpen(true);
+		}
+	};
+
+	const handleExportFiltered = async () => {
+		try {
+			const blob = await exportMutation.mutateAsync({ search: debouncedSearch });
+			const url = URL.createObjectURL(blob);
+			const link = document.createElement("a");
+			link.href = url;
+			link.download = `customers-${debouncedSearch}-${new Date().toISOString().slice(0, 10)}.csv`;
+			document.body.appendChild(link);
+			link.click();
+			document.body.removeChild(link);
+			URL.revokeObjectURL(url);
+			toast.success(`CSV exported for "${debouncedSearch}"`);
+		} catch (err) {
+			console.error("Failed to export customers:", err);
+			toast.error(extractErrorMessage(err, "Failed to export customers"));
+		}
+	};
+
+	const handleExportAll = async () => {
+		try {
+			const blob = await exportMutation.mutateAsync({ search: undefined });
+			const url = URL.createObjectURL(blob);
+			const link = document.createElement("a");
+			link.href = url;
+			link.download = `customers-${new Date().toISOString().slice(0, 10)}.csv`;
+			document.body.appendChild(link);
+			link.click();
+			document.body.removeChild(link);
+			URL.revokeObjectURL(url);
+			toast.success("CSV exported successfully");
+		} catch (err) {
+			console.error("Failed to export customers:", err);
+			toast.error(extractErrorMessage(err, "Failed to export customers"));
+		}
+	};
 
 	// Transform API data to typed table format with runtime guards
 	const customersList = React.useMemo((): CustomerRow[] => {
@@ -104,8 +144,12 @@ export default function Customers() {
 			<div className="flex items-center justify-between flex-wrap gap-4 mb-4">
 				<PageTitles title="Customers" description="List of people who patronize Kpo kpoi mingi investment" />
 				<div className="flex items-center gap-3">
-					<ActionButton type="button" className="bg-primary/10 text-primary gap-2 hover:bg-primary/20" onClick={() => setCsvModalOpen(true)}>
-						<span className="text-sm">Export CSV</span>
+					<ActionButton
+						type="button"
+						className="bg-primary/10 text-primary gap-2 hover:bg-primary/20"
+						onClick={handleExportClick}
+						disabled={exportMutation.isPending}>
+						<span className="text-sm">{exportMutation.isPending ? "Exporting..." : "Export CSV"}</span>
 					</ActionButton>
 					<ActionButton type="button" className="bg-primary/10 text-primary gap-2 hover:bg-primary/20" onClick={() => setIsSendEmailOpen(true)}>
 						<span className="text-sm">Send Email</span>
@@ -232,16 +276,7 @@ export default function Customers() {
 								</div>
 							</div>
 
-							<div className="mt-auto flex flex-col md:flex-row text-center md:text-start justify-center items-center">
-								<span className="text-sm text-nowrap">
-									Showing <span className="font-medium">{(page - 1) * limit + 1}</span>-
-									<span className="font-medium">{Math.min(page * limit, (customersData as any)?.pagination?.total || 0)}</span> of{" "}
-									<span className="font-medium">{(customersData as any)?.pagination?.total || 0}</span> results
-								</span>
-								<div className="ml-auto">
-									<CompactPagination page={page} pages={pages} onPageChange={setPage} />
-								</div>
-							</div>
+							<CompactPagination page={page} pages={pages} showRange onPageChange={setPage} />
 						</div>
 					)}
 				</div>
@@ -263,25 +298,15 @@ export default function Customers() {
 				open={isSendEmailOpen}
 				onOpenChange={setIsSendEmailOpen}
 				customers={customersList.map((c) => ({ id: c.id, email: c.email, name: c.fullName }))}
-				onSend={async (data) => {
-					try {
-						console.log("Sending email with data:", data);
-						// TODO: Call your email API here
-						// Example: await sendEmailAPI(data);
-					} catch (error) {
-						console.error("Failed to send email:", error);
-					}
-				}}
 			/>
 
-			<CsvExportModal
-				open={csvModalOpen}
-				onOpenChange={setCsvModalOpen}
-				title="Export Customers As CSV"
-				subtitle="Filter customers to export"
-				fields={customerCsvFields}
-				onExport={handleCsvExport}
-				downloadFileName={`customers-${new Date().toISOString().slice(0, 10)}.csv`}
+			<ExportConfirmModal
+				open={exportConfirmOpen}
+				onOpenChange={setExportConfirmOpen}
+				searchTerm={debouncedSearch}
+				onExportFiltered={handleExportFiltered}
+				onExportAll={handleExportAll}
+				isLoading={exportMutation.isPending}
 			/>
 		</div>
 	);

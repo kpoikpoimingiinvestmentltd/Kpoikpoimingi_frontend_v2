@@ -53,21 +53,21 @@ export default function KeyValueRow({
 	return (
 		<div className={twMerge(`flex items-start justify-between py-2 gap-4`, className)}>
 			<aside {...(leftProps || {})} className={`text-start text-wrap`}>
-				<p className={twMerge("text-muted-foreground text-sm", leftClassName)}>{label}</p>
+				<p className={twMerge("text-muted-foreground text-xs min-[450px]:text-sm", leftClassName)}>{label}</p>
 			</aside>
 
 			<aside {...(rightProps || {})} className={twMerge(`flex items-center gap-4 justify-end max-w-[120px]`, rightClassName)}>
 				<div className="flex-1 text-right">
 					{variant === "text" ? (
 						link ? (
-							<Link to={href} className="text-primary underline-offset-2 hover:underline text-sm">
+							<Link to={href} className="text-primary underline-offset-2 hover:underline text-xs min-[450px]:text-sm">
 								{value}
 							</Link>
 						) : (
-							<div className="text-sm text-balance sm:text-nowrap">{value}</div>
+							<div className="text-xs min-[450px]:text-sm text-balance sm:text-nowrap">{value}</div>
 						)
 					) : variant === "action" ? (
-						<div className="text-sm">{value}</div>
+						<div className="text-xs min-[450px]:text-sm">{value}</div>
 					) : (
 						<div />
 					)}

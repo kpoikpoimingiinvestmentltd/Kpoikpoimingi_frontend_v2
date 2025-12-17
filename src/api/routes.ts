@@ -35,7 +35,7 @@ export const API_ROUTES = {
 		deleteProperty: (id: string) => `/property/${id}`,
 	},
 	auditLogs: {
-		getAuditLogs: "/audit-logs",
+		getAuditLogs: "/audit-logs/grouped",
 		getAuditLogsGrouped: "/audit-logs/grouped",
 		exportAuditLogs: "/audit-logs/export/csv",
 	},
@@ -107,6 +107,7 @@ export const API_ROUTES = {
 		getAllReceipts: "/receipt",
 		getReceiptsById: (id: string) => `/receipt/${id}`,
 		generateReceipt: "/generate-receipt",
+		sendToEmail: (id: string) => `/receipt/${id}/email`,
 	},
 	analytics: {
 		getAnalyticsOverview: "/analytics",

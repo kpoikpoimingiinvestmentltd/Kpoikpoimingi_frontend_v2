@@ -64,7 +64,8 @@ export default function ReceiptDetails() {
 				emailBody="Please find attached the receipt."
 				onDownload={handleDownloadPDF}
 				onPrint={handlePrint}
-				onShare={handleSharePDF}>
+				onShare={handleSharePDF}
+				receiptId={id}>
 				<ReceiptContent receipt={receipt} />
 			</ReceiptWrapper>
 		</div>

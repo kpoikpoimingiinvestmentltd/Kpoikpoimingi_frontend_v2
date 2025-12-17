@@ -8,23 +8,24 @@ import { CardSkeleton } from "@/components/common/Skeleton";
 import SearchWithFilters from "@/components/common/SearchWithFilters";
 import type { FilterField } from "@/components/common/SearchWithFilters";
 import { useDebounceSearch } from "@/hooks/useDebounceSearch";
-import CsvExportModal from "@/components/common/CsvExportModal";
-import type { CsvField } from "@/components/common/CsvExportModal";
-import { ExportFileIcon, IconWrapper } from "@/assets/icons";
-import { twMerge } from "tailwind-merge";
+import ExportConfirmModal from "@/components/common/ExportConfirmModal";
+import ActionButton from "@/components/base/ActionButton";
+import { toast } from "sonner";
+import { extractErrorMessage } from "@/lib/utils";
+import { ExportFileIcon, IconWrapper } from "../../assets/icons";
 
 export default function AuditCompliance() {
 	const [page, setPage] = useState(1);
 	const pageSize = 10;
 	const [searchQuery, setSearchQuery] = useState<string>("");
-	const [startDate, setStartDate] = useState<string>("");
-	const [endDate, setEndDate] = useState<string>("");
-	const [csvModalOpen, setCsvModalOpen] = useState(false);
+	const [filters, setFilters] = useState<Record<string, string>>({});
+	const [showExportModal, setShowExportModal] = useState(false);
 
 	const debouncedSearch = useDebounceSearch(searchQuery, 400);
+	const sortBy = filters.sortBy || "createdAt";
+	const sortOrder = filters.sortOrder || "desc";
 
-	// Fetch grouped audit logs
-	const { data: auditData, isLoading } = useGetAuditLogsGrouped(page, pageSize, debouncedSearch || undefined);
+	const { data: auditData, isLoading } = useGetAuditLogsGrouped(page, pageSize, debouncedSearch || undefined, sortBy, sortOrder);
 
 	const auditDataTyped = auditData as Record<string, unknown> | undefined;
 	const groups = Array.isArray(auditDataTyped?.data) ? (auditDataTyped?.data as unknown[]) : [];
@@ -34,96 +35,123 @@ export default function AuditCompliance() {
 
 	const exportMutation = useExportAuditLogs();
 
-	const auditCsvFields: CsvField[] = [
-		{ key: "startDate", label: "From", type: "date", placeholder: "01-01-2025" },
-		{ key: "endDate", label: "To", type: "date", placeholder: "31-12-2025" },
-		{ key: "search", label: "Search", type: "text", placeholder: "John Doe" },
+	const filterFields: FilterField[] = [
+		{
+			key: "sortBy",
+			label: "Sort by field",
+			type: "sortBy",
+			options: [
+				{ value: "name", label: "name" },
+				{ value: "price", label: "price" },
+				{ value: "createdAt", label: "createdAt" },
+				{ value: "updatedAt", label: "updatedAt" },
+			],
+		},
+		{ key: "sortOrder", label: "Sort order", type: "sortOrder" },
 	];
 
-	const handleCsvExport = async (formData: Record<string, string>) => {
-		try {
-			const blob = await exportMutation.mutateAsync({
-				search: formData.search || undefined,
-				startDate: formData.startDate || undefined,
-				endDate: formData.endDate || undefined,
-			});
-			const url = URL.createObjectURL(blob);
-			return {
-				success: true,
-				downloadUrl: url,
-			};
-		} catch (err) {
-			console.error("Failed to export audit logs:", err);
-			return {
-				success: false,
-				message: "Failed to export audit logs",
-			};
+	const handleFilterApply = (newFilters: Record<string, string>) => {
+		setFilters(newFilters);
+		setPage(1);
+	};
+
+	const hasActiveFilters = !!(debouncedSearch || sortBy !== "createdAt" || sortOrder !== "desc");
+
+	const getFilterLabels = () => {
+		const labels: Record<string, string> = {};
+		if (sortBy && sortBy !== "createdAt") labels["Sort By"] = sortBy;
+		if (sortOrder && sortOrder !== "desc") labels["Sort Order"] = sortOrder;
+		return labels;
+	};
+
+	const handleExportClick = () => {
+		if (hasActiveFilters) {
+			setShowExportModal(true);
+		} else {
+			handleExportAll();
 		}
 	};
 
-	const filterFields: FilterField[] = [
-		{
-			key: "startDate",
-			label: "Start Date",
-			type: "date",
-		},
-		{
-			key: "endDate",
-			label: "End Date",
-			type: "date",
-		},
-	];
-
-	const handleFilterApply = (filters: Record<string, string>) => {
-		setStartDate(filters.startDate || "");
-		setEndDate(filters.endDate || "");
-		setPage(1);
+	const handleExportFiltered = async () => {
+		try {
+			const blob = await exportMutation.mutateAsync({
+				search: debouncedSearch || undefined,
+			});
+			const url = URL.createObjectURL(blob);
+			const link = document.createElement("a");
+			link.href = url;
+			link.download = `audit-logs-filtered-${new Date().toISOString().slice(0, 10)}.csv`;
+			document.body.appendChild(link);
+			link.click();
+			document.body.removeChild(link);
+			URL.revokeObjectURL(url);
+			toast.success("Audit logs exported successfully");
+			setShowExportModal(false);
+		} catch (err) {
+			toast.error(extractErrorMessage(err, "Failed to export audit logs"));
+		}
 	};
 
-	const handleFilterReset = () => {
-		setStartDate("");
-		setEndDate("");
-		setPage(1);
+	const handleExportAll = async () => {
+		try {
+			const blob = await exportMutation.mutateAsync({});
+			const url = URL.createObjectURL(blob);
+			const link = document.createElement("a");
+			link.href = url;
+			link.download = `audit-logs-${new Date().toISOString().slice(0, 10)}.csv`;
+			document.body.appendChild(link);
+			link.click();
+			document.body.removeChild(link);
+			URL.revokeObjectURL(url);
+			toast.success("Audit logs exported successfully");
+			setShowExportModal(false);
+		} catch (err) {
+			toast.error(extractErrorMessage(err, "Failed to export audit logs"));
+		}
 	};
 
 	return (
 		<div className="flex flex-col gap-y-6">
 			<div className="flex items-center justify-between flex-wrap gap-4 mb-4">
 				<PageTitles title="Audit & Compliance" description="This Contains all activities done indicating who performed the action" />
-				<div className="flex items-center gap-3">
-					<CsvExportModal
-						open={csvModalOpen}
-						onOpenChange={setCsvModalOpen}
-						title="Export Audit Logs As CSV"
-						subtitle="Filter audit logs by date range and search"
-						fields={auditCsvFields}
-						onExport={handleCsvExport}
-						downloadFileName={`audit-logs-${new Date().toISOString().slice(0, 10)}.csv`}
-						triggerButton={
-							<button className={twMerge("flex items-center gap-2 underline-offset-[4px] underline")}>
-								<IconWrapper>
-									<ExportFileIcon />
-								</IconWrapper>
-								<span>Export</span>
-							</button>
-						}
-					/>
-				</div>
+				<ActionButton
+					type="button"
+					className="bg-primary/10 text-primary hover:bg-primary/20 flex items-center gap-2"
+					onClick={handleExportClick}
+					disabled={exportMutation.isPending}>
+					<IconWrapper className="text-base">
+						<ExportFileIcon />
+					</IconWrapper>
+					<span className="text-sm">{exportMutation.isPending ? "Exporting..." : "Export"}</span>
+				</ActionButton>
 			</div>
 
-			<SearchWithFilters
-				search={searchQuery}
-				onSearchChange={setSearchQuery}
-				setPage={setPage}
-				placeholder="Search by staff name, email, or action"
-				showFilter={true}
-				fields={filterFields}
-				initialValues={{
-					startDate,
-					endDate,
-				}}
-				onApply={handleFilterApply}
-				onReset={handleFilterReset}
+			<div className="flex items-center gap-2">
+				<SearchWithFilters
+					search={searchQuery}
+					onSearchChange={setSearchQuery}
+					setPage={setPage}
+					placeholder="Search by staff name, email, or action"
+					showFilter={true}
+					fields={filterFields}
+					initialValues={filters}
+					onApply={handleFilterApply}
+					onReset={() => {
+						setSearchQuery("");
+						setFilters({});
+						setPage(1);
+					}}
+				/>
+			</div>
+
+			<ExportConfirmModal
+				open={showExportModal}
+				onOpenChange={setShowExportModal}
+				searchTerm={debouncedSearch}
+				filterLabels={getFilterLabels()}
+				onExportFiltered={handleExportFiltered}
+				onExportAll={handleExportAll}
+				isLoading={exportMutation.isPending}
 			/>
 
 			<div className="min-h-96 flex">
@@ -177,15 +205,53 @@ export default function AuditCompliance() {
 }
 
 function RowItem({ action, staffName, date, time }: { action: string; staffName: string; date: string; time: string }) {
+	const formatDate = (dateStr: string) => {
+		try {
+			const parts = dateStr.split("/");
+			const day = parseInt(parts[0]);
+			const month = parseInt(parts[1]) - 1; // months are 0-indexed
+			const year = parseInt(parts[2]);
+			const dateObj = new Date(year, month, day);
+
+			const shortFormat = dateStr;
+
+			const longFormat = dateObj.toLocaleDateString("en-US", {
+				day: "numeric",
+				month: "long",
+				year: "numeric",
+			});
+
+			return { shortFormat, longFormat };
+		} catch {
+			return { shortFormat: dateStr, longFormat: dateStr };
+		}
+	};
+
+	const formatTime = (timeStr: string) => {
+		try {
+			// Parse time string like "19:41"
+			const [hours, minutes] = timeStr.split(":").map(Number);
+			const period = hours >= 12 ? "PM" : "AM";
+			const hours12 = hours % 12 || 12;
+			return `${hours12}:${String(minutes).padStart(2, "0")} ${period}`;
+		} catch {
+			return timeStr;
+		}
+	};
+
+	const { shortFormat, longFormat } = formatDate(date);
+	const time12 = formatTime(time);
+
 	return (
-		<div className="rounded-lg bg-white p-5 border border-gray-100 flex items-start justify-between">
+		<div className="rounded-lg bg-white p-5 gap-6 border border-gray-100 flex items-start justify-between">
 			<div>
 				<h4 className="font-medium">{action}</h4>
 				<p className="text-sm text-muted-foreground mt-2">Staff Name: {staffName || "N/A"}</p>
 			</div>
 			<div className="text-right text-sm text-muted-foreground">
-				<div>{date}</div>
-				<div>{time}</div>
+				<div className="md:hidden">{shortFormat}</div>
+				<div className="hidden md:block">{longFormat}</div>
+				<div>{time12}</div>
 			</div>
 		</div>
 	);

@@ -77,6 +77,7 @@ export default function Calculator() {
 	});
 	const [isDragging, setIsDragging] = React.useState(false);
 	const [dragOffset, setDragOffset] = React.useState({ x: 0, y: 0 });
+	const [hasBeenDragged, setHasBeenDragged] = React.useState(false);
 
 	// Get max duration based on interval
 	const getMaxDuration = () => {
@@ -117,6 +118,7 @@ export default function Calculator() {
 	const handleMouseDown = (e: React.MouseEvent<HTMLButtonElement>) => {
 		if ((e.target as HTMLElement).closest("button")) {
 			setIsDragging(true);
+			setHasBeenDragged(true);
 			setDragOffset({
 				x: e.clientX - position.x,
 				y: e.clientY - position.y,
@@ -149,6 +151,21 @@ export default function Calculator() {
 			};
 		}
 	}, [isDragging, handleMouseMove]);
+
+	// Reset calculator to right side on window resize if not dragged
+	React.useEffect(() => {
+		const handleResize = () => {
+			if (!hasBeenDragged) {
+				setPosition({
+					x: window.innerWidth - 100,
+					y: window.innerHeight - 80,
+				});
+			}
+		};
+
+		window.addEventListener("resize", handleResize);
+		return () => window.removeEventListener("resize", handleResize);
+	}, [hasBeenDragged]);
 
 	return (
 		<div>

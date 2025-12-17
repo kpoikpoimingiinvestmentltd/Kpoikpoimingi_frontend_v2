@@ -51,7 +51,7 @@ export default function ReceiptTable() {
 
 	return (
 		<CustomCard className="mt-4 p-6">
-			<div className="flex items-center justify-between mb-4">
+			<div className="flex items-center justify-between gap-4 flex-wrap mb-4">
 				<h3 className="text-base font-medium">All Receipt</h3>
 				<div className="flex items-center gap-2">
 					<SearchWithFilters
@@ -162,12 +162,7 @@ export default function ReceiptTable() {
 							</TableBody>
 						</Table>
 
-						<div className="mt-8 flex flex-col md:flex-row text-center md:text-start justify-center items-center">
-							<span className="text-sm text-nowrap">Total of ({pagination.total})</span>
-							<div className="ml-auto">
-								<CompactPagination page={page} pages={pages} onPageChange={setPage} />
-							</div>
-						</div>
+						<CompactPagination showRange page={page} pages={pages} onPageChange={setPage} />
 					</>
 				)}
 			</div>

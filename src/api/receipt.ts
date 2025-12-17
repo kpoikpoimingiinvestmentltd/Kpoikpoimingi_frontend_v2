@@ -45,3 +45,32 @@ export function useGenerateReceipt() {
 		mutationFn: (payload: GenerateReceiptPayload) => generateReceipt(payload),
 	});
 }
+
+export async function sendReceiptToEmail(id: string) {
+	const url = API_ROUTES.receipt.sendToEmail(id);
+	return apiPost(url, {}) as Promise<any>;
+}
+
+export function useSendReceiptToEmail() {
+	return useMutation({
+		mutationFn: (id: string) => sendReceiptToEmail(id),
+	});
+}
+
+export async function sendReceiptPdfToEmail(id: string, pdfFile: File, recipientEmail?: string) {
+	const formData = new FormData();
+	formData.append("pdf", pdfFile);
+	if (recipientEmail) {
+		formData.append("recipientEmail", recipientEmail);
+	}
+
+	const url = API_ROUTES.receipt.sendToEmail(id);
+	return apiPost(url, formData) as Promise<any>;
+}
+
+export function useSendReceiptPdfToEmail() {
+	return useMutation({
+		mutationFn: ({ id, pdfFile, recipientEmail }: { id: string; pdfFile: File; recipientEmail?: string }) =>
+			sendReceiptPdfToEmail(id, pdfFile, recipientEmail),
+	});
+}

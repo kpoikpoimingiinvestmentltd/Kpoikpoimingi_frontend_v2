@@ -24,21 +24,21 @@ import {
 import PageTitles from "@/components/common/PageTitles";
 import CustomCard from "@/components/base/CustomCard";
 import StatCard from "@/components/base/StatCard";
-import CustomInput from "@/components/base/CustomInput";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { inputStyle, preTableButtonStyle, tabListStyle, tabStyle } from "@/components/common/commonStyles";
-import { FilterIcon, IconWrapper, SearchIcon, CalendarIcon, CloseIcon, ExportFileIcon } from "@/assets/icons";
+import { tabListStyle, tabStyle } from "@/components/common/commonStyles";
+import { IconWrapper, ExportFileIcon } from "@/assets/icons";
 import { useExportInterestPenalties, useExportVATRecords } from "@/api/analytics";
-import CsvExportModal from "@/components/common/CsvExportModal";
-import type { CsvField } from "@/components/common/CsvExportModal";
-import { twMerge } from "tailwind-merge";
+import ExportConfirmModal from "@/components/common/ExportConfirmModal";
 import EmptyData from "@/components/common/EmptyData";
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent } from "@/components/ui/dropdown-menu";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import SearchWithFilters from "@/components/common/SearchWithFilters";
+import type { FilterField } from "@/components/common/SearchWithFilters";
 import VATCollected from "./VATCollected";
 import InterestPenalties from "./InterestPenalties";
 import { useGetPenalties, useGetVATRecords, useGetIncomeEarned, useGetVatCollected, useGetInterestPenalties } from "@/api/analytics";
 import type { PenaltyRecord, VATRecord } from "@/types/reports";
+import ActionButton from "@/components/base/ActionButton";
+import { toast } from "sonner";
+import { extractErrorMessage } from "@/lib/utils";
 import { TableSkeleton } from "@/components/common/Skeleton";
 
 export default function ReportAnalytics() {
@@ -63,8 +63,8 @@ export default function ReportAnalytics() {
 	} = useSelector((state: RootState) => state.reportAnalytics);
 
 	const isEmpty = false;
-	const [vatCsvModalOpen, setVatCsvModalOpen] = useState(false);
-	const [penaltyCsvModalOpen, setPenaltyCsvModalOpen] = useState(false);
+	const [vatExportOpen, setVatExportOpen] = useState(false);
+	const [penaltyExportOpen, setPenaltyExportOpen] = useState(false);
 
 	const { data: incomeData, isLoading: isIncomeLoading } = useGetIncomeEarned(incomePeriod);
 
@@ -97,67 +97,220 @@ export default function ReportAnalytics() {
 	const penaltyRows: PenaltyRecord[] = penaltiesData?.data || [];
 	const totalPages = penaltiesData?.pagination?.totalPages || 1;
 
-	const handleClearFilter = () => {
-		dispatch(clearFilters());
-	};
-
 	// Hooks for exporting CSV
 	const exportVATMutation = useExportVATRecords();
 	const exportInterestMutation = useExportInterestPenalties();
 
-	// CSV fields for VAT export (date range only)
-	const vatCsvFields: CsvField[] = [
-		{ key: "startDate", label: "Start Date", type: "date", placeholder: "01-01-2025", required: false },
-		{ key: "endDate", label: "End Date", type: "date", placeholder: "31-12-2025", required: false },
-	];
-
-	// CSV fields for penalties export (search only)
-	const penaltyCsvFields: CsvField[] = [
-		{ key: "search", label: "Search", type: "text", placeholder: "Contract code, customer name, or property name", required: false },
-	];
-
-	const handleVATExport = async (formData: Record<string, string>) => {
-		try {
-			const blob = await exportVATMutation.mutateAsync({
-				startDate: formData.startDate || undefined,
-				endDate: formData.endDate || undefined,
-			});
-			const url = URL.createObjectURL(blob);
-			return {
-				success: true,
-				downloadUrl: url,
-			};
-		} catch (err) {
-			console.error("Failed to export VAT records:", err);
-			return {
-				success: false,
-				message: "Failed to export VAT records",
-			};
+	// VAT Export handlers
+	const handleVATExportClick = async () => {
+		const hasActiveFilters = !!(vatFromDate || vatToDate);
+		if (hasActiveFilters) {
+			setVatExportOpen(true);
+		} else {
+			handleVATExportAll();
 		}
 	};
 
-	const handlePenaltyExport = async (formData: Record<string, string>) => {
+	const getVATFilterLabels = () => {
+		const labels: Record<string, string> = {};
+		if (vatFromDate) labels["From"] = vatFromDate;
+		if (vatToDate) labels["To"] = vatToDate;
+		return labels;
+	};
+
+	const handleVATExportFiltered = async () => {
+		try {
+			const blob = await exportVATMutation.mutateAsync({
+				startDate: vatFromDate || undefined,
+				endDate: vatToDate || undefined,
+			});
+			const url = URL.createObjectURL(blob);
+			const link = document.createElement("a");
+			link.href = url;
+			link.download = `vat-records-filtered-${new Date().toISOString().slice(0, 10)}.csv`;
+			document.body.appendChild(link);
+			link.click();
+			document.body.removeChild(link);
+			URL.revokeObjectURL(url);
+			toast.success("VAT records exported successfully");
+			setVatExportOpen(false);
+		} catch (err) {
+			toast.error(extractErrorMessage(err, "Failed to export VAT records"));
+		}
+	};
+
+	const handleVATExportAll = async () => {
+		try {
+			const blob = await exportVATMutation.mutateAsync({});
+			const url = URL.createObjectURL(blob);
+			const link = document.createElement("a");
+			link.href = url;
+			link.download = `vat-records-${new Date().toISOString().slice(0, 10)}.csv`;
+			document.body.appendChild(link);
+			link.click();
+			document.body.removeChild(link);
+			URL.revokeObjectURL(url);
+			toast.success("VAT records exported successfully");
+			setVatExportOpen(false);
+		} catch (err) {
+			toast.error(extractErrorMessage(err, "Failed to export VAT records"));
+		}
+	};
+
+	// Penalty Export handlers
+	const handlePenaltyExportClick = async () => {
+		const hasActiveFilters = !!penaltySearch;
+		if (hasActiveFilters) {
+			setPenaltyExportOpen(true);
+		} else {
+			handlePenaltyExportAll();
+		}
+	};
+
+	const getPenaltyFilterLabels = () => {
+		const labels: Record<string, string> = {};
+		if (penaltySearch) labels["Search"] = penaltySearch;
+		return labels;
+	};
+
+	const handlePenaltyExportFiltered = async () => {
 		try {
 			const blob = await exportInterestMutation.mutateAsync({
 				page: penaltyPage || 1,
 				limit: penaltyLimit || 10,
-				search: formData.search || "",
+				search: penaltySearch || "",
 				sortBy: penaltySortBy || "createdAt",
 				sortOrder: penaltySortOrder || "desc",
 				period: penaltyPeriod || "daily",
 			});
 			const url = URL.createObjectURL(blob);
-			return {
-				success: true,
-				downloadUrl: url,
-			};
+			const link = document.createElement("a");
+			link.href = url;
+			link.download = `interest-penalties-filtered-${new Date().toISOString().slice(0, 10)}.csv`;
+			document.body.appendChild(link);
+			link.click();
+			document.body.removeChild(link);
+			URL.revokeObjectURL(url);
+			toast.success("Interest penalties exported successfully");
+			setPenaltyExportOpen(false);
 		} catch (err) {
-			console.error("Failed to export interest penalties:", err);
-			return {
-				success: false,
-				message: "Failed to export interest penalties",
-			};
+			toast.error(extractErrorMessage(err, "Failed to export interest penalties"));
 		}
+	};
+
+	const handlePenaltyExportAll = async () => {
+		try {
+			const blob = await exportInterestMutation.mutateAsync({
+				page: 1,
+				limit: 10,
+				search: "",
+				sortBy: "createdAt",
+				sortOrder: "desc",
+				period: penaltyPeriod || "daily",
+			});
+			const url = URL.createObjectURL(blob);
+			const link = document.createElement("a");
+			link.href = url;
+			link.download = `interest-penalties-${new Date().toISOString().slice(0, 10)}.csv`;
+			document.body.appendChild(link);
+			link.click();
+			document.body.removeChild(link);
+			URL.revokeObjectURL(url);
+			toast.success("Interest penalties exported successfully");
+			setPenaltyExportOpen(false);
+		} catch (err) {
+			toast.error(extractErrorMessage(err, "Failed to export interest penalties"));
+		}
+	};
+
+	// Filter fields for VAT tab
+	const vatFilterFields: FilterField[] = [
+		{
+			key: "vatLimit",
+			label: "Items per page",
+			type: "select",
+			options: [
+				{ value: "5", label: "5" },
+				{ value: "10", label: "10" },
+				{ value: "20", label: "20" },
+				{ value: "50", label: "50" },
+			],
+		},
+		{
+			key: "vatSortBy",
+			label: "Sort By",
+			type: "sortBy",
+			options: [
+				{ value: "createdAt", label: "Created At" },
+				{ value: "amount", label: "Amount" },
+				{ value: "vatAmount", label: "VAT Amount" },
+			],
+		},
+		{ key: "vatSortOrder", label: "Sort Order", type: "sortOrder" },
+		{
+			key: "vatFromDate",
+			label: "From Date",
+			type: "date",
+		},
+		{
+			key: "vatToDate",
+			label: "To Date",
+			type: "date",
+		},
+	];
+
+	// Filter fields for Penalty tab
+	const penaltyFilterFields: FilterField[] = [
+		{
+			key: "penaltyLimit",
+			label: "Items per page",
+			type: "select",
+			options: [
+				{ value: "5", label: "5" },
+				{ value: "10", label: "10" },
+				{ value: "20", label: "20" },
+				{ value: "50", label: "50" },
+			],
+		},
+		{
+			key: "penaltySortBy",
+			label: "Sort By",
+			type: "sortBy",
+			options: [
+				{ value: "name", label: "Name" },
+				{ value: "price", label: "Price" },
+			],
+		},
+		{ key: "penaltySortOrder", label: "Sort Order", type: "sortOrder" },
+	];
+
+	// Handle VAT filter application
+	const handleVATFilterApply = (filters: Record<string, string>) => {
+		dispatch(setVatLimit(Number(filters.vatLimit) || vatLimit));
+		dispatch(setVatSortBy(filters.vatSortBy || vatSortBy));
+		dispatch(setVatSortOrder(filters.vatSortOrder || vatSortOrder));
+		dispatch(setVatFromDate(filters.vatFromDate || null));
+		dispatch(setVatToDate(filters.vatToDate || null));
+		dispatch(setIsFilterApplied(!!(filters.vatFromDate || filters.vatToDate)));
+		dispatch(setVatPage(1));
+	};
+
+	// Handle VAT filter reset
+	const handleVATFilterReset = () => {
+		dispatch(clearFilters());
+	};
+
+	// Handle Penalty filter application
+	const handlePenaltyFilterApply = (filters: Record<string, string>) => {
+		dispatch(setPenaltyLimit(Number(filters.penaltyLimit) || penaltyLimit));
+		dispatch(setPenaltySortBy(filters.penaltySortBy || penaltySortBy));
+		dispatch(setPenaltySortOrder(filters.penaltySortOrder || penaltySortOrder));
+		dispatch(setPenaltyPage(1));
+	};
+
+	// Handle Penalty filter reset
+	const handlePenaltyFilterReset = () => {
+		dispatch(clearPenaltyFilters());
 	};
 
 	// Dynamic stats data from API
@@ -200,42 +353,28 @@ export default function ReportAnalytics() {
 				<PageTitles title="Report Analytics" description="Overview of financial and operational reports" />
 				<div className="flex items-center gap-3">
 					{tab === "vat" && (
-						<CsvExportModal
-							open={vatCsvModalOpen}
-							onOpenChange={setVatCsvModalOpen}
-							title="Export VAT Records As CSV"
-							subtitle="Filter VAT records by date range"
-							fields={vatCsvFields}
-							onExport={handleVATExport}
-							downloadFileName={`vat-records-${new Date().toISOString().slice(0, 10)}.csv`}
-							triggerButton={
-								<button className={twMerge("flex items-center gap-2 underline-offset-[4px] underline")}>
-									<IconWrapper>
-										<ExportFileIcon />
-									</IconWrapper>
-									<span>Export</span>
-								</button>
-							}
-						/>
+						<ActionButton
+							type="button"
+							className="bg-primary/10 text-primary hover:bg-primary/20 flex items-center gap-2"
+							onClick={handleVATExportClick}
+							disabled={exportVATMutation.isPending}>
+							<IconWrapper className="text-base">
+								<ExportFileIcon />
+							</IconWrapper>
+							<span className="text-sm">{exportVATMutation.isPending ? "Exporting..." : "Export"}</span>
+						</ActionButton>
 					)}
 					{tab === "interest" && (
-						<CsvExportModal
-							open={penaltyCsvModalOpen}
-							onOpenChange={setPenaltyCsvModalOpen}
-							title="Export Interest Penalties As CSV"
-							subtitle="Filter interest penalties by search"
-							fields={penaltyCsvFields}
-							onExport={handlePenaltyExport}
-							downloadFileName={`interest-penalties-${new Date().toISOString().slice(0, 10)}.csv`}
-							triggerButton={
-								<button className={twMerge("flex items-center gap-2 underline-offset-[4px] underline")}>
-									<IconWrapper>
-										<ExportFileIcon />
-									</IconWrapper>
-									<span>Export</span>
-								</button>
-							}
-						/>
+						<ActionButton
+							type="button"
+							className="bg-primary/10 text-primary hover:bg-primary/20 flex items-center gap-2"
+							onClick={handlePenaltyExportClick}
+							disabled={exportInterestMutation.isPending}>
+							<IconWrapper className="text-base">
+								<ExportFileIcon />
+							</IconWrapper>
+							<span className="text-sm">{exportInterestMutation.isPending ? "Exporting..." : "Export"}</span>
+						</ActionButton>
 					)}
 				</div>
 			</div>
@@ -275,180 +414,36 @@ export default function ReportAnalytics() {
 										</Tabs>
 									</div>
 
-									<div className="flex items-center gap-2">
-										{tab === "interest" && (
-											<div className="relative md:w-80">
-												<CustomInput
-													placeholder="Search by contract code"
-													aria-label="Search penalties"
-													value={penaltySearch}
-													onChange={(e) => {
-														const v = (e.target as HTMLInputElement).value;
-														dispatch(setPenaltySearch(v));
-														dispatch(setPenaltyPage(1));
-													}}
-													className={`max-w-[320px] ${inputStyle} h-10 pl-9`}
-													iconLeft={<SearchIcon />}
-												/>
-											</div>
-										)}
-
-										<div className="flex items-center gap-2">
-											<DropdownMenu>
-												<DropdownMenuTrigger asChild>
-													<button type="button" className={`${preTableButtonStyle} text-white bg-primary`}>
-														<IconWrapper className="text-base">
-															<FilterIcon />
-														</IconWrapper>
-														<span className="hidden sm:inline">Filter</span>
-													</button>
-												</DropdownMenuTrigger>
-
-												<DropdownMenuContent className="w-80 p-4 mr-4">
-													<div className="grid grid-cols-1 gap-4">
-														<div>
-															<label className="text-xs font-medium text-gray-700 mb-2 block">Items per page</label>
-															<Select
-																value={tab === "interest" ? String(penaltyLimit) : String(vatLimit)}
-																onValueChange={(v) => {
-																	if (tab === "interest") {
-																		dispatch(setPenaltyLimit(Number(v)));
-																		dispatch(setPenaltyPage(1));
-																	} else {
-																		dispatch(setVatLimit(Number(v)));
-																		dispatch(setVatPage(1));
-																	}
-																}}>
-																<SelectTrigger className="w-full h-9">
-																	<SelectValue />
-																</SelectTrigger>
-																<SelectContent>
-																	<SelectItem value="5">5</SelectItem>
-																	<SelectItem value="10">10</SelectItem>
-																	<SelectItem value="20">20</SelectItem>
-																	<SelectItem value="50">50</SelectItem>
-																</SelectContent>
-															</Select>
-														</div>
-														<div>
-															<label className="text-xs font-medium text-gray-700 mb-2 block">Sort By Field</label>
-															<Select
-																value={tab === "interest" ? penaltySortBy : vatSortBy}
-																onValueChange={(value) => {
-																	if (tab === "interest") {
-																		dispatch(setPenaltySortBy(value));
-																		dispatch(setPenaltyPage(1));
-																	} else {
-																		dispatch(setVatSortBy(value));
-																		dispatch(setVatPage(1));
-																	}
-																}}>
-																<SelectTrigger className="w-full h-9">
-																	<SelectValue />
-																</SelectTrigger>
-																<SelectContent>
-																	{tab === "interest" ? (
-																		<>
-																			<SelectItem value="name">Name</SelectItem>
-																			<SelectItem value="price">Price</SelectItem>
-																		</>
-																	) : (
-																		<>
-																			<SelectItem value="createdAt">Created At</SelectItem>
-																			<SelectItem value="amount">Amount</SelectItem>
-																			<SelectItem value="vatAmount">VAT Amount</SelectItem>
-																		</>
-																	)}
-																</SelectContent>
-															</Select>
-														</div>
-
-														<div>
-															<label className="text-xs font-medium text-gray-700 mb-2 block">Sort Order</label>
-															<Select
-																value={tab === "interest" ? penaltySortOrder : vatSortOrder}
-																onValueChange={(value) => {
-																	if (tab === "interest") {
-																		dispatch(setPenaltySortOrder(value));
-																		dispatch(setPenaltyPage(1));
-																	} else {
-																		dispatch(setVatSortOrder(value));
-																		dispatch(setVatPage(1));
-																	}
-																}}>
-																<SelectTrigger className="w-full h-9">
-																	<SelectValue />
-																</SelectTrigger>
-																<SelectContent>
-																	<SelectItem value="asc">Ascending</SelectItem>
-																	<SelectItem value="desc">Descending</SelectItem>
-																</SelectContent>
-															</Select>
-														</div>
-
-														{tab === "vat" && (
-															<>
-																<div>
-																	<CustomInput
-																		type="date"
-																		label="From"
-																		value={vatFromDate ?? ""}
-																		onChange={(e) => dispatch(setVatFromDate((e.target as HTMLInputElement).value || null))}
-																		className="w-full h-9 text-sm"
-																		iconRight={<CalendarIcon />}
-																	/>
-																</div>
-																<div>
-																	<CustomInput
-																		type="date"
-																		label="To"
-																		value={vatToDate ?? ""}
-																		onChange={(e) => dispatch(setVatToDate((e.target as HTMLInputElement).value || null))}
-																		className="w-full h-9 text-sm"
-																		iconRight={<CalendarIcon />}
-																	/>
-																</div>
-															</>
-														)}
-														<div className="pt-2 border-t flex items-center justify-between gap-2">
-															<button
-																type="button"
-																onClick={() => {
-																	// reset filters
-																	if (tab === "interest") {
-																		dispatch(clearPenaltyFilters());
-																	} else {
-																		dispatch(clearFilters());
-																	}
-																}}
-																className="px-4 py-2 text-sm rounded border border-gray-200 hover:bg-gray-100">
-																Reset
-															</button>
-															<button
-																type="button"
-																onClick={() => {
-																	if (tab === "interest") {
-																		dispatch(setPenaltyPage(1));
-																	} else {
-																		dispatch(setVatPage(1));
-																	}
-																	dispatch(setIsFilterApplied(true));
-																}}
-																className="px-4 py-2 bg-primary text-white text-sm rounded">
-																Apply
-															</button>
-														</div>
-													</div>
-												</DropdownMenuContent>
-											</DropdownMenu>
-											{isFilterApplied && (
-												<button type="button" onClick={handleClearFilter} className={`p-2 rounded-full text-gray-700 bg-gray-200 hover:bg-gray-300`}>
-													<IconWrapper>
-														<CloseIcon />
-													</IconWrapper>
-												</button>
-											)}
-										</div>
+									<div className="flex items-center justify-end">
+										<SearchWithFilters
+											search={tab === "interest" ? penaltySearch : ""}
+											onSearchChange={(v) => {
+												if (tab === "interest") {
+													dispatch(setPenaltySearch(v));
+													dispatch(setPenaltyPage(1));
+												}
+											}}
+											placeholder={tab === "interest" ? "Search by contract code" : undefined}
+											showFilter={true}
+											fields={tab === "vat" ? vatFilterFields : penaltyFilterFields}
+											initialValues={
+												tab === "vat"
+													? {
+															vatLimit: String(vatLimit),
+															vatSortBy: vatSortBy,
+															vatSortOrder: vatSortOrder,
+															vatFromDate: vatFromDate || "",
+															vatToDate: vatToDate || "",
+													  }
+													: {
+															penaltyLimit: String(penaltyLimit),
+															penaltySortBy: penaltySortBy,
+															penaltySortOrder: penaltySortOrder,
+													  }
+											}
+											onApply={tab === "vat" ? handleVATFilterApply : handlePenaltyFilterApply}
+											onReset={tab === "vat" ? handleVATFilterReset : handlePenaltyFilterReset}
+										/>
 									</div>
 								</div>
 
@@ -499,6 +494,25 @@ export default function ReportAnalytics() {
 				) : (
 					<EmptyData className="h-full" text="No reports yet." />
 				)}
+
+				{/* Export Modals */}
+				<ExportConfirmModal
+					open={vatExportOpen}
+					onOpenChange={setVatExportOpen}
+					filterLabels={getVATFilterLabels()}
+					onExportFiltered={handleVATExportFiltered}
+					onExportAll={handleVATExportAll}
+					isLoading={exportVATMutation.isPending}
+				/>
+
+				<ExportConfirmModal
+					open={penaltyExportOpen}
+					onOpenChange={setPenaltyExportOpen}
+					filterLabels={getPenaltyFilterLabels()}
+					onExportFiltered={handlePenaltyExportFiltered}
+					onExportAll={handlePenaltyExportAll}
+					isLoading={exportInterestMutation.isPending}
+				/>
 			</CustomCard>
 		</div>
 	);

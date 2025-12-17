@@ -1,5 +1,4 @@
 import CustomCard from "@/components/base/CustomCard";
-import SectionTitle from "@/components/common/SectionTitle";
 import KeyValueRow from "@/components/common/KeyValueRow";
 import { useState } from "react";
 import type { CustomerRegistration, PropertyInterest } from "@/types/productRequest";
@@ -8,6 +7,7 @@ import AddProperties from "@/dashboard/Properties/AddProperties";
 import { Button } from "@/components/ui/button";
 import { modalContentStyle } from "../../components/common/commonStyles";
 import { CardSkeleton } from "@/components/common/Skeleton";
+import ImageGallery from "@/components/base/ImageGallery";
 
 export default function TabProductInformation({
 	data,
@@ -71,61 +71,127 @@ export default function TabProductInformation({
 						</Dialog>
 					</>
 				)}
-				{propertyInterests.map((property: Record<string, unknown>, index: number) => (
-					<div key={index}>
-						<SectionTitle title={`Property Interest ${index + 1}`} />
-						<CustomCard className="mt-6 p-0 border-0">
-							<div className="grid grid-cols-1 gap-y-0.5 text-sm">
-								<KeyValueRow
-									label="Property ID"
-									value={(property.propertyId as string) || "N/A"}
-									leftClassName="text-sm text-muted-foreground"
-									rightClassName="text-right"
+				{propertyInterests.map((property: Record<string, unknown>, index: number) => {
+					const propertyData = property.property as Record<string, unknown>;
+					const propertyImages = (propertyData?.images as string[]) || [];
+					const durationUnit =
+						(property.durationUnitId as number) === 1 ? "day(s)" : (property.durationUnitId as number) === 2 ? "month(s)" : "year(s)";
+
+					return (
+						<div key={index}>
+							{/* Property Image */}
+							{propertyImages.length > 0 && (
+								<ImageGallery
+									images={propertyImages[0]}
+									uploadedImages={propertyImages.map((src) => ({ src }))}
+									mode="view"
+									containerBg="bg-blue-50"
+									thumbBg="bg-gray-100"
+									thumbVariant="solid"
+									containerBorder="dashed"
 								/>
-								<KeyValueRow
-									label="Quantity"
-									value={String((property.quantity as number) || 1)}
-									leftClassName="text-sm text-muted-foreground"
-									rightClassName="text-right"
-								/>
-								<KeyValueRow
-									label="Down Payment"
-									value={`₦${(property.downPayment as number) || 0}`}
-									leftClassName="text-sm text-muted-foreground"
-									rightClassName="text-right"
-								/>
-								<KeyValueRow
-									label="Payment Interval ID"
-									value={String((property.paymentIntervalId as string) || "N/A")}
-									leftClassName="text-sm text-muted-foreground"
-									rightClassName="text-right"
-								/>
-								<KeyValueRow
-									label="Is Assigned"
-									value={(property.isAssigned as boolean) ? "Yes" : "No"}
-									leftClassName="text-sm text-muted-foreground"
-									rightClassName="text-right"
-								/>
-								{(property.customPropertyName as string) && (
+							)}
+
+							{/* Property Details */}
+							<CustomCard className="mt-6 p-0 border-0">
+								<div className="grid grid-cols-1 gap-y-0.5 text-sm">
 									<KeyValueRow
-										label="Custom Property Name"
-										value={property.customPropertyName as string}
+										label="Property Name"
+										value={(propertyData?.name as string) || "N/A"}
 										leftClassName="text-sm text-muted-foreground"
-										rightClassName="text-right"
+										rightClassName="text-right md:text-left"
 									/>
-								)}
-								{(property.customPropertyPrice as number) && (
 									<KeyValueRow
-										label="Custom Property Price"
-										value={`₦${property.customPropertyPrice as number}`}
+										label="Amount"
+										value={`₦${(propertyData?.price as string) || 0}`}
 										leftClassName="text-sm text-muted-foreground"
-										rightClassName="text-right"
+										rightClassName="text-right md:text-left"
 									/>
-								)}
-							</div>
-						</CustomCard>
-					</div>
-				))}
+									<KeyValueRow
+										label="Payment Method"
+										value={
+											(property.paymentIntervalId as number) === 1
+												? "One-time"
+												: (property.paymentIntervalId as number) === 2
+												? "Hire Purchase"
+												: "N/A"
+										}
+										leftClassName="text-sm text-muted-foreground"
+										rightClassName="text-right md:text-left"
+									/>
+									<KeyValueRow
+										label="Payment Frequency"
+										value={(property.paymentIntervalId as number) === 1 ? "N/A" : (property.paymentIntervalId as number) === 2 ? "Monthly" : "N/A"}
+										leftClassName="text-sm text-muted-foreground"
+										rightClassName="text-right md:text-left"
+									/>
+									<KeyValueRow
+										label="Payment Duration"
+										value={`${(property.durationValue as number) || 0} ${durationUnit}`}
+										leftClassName="text-sm text-muted-foreground"
+										rightClassName="text-right md:text-left"
+									/>
+									{data?.purposeOfProperty && (
+										<KeyValueRow
+											label="Reason for Property"
+											value={(data.purposeOfProperty as string) || "N/A"}
+											leftClassName="text-sm text-muted-foreground"
+											rightClassName="text-right md:text-left"
+										/>
+									)}
+									<KeyValueRow
+										label="Down Payment"
+										value={`₦${(property.downPayment as number) || 0}`}
+										leftClassName="text-sm text-muted-foreground"
+										rightClassName="text-right md:text-left"
+									/>
+									<KeyValueRow
+										label="Quantity"
+										value={String((property.quantity as number) || 1)}
+										leftClassName="text-sm text-muted-foreground"
+										rightClassName="text-right md:text-left"
+									/>
+									{(propertyData?.description as string) && (
+										<>
+											<div className="col-span-1 md:col-span-2">
+												<KeyValueRow
+													label="Description"
+													value={propertyData?.description as string}
+													leftClassName="text-sm text-muted-foreground"
+													rightClassName="text-right md:text-left"
+												/>
+											</div>
+										</>
+									)}
+									{(propertyData?.condition as string) && (
+										<KeyValueRow
+											label="Condition"
+											value={propertyData?.condition as string}
+											leftClassName="text-sm text-muted-foreground"
+											rightClassName="text-right md:text-left"
+										/>
+									)}
+									{(property.customPropertyName as string) && (
+										<KeyValueRow
+											label="Custom Property Name"
+											value={property.customPropertyName as string}
+											leftClassName="text-sm text-muted-foreground"
+											rightClassName="text-right md:text-left"
+										/>
+									)}
+									{(property.customPropertyPrice as number) && (
+										<KeyValueRow
+											label="Custom Property Price"
+											value={`₦${property.customPropertyPrice as number}`}
+											leftClassName="text-sm text-muted-foreground"
+											rightClassName="text-right md:text-left"
+										/>
+									)}
+								</div>
+							</CustomCard>
+						</div>
+					);
+				})}
 			</div>
 		</CustomCard>
 	);

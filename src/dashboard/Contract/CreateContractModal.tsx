@@ -54,8 +54,18 @@ export default function CreateContractModal({ open, onOpenChange }: { open: bool
 		}
 	}, [open]);
 
+	// Get today's date in YYYY-MM-DD format
+	const getTodayDate = () => {
+		const today = new Date();
+		const year = today.getFullYear();
+		const month = String(today.getMonth() + 1).padStart(2, "0");
+		const day = String(today.getDate()).padStart(2, "0");
+		return `${year}-${month}-${day}`;
+	};
+
 	// Get default values based on selected customer
 	const getDefaultValues = () => {
+		const todayDate = getTodayDate();
 		if (!selectedCustomerData) {
 			return {
 				customerId: "",
@@ -66,7 +76,7 @@ export default function CreateContractModal({ open, onOpenChange }: { open: bool
 				intervalId: "",
 				durationValue: 12,
 				durationUnitId: "",
-				startDate: "",
+				startDate: todayDate,
 				remarks: "",
 				paymentMethod: "",
 			};
@@ -82,7 +92,7 @@ export default function CreateContractModal({ open, onOpenChange }: { open: bool
 			intervalId: String(propertyInterest?.paymentIntervalId || ""),
 			durationValue: propertyInterest?.durationValue || 12,
 			durationUnitId: String(propertyInterest?.durationUnitId || ""),
-			startDate: "",
+			startDate: todayDate,
 			remarks: "",
 			paymentMethod: "",
 		};
@@ -120,6 +130,14 @@ export default function CreateContractModal({ open, onOpenChange }: { open: bool
 		const hireFieldsOk = !isHire || (String(watchedIntervalId) !== "" && watchedDurationValue != null && String(watchedDurationUnitId) !== "");
 		return Boolean(hasCustomer && hasPaymentType && hasStartDate && hireFieldsOk && hasPaymentMethod);
 	}, [watchedCustomerId, paymentTypeId, watchedStartDate, watchedIntervalId, watchedDurationValue, watchedDurationUnitId, watchedPaymentMethod]);
+
+	// Set start date to today when modal opens
+	React.useEffect(() => {
+		if (open) {
+			const todayDate = getTodayDate();
+			setValue("startDate", todayDate);
+		}
+	}, [open, setValue]);
 
 	// Reset form when customer is selected
 	React.useEffect(() => {
@@ -292,7 +310,7 @@ export default function CreateContractModal({ open, onOpenChange }: { open: bool
 											setSelectedCustomerData(selected);
 										}}
 										value={String(field.value)}>
-										<SelectTrigger className={selectTriggerStyle()}>
+										<SelectTrigger className={`${selectTriggerStyle()} text-sm`}>
 											<SelectValue placeholder="Search customer" />
 										</SelectTrigger>
 										<SelectContent>
@@ -545,7 +563,14 @@ export default function CreateContractModal({ open, onOpenChange }: { open: bool
 							control={control}
 							name="startDate"
 							render={({ field }) => (
-								<CustomInput type="date" iconRight={<CalendarIcon />} label="Start Date" value={field.value} onChange={field.onChange} />
+								<CustomInput
+									type="date"
+									iconRight={<CalendarIcon />}
+									label="Start Date"
+									value={field.value}
+									onChange={field.onChange}
+									disabled={true}
+								/>
 							)}
 						/>
 

@@ -55,7 +55,19 @@ export type ReceiptDetail = {
 		durationValue?: number;
 		durationUnit?: { duration?: string };
 	};
-	customer?: { id?: string; fullName?: string; phoneNumber?: string };
+	customer?: {
+		id?: string;
+		fullName?: string;
+		phoneNumber?: string;
+		email?: string;
+		customerCode?: string;
+		registrations?: Array<{
+			employmentDetails?: {
+				homeAddress?: string;
+				businessAddress?: string;
+			};
+		}>;
+	};
 	installmentProgress?: string;
 	totalInstallments?: number;
 };

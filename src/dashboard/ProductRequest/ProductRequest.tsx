@@ -16,15 +16,15 @@ import { TableSkeleton } from "@/components/common/Skeleton";
 import { IconWrapper, EditIcon, TrashIcon, ExportFileIcon } from "@/assets/icons";
 import { toast } from "sonner";
 import EmptyData from "@/components/common/EmptyData";
-import CsvExportModal from "@/components/common/CsvExportModal";
-import type { CsvField } from "@/components/common/CsvExportModal";
-import { twMerge } from "tailwind-merge";
+import ExportConfirmModal from "@/components/common/ExportConfirmModal";
+import ActionButton from "@/components/base/ActionButton";
+import { extractErrorMessage } from "@/lib/utils";
 
 export default function ProductRequest() {
 	const [page, setPage] = React.useState(1);
 	const [limit, setLimit] = React.useState(10);
 	const [search, setSearch] = React.useState("");
-	const [csvModalOpen, setCsvModalOpen] = React.useState(false);
+	const [exportConfirmOpen, setExportConfirmOpen] = React.useState(false);
 	const debouncedSearch = useDebounceSearch(search, 400);
 	const [sortBy, setSortBy] = React.useState<string | undefined>(undefined);
 	const [sortOrder, setSortOrder] = React.useState<string | undefined>(undefined);
@@ -41,26 +41,63 @@ export default function ProductRequest() {
 	const [toDelete, setToDelete] = React.useState<{ id?: string; title?: string } | null>(null);
 	const [confirmOpen, setConfirmOpen] = React.useState(false);
 
-	const productRequestCsvFields: CsvField[] = [
-		{ key: "search", label: "Search", type: "text", placeholder: "Registration code, customer name, or email", required: false },
-	];
+	const handleExportClick = async () => {
+		if (!debouncedSearch) {
+			// No active search, export all directly
+			try {
+				const blob = await exportMutation.mutateAsync({ search: undefined });
+				const url = URL.createObjectURL(blob);
+				const link = document.createElement("a");
+				link.href = url;
+				link.download = `product-requests-${new Date().toISOString().slice(0, 10)}.csv`;
+				document.body.appendChild(link);
+				link.click();
+				document.body.removeChild(link);
+				URL.revokeObjectURL(url);
+				toast.success("CSV exported successfully");
+			} catch (err) {
+				console.error("Failed to export product requests:", err);
+				toast.error(extractErrorMessage(err, "Failed to export product requests"));
+			}
+		} else {
+			// Show confirmation dialog
+			setExportConfirmOpen(true);
+		}
+	};
 
-	const handleCsvExport = async (formData: Record<string, string>) => {
+	const handleExportFiltered = async () => {
 		try {
-			const blob = await exportMutation.mutateAsync({
-				search: formData.search || undefined,
-			});
+			const blob = await exportMutation.mutateAsync({ search: debouncedSearch });
 			const url = URL.createObjectURL(blob);
-			return {
-				success: true,
-				downloadUrl: url,
-			};
+			const link = document.createElement("a");
+			link.href = url;
+			link.download = `product-requests-${debouncedSearch}-${new Date().toISOString().slice(0, 10)}.csv`;
+			document.body.appendChild(link);
+			link.click();
+			document.body.removeChild(link);
+			URL.revokeObjectURL(url);
+			toast.success(`CSV exported for "${debouncedSearch}"`);
 		} catch (err) {
 			console.error("Failed to export product requests:", err);
-			return {
-				success: false,
-				message: "Failed to export product requests",
-			};
+			toast.error(extractErrorMessage(err, "Failed to export product requests"));
+		}
+	};
+
+	const handleExportAll = async () => {
+		try {
+			const blob = await exportMutation.mutateAsync({ search: undefined });
+			const url = URL.createObjectURL(blob);
+			const link = document.createElement("a");
+			link.href = url;
+			link.download = `product-requests-${new Date().toISOString().slice(0, 10)}.csv`;
+			document.body.appendChild(link);
+			link.click();
+			document.body.removeChild(link);
+			URL.revokeObjectURL(url);
+			toast.success("CSV exported successfully");
+		} catch (err) {
+			console.error("Failed to export product requests:", err);
+			toast.error(extractErrorMessage(err, "Failed to export product requests"));
 		}
 	};
 
@@ -69,23 +106,16 @@ export default function ProductRequest() {
 			<div className="flex items-center justify-between flex-wrap gap-4 mb-4">
 				<PageTitles title="Product Request" description="This is all the product request from customers" />
 				<div className="flex items-center gap-3">
-					<CsvExportModal
-						open={csvModalOpen}
-						onOpenChange={setCsvModalOpen}
-						title="Export Customer Registrations As CSV"
-						subtitle="Export all customer registrations with optional search filter"
-						fields={productRequestCsvFields}
-						onExport={handleCsvExport}
-						downloadFileName={`customer-registrations-${new Date().toISOString().slice(0, 10)}.csv`}
-						triggerButton={
-							<button className={twMerge("flex items-center gap-2 underline-offset-[4px] underline")}>
-								<IconWrapper>
-									<ExportFileIcon />
-								</IconWrapper>
-								<span>Export</span>
-							</button>
-						}
-					/>
+					<ActionButton
+						type="button"
+						className="flex items-center gap-2 bg-primary/10 text-primary hover:bg-primary/20"
+						onClick={handleExportClick}
+						disabled={exportMutation.isPending}>
+						<IconWrapper>
+							<ExportFileIcon />
+						</IconWrapper>
+						<span>{exportMutation.isPending ? "Exporting..." : "Export"}</span>
+					</ActionButton>
 				</div>
 			</div>
 
@@ -240,6 +270,15 @@ export default function ProductRequest() {
 							variant: "destructive",
 						},
 					]}
+				/>
+
+				<ExportConfirmModal
+					open={exportConfirmOpen}
+					onOpenChange={setExportConfirmOpen}
+					searchTerm={debouncedSearch}
+					onExportFiltered={handleExportFiltered}
+					onExportAll={handleExportAll}
+					isLoading={exportMutation.isPending}
 				/>
 			</CustomCard>
 		</div>

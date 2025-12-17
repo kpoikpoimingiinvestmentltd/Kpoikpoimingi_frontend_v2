@@ -49,6 +49,11 @@ export default function AdminDashboardHeader({ onSidebarOpen, onLogoutOpen }: Ad
 	return (
 		<div className="bg-white border-b border-gray-100 p-4 flex items-center justify-between sticky top-0 z-2">
 			<div className="flex items-center gap-1">
+				<button className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-neutral-800 xl:hidden" onClick={onSidebarOpen} aria-label="Open sidebar">
+					<IconWrapper>
+						<MenuIcon />
+					</IconWrapper>
+				</button>
 				{shouldShowBackButton && (
 					<button
 						className="flex bg-primary text-white p-2 px-2.5 sm:gap-1 active-scale rounded-lg items-center justify-center shadow-lg"
@@ -61,11 +66,6 @@ export default function AdminDashboardHeader({ onSidebarOpen, onLogoutOpen }: Ad
 						<span className="hidden min-[480px]:inline text-sm">Go back</span>
 					</button>
 				)}
-				<button className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-neutral-800 xl:hidden" onClick={onSidebarOpen} aria-label="Open sidebar">
-					<IconWrapper>
-						<MenuIcon />
-					</IconWrapper>
-				</button>
 			</div>
 			<div className="flex items-center gap-3.5 xl:pr-8">
 				<button

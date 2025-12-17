@@ -104,7 +104,6 @@ export default function Users() {
 	}, [usersData]);
 
 	const paginationData = (usersData as { pagination?: { total?: number; totalPages?: number } })?.pagination;
-	const total = paginationData?.total || 0;
 	const pages = paginationData?.totalPages || 1;
 
 	React.useEffect(() => {
@@ -182,7 +181,8 @@ export default function Users() {
 	const getPhone = (r: unknown) => (isUser(r) ? r.phoneNumber ?? "-" : (r as Record<string, unknown>).phone ?? "-");
 	const getRole = (r: unknown) =>
 		isUser(r) ? (typeof r.role === "string" ? r.role : r.role?.role ?? "-") : (r as Record<string, unknown>).role ?? "-";
-	const getAssigned = (r: unknown) => (isUser(r) ? "-" : (r as Record<string, unknown>).assigned ?? "-");
+	const getAssigned = (r: unknown) =>
+		isUser(r) ? r.numberOfAssignedCustomers ?? "-" : (r as Record<string, unknown>).numberOfAssignedCustomers ?? "-";
 	const getSalary = (r: unknown) => (r as Record<string, unknown>).salaryAmount ?? "-";
 
 	return (
@@ -357,12 +357,7 @@ export default function Users() {
 									</Table>
 								</div>
 
-								<div className="mt-8 flex flex-col md:flex-row text-center md:text-start justify-center items-center">
-									<span className="text-sm text-nowrap">Total of ({total})</span>
-									<div className="ml-auto">
-										<CompactPagination page={page} pages={pages} onPageChange={setPage} />
-									</div>
-								</div>
+								<CompactPagination page={page} pages={pages} showRange onPageChange={setPage} />
 							</>
 						)}
 					</CustomCard>

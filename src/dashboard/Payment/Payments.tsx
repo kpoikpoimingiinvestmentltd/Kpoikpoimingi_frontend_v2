@@ -10,19 +10,23 @@ import type { FilterField } from "@/components/common/SearchWithFilters";
 import { useGetAllDuePayments, useExportDuePayments } from "@/api/duePayment";
 import { useDebounceSearch } from "@/hooks/useDebounceSearch";
 import { TableSkeleton } from "@/components/common/Skeleton";
-import CsvExportModal from "@/components/common/CsvExportModal";
-import type { CsvField } from "@/components/common/CsvExportModal";
 import { ExportFileIcon, IconWrapper } from "@/assets/icons";
-import { twMerge } from "tailwind-merge";
 import { useDispatch, useSelector } from "react-redux";
 import type { RootState } from "@/store";
-import { setPage, setSearch, setCsvModalOpen, applyFilters, resetFilters } from "@/store/duePaymentSlice";
+import { setPage, setSearch, applyFilters, resetFilters } from "@/store/duePaymentSlice";
+import { useState } from "react";
+import ActionButton from "@/components/base/ActionButton";
+import { toast } from "sonner";
+import { extractErrorMessage } from "@/lib/utils";
+import ExportConfirmModal from "@/components/common/ExportConfirmModal";
 
 export default function Payments() {
 	const dispatch = useDispatch();
-	const { page, search, csvModalOpen, sortBy, sortOrder, dueDateFrom, dueDateTo, dateFrom, dateTo, isOverdue, statusId } = useSelector(
+	const { page, search, sortBy, sortOrder, dueDateFrom, dueDateTo, dateFrom, dateTo, isOverdue, statusId } = useSelector(
 		(state: RootState) => state.duePayment
 	);
+
+	const [exportOpen, setExportOpen] = useState(false);
 
 	const debouncedSearch = useDebounceSearch(search, 400);
 
@@ -119,55 +123,71 @@ export default function Payments() {
 		dispatch(resetFilters());
 	};
 
-	const duePaymentCsvFields: CsvField[] = [
-		{ key: "dueDateFrom", label: "Payment Due From", type: "date", placeholder: "01-01-2025" },
-		{ key: "dueDateTo", label: "Payment Due To", type: "date", placeholder: "31-12-2025" },
-		{ key: "dateFrom", label: "Reminder Sent From", type: "date", placeholder: "01-01-2025" },
-		{ key: "dateTo", label: "Reminder Sent To", type: "date", placeholder: "31-12-2025" },
-		{ key: "contractCode", label: "Contract Code", type: "text", placeholder: "Contract code" },
-		{ key: "customerName", label: "Customer Name", type: "text", placeholder: "John Doe" },
-		{ key: "customerEmail", label: "Customer Email", type: "text", placeholder: "john@example.com" },
-		{
-			key: "isOverdue",
-			label: "Status",
-			type: "select",
-			options: [
-				{ value: "true", label: "Overdue" },
-				{ value: "false", label: "Current" },
-			],
-		},
-		{
-			key: "statusId",
-			label: "Payment Status",
-			type: "text",
-			placeholder: "Status ID",
-		},
-	];
+	// Smart Export Handlers
+	const handleExportClick = async () => {
+		const hasActiveFilters = !!(dueDateFrom || dueDateTo || dateFrom || dateTo || isOverdue !== undefined || statusId !== undefined || search);
+		if (hasActiveFilters) {
+			setExportOpen(true);
+		} else {
+			handleExportAll();
+		}
+	};
 
-	const handleCsvExport = async (formData: Record<string, string>) => {
+	const getFilterLabels = () => {
+		const labels: Record<string, string> = {};
+		if (dueDateFrom) labels["Due From"] = dueDateFrom;
+		if (dueDateTo) labels["Due To"] = dueDateTo;
+		if (dateFrom) labels["Reminder From"] = dateFrom;
+		if (dateTo) labels["Reminder To"] = dateTo;
+		if (isOverdue !== undefined) labels["Overdue"] = isOverdue ? "Yes" : "No";
+		if (statusId !== undefined) labels["Status"] = statusId === 1 ? "Pending" : statusId === 2 ? "Paid" : "Failed";
+		if (search) labels["Search"] = search;
+		return labels;
+	};
+
+	const handleExportFiltered = async () => {
 		try {
 			const blob = await exportMutation.mutateAsync({
-				dueDateFrom: formData.dueDateFrom || undefined,
-				dueDateTo: formData.dueDateTo || undefined,
-				dateFrom: formData.dateFrom || undefined,
-				dateTo: formData.dateTo || undefined,
-				contractCode: formData.contractCode || undefined,
-				customerName: formData.customerName || undefined,
-				customerEmail: formData.customerEmail || undefined,
-				isOverdue: formData.isOverdue ? formData.isOverdue === "true" : undefined,
-				statusId: formData.statusId ? Number(formData.statusId) : undefined,
+				dueDateFrom: dueDateFrom || undefined,
+				dueDateTo: dueDateTo || undefined,
+				dateFrom: dateFrom || undefined,
+				dateTo: dateTo || undefined,
+				contractCode: search || undefined,
+				customerName: search || undefined,
+				customerEmail: search || undefined,
+				isOverdue: isOverdue !== undefined ? isOverdue : undefined,
+				statusId: statusId !== undefined ? statusId : undefined,
 			});
 			const url = URL.createObjectURL(blob);
-			return {
-				success: true,
-				downloadUrl: url,
-			};
+			const link = document.createElement("a");
+			link.href = url;
+			link.download = `due-payments-filtered-${new Date().toISOString().slice(0, 10)}.csv`;
+			document.body.appendChild(link);
+			link.click();
+			document.body.removeChild(link);
+			URL.revokeObjectURL(url);
+			toast.success("Due payments exported successfully");
+			setExportOpen(false);
 		} catch (err) {
-			console.error("Failed to export due payments:", err);
-			return {
-				success: false,
-				message: "Failed to export due payments",
-			};
+			toast.error(extractErrorMessage(err, "Failed to export due payments"));
+		}
+	};
+
+	const handleExportAll = async () => {
+		try {
+			const blob = await exportMutation.mutateAsync({});
+			const url = URL.createObjectURL(blob);
+			const link = document.createElement("a");
+			link.href = url;
+			link.download = `due-payments-all-${new Date().toISOString().slice(0, 10)}.csv`;
+			document.body.appendChild(link);
+			link.click();
+			document.body.removeChild(link);
+			URL.revokeObjectURL(url);
+			toast.success("All due payments exported successfully");
+			setExportOpen(false);
+		} catch (err) {
+			toast.error(extractErrorMessage(err, "Failed to export due payments"));
 		}
 	};
 
@@ -176,23 +196,16 @@ export default function Payments() {
 			<div className="flex items-center justify-between flex-wrap gap-4 mb-4">
 				<PageTitles title="Due Payments" description="The list of all paid debt and pending payment" />
 				<div className="flex items-center gap-3">
-					<CsvExportModal
-						open={csvModalOpen}
-						onOpenChange={(open) => dispatch(setCsvModalOpen(open))}
-						title="Export Due Payments As CSV"
-						subtitle="Filter due payments by date range, customer, or status"
-						fields={duePaymentCsvFields}
-						onExport={handleCsvExport}
-						downloadFileName={`due-payments-${new Date().toISOString().slice(0, 10)}.csv`}
-						triggerButton={
-							<button className={twMerge("flex items-center gap-2 underline-offset-[4px] underline")}>
-								<IconWrapper>
-									<ExportFileIcon />
-								</IconWrapper>
-								<span>Export</span>
-							</button>
-						}
-					/>
+					<ActionButton
+						type="button"
+						className="bg-primary/10 text-primary hover:bg-primary/20 flex items-center gap-2"
+						onClick={handleExportClick}
+						disabled={exportMutation.isPending}>
+						<IconWrapper className="text-base">
+							<ExportFileIcon />
+						</IconWrapper>
+						<span className="text-sm">{exportMutation.isPending ? "Exporting..." : "Export"}</span>
+					</ActionButton>
 				</div>
 			</div>
 
@@ -292,6 +305,16 @@ export default function Payments() {
 					)}
 				</div>
 			</CustomCard>
+
+			{/* Export Modal */}
+			<ExportConfirmModal
+				open={exportOpen}
+				onOpenChange={setExportOpen}
+				filterLabels={getFilterLabels()}
+				onExportFiltered={handleExportFiltered}
+				onExportAll={handleExportAll}
+				isLoading={exportMutation.isPending}
+			/>
 		</div>
 	);
 }

@@ -5,7 +5,7 @@ import CustomCard from "@/components/base/CustomCard";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { tableHeaderRowStyle } from "@/components/common/commonStyles";
 import CompactPagination from "@/components/ui/compact-pagination";
-import { EyeIcon, IconWrapper } from "@/assets/icons";
+import { EyeIcon, IconWrapper, ExportFileIcon } from "@/assets/icons";
 import { Link } from "react-router";
 import { _router } from "@/routes/_router";
 import React from "react";
@@ -16,15 +16,18 @@ import { twMerge } from "tailwind-merge";
 import SearchWithFilters from "@/components/common/SearchWithFilters";
 import type { FilterField } from "@/components/common/SearchWithFilters";
 import { useDebounceSearch } from "@/hooks/useDebounceSearch";
-import CsvExportModal from "@/components/common/CsvExportModal";
-import type { CsvField } from "@/components/common/CsvExportModal";
 import { useExportAllContractDebts } from "@/api/contracts";
+import { useState } from "react";
+import ActionButton from "@/components/base/ActionButton";
+import { toast } from "sonner";
+import { extractErrorMessage } from "@/lib/utils";
+import ExportConfirmModal from "@/components/common/ExportConfirmModal";
 
 export default function Debt() {
 	const [page, setPage] = React.useState(1);
 	const [limit, setLimit] = React.useState<number>(10);
 	const [searchQuery, setSearchQuery] = React.useState<string>("");
-	const [csvModalOpen, setCsvModalOpen] = React.useState(false);
+	const [exportOpen, setExportOpen] = useState(false);
 	const debouncedSearch = useDebounceSearch(searchQuery, 400);
 	const [sortBy, setSortBy] = React.useState<string>("createdAt");
 	const [sortOrder, setSortOrder] = React.useState<string>("desc");
@@ -39,26 +42,57 @@ export default function Debt() {
 
 	const exportMutation = useExportAllContractDebts();
 
-	const debtCsvFields: CsvField[] = [
-		{ key: "search", label: "Search", type: "text", placeholder: "Contract code, customer name, or property name", required: false },
-	];
+	// Smart Export Handlers
+	const handleExportClick = async () => {
+		const hasActiveFilters = !!searchQuery;
+		if (hasActiveFilters) {
+			setExportOpen(true);
+		} else {
+			handleExportAll();
+		}
+	};
 
-	const handleCsvExport = async (formData: Record<string, string>) => {
+	const getFilterLabels = () => {
+		const labels: Record<string, string> = {};
+		if (searchQuery) labels["Search"] = searchQuery;
+		return labels;
+	};
+
+	const handleExportFiltered = async () => {
 		try {
 			const blob = await exportMutation.mutateAsync({
-				search: formData.search || undefined,
+				search: searchQuery || undefined,
 			});
 			const url = URL.createObjectURL(blob);
-			return {
-				success: true,
-				downloadUrl: url,
-			};
+			const link = document.createElement("a");
+			link.href = url;
+			link.download = `contract-debts-filtered-${new Date().toISOString().slice(0, 10)}.csv`;
+			document.body.appendChild(link);
+			link.click();
+			document.body.removeChild(link);
+			URL.revokeObjectURL(url);
+			toast.success("Contract debts exported successfully");
+			setExportOpen(false);
 		} catch (err) {
-			console.error("Failed to export contract debts:", err);
-			return {
-				success: false,
-				message: "Failed to export contract debts",
-			};
+			toast.error(extractErrorMessage(err, "Failed to export contract debts"));
+		}
+	};
+
+	const handleExportAll = async () => {
+		try {
+			const blob = await exportMutation.mutateAsync({});
+			const url = URL.createObjectURL(blob);
+			const link = document.createElement("a");
+			link.href = url;
+			link.download = `contract-debts-all-${new Date().toISOString().slice(0, 10)}.csv`;
+			document.body.appendChild(link);
+			link.click();
+			document.body.removeChild(link);
+			URL.revokeObjectURL(url);
+			toast.success("All contract debts exported successfully");
+			setExportOpen(false);
+		} catch (err) {
+			toast.error(extractErrorMessage(err, "Failed to export contract debts"));
 		}
 	};
 
@@ -87,35 +121,35 @@ export default function Debt() {
 
 	const paginationData = (debtData.pagination as Record<string, unknown>) || {};
 	const pages = Math.max(1, (paginationData.totalPages as number) ?? 1);
-	const total = (paginationData.total as number) ?? 0;
 
 	return (
 		<PageWrapper>
 			<div className="flex items-center justify-between flex-wrap gap-4 mb-4">
 				<PageTitles title="Debt" description="This contains all customers owing for product they signed to buy on installment" />
 				<div className="flex items-center gap-3">
-					<CsvExportModal
-						open={csvModalOpen}
-						onOpenChange={setCsvModalOpen}
-						title="Export Contract Debts As CSV"
-						subtitle="Export all contract debts with optional search filter"
-						fields={debtCsvFields}
-						onExport={handleCsvExport}
-						downloadFileName={`contract-debts-${new Date().toISOString().slice(0, 10)}.csv`}
-					/>
+					<ActionButton
+						type="button"
+						className="bg-primary/10 text-primary hover:bg-primary/20 flex items-center gap-2"
+						onClick={handleExportClick}
+						disabled={exportMutation.isPending}>
+						<IconWrapper className="text-base">
+							<ExportFileIcon />
+						</IconWrapper>
+						<span className="text-sm">{exportMutation.isPending ? "Exporting..." : "Export"}</span>
+					</ActionButton>
 				</div>
 			</div>
 
-			<div className="grid grid-cols-2 bg-white rounded-lg overflow-hidden items-center">
-				<div className="bg-[#03b5ff] h-full text-white rounded-r-full py-6 px-6 flex-1 mr-4 flex items-center justify-between">
+			<div className="grid grid-cols-5 md:grid-cols-2 bg-white rounded-lg overflow-hidden items-center">
+				<aside className="bg-[#03b5ff] col-span-3 md:col-span-1 h-full text-white rounded-r-full py-6 px-6 flex-1 md:mr-4 flex items-center justify-between">
 					<div className="flex flex-col h-full justify-between">
 						<div className="text-[.9rem] opacity-90">Total Debt</div>
 						<div className="mt-2 text-lg font-medium">
 							NGN <span className="text-3xl">{(summary.totalDebtAmount || 0).toLocaleString()}</span>
 						</div>
 					</div>
-				</div>
-				<aside className="items-end p-4 h-full flex justify-end">
+				</aside>
+				<aside className="items-end p-4 h-full col-span-2 md:col-span-1 flex justify-end">
 					<Image src={media.images.coin} alt="coin" className="w-28 md:mr-10" />
 				</aside>
 			</div>
@@ -123,7 +157,7 @@ export default function Debt() {
 			{/* Debtors table */}
 			<CustomCard className="bg-white flex-grow w-full rounded-lg p-4 border border-gray-100">
 				<div className="w-full">
-					<div className="flex items-center justify-between mb-4">
+					<div className="flex items-center justify-between mb-4 flex-wrap gap-4">
 						<h2 className="font-semibold">All Debtors ( Customers Owning )</h2>
 						<div className="flex items-center gap-2">
 							<SearchWithFilters
@@ -230,18 +264,7 @@ export default function Debt() {
 									</TableBody>
 								</Table>
 
-								<div className="mt-8 flex flex-col md:flex-row text-center md:text-start justify-center items-center">
-									<span className="text-sm text-nowrap">
-										Showing{" "}
-										<span className="font-medium">
-											{Math.min((page - 1) * limit + 1, total)}- {Math.min(page * limit, total)}
-										</span>{" "}
-										of <span className="font-medium">{total}</span> results
-									</span>
-									<div className="ml-auto">
-										<CompactPagination page={page} pages={pages} onPageChange={setPage} />
-									</div>
-								</div>
+								<CompactPagination page={page} pages={pages} showRange onPageChange={setPage} />
 							</>
 						) : (
 							<div className="text-center py-8 text-muted-foreground">No debtors found</div>
@@ -249,6 +272,16 @@ export default function Debt() {
 					</div>
 				</div>
 			</CustomCard>
+
+			{/* Export Modal */}
+			<ExportConfirmModal
+				open={exportOpen}
+				onOpenChange={setExportOpen}
+				filterLabels={getFilterLabels()}
+				onExportFiltered={handleExportFiltered}
+				onExportAll={handleExportAll}
+				isLoading={exportMutation.isPending}
+			/>
 		</PageWrapper>
 	);
 }

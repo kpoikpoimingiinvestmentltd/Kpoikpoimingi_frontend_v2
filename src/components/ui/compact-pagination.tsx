@@ -24,9 +24,32 @@ export default function CompactPagination({ page, pages, onPageChange, className
 	const render = () => {
 		const nodes: React.ReactNode[] = [];
 
-		const visible = Math.min(3, pages);
+		// Show current page and adjacent pages
+		const rangeStart = Math.max(1, page - 1);
+		const rangeEnd = Math.min(pages, page + 1);
 
-		for (let i = 1; i <= visible; i++) {
+		// Always show page 1
+		if (rangeStart > 1) {
+			nodes.push(
+				<PaginationItem key={1}>
+					<PaginationLink isActive={page === 1} onClick={() => onPageChange(1)}>
+						1
+					</PaginationLink>
+				</PaginationItem>
+			);
+		}
+
+		// Show ellipsis if there's a gap between 1 and rangeStart
+		if (rangeStart > 2) {
+			nodes.push(
+				<PaginationItem key="e1">
+					<PaginationEllipsis />
+				</PaginationItem>
+			);
+		}
+
+		// Show range around current page
+		for (let i = rangeStart; i <= rangeEnd; i++) {
 			nodes.push(
 				<PaginationItem key={i}>
 					<PaginationLink isActive={page === i} onClick={() => onPageChange(i)}>
@@ -36,24 +59,21 @@ export default function CompactPagination({ page, pages, onPageChange, className
 			);
 		}
 
-		if (pages > visible + 1) {
+		// Show ellipsis if there's a gap between rangeEnd and last page
+		if (rangeEnd < pages - 1) {
 			nodes.push(
-				<PaginationItem key="e">
+				<PaginationItem key="e2">
 					<PaginationEllipsis />
 				</PaginationItem>
 			);
+		}
+
+		// Always show last page
+		if (rangeEnd < pages) {
 			nodes.push(
 				<PaginationItem key={pages}>
 					<PaginationLink isActive={page === pages} onClick={() => onPageChange(pages)}>
 						{pages}
-					</PaginationLink>
-				</PaginationItem>
-			);
-		} else if (pages === visible + 1) {
-			nodes.push(
-				<PaginationItem key={visible + 1}>
-					<PaginationLink isActive={page === visible + 1} onClick={() => onPageChange(visible + 1)}>
-						{visible + 1}
 					</PaginationLink>
 				</PaginationItem>
 			);
@@ -66,7 +86,7 @@ export default function CompactPagination({ page, pages, onPageChange, className
 	const end = Math.min(page * perPage, total ?? pages * perPage);
 
 	return (
-		<div className={twMerge("mt-8 flex gap-4  flex-col min-[500px]:flex-row text-center justify-between items-center md:justify-between", className)}>
+		<div className={twMerge("mt-8 flex gap-4 flex-col min-[500px]:flex-row text-center justify-between items-center md:justify-between", className)}>
 			{showRange && (
 				<div className="mr-4 flex items-center text-sm text-muted-foreground">
 					Showing{" "}

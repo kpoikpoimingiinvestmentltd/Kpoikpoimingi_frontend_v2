@@ -46,3 +46,15 @@ export function formatDate(dateInput?: string | Date | number | null, options?: 
 		return String(dateInput);
 	}
 }
+
+export function getFileIcon(fileUrl: string, mediaImages: Record<string, string>) {
+	const cleanUrl = fileUrl.split("?")[0];
+	const extension = cleanUrl.split(".").pop()?.toLowerCase() || "";
+
+	if (extension === "png") {
+		return mediaImages.pngImage || mediaImages.pdfImage;
+	} else if (extension === "jpg" || extension === "jpeg") {
+		return mediaImages.jpgImage || mediaImages.pdfImage;
+	}
+	return mediaImages.pdfImage;
+}

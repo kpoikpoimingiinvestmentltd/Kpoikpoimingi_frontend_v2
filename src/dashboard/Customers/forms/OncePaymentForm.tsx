@@ -256,7 +256,7 @@ export default function OncePaymentFormComponent({ form, handleChange, isSubmitt
 							const updatedProperties = [...form.properties, { propertyName: "", quantity: 1 }];
 							handleChange("properties", updatedProperties);
 						}}
-						className="mt-4 px-4 py-2 bg-primary text-white rounded">
+						className="mt-4 text-sm px-4 py-2 bg-primary text-white rounded">
 						+ Add Property
 					</button>
 				</div>
