@@ -14,7 +14,9 @@ export default function Dashboard() {
 		<div className="flex flex-col gap-y-6">
 			<div className="flex items-center flex-wrap justify-between gap-2">
 				<PageTitles title="Overview" description="Overview of major activities" />
-				<Link to={_router.dashboard.customerAdd} className="text-sm flex items-center gap-2 text-white py-2.5 px-4 rounded-sm bg-primary">
+				<Link
+					to={_router.dashboard.selectCustomerPaymentMethod}
+					className="text-sm flex items-center gap-2 text-white py-2.5 px-4 rounded-sm bg-primary">
 					<IconWrapper>
 						<PlusIcon />
 					</IconWrapper>

@@ -159,7 +159,7 @@ export default function DebtDetails() {
 					<Table>
 						<TableHeader className={tableHeaderRowStyle}>
 							<TableRow className="bg-[#EAF6FF] h-12 overflow-hidden py-4 rounded-lg">
-								<TableHead>Payment #</TableHead>
+								<TableHead>Payment</TableHead>
 								<TableHead>Amount</TableHead>
 								<TableHead>Due Date</TableHead>
 								<TableHead>Status</TableHead>
@@ -173,7 +173,7 @@ export default function DebtDetails() {
 									<TableCell className="text-[#13121266] py-4">₦{payment.amount.toLocaleString()}</TableCell>
 									<TableCell className="text-[#13121266] py-4">{new Date(payment.dueDate).toLocaleDateString()}</TableCell>
 									<TableCell className="text-[#13121266] py-4">
-										<Badge value={payment.status} status={payment.isOverdue ? "banned" : undefined} size="sm" />
+										<Badge value={payment.status} status={payment.isOverdue ? "banned" : "success"} size="sm" />
 									</TableCell>
 									<TableCell className="text-[#13121266] py-4">₦{payment.paidAmount.toLocaleString()}</TableCell>
 								</TableRow>

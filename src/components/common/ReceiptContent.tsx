@@ -10,7 +10,6 @@ interface ReceiptContentProps {
 export default function ReceiptContent({ receipt }: ReceiptContentProps) {
 	const isFullPayment = !receipt.totalInstallments || receipt.totalInstallments === 1;
 
-	// Parse installment progress to get covered and total
 	const parseInstallmentProgress = (progress?: string) => {
 		if (!progress) return { covered: 0, total: 0 };
 		const match = progress.match(/(\d+)\/(\d+)/);
@@ -34,7 +33,7 @@ export default function ReceiptContent({ receipt }: ReceiptContentProps) {
 			<>
 				<ReceiptHeader receiptNumber={receipt.receiptNumber ?? receipt.id} />
 				<main className="flex-grow">
-					<section className="flex flex-col gap-y-1 my-6">
+					<section className="flex flex-col gap-y-1 mb-6 mt-4">
 						<h3 className="text-center text-lg font-medium text-primary mb-4">Invoice With Full Payment</h3>
 						<KeyValueRow label="Name" value={receipt.customer?.fullName ?? receipt.id ?? "-"} />
 						<KeyValueRow label="Email" value={receipt.customer?.email ?? "-"} />
@@ -53,7 +52,7 @@ export default function ReceiptContent({ receipt }: ReceiptContentProps) {
 					</section>
 
 					{/* Payment Breakdown Section */}
-					<section className="mt-6 flex flex-col gap-y-4">
+					<section className="mt-4 flex flex-col gap-y-4">
 						<header className="flex items-center justify-between bg-primary/10 px-4 md:px-6 py-2.5 rounded-md">
 							<h5 className="text-start font-medium">Payment Breakdown</h5>
 							<span className="text-sm text-end font-medium">Payment duration (One time)</span>
@@ -108,8 +107,8 @@ export default function ReceiptContent({ receipt }: ReceiptContentProps) {
 		<>
 			<ReceiptHeader receiptNumber={receipt.receiptNumber ?? receipt.id} />
 			<main className="flex-grow">
-				<section className="flex flex-col gap-y-3 my-6">
-					<h3 className="text-center text-sm sm:text-lg font-medium text-primary mb-4">Invoice With Partial Payment</h3>
+				<section className="flex flex-col gap-y-3 mb-4 mt-3">
+					<h3 className="text-center text-sm sm:text-lg font-medium text-primary ">Invoice With Partial Payment</h3>
 					<div className="gap-4">
 						<KeyValueRow label="Name" value={receipt.customer?.fullName ?? receipt.id ?? "-"} />
 						<KeyValueRow label="Email" value={receipt.customer?.email ?? "-"} />
@@ -129,7 +128,7 @@ export default function ReceiptContent({ receipt }: ReceiptContentProps) {
 				</section>
 
 				{/* Payment Breakdown Section */}
-				<section className="mt-6 flex flex-col gap-y-4">
+				<section className="mt-4 flex flex-col gap-y-4">
 					<header className="flex items-center justify-between bg-primary/10 px-4 md:px-6 py-2.5 rounded-md">
 						<h5 className="text-start text-xs sm:text-sm font-medium">Payment Breakdown</h5>
 						<span className="text-xs sm:text-sm text-end font-medium">
