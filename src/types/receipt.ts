@@ -6,7 +6,7 @@ export type GenerateReceiptPayload = {
 	amount: string | number;
 	paymentMethodId: string | number;
 	paymentDate: string;
-	generatedBy: string;
+	generatedBy?: string;
 	notes?: string;
 };
 

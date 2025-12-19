@@ -94,7 +94,7 @@ export default function TabProductInformation({
 
 							{/* Property Details */}
 							<CustomCard className="mt-6 p-0 border-0">
-								<div className="grid grid-cols-1 gap-y-0.5 text-sm">
+								<div className="grid grid-cols-1 gap-4 text-sm">
 									<KeyValueRow
 										label="Property Name"
 										value={(propertyData?.name as string) || "N/A"}
@@ -151,42 +151,6 @@ export default function TabProductInformation({
 										leftClassName="text-sm text-muted-foreground"
 										rightClassName="text-right md:text-left"
 									/>
-									{(propertyData?.description as string) && (
-										<>
-											<div className="col-span-1 md:col-span-2">
-												<KeyValueRow
-													label="Description"
-													value={propertyData?.description as string}
-													leftClassName="text-sm text-muted-foreground"
-													rightClassName="text-right md:text-left"
-												/>
-											</div>
-										</>
-									)}
-									{(propertyData?.condition as string) && (
-										<KeyValueRow
-											label="Condition"
-											value={propertyData?.condition as string}
-											leftClassName="text-sm text-muted-foreground"
-											rightClassName="text-right md:text-left"
-										/>
-									)}
-									{(property.customPropertyName as string) && (
-										<KeyValueRow
-											label="Custom Property Name"
-											value={property.customPropertyName as string}
-											leftClassName="text-sm text-muted-foreground"
-											rightClassName="text-right md:text-left"
-										/>
-									)}
-									{(property.customPropertyPrice as number) && (
-										<KeyValueRow
-											label="Custom Property Price"
-											value={`₦${property.customPropertyPrice as number}`}
-											leftClassName="text-sm text-muted-foreground"
-											rightClassName="text-right md:text-left"
-										/>
-									)}
 								</div>
 							</CustomCard>
 						</div>

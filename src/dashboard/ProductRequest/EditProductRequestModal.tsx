@@ -34,6 +34,7 @@ export default function EditProductRequest({ open, onOpenChange, initial, onSave
 				businessAddress: (src.companyAddress as string) || (src.businessAddress as string) || "",
 				stateOfOrigin: (src.stateOfOrigin as string) || "",
 				votersUploaded: (src.votersUploaded as number) || 0,
+				hasAgreed: Boolean(src.hasAgreed ?? false),
 			};
 		});
 

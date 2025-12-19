@@ -170,6 +170,7 @@ export interface InstallmentPaymentForm {
 		businessAddress: string;
 		stateOfOrigin: string;
 		votersUploaded: number;
+		hasAgreed?: boolean;
 	}>;
 }
 

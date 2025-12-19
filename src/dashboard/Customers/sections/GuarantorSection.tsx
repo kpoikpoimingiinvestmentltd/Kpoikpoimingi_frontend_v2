@@ -50,6 +50,12 @@ export default function GuarantorSection({
 								wrapperClassName="items-start mb-4 gap-3"
 								labelClassName="font-normal text-stone-600"
 								id={`guarantor_agree_${idx}`}
+								checked={g.hasAgreed ?? false}
+								onCheckedChange={(checked) => {
+									const next = [...form.guarantors];
+									next[idx] = { ...next[idx], hasAgreed: checked };
+									handleChange("guarantors", next);
+								}}
 								label={
 									<div>
 										<span className="text-sm">

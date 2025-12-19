@@ -81,6 +81,7 @@ export function useCustomerFormState(paymentMethod?: "once" | "installment", ini
 					businessAddress: "",
 					stateOfOrigin: "",
 					votersUploaded: 0,
+					hasAgreed: false,
 				},
 				{
 					fullName: "",
@@ -92,6 +93,7 @@ export function useCustomerFormState(paymentMethod?: "once" | "installment", ini
 					businessAddress: "",
 					stateOfOrigin: "",
 					votersUploaded: 0,
+					hasAgreed: false,
 				},
 			],
 		} as InstallmentPaymentForm;
@@ -234,6 +236,7 @@ export function useCustomerFormState(paymentMethod?: "once" | "installment", ini
 						businessAddress: "",
 						stateOfOrigin: "",
 						votersUploaded: 0,
+						hasAgreed: false,
 					},
 					{
 						fullName: "",
@@ -245,6 +248,7 @@ export function useCustomerFormState(paymentMethod?: "once" | "installment", ini
 						businessAddress: "",
 						stateOfOrigin: "",
 						votersUploaded: 0,
+						hasAgreed: false,
 					},
 				],
 			} as FormState);

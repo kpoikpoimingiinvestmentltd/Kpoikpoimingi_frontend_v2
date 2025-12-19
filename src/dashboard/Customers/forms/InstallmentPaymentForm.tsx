@@ -111,23 +111,7 @@ export default function InstallmentPaymentFormComponent({
 				missingFields={missingFields}
 			/>
 
-			{/* Authorization Agreement */}
-			<div className={centeredContainer()}>
-				<CheckboxField
-					labelClassName="font-normal text-stone-600"
-					wrapperClassName="items-start mb-4 gap-3"
-					id="authorization_agree"
-					label={
-						<span className="text-sm">
-							I hereby authorise <span className="font-medium">Kpoi Kpoi Mingi Investments Ltd</span> to retrieve the electrical appliance from me, or
-							any other person at my or any other place it may be found in the event of my default in paying the Hire Purchase sum as agreed.
-						</span>
-					}
-					labelPosition="right"
-				/>
-			</div>
 			<hr className="my-6" />
-
 			{/* Property Details */}
 			<PropertyDetailsSection
 				form={form}
@@ -159,6 +143,24 @@ export default function InstallmentPaymentFormComponent({
 					sectionTitle={sectionTitle}
 					setUploadedFiles={setUploadedFiles}
 					missingFields={missingFields}
+				/>
+			</div>
+
+			{/* Authorization Agreement - Before Submit Button */}
+			<div className={centeredContainer()}>
+				<CheckboxField
+					labelClassName="font-normal text-stone-600"
+					wrapperClassName="items-start mb-4 gap-3"
+					id="authorization_agree"
+					checked={(form as any).hasRequestAgreement ?? false}
+					onCheckedChange={(checked) => handleChange("hasRequestAgreement", checked)}
+					label={
+						<span className="text-sm">
+							I hereby authorise <span className="font-medium">Kpoi Kpoi Mingi Investments Ltd</span> to retrieve the electrical appliance from me, or
+							any other person at my or any other place it may be found in the event of my default in paying the Hire Purchase sum as agreed.
+						</span>
+					}
+					labelPosition="right"
 				/>
 			</div>
 

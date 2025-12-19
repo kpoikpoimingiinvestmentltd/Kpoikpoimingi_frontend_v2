@@ -129,6 +129,11 @@ export default function CustomerForm({
 		}
 	}, [initial]);
 
+	// Reset prefill flag when initial data changes
+	React.useEffect(() => {
+		didPrefillRef.current = false;
+	}, [initial]);
+
 	React.useEffect(() => {
 		if (didPrefillRef.current) return;
 		if (!initial) return;
@@ -186,6 +191,7 @@ export default function CustomerForm({
 						businessAddress: "",
 						stateOfOrigin: "",
 						votersUploaded: 0,
+						hasAgreed: false,
 					};
 					return {
 						...curr,
@@ -198,6 +204,7 @@ export default function CustomerForm({
 						businessAddress: srcObj.businessAddress ?? curr.businessAddress,
 						stateOfOrigin: srcObj.stateOfOrigin ?? curr.stateOfOrigin,
 						votersUploaded: curr.votersUploaded ?? 0,
+						hasAgreed: Boolean(srcObj.hasAgreed ?? curr.hasAgreed ?? false),
 					};
 				});
 				handleChange("guarantors", mapped);
