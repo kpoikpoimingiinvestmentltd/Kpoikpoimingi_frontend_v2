@@ -21,8 +21,9 @@ export const NotificationsProvider: React.FC<React.PropsWithChildren> = ({ child
 	}, [auth?.accessToken]);
 
 	useEffect(() => {
-		const id = (currentUser as any)?.id as string | undefined;
-		const role = (currentUser as any)?.role as string | undefined;
+		const userData = currentUser as Record<string, unknown> | undefined;
+		const id = userData?.id as string | undefined;
+		const role = userData?.role as string | undefined;
 		if (id) {
 			joinRoom(id, role);
 		}

@@ -155,7 +155,7 @@ export default function InstallmentPaymentFormComponent({
 					labelClassName="font-normal text-stone-600"
 					wrapperClassName="items-start mb-4 gap-3"
 					id="authorization_agree"
-					checked={(form as any).hasRequestAgreement ?? false}
+					checked={((form as unknown as Record<string, unknown>).hasRequestAgreement as boolean) ?? false}
 					onCheckedChange={(checked) => handleChange("hasRequestAgreement", checked)}
 					label={
 						<span className="text-sm">

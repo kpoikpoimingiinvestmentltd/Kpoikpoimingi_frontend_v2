@@ -101,7 +101,7 @@ export default function SearchWithFilters({
 												className="w-full rounded-md border px-3 py-2 text-sm"
 												value={values[f.key] || ""}
 												onChange={(e) => handleChange(f.key, e.target.value)}
-												placeholder={(f as any).placeholder || ""}
+												placeholder={((f as Record<string, unknown>).placeholder as string) || ""}
 											/>
 										)}
 

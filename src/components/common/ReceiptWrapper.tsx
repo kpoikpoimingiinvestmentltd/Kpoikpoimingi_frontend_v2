@@ -60,13 +60,14 @@ export default function ReceiptWrapper({
 			return;
 		}
 
-		if (!contentRef || !(contentRef as any)?.current) {
+		const refContent = contentRef as React.RefObject<HTMLDivElement> | undefined;
+		if (!refContent || !refContent.current) {
 			toast.error("Receipt content not available");
 			return;
 		}
 
 		// Generate PDF and send via API endpoint
-		const success = await handleSendPDFViaEmail((contentRef as any).current, receiptId);
+		const success = await handleSendPDFViaEmail(refContent.current, receiptId);
 
 		if (!success) {
 			// Error toast is already handled in handleSendPDFViaEmail
@@ -84,7 +85,8 @@ export default function ReceiptWrapper({
 			label: "Whatsapp",
 			src: media.images.whatsapp,
 			onSelect: () => {
-				if (onShare && typeof navigator !== "undefined" && (navigator as any).share) {
+				const navSharing = navigator as Record<string, unknown> & typeof navigator;
+				if (onShare && typeof navigator !== "undefined" && navSharing.share) {
 					try {
 						onShare();
 						return;

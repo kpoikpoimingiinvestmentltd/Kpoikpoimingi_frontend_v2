@@ -14,8 +14,9 @@ export default function TabPaymentHistory({ payments, customerId }: { payments?:
 	const { data: allPayments } = useGetCustomerPayments(customerId, !!customerId);
 
 	const handleView = (p: ApiPaymentItem) => {
-		if (allPayments && (allPayments as any)?.payments) {
-			const groups = (allPayments as any).payments as ApiContractPayments[];
+		const allPaymentsData = allPayments as Record<string, unknown> | undefined;
+		if (allPayments && allPaymentsData?.payments) {
+			const groups = allPaymentsData.payments as ApiContractPayments[];
 			for (const grp of groups) {
 				const found = (grp.payments ?? []).find((it) => it.id === p.id);
 				if (found) {

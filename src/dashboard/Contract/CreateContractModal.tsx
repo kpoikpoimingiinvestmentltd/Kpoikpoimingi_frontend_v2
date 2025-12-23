@@ -19,6 +19,7 @@ import type { RefOption } from "@/lib/referenceDataHelpers";
 import { toast } from "sonner";
 import { extractErrorMessage } from "@/lib/utils";
 import type { Registration } from "@/types/customerRegistration";
+import type { ContractPayload } from "@/types/contracts";
 
 export default function CreateContractModal({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
 	const [showSuccess, setShowSuccess] = React.useState(false);
@@ -26,7 +27,6 @@ export default function CreateContractModal({ open, onOpenChange }: { open: bool
 	const [selectedCustomerData, setSelectedCustomerData] = React.useState<Registration | null>(null);
 	const [searchQuery, setSearchQuery] = React.useState("");
 
-	// Fetch customer registrations when modal opens
 	const registrationsQuery = useGetAllCustomerRegistrations(open) as { data?: { data?: Registration[] } | Registration[] };
 	const registrations = registrationsQuery?.data;
 
@@ -139,26 +139,33 @@ export default function CreateContractModal({ open, onOpenChange }: { open: bool
 		}
 	}, [open, setValue]);
 
-	// Reset form when customer is selected
 	React.useEffect(() => {
 		reset(getDefaultValues());
 	}, [selectedCustomerData, reset]);
 
-	// confirm / preview state
-	type ContractPayload = {
-		customerId?: string;
-		propertyId?: string | undefined;
-		paymentTypeId?: number;
-		quantity?: number;
-		downPayment?: number;
-		intervalId?: number | undefined;
-		durationValue?: number;
-		durationUnitId?: number | undefined;
-		startDate?: string | undefined;
-		remarks?: string | undefined;
-		isCash?: boolean;
-		isPaymentLink?: boolean;
-	};
+	React.useEffect(() => {
+		if (paymentTypeId === "2" && selectedCustomerData) {
+			const propertyInterest = selectedCustomerData?.propertyInterestRequest?.[0] as Record<string, unknown> | undefined;
+			if (propertyInterest) {
+				let propertyPrice = 0;
+
+				if (propertyInterest.isCustomProperty && propertyInterest.customPropertyPrice) {
+					propertyPrice = Number(propertyInterest.customPropertyPrice);
+				} else {
+					const propObj = propertyInterest.property as Record<string, unknown> | undefined;
+					if (propObj?.price) {
+						propertyPrice = Number(propObj.price);
+					}
+				}
+
+				if (propertyPrice > 0) {
+					const quantity = propertyInterest.quantity ? Number(propertyInterest.quantity) : 1;
+					const amountPaid = propertyPrice * quantity;
+					setValue("downPayment", amountPaid);
+				}
+			}
+		}
+	}, [paymentTypeId, selectedCustomerData, setValue]);
 
 	const [previewPayload, setPreviewPayload] = React.useState<ContractPayload | null>(null);
 	const [confirmOpen, setConfirmOpen] = React.useState(false);
@@ -173,14 +180,11 @@ export default function CreateContractModal({ open, onOpenChange }: { open: bool
 		return extractDurationUnitOptions(refData);
 	}, [refData]);
 
-	// Auto-sync duration unit with selected payment interval (weekly vs monthly)
-	// Do not clear an already-provided `durationValue` (e.g., when selecting a customer with prefills).
 	React.useEffect(() => {
 		if (!watchedIntervalId) return;
 		const selected = intervalCandidates.find((it) => String(it.key) === String(watchedIntervalId));
 		const isWeekly = Boolean(selected && String(selected.value).toUpperCase().includes("WEEK"));
 
-		// Try to find the matching duration unit key from durationCandidates
 		let unitKey: string | undefined;
 		if (isWeekly) {
 			unitKey = durationCandidates.find((d) => String(d.value).toUpperCase().includes("WEEK"))?.key;
@@ -190,7 +194,6 @@ export default function CreateContractModal({ open, onOpenChange }: { open: bool
 
 		if (unitKey) {
 			setValue("durationUnitId", String(unitKey));
-			// Only clear durationValue if there was no existing value (preserve prefills)
 			if (watchedDurationValue === undefined || watchedDurationValue === null || String(watchedDurationValue).trim() === "") {
 				setValue("durationValue", undefined as unknown as number);
 			}
@@ -222,7 +225,6 @@ export default function CreateContractModal({ open, onOpenChange }: { open: bool
 			isPaymentLink: values.paymentMethod === "link",
 		};
 
-		// Client-side validation for hire-purchase contracts to avoid server 400s
 		const resolvedPaymentType = Number(values.paymentTypeId);
 		if (resolvedPaymentType === 1) {
 			const missing: string[] = [];
@@ -256,7 +258,6 @@ export default function CreateContractModal({ open, onOpenChange }: { open: bool
 			} else if (r.data && typeof (r.data as Record<string, unknown>).downPaymentLink === "string") {
 				linkStr = (r.data as Record<string, unknown>).downPaymentLink as string;
 			}
-			// Show success toast if server returned a friendly message
 			const successMsg =
 				typeof r.message === "string"
 					? r.message
@@ -265,9 +266,7 @@ export default function CreateContractModal({ open, onOpenChange }: { open: bool
 					: "Contract created successfully";
 			try {
 				toast.success(String(successMsg));
-			} catch (e) {
-				// ignore toast failures
-			}
+			} catch {}
 			setGeneratedLink(linkStr);
 			setConfirmOpen(false);
 			onOpenChange(false);
