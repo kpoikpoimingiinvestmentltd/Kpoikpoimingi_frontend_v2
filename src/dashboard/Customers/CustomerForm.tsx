@@ -571,6 +571,8 @@ export default function CustomerForm({
 					toast.success(`Registration created successfully! Code: ${response.registrationCode}`);
 				}
 
+				localStorage.removeItem("pendingSelectedProperties");
+
 				resetFormCompletely();
 				if (!isEditMode) navigate(_router.dashboard.customers);
 			}
@@ -590,12 +592,11 @@ export default function CustomerForm({
 		if (!f.fullName || String(f.fullName).trim() === "") return false;
 		if (!f.email || String(f.email).trim() === "") return false;
 		if (!f.whatsapp || String(f.whatsapp).trim() === "") return false;
-		if (!f.numberOfProperties || String(f.numberOfProperties).trim() === "") return false;
+		const validProperties = f.properties.filter((p) => p.propertyName && String(p.propertyName).trim() !== "");
 		// Check that at least one property is filled
-		if (!Array.isArray(f.properties) || f.properties.length === 0) return false;
-		// Check each property has required fields
-		for (const p of f.properties) {
-			if (!p.propertyName || String(p.propertyName).trim() === "") return false;
+		if (validProperties.length === 0) return false;
+		// Check each valid property has required fields
+		for (const p of validProperties) {
 			if (!p.quantity || Number(p.quantity) < 1) return false;
 		}
 		return true;

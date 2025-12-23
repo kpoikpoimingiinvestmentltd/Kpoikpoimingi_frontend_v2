@@ -13,6 +13,10 @@ import { RectangleSkeleton } from "@/components/common/Skeleton";
 import ActionButton from "@/components/base/ActionButton";
 import { twMerge } from "tailwind-merge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import SearchWithFilters from "@/components/common/SearchWithFilters";
+import { useDebounceSearch } from "@/hooks/useDebounceSearch";
+import type { FilterField } from "@/components/common/SearchWithFilters";
+import CompactPagination from "@/components/ui/compact-pagination";
 
 interface SelectedProperty {
 	id: string;
@@ -24,7 +28,11 @@ interface SelectedProperty {
 
 export default function SelectProperties() {
 	const navigate = useNavigate();
-	const { data: propertiesData, isLoading: propertiesLoading } = useGetAllProperties(1, 100);
+	const [currentPage, setCurrentPage] = React.useState(1);
+	const [itemsPerPage, setItemsPerPage] = React.useState<number>(10);
+	const [searchQuery, setSearchQuery] = React.useState<string>("");
+	const debouncedSearch = useDebounceSearch(searchQuery, 400);
+	const { data: propertiesData, isLoading: propertiesLoading } = useGetAllProperties(currentPage, itemsPerPage, debouncedSearch || undefined);
 
 	const [paymentMethod, setPaymentMethod] = React.useState<"once" | "installment" | null>(null);
 	const [selectedProperties, setSelectedProperties] = React.useState<SelectedProperty[]>([]);
@@ -76,14 +84,16 @@ export default function SelectProperties() {
 		setDetailsOpen(true);
 	};
 
-	const properties: PropertyData[] = React.useMemo(() => {
-		if (!propertiesData || typeof propertiesData !== "object") return [];
-		if (Array.isArray(propertiesData)) return propertiesData as PropertyData[];
+	const { properties, totalPages } = React.useMemo(() => {
+		if (!propertiesData || typeof propertiesData !== "object") return { properties: [], totalPages: 1 };
 		const dataObj = propertiesData as Record<string, unknown>;
-		if (Array.isArray(dataObj.data as unknown)) return dataObj.data as unknown as PropertyData[];
-		if (Array.isArray(dataObj.items as unknown)) return dataObj.items as unknown as PropertyData[];
-		return [];
-	}, [propertiesData]);
+		let props: PropertyData[] = [];
+		if (Array.isArray(propertiesData)) props = propertiesData as PropertyData[];
+		else if (Array.isArray(dataObj.data as unknown)) props = dataObj.data as unknown as PropertyData[];
+		else if (Array.isArray(dataObj.items as unknown)) props = dataObj.items as unknown as PropertyData[];
+		const total = (dataObj.totalPages as number) || Math.ceil(((dataObj.total as number) || props.length) / itemsPerPage);
+		return { properties: props, totalPages: total };
+	}, [propertiesData, itemsPerPage]);
 
 	// For hire purchase, only allow one selection
 	const handlePropertySelect = (property: PropertyData) => {
@@ -172,6 +182,38 @@ export default function SelectProperties() {
 			</div>
 
 			<CustomCard className="p-6">
+				<div className="flex items-center mb-5 justify-end">
+					<SearchWithFilters
+						search={searchQuery}
+						onSearchChange={(v) => {
+							setSearchQuery(v);
+							setCurrentPage(1);
+						}}
+						setPage={setCurrentPage}
+						placeholder="Search properties..."
+						fields={
+							[
+								{
+									key: "itemsPerPage",
+									label: "Items per page",
+									type: "select",
+									options: [
+										{ value: "5", label: "5" },
+										{ value: "10", label: "10" },
+										{ value: "20", label: "20" },
+										{ value: "50", label: "50" },
+									],
+								},
+							] as FilterField[]
+						}
+						initialValues={{ itemsPerPage: String(itemsPerPage) }}
+						onApply={(filters) => {
+							setItemsPerPage(filters.itemsPerPage ? Number(filters.itemsPerPage) : 5);
+							setCurrentPage(1);
+						}}
+						onReset={() => setSearchQuery("")}
+					/>
+				</div>
 				{/* Properties Grid */}
 				<div>
 					{propertiesLoading ? (
@@ -224,8 +266,8 @@ export default function SelectProperties() {
 											</div>
 											{/* Content */}
 											<div>
-												<h5 className="text-sm font-medium truncate mb-1">{property.name}</h5>
-												<p className="text-primary font-bold text-base mb-3">₦{parseFloat(property.price).toLocaleString()}</p>
+												<h5 className="text-sm opacity-70 truncate">{property.name}</h5>
+												<p className="text-primary font-semibold text-base mb-3">₦{parseFloat(property.price).toLocaleString()}</p>
 
 												{/* Action Buttons/Controls */}
 												{isSelected ? (
@@ -233,9 +275,9 @@ export default function SelectProperties() {
 														<button
 															type="button"
 															onClick={() => handleQuantityChange(property.id, -1)}
-															className="flex-1 bg-red-500 text-white py-1.5 rounded text-xs hover:bg-red-600 flex items-center justify-center"
+															className="flex-1 bg-red-500 text-white py-2 rounded text-xs hover:bg-red-600 active-scale flex items-center justify-center"
 															title="Decrease quantity">
-															<IconWrapper className="text-sm">
+															<IconWrapper className="text-xl">
 																<MinusIcon />
 															</IconWrapper>
 														</button>
@@ -243,9 +285,9 @@ export default function SelectProperties() {
 														<button
 															type="button"
 															onClick={() => handleQuantityChange(property.id, 1)}
-															className="flex-1 bg-blue-500 text-white py-1.5 rounded text-xs hover:bg-blue-600 flex items-center justify-center"
+															className="flex-1 bg-primary active-scale text-white py-2 rounded text-xs hover:bg-primary/90 flex items-center justify-center"
 															title="Increase quantity">
-															<IconWrapper className="text-sm">
+															<IconWrapper className="text-xl">
 																<PlusIcon />
 															</IconWrapper>
 														</button>
@@ -255,7 +297,7 @@ export default function SelectProperties() {
 														type="button"
 														onClick={() => handlePropertySelect(property)}
 														disabled={isDisabled}
-														className="w-full bg-primary text-white text-sm py-2 hover:bg-primary/90">
+														className="w-full bg-primary active-scale text-white text-sm py-2 hover:bg-primary/90">
 														Select
 													</ActionButton>
 												)}
@@ -264,6 +306,8 @@ export default function SelectProperties() {
 									);
 								})}
 							</div>
+
+							<CompactPagination page={currentPage} pages={totalPages} onPageChange={setCurrentPage} showRange />
 
 							{/* Selected Summary and Action Buttons */}
 							{selectedProperties.length > 0 && (

@@ -21,8 +21,7 @@ type Props = {
 };
 
 export default function OncePaymentFormComponent({ form, handleChange, isSubmitting, onSubmit, centeredContainer, sectionTitle, isValid }: Props) {
-	// Fetch properties once at top-level (hooks must run unconditionally)
-	const { data: propertiesData, isLoading: propertiesLoading } = useGetAllProperties();
+	const { data: propertiesData, isLoading: propertiesLoading } = useGetAllProperties(1, 100);
 	const properties: PropertyData[] = React.useMemo(() => {
 		if (!propertiesData || typeof propertiesData !== "object") return [];
 		if (Array.isArray(propertiesData)) return propertiesData as PropertyData[];
@@ -82,7 +81,7 @@ export default function OncePaymentFormComponent({ form, handleChange, isSubmitt
 						required
 						type="number"
 						labelClassName={labelStyle()}
-						value={form.properties.length}
+						value={form.properties.filter((p) => p.propertyName && String(p.propertyName).trim() !== "").length}
 						className={twMerge(inputStyle)}
 						readOnly
 					/>
@@ -136,13 +135,7 @@ export default function OncePaymentFormComponent({ form, handleChange, isSubmitt
 												handleChange("properties", updated);
 											}}>
 											<SelectTrigger className={twMerge(inputStyle, "w-full min-h-11 cursor-pointer !text-sm")}>
-												<SelectValue placeholder="Select a property">
-													{(() => {
-														// Find property from API list to get correct name
-														const selectedProp = properties.find((p) => p.id === property.propertyId);
-														return selectedProp?.name || property.propertyName || undefined;
-													})()}
-												</SelectValue>
+												<SelectValue placeholder="Select a property">{property.propertyName || undefined}</SelectValue>
 											</SelectTrigger>
 											<SelectContent>
 												{propertiesLoading ? (

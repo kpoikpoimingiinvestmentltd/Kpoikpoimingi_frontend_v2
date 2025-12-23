@@ -85,8 +85,7 @@ export default function ReceiptWrapper({
 			label: "Whatsapp",
 			src: media.images.whatsapp,
 			onSelect: () => {
-				const navSharing = navigator as Record<string, unknown> & typeof navigator;
-				if (onShare && typeof navigator !== "undefined" && navSharing.share) {
+				if (onShare && typeof navigator !== "undefined" && "share" in navigator) {
 					try {
 						onShare();
 						return;
