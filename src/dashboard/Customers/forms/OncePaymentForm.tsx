@@ -4,7 +4,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { inputStyle, labelStyle } from "@/components/common/commonStyles";
 import { twMerge } from "tailwind-merge";
 import ActionButton from "@/components/base/ActionButton";
-import { EmailIcon, WhatsappIcon, TrashIcon, IconWrapper, PlusIcon, MinusIcon } from "@/assets/icons";
+import { EmailIcon, WhatsappIcon, TrashIcon, IconWrapper, PlusIcon, MinusIcon, SwitchIcon } from "@/assets/icons";
 import type { OncePaymentForm } from "@/types/customerRegistration";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { useGetAllProperties } from "@/api/property";
@@ -82,31 +82,48 @@ export default function OncePaymentFormComponent({ form, handleChange, isSubmitt
 						required
 						type="number"
 						labelClassName={labelStyle()}
-						value={form.numberOfProperties}
-						onChange={(e) => handleChange("numberOfProperties", e.target.value)}
+						value={form.properties.length}
 						className={twMerge(inputStyle)}
+						readOnly
 					/>
 				</div>
 
 				{/* Properties list */}
 				<div className="mt-6">
 					<h4 className="text-sm font-medium mb-4">Properties</h4>
-					{/* Fetch properties for select */}
-					{/* properties fetch */}
-					{form.properties.map((property, idx) => (
-						<div key={idx} className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-							{/* Combo: select from properties OR custom input */}
-							{/* Combo: select from properties OR custom input */}
-							<>
-								<label className={labelStyle()}>{`Property Name${idx > 0 ? ` ${idx + 1}` : ""}`}</label>
-								{!property.isCustomProperty ? (
-									<>
+
+					{/* Headers */}
+					<div className="grid grid-cols-1 md:grid-cols-6 gap-4 mb-2 items-center">
+						<label className={labelStyle("col-span-3")}>Product Name</label>
+						<label className={labelStyle("col-span-3")}>Quantity</label>
+					</div>
+
+					{/* Properties rows */}
+					{form.properties
+						.map((property, idx) => ({ property, idx }))
+						.filter((item) => {
+							if (item.idx === 0 && !item.property.propertyName && !item.property.isPrefilled && form.properties.length > 1) {
+								const hasOtherProperties = form.properties.slice(1).some((p) => p.propertyName);
+								if (hasOtherProperties) return false;
+							}
+							return true;
+						})
+						.map(({ property, idx }) => (
+							<div key={idx} className="grid relative grid-cols-1 md:grid-cols-6 items-stretch gap-4 mb-4">
+								{/* Product Name - with select or custom input */}
+								<div className="col-span-3">
+									{!property.isCustomProperty ? (
 										<Select
-											value={property.isCustomProperty ? "custom" : property.propertyId || ""}
+											value={property.propertyId || ""}
 											onValueChange={(val) => {
 												const updated = [...form.properties];
 												if (val === "custom") {
-													updated[idx] = { ...updated[idx], propertyId: "", isCustomProperty: true, propertyName: "" };
+													updated[idx] = {
+														...updated[idx],
+														propertyId: "",
+														propertyName: "",
+														isCustomProperty: true,
+													};
 												} else {
 													const sel = properties.find((p) => p.id === val);
 													updated[idx] = {
@@ -118,8 +135,14 @@ export default function OncePaymentFormComponent({ form, handleChange, isSubmitt
 												}
 												handleChange("properties", updated);
 											}}>
-											<SelectTrigger className={twMerge(inputStyle, "w-full min-h-11 cursor-pointer")}>
-												<SelectValue placeholder="Select property or enter custom" />
+											<SelectTrigger className={twMerge(inputStyle, "w-full min-h-11 cursor-pointer !text-sm")}>
+												<SelectValue placeholder="Select a property">
+													{(() => {
+														// Find property from API list to get correct name
+														const selectedProp = properties.find((p) => p.id === property.propertyId);
+														return selectedProp?.name || property.propertyName || undefined;
+													})()}
+												</SelectValue>
 											</SelectTrigger>
 											<SelectContent>
 												{propertiesLoading ? (
@@ -133,106 +156,101 @@ export default function OncePaymentFormComponent({ form, handleChange, isSubmitt
 																{prop.name}
 															</SelectItem>
 														))}
-														<div className="border-t my-2" />
-														<SelectItem value="custom">+ Enter Custom Property</SelectItem>
+														{!property.isPrefilled && (
+															<>
+																<div className="border-t my-2" />
+																<SelectItem value="custom">+ Enter Custom Property</SelectItem>
+															</>
+														)}
 													</>
 												) : (
 													<SelectItem value="custom">+ Enter Custom Property</SelectItem>
 												)}
 											</SelectContent>
 										</Select>
-										{property.propertyId && (
+									) : (
+										<div className="relative flex-grow">
+											<CustomInput
+												placeholder="Enter property name"
+												value={property.propertyName}
+												onChange={(e) => {
+													const updated = [...form.properties];
+													updated[idx] = { ...updated[idx], propertyName: e.target.value };
+													handleChange("properties", updated);
+												}}
+												className={twMerge(inputStyle, "w-full")}
+											/>
 											<button
 												type="button"
 												onClick={() => {
 													const updated = [...form.properties];
-													updated[idx] = { ...updated[idx], propertyId: "", propertyName: "", isCustomProperty: true };
+													updated[idx] = {
+														...updated[idx],
+														propertyId: "",
+														propertyName: "",
+														isCustomProperty: false,
+													};
 													handleChange("properties", updated);
 												}}
-												className="text-xs text-primary mt-2 hover:underline">
-												Switch to manual entry
+												className="absolute flex items-center -left-10 top-1/2 -translate-y-1/2 bg-primary text-white rounded-sm p-1.5 gap-1"
+												title="Switch to property selector">
+												<IconWrapper className="text-xl">
+													<SwitchIcon />
+												</IconWrapper>
 											</button>
-										)}
-									</>
-								) : (
-									<>
-										<CustomInput
-											placeholder="Enter property name"
-											value={property.propertyName}
-											onChange={(e) => {
-												const updated = [...form.properties];
-												updated[idx] = { ...updated[idx], propertyName: e.target.value };
-												handleChange("properties", updated);
-											}}
-											labelClassName={labelStyle()}
-											className={twMerge(inputStyle)}
-										/>
-										<button
-											type="button"
-											onClick={() => {
-												const updated = [...form.properties];
-												updated[idx] = { ...updated[idx], propertyId: "", propertyName: "", isCustomProperty: false };
-												handleChange("properties", updated);
-											}}
-											className="text-xs text-primary mt-2 hover:underline">
-											Select from list instead
-										</button>
-									</>
-								)}
-							</>
-
-							<div className="flex gap-2 items-end">
-								<div className="flex-1">
-									<label className={labelStyle()}>Quantity</label>
-									<div className="flex items-stretch gap-2 mt-1">
-										<button
-											type="button"
-											onClick={() => {
-												const updatedProperties = [...form.properties];
-												const current = Number(updatedProperties[idx].quantity) || 0;
-												if (current > 1) {
-													updatedProperties[idx].quantity = current - 1;
-													handleChange("properties", updatedProperties);
-												}
-											}}
-											className="bg-red-500 text-white px-3 py-2 rounded font-bold">
-											<IconWrapper>
-												<MinusIcon />
-											</IconWrapper>
-										</button>
-										<input
-											type="number"
-											value={String(property.quantity)}
-											onChange={(e) => {
-												const updatedProperties = [...form.properties];
-												// Store raw input string to avoid cursor reset while typing multi-digit numbers
-												updatedProperties[idx].quantity = e.target.value;
-												handleChange("properties", updatedProperties);
-											}}
-											onBlur={() => {
-												const updatedProperties = [...form.properties];
-												const coerced = Math.max(1, Number(updatedProperties[idx].quantity) || 1);
-												updatedProperties[idx].quantity = coerced;
-												handleChange("properties", updatedProperties);
-											}}
-											className={twMerge(inputStyle, "flex-1 text-center")}
-											min="1"
-										/>
-										<button
-											type="button"
-											onClick={() => {
-												const updatedProperties = [...form.properties];
-												const current = Number(updatedProperties[idx].quantity) || 0;
-												updatedProperties[idx].quantity = current + 1;
-												handleChange("properties", updatedProperties);
-											}}
-											className="bg-primary text-white px-3 py-2 rounded font-bold">
-											<IconWrapper>
-												<PlusIcon />
-											</IconWrapper>
-										</button>
-									</div>
+										</div>
+									)}
 								</div>
+								{/* Quantity Controls */}
+								<div className="col-span-3 flex items-stretch gap-2">
+									<button
+										type="button"
+										onClick={() => {
+											const updatedProperties = [...form.properties];
+											const current = Number(updatedProperties[idx].quantity) || 0;
+											if (current > 1) {
+												updatedProperties[idx].quantity = current - 1;
+												handleChange("properties", updatedProperties);
+											}
+										}}
+										className="bg-red-500 text-white px-3 py-2 rounded font-bold hover:bg-red-600">
+										<IconWrapper>
+											<MinusIcon />
+										</IconWrapper>
+									</button>
+									<input
+										type="number"
+										value={String(property.quantity)}
+										onChange={(e) => {
+											const updatedProperties = [...form.properties];
+											updatedProperties[idx].quantity = e.target.value;
+											handleChange("properties", updatedProperties);
+										}}
+										onBlur={() => {
+											const updatedProperties = [...form.properties];
+											const coerced = Math.max(1, Number(updatedProperties[idx].quantity) || 1);
+											updatedProperties[idx].quantity = coerced;
+											handleChange("properties", updatedProperties);
+										}}
+										className={twMerge(inputStyle, "w-full shrink-1 text-center")}
+										min="1"
+									/>
+									<button
+										type="button"
+										onClick={() => {
+											const updatedProperties = [...form.properties];
+											const current = Number(updatedProperties[idx].quantity) || 0;
+											updatedProperties[idx].quantity = current + 1;
+											handleChange("properties", updatedProperties);
+										}}
+										className="bg-primary text-white px-3 py-2 rounded font-bold hover:bg-primary/50 active-scale">
+										<IconWrapper>
+											<PlusIcon />
+										</IconWrapper>
+									</button>
+								</div>
+
+								{/* Remove button */}
 								{form.properties.length > 1 && (
 									<button
 										type="button"
@@ -240,15 +258,14 @@ export default function OncePaymentFormComponent({ form, handleChange, isSubmitt
 											const updatedProperties = form.properties.filter((_, i) => i !== idx);
 											handleChange("properties", updatedProperties);
 										}}
-										className="bg-red-500 text-white px-3 py-3 rounded font-bold">
+										className="bg-red-500 md:absolute md:-right-14 shrink-0 w-max text-white px-3 py-2 rounded font-bold hover:bg-red-600 h-11 col-span-1 md:ml-auto active-scale">
 										<IconWrapper>
 											<TrashIcon />
 										</IconWrapper>
 									</button>
 								)}
 							</div>
-						</div>
-					))}
+						))}
 
 					<button
 						type="button"
@@ -256,7 +273,7 @@ export default function OncePaymentFormComponent({ form, handleChange, isSubmitt
 							const updatedProperties = [...form.properties, { propertyName: "", quantity: 1 }];
 							handleChange("properties", updatedProperties);
 						}}
-						className="mt-4 text-sm px-4 py-2 bg-primary text-white rounded">
+						className="mt-4 text-sm px-4 active-scale py-2 bg-primary text-white rounded">
 						+ Add Property
 					</button>
 				</div>

@@ -36,10 +36,7 @@ export function TableSkeleton({ rows = 4, cols = 6 }: { rows?: number; cols?: nu
 	return (
 		<div className="overflow-x-auto w-full">
 			<div className="w-full bg-white">
-				<div className="w-full">
-					<div className="mb-4">
-						<div className="h-6 w-1/6 bg-gray-200 rounded" />
-					</div>
+				<div className="w-full mt-4">
 					<div className="space-y-3">
 						{Array.from({ length: rows }).map((_, r) => (
 							<div key={r} className="flex items-center gap-4 w-full" aria-hidden>

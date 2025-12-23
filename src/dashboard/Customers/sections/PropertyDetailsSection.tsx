@@ -20,6 +20,7 @@ type Props = {
 	centeredContainer: (additionalClasses?: string) => string;
 	sectionTitle: (additionalClasses?: string) => string;
 	missingFields?: string[];
+	isPropertyPrefilled?: boolean;
 };
 
 export default function PropertyDetailsSection({
@@ -32,6 +33,7 @@ export default function PropertyDetailsSection({
 	centeredContainer,
 	sectionTitle,
 	missingFields = [],
+	isPropertyPrefilled = false,
 }: Props) {
 	void employmentStatusOptions;
 	const { data: propertiesData, isLoading: propertiesLoading } = useGetAllProperties();
@@ -95,7 +97,12 @@ export default function PropertyDetailsSection({
 			<div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
 				<div>
 					<label className={labelStyle()}>Property Name*</label>
-					{!form.isCustomProperty ? (
+					{isPropertyPrefilled ? (
+						// Show prefilled property as read-only
+						<div className={twMerge(inputStyle, "flex items-center px-3 py-2 bg-gray-50 rounded border border-gray-200")}>
+							<span className="text-gray-700">{form.propertyName}</span>
+						</div>
+					) : !form.isCustomProperty ? (
 						<>
 							<Select value={form.propertyId} onValueChange={handlePropertySelect}>
 								<SelectTrigger className={twMerge(inputStyle, "w-full min-h-11 cursor-pointer")}>

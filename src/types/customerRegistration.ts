@@ -104,6 +104,7 @@ export interface PropertyItem {
 	propertyId?: string;
 	isCustomProperty?: boolean;
 	customPropertyPrice?: number;
+	isPrefilled?: boolean;
 }
 
 export interface FileUploadState {
@@ -172,6 +173,7 @@ export interface InstallmentPaymentForm {
 		votersUploaded: number;
 		hasAgreed?: boolean;
 	}>;
+	hasRequestAgreement?: boolean;
 }
 
 export interface FullPaymentProperty {

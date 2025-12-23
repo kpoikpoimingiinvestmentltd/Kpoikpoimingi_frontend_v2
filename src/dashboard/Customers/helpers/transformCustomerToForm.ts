@@ -169,6 +169,7 @@ export function transformCustomerToInstallmentForm(customer: unknown): Installme
 				votersUploaded: (gg.votersUploaded as number) || 0,
 			};
 		}),
+		hasRequestAgreement: Boolean(c.hasRequestAgreement),
 	};
 }
 

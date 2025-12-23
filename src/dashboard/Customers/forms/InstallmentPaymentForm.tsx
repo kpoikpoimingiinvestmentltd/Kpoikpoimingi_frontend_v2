@@ -31,6 +31,7 @@ type Props = {
 	sectionTitle: (additionalClasses?: string) => string;
 	setUploadedFiles: React.Dispatch<React.SetStateAction<FileUploadState>>;
 	missingFields?: string[];
+	isPropertyPrefilled?: boolean;
 };
 
 export default function InstallmentPaymentFormComponent({
@@ -52,6 +53,7 @@ export default function InstallmentPaymentFormComponent({
 	sectionTitle,
 	setUploadedFiles,
 	missingFields = [],
+	isPropertyPrefilled = false,
 }: Props) {
 	const formRef = React.useRef<HTMLFormElement | null>(null);
 
@@ -124,6 +126,7 @@ export default function InstallmentPaymentFormComponent({
 				centeredContainer={centeredContainer}
 				sectionTitle={sectionTitle}
 				missingFields={missingFields}
+				isPropertyPrefilled={isPropertyPrefilled}
 			/>
 			<hr className="my-6" />
 

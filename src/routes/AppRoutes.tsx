@@ -9,6 +9,7 @@ import Customers from "../dashboard/Customers/Customers";
 import CustomerDetails from "../dashboard/Customers/CustomerDetails";
 import CustomerReceipt from "../dashboard/Customers/CustomerReceipt";
 import AddCustomer from "../dashboard/Customers/AddCustomer";
+import SelectProperties from "../dashboard/Customers/SelectProperties";
 import DashboardPageNotFound from "../error/DashboardPageNotFound";
 import Contract from "../dashboard/Contract/Contract";
 import ProductRequest from "../dashboard/ProductRequest/ProductRequest";
@@ -69,6 +70,10 @@ export const appRouter = createBrowserRouter([
 			{
 				path: _router.dashboard.selectCustomerPaymentMethod,
 				element: <SelectPaymentMethod />,
+			},
+			{
+				path: _router.dashboard.selectProperties,
+				element: <SelectProperties />,
 			},
 			{
 				path: _router.dashboard.customerDetails,

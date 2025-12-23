@@ -31,6 +31,13 @@ type Props = {
 	sectionTitle?: (additionalClasses?: string) => string;
 	centeredContainer?: (additionalClasses?: string) => string;
 	paymentMethod?: "once" | "installment";
+	selectedProperties?: Array<{
+		id: string;
+		name: string;
+		price: string;
+		quantity: number;
+		media?: string[];
+	}>;
 };
 
 export default function CustomerForm({
@@ -40,6 +47,7 @@ export default function CustomerForm({
 	sectionTitle: sectionTitleProp,
 	centeredContainer: centeredContainerProp,
 	paymentMethod: paymentMethodProp,
+	selectedProperties,
 }: Props) {
 	const baseEachSectionTitle = "text-lg font-normal";
 	const baseCenteredContainer = "mx-auto w-full md:w-2/3 w-full my-12";
@@ -66,40 +74,26 @@ export default function CustomerForm({
 	const [isSubmitting, setIsSubmitting] = React.useState(false);
 
 	// Full payment registration mutation
-	const fullPaymentMutation = useCreateInternalFullPaymentRegistration(
-		() => {
-			toast.success(`Registration created successfully!`);
-		},
-		(err) => {
-			console.error("Error creating full payment registration:", err);
-			toast.error("Failed to create full payment registration");
-		}
-	);
+	const fullPaymentMutation = useCreateInternalFullPaymentRegistration(() => {
+		toast.success(`Registration created successfully!`);
+	});
 
-	const updateMutation = useUpdateCustomerRegistration(
-		() => {
-			// no success toast here; parent will handle UI update
-		},
-		(err) => {
-			console.error("Error updating customer registration:", err);
-			toast.error("Failed to update registration");
-		}
-	);
+	const updateMutation = useUpdateCustomerRegistration(() => {
+		// no success toast here; parent will handle UI update
+	});
 
 	// Reference data for dropdowns
 	const { data: refData, isLoading: refLoading } = useGetReferenceData();
 
 	const didPrefillRef = React.useRef(false);
 	const nextPrefilledRef = React.useRef(false);
+	const isPropertyPrefilledRef = React.useRef(false);
 
 	React.useEffect(() => {
 		if (!initial) return;
 		if (nextPrefilledRef.current) return;
 		nextPrefilledRef.current = true;
 		try {
-			const nk = (initial as { nextOfKin?: Record<string, unknown> })?.nextOfKin;
-			if (!nk || typeof nk !== "object") return;
-
 			const toLocalPhone = (phone?: string | null) => {
 				if (!phone) return "";
 				const cleaned = String(phone).replace(/\D/g, "");
@@ -108,6 +102,20 @@ export default function CustomerForm({
 				if (cleaned.length === 10) return `0${cleaned}`;
 				return cleaned;
 			};
+
+			// Handle whatsapp number for "once" payment method
+			if (paymentMethod === "once") {
+				const phoneVal =
+					(initial as { phoneNumber?: string; phone?: string; whatsapp?: string })?.phoneNumber ||
+					(initial as { phoneNumber?: string; phone?: string; whatsapp?: string })?.phone ||
+					(initial as { phoneNumber?: string; phone?: string; whatsapp?: string })?.whatsapp;
+				if (phoneVal) {
+					handleChange("whatsapp", toLocalPhone(typeof phoneVal === "string" ? phoneVal : ""));
+				}
+			}
+
+			const nk = (initial as { nextOfKin?: Record<string, unknown> })?.nextOfKin;
+			if (!nk || typeof nk !== "object") return;
 
 			// Build desired nextOfKin object from initial
 			const desired = {
@@ -127,12 +135,45 @@ export default function CustomerForm({
 		} catch {
 			// ignore
 		}
-	}, [initial]);
+	}, [initial, paymentMethod, handleChange]);
 
 	// Reset prefill flag when initial data changes
 	React.useEffect(() => {
 		didPrefillRef.current = false;
 	}, [initial]);
+
+	React.useEffect(() => {
+		let propertiesToUse = selectedProperties;
+
+		if (!propertiesToUse || propertiesToUse.length === 0) {
+			const stored = localStorage.getItem("pendingSelectedProperties");
+			if (stored) {
+				try {
+					const parsed = JSON.parse(stored);
+					propertiesToUse = parsed.selectedProperties;
+				} catch {}
+			}
+		}
+
+		if (!propertiesToUse || propertiesToUse.length === 0) return;
+		if (paymentMethod === "once") {
+			const formattedProperties = propertiesToUse.map((prop) => ({
+				propertyId: prop.id,
+				propertyName: prop.name || "Selected Property",
+				quantity: prop.quantity,
+				isCustomProperty: false,
+				isPrefilled: true,
+			}));
+			handleChange("properties", formattedProperties);
+		} else if (paymentMethod === "installment" && propertiesToUse.length > 0) {
+			// For hire purchase, use the first (and only) selected property
+			const selectedProp = propertiesToUse[0];
+			handleChange("propertyId", selectedProp.id);
+			handleChange("propertyName", selectedProp.name);
+			handleChange("isCustomProperty", false);
+			isPropertyPrefilledRef.current = true;
+		}
+	}, [selectedProperties, paymentMethod, handleChange]);
 
 	React.useEffect(() => {
 		if (didPrefillRef.current) return;
@@ -365,6 +406,9 @@ export default function CustomerForm({
 
 				// Reset form completely (localStorage + state)
 				resetFormCompletely();
+
+				// Clear stored properties after successful submission
+				localStorage.removeItem("pendingSelectedProperties");
 				// After successful creation, navigate back to customers list (non-edit)
 				if (!isEditMode) navigate(_router.dashboard.customers);
 
@@ -682,6 +726,7 @@ export default function CustomerForm({
 			sectionTitle={sectionTitle}
 			setUploadedFiles={setUploadedFiles}
 			missingFields={missingFields}
+			isPropertyPrefilled={isPropertyPrefilledRef.current}
 		/>
 	);
 }

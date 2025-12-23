@@ -10,7 +10,7 @@ export default function SelectPaymentMethod() {
 
 	const handleSelect = (method: "once" | "installment") => {
 		setSelected(method);
-		navigate(`${_router.dashboard.customerAdd}?paymentMethod=${method}`);
+		navigate(`${_router.dashboard.selectProperties}?paymentMethod=${method}`);
 	};
 
 	return (
