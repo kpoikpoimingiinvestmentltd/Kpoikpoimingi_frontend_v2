@@ -535,7 +535,6 @@ export default function CustomerForm({
 						payload,
 					});
 
-					toast.success("Registration updated successfully!");
 					onClose?.();
 					if (onSubmit) onSubmit({ message: "Registration updated successfully" });
 				} else {

@@ -22,9 +22,11 @@ export default function ReceiptContent({ receipt }: ReceiptContentProps) {
 
 	const receiptFooter = (
 		<footer className="border-t-2 border-dashed pb-4 pt-6 text-center">
-			<p className="text-gray-700 text-xs sm:text-[.9rem]">
-				Receipt granted by: <span className="font-medium text-black">{receipt.issuedBy?.fullName ?? receipt.issuedById ?? "-"}</span>
-			</p>
+			{receipt.issuedBy?.fullName && (
+				<p className="text-gray-700 text-xs sm:text-[.9rem]">
+					Receipt granted by: <span className="font-medium text-black">{receipt.issuedBy.fullName}</span>
+				</p>
+			)}
 		</footer>
 	);
 
@@ -156,26 +158,8 @@ export default function ReceiptContent({ receipt }: ReceiptContentProps) {
 							rightClassName="text-right font-medium"
 						/>
 						<KeyValueRow
-							label="Amount paid"
-							value={receipt.amountPaid ? `₦${Number(receipt.amountPaid).toLocaleString()}` : "-"}
-							leftClassName="text-gray-600"
-							rightClassName="text-right font-medium"
-						/>
-						<KeyValueRow
-							label="VAT Amount"
-							value={receipt.vatAmount ? `₦${Number(receipt.vatAmount).toLocaleString()}` : "-"}
-							leftClassName="text-gray-600"
-							rightClassName="text-right font-medium"
-						/>
-						<KeyValueRow
 							label="Amount paid plus VAT"
 							value={receipt.amountPaid && receipt.vatAmount ? `₦${(Number(receipt.amountPaid) + Number(receipt.vatAmount)).toLocaleString()}` : "-"}
-							leftClassName="text-gray-600"
-							rightClassName="text-right font-medium"
-						/>
-						<KeyValueRow
-							label="Interest"
-							value={receipt.interest ? `₦${Number(receipt.interest).toLocaleString()}` : "-"}
 							leftClassName="text-gray-600"
 							rightClassName="text-right font-medium"
 						/>

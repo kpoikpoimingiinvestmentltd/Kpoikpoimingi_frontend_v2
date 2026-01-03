@@ -1,5 +1,5 @@
-// import Image from "@/components/base/Image";
-// import { media } from "@/resources/images";
+import Image from "@/components/base/Image";
+import { media } from "@/resources/images";
 
 interface ReceiptHeaderProps {
 	receiptNumber?: string | number;
@@ -12,7 +12,7 @@ export default function ReceiptHeader({ receiptNumber }: ReceiptHeaderProps) {
 				<p className="text-black text-sm sm:text-base font-semibold">Invoice: {receiptNumber ?? "-"}</p>
 			</aside>
 			<aside className="order-2 flex flex-col max-w-sm items-start gap-y-3">
-				{/* <Image src={media.logos.logo} className="w-40 sm:w-48" /> */}
+				<Image src={media.logos.logo} className="w-40 sm:w-48" />
 				<div className="text-start">
 					<p className="text-[#13121299] text-xs sm:text-sm">
 						<span className="text-black">Office adress: </span>
