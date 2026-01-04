@@ -25,6 +25,7 @@ export const _router = {
 		debt: "/dashboard/debt",
 		debtDetails: "/dashboard/debt/:id",
 		payment: "/dashboard/payment",
+		paymentSuccess: "/dashboard/payment/success",
 		reportAnalytics: "/dashboard/report-analytics",
 		auditAndCompliance: "/dashboard/audit-and-compliance",
 		users: "/dashboard/users",

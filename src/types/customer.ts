@@ -21,6 +21,7 @@ export type Customer = {
 		registrationCode: string;
 		approved: boolean;
 		approvedAt?: string;
+		isCurrent?: boolean;
 		source: string;
 		paymentType: {
 			id: number;
@@ -78,6 +79,48 @@ export type CustomerRow = {
 	phoneNumber?: string;
 	status?: string;
 	createdAt?: string;
+	registrations?: Array<{
+		id: string;
+		registrationCode: string;
+		approved?: boolean;
+		approvedAt?: string;
+		isCurrent?: boolean;
+		source?: string;
+		paymentType?: {
+			id: number;
+			type: string;
+		};
+		propertyInterestRequest?: Array<{
+			id: string;
+			propertyId: string;
+			isAssigned?: boolean;
+			property?: {
+				id: string;
+				propertyCode: string;
+				name: string;
+				categoryId: string;
+				price: string;
+				quantityTotal: number;
+				quantityAssigned: number;
+				quantityAvailable: number;
+				statusId: number;
+				description?: string;
+				isPublic?: boolean;
+				vehicleMake?: string | null;
+				vehicleModel?: string | null;
+				vehicleYear?: string | null;
+				vehicleColor?: string | null;
+				vehicleChassisNumber?: string | null;
+				vehicleType?: string | null;
+				vehicleRegistrationNumber?: string | null;
+				condition?: string;
+				addedById: string;
+				dateAdded: string;
+				createdAt: string;
+				updatedAt: string;
+			};
+		}>;
+	}>;
 };
 
 export interface DeleteCustomerResponse {

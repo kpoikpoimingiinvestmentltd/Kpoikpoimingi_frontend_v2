@@ -126,6 +126,7 @@ export default function Customers() {
 					phoneNumber: it.phoneNumber ? String(it.phoneNumber) : undefined,
 					status: typeof it.status === "string" ? it.status : undefined,
 					createdAt: typeof it.createdAt === "string" ? it.createdAt : undefined,
+					registrations: it.registrations as CustomerRow["registrations"],
 				} as CustomerRow;
 			}
 			return { id: `cust-${idx}`, fullName: "", email: "" } as CustomerRow;
@@ -237,13 +238,16 @@ export default function Customers() {
 												<TableHead>Phone</TableHead>
 												<TableHead>Status</TableHead>
 												<TableHead>Date</TableHead>
+												<TableHead>Current Status</TableHead>
 												<TableHead>Action</TableHead>
 											</TableRow>
 										</TableHeader>
 										<TableBody>
 											{customersList.map((row, idx: number) => (
 												<TableRow key={row.id || idx} className="hover:bg-[#F6FBFF]">
-													<TableCell className="text-[#13121266]">{row.id}</TableCell>
+													<TableCell className="text-[#13121266]" title={row.id}>
+														<span className="max-w-40 block truncate">{row.id}</span>
+													</TableCell>
 													<TableCell className="text-[#13121266]">{row.fullName}</TableCell>
 													<TableCell className="text-[#13121266]">{row.email}</TableCell>
 													<TableCell className="text-[#13121266]">{row.phoneNumber ?? "-"}</TableCell>
@@ -251,12 +255,21 @@ export default function Customers() {
 														<Badge value={row.status || "Active"} size="sm" />
 													</TableCell>
 													<TableCell className="text-[#13121266]">{row.createdAt ? new Date(row.createdAt).toLocaleDateString() : "-"}</TableCell>
+													<TableCell className="text-[#13121266]">
+														<Badge
+															value={row.registrations?.some((reg) => reg.isCurrent) ? "Current" : "Not Current"}
+															size="sm"
+															status={row.registrations?.some((reg) => reg.isCurrent) ? "active" : "inactive"}
+														/>
+													</TableCell>
 													<TableCell className="flex items-center gap-1">
-														<Link to={_router.dashboard.customerDetails.replace(":id", row.id)} className="p-2 flex items-center">
-															<IconWrapper className="text-xl">
-																<EditIcon />
-															</IconWrapper>
-														</Link>
+														{row.registrations?.some((reg) => reg.isCurrent) && (
+															<Link to={_router.dashboard.customerDetails.replace(":id", row.id)} className="p-2 flex items-center">
+																<IconWrapper className="text-xl">
+																	<EditIcon />
+																</IconWrapper>
+															</Link>
+														)}
 														<button
 															type="button"
 															className="text-red-500"
@@ -264,7 +277,7 @@ export default function Customers() {
 																setSelectedCustomerId(row.id);
 																setDeleteOpen(true);
 															}}>
-															<IconWrapper className="text-xl">
+															<IconWrapper className="text-xl py-1.5">
 																<TrashIcon />
 															</IconWrapper>
 														</button>

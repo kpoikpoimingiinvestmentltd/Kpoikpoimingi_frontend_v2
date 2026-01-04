@@ -13,23 +13,20 @@ const simpleInterestCalculator = ({
 	ri: interestRate,
 	ti: time,
 	ii: interval,
-	si: startingAmount,
 }: {
 	pi: number;
 	ri: number;
 	ti: number;
 	ii: string;
-	si: number;
 }) => {
 	// Defensive defaults
 	const P = Number(principal) || 0;
-	const R = Number(interestRate) || 0; // percent per annum
+	const R = Number(interestRate) || 0; // percent per annum, convert to decimal
 	const T = Number(time) || 0;
-	const S = Number(startingAmount) || 0;
 
-	// Convert given duration to years based on interval
+	// Step 1: Convert Duration to Years based on interval
 	let timeInYears: number;
-	switch (String(interval)) {
+	switch (String(interval).toLowerCase()) {
 		case "daily":
 			timeInYears = T / 365;
 			break;
@@ -39,34 +36,25 @@ const simpleInterestCalculator = ({
 		case "monthly":
 			timeInYears = T / 12;
 			break;
-		case "yearly":
-		case "years":
 		default:
 			timeInYears = T; // assume already in years
 	}
 
-	// Simple interest (as float): I = P * (R / 100) * T_years
-	const principalInterestRaw = P * (R / 100) * timeInYears;
-	const startingAmountInterestRaw = S * (R / 100) * timeInYears;
+	// Step 2: Calculate Interest Amount
+	// Formula: Principal × Interest Rate × Time in Years
+	const interestAmount = P * (R / 100) * timeInYears;
 
-	// Round to 2 decimal places for currency-like presentation
-	const principalInterest = Math.round(principalInterestRaw * 100) / 100;
-	const startingAmountInterest = Math.round(startingAmountInterestRaw * 100) / 100;
+	// Step 3: Calculate Total Payable
+	// Formula: Principal + Interest Amount
+	const totalPayable = P + interestAmount;
 
-	// Total after adding interest on principal
-	const totalWithInterest = P + principalInterest;
-
-	// Previous app behavior subtracted the starting-amount's interest from total.
-	// Keep that behavior but preserve precision and ensure non-negative result.
-	const finalTotal = totalWithInterest - startingAmountInterest;
-
-	return Number(Math.max(0, Math.round(finalTotal * 100) / 100).toFixed(2));
+	// Round to 2 decimal places
+	return Number(Math.round(totalPayable * 100) / 100);
 };
 
 export default function Calculator() {
 	const [open, setOpen] = React.useState(false);
 	const [principal, setPrincipal] = React.useState(0);
-	const [startAmount, setStartAmount] = React.useState(0);
 	const [rate, setRate] = React.useState(0);
 	const [interval, setInterval] = React.useState("daily");
 	const [duration, setDuration] = React.useState(0);
@@ -88,8 +76,6 @@ export default function Calculator() {
 				return 52;
 			case "monthly":
 				return 12;
-			case "yearly":
-				return 100; // Arbitrary max for years
 			default:
 				return 366;
 		}
@@ -110,7 +96,6 @@ export default function Calculator() {
 			ri: rate,
 			ti: duration,
 			ii: interval,
-			si: startAmount,
 		});
 		setTotal(result);
 	};
@@ -212,16 +197,8 @@ export default function Calculator() {
 									type="number"
 									labelClassName="mb-1"
 									className="h-9 rounded-sm"
-									value={startAmount}
-									label="Starting Amount"
-									onChange={(e) => setStartAmount(Number(e.target.value))}
-								/>
-								<CustomInput
-									type="number"
-									labelClassName="mb-1"
-									className="h-9 rounded-sm"
 									value={rate}
-									label="Interest Rate"
+									label="Interest Rate (%)"
 									onChange={(e) => setRate(Number(e.target.value))}
 								/>
 								<div className="">
@@ -231,7 +208,7 @@ export default function Calculator() {
 										onValueChange={(v) => {
 											setInterval(v);
 											// Reset duration if it exceeds new max
-											const newMaxDuration = v === "daily" ? 366 : v === "weekly" ? 52 : v === "monthly" ? 12 : 100;
+											const newMaxDuration = v === "daily" ? 366 : v === "weekly" ? 52 : v === "monthly" ? 12 : 366;
 											if (duration > newMaxDuration) {
 												setDuration(0);
 											}
@@ -243,7 +220,6 @@ export default function Calculator() {
 											<SelectItem value="daily">Daily</SelectItem>
 											<SelectItem value="weekly">Weekly</SelectItem>
 											<SelectItem value="monthly">Monthly</SelectItem>
-											<SelectItem value="yearly">Yearly</SelectItem>
 										</SelectContent>
 									</Select>
 								</div>
@@ -262,7 +238,7 @@ export default function Calculator() {
 								</div>
 								{total !== null && (
 									<div className="mt-3 bg-gray-50 p-3 rounded">
-										<div className="text-sm text-muted-foreground">Total Amount</div>
+										<div className="text-sm text-muted-foreground">Total Payable</div>
 										<div className="text-lg font-medium">₦{total.toLocaleString()}</div>
 									</div>
 								)}
