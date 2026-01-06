@@ -63,7 +63,8 @@ export default function CustomerForm({
 	// Form state
 	const { form, handleChange, uploadedFiles, setUploadedFiles, uploadedFieldsRef, resetFormCompletely } = useCustomerFormState(
 		paymentMethod,
-		initial
+		initial,
+		selectedProperties
 	);
 
 	// Navigation helper
@@ -141,39 +142,6 @@ export default function CustomerForm({
 	React.useEffect(() => {
 		didPrefillRef.current = false;
 	}, [initial]);
-
-	React.useEffect(() => {
-		let propertiesToUse = selectedProperties;
-
-		if (!propertiesToUse || propertiesToUse.length === 0) {
-			const stored = localStorage.getItem("pendingSelectedProperties");
-			if (stored) {
-				try {
-					const parsed = JSON.parse(stored);
-					propertiesToUse = parsed.selectedProperties;
-				} catch {}
-			}
-		}
-
-		if (!propertiesToUse || propertiesToUse.length === 0) return;
-		if (paymentMethod === "once") {
-			const formattedProperties = propertiesToUse.map((prop) => ({
-				propertyId: prop.id,
-				propertyName: prop.name || "Selected Property",
-				quantity: prop.quantity,
-				isCustomProperty: false,
-				isPrefilled: true,
-			}));
-			handleChange("properties", formattedProperties);
-		} else if (paymentMethod === "installment" && propertiesToUse.length > 0) {
-			// For hire purchase, use the first (and only) selected property
-			const selectedProp = propertiesToUse[0];
-			handleChange("propertyId", selectedProp.id);
-			handleChange("propertyName", selectedProp.name);
-			handleChange("isCustomProperty", false);
-			isPropertyPrefilledRef.current = true;
-		}
-	}, [selectedProperties, paymentMethod, handleChange]);
 
 	React.useEffect(() => {
 		if (didPrefillRef.current) return;
@@ -407,8 +375,6 @@ export default function CustomerForm({
 				// Reset form completely (localStorage + state)
 				resetFormCompletely();
 
-				// Clear stored properties after successful submission
-				localStorage.removeItem("pendingSelectedProperties");
 				// After successful creation, navigate back to customers list (non-edit)
 				if (!isEditMode) navigate(_router.dashboard.customers);
 
@@ -569,8 +535,6 @@ export default function CustomerForm({
 					const response = await createInternalCustomerRegistration(payload);
 					toast.success(`Registration created successfully! Code: ${response.registrationCode}`);
 				}
-
-				localStorage.removeItem("pendingSelectedProperties");
 
 				resetFormCompletely();
 				if (!isEditMode) navigate(_router.dashboard.customers);

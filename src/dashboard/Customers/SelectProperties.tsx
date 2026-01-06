@@ -40,43 +40,14 @@ export default function SelectProperties() {
 	const [selectedProperty, setSelectedProperty] = React.useState<PropertyData | null>(null);
 	const [imageIndex, setImageIndex] = React.useState(0);
 
-	// Parse payment method from URL params and load previously selected properties
+	// Parse payment method from URL params
 	React.useEffect(() => {
 		const params = new URLSearchParams(window.location.search);
 		const method = params.get("paymentMethod");
 		if (method === "once" || method === "installment") {
 			setPaymentMethod(method);
 		}
-
-		// Load previously selected properties from localStorage
-		const stored = localStorage.getItem("pendingSelectedProperties");
-		if (stored) {
-			try {
-				const parsed = JSON.parse(stored);
-				if (parsed.selectedProperties && Array.isArray(parsed.selectedProperties)) {
-					setSelectedProperties(parsed.selectedProperties);
-				}
-			} catch {
-				// ignore parse errors
-			}
-		}
 	}, []);
-
-	React.useEffect(() => {
-		if (paymentMethod) {
-			if (selectedProperties.length > 0) {
-				localStorage.setItem(
-					"pendingSelectedProperties",
-					JSON.stringify({
-						paymentMethod,
-						selectedProperties,
-					})
-				);
-			} else {
-				localStorage.removeItem("pendingSelectedProperties");
-			}
-		}
-	}, [selectedProperties, paymentMethod]);
 
 	const handleViewDetails = (property: PropertyData) => {
 		setSelectedProperty(property);
@@ -150,12 +121,13 @@ export default function SelectProperties() {
 			return;
 		}
 
-		navigate(_router.dashboard.customerAdd, {
-			state: {
-				paymentMethod,
-				selectedProperties,
-			},
-		});
+		const queryParams = new URLSearchParams();
+		if (paymentMethod) {
+			queryParams.set("paymentMethod", paymentMethod);
+		}
+		queryParams.set("selectedProperties", JSON.stringify(selectedProperties));
+
+		navigate(`${_router.dashboard.customerAdd}?${queryParams.toString()}`);
 	};
 
 	const handleBack = () => {

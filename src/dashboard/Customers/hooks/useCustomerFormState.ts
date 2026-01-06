@@ -7,7 +7,17 @@ type FormState = OncePaymentForm | InstallmentPaymentForm;
 const DRAFT_KEY = "customer_registration_draft";
 const UPLOADED_FILES_KEY = "customer_registration_uploaded_files";
 
-export function useCustomerFormState(paymentMethod?: "once" | "installment", initial?: any) {
+export function useCustomerFormState(
+	paymentMethod?: "once" | "installment",
+	initial?: any,
+	selectedProperties?: Array<{
+		id: string;
+		name: string;
+		price: string;
+		quantity: number;
+		media?: string[];
+	}>
+) {
 	const initializeFormState = (): FormState => {
 		if (initial) {
 			if (paymentMethod === "once") {
@@ -18,6 +28,23 @@ export function useCustomerFormState(paymentMethod?: "once" | "installment", ini
 		}
 
 		if (paymentMethod === "once") {
+			if (selectedProperties && selectedProperties.length > 0) {
+				const formattedProperties = selectedProperties.map((prop) => ({
+					propertyId: prop.id,
+					propertyName: prop.name || "Selected Property",
+					quantity: prop.quantity,
+					isCustomProperty: false,
+					isPrefilled: true,
+				}));
+				return {
+					fullName: "",
+					email: "",
+					whatsapp: "",
+					numberOfProperties: "",
+					properties: formattedProperties,
+				} as OncePaymentForm;
+			}
+
 			try {
 				const raw = localStorage.getItem(DRAFT_KEY);
 				if (raw) {
@@ -51,7 +78,7 @@ export function useCustomerFormState(paymentMethod?: "once" | "installment", ini
 			console.warn("Failed to parse customer draft from localStorage", err);
 		}
 
-		return {
+		const defaultInstallment = {
 			fullName: "",
 			email: "",
 			whatsapp: "",
@@ -59,8 +86,8 @@ export function useCustomerFormState(paymentMethod?: "once" | "installment", ini
 			address: "",
 			isDriver: undefined,
 			nextOfKin: { fullName: "", phone: "", relationship: "", spouseName: "", spousePhone: "", address: "" },
-			propertyId: "",
-			propertyName: "",
+			propertyId: selectedProperties && selectedProperties.length > 0 ? selectedProperties[0].id : "",
+			propertyName: selectedProperties && selectedProperties.length > 0 ? selectedProperties[0].name || "" : "",
 			isCustomProperty: false,
 			customPropertyPrice: "",
 			paymentFrequency: "",
@@ -97,6 +124,8 @@ export function useCustomerFormState(paymentMethod?: "once" | "installment", ini
 				},
 			],
 		} as InstallmentPaymentForm;
+
+		return defaultInstallment;
 	};
 
 	const [form, setForm] = React.useState(initializeFormState);

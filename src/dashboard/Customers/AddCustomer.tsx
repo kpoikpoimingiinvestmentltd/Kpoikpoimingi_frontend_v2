@@ -21,7 +21,18 @@ export default function AddCustomer() {
 	const statePaymentMethod = (location.state as LocationState | undefined)?.paymentMethod;
 	const queryPaymentMethod = searchParams.get("paymentMethod");
 	const paymentMethod = statePaymentMethod || queryPaymentMethod;
-	const state = location.state as LocationState | undefined;
+
+	let selectedProperties: LocationState["selectedProperties"];
+	const querySelectedProperties = searchParams.get("selectedProperties");
+	if (querySelectedProperties) {
+		try {
+			selectedProperties = JSON.parse(decodeURIComponent(querySelectedProperties));
+		} catch {
+			selectedProperties = undefined;
+		}
+	} else {
+		selectedProperties = (location.state as LocationState | undefined)?.selectedProperties;
+	}
 
 	return (
 		<PageWrapper>
@@ -33,7 +44,7 @@ export default function AddCustomer() {
 				<div className="p-6">
 					<CustomerForm
 						paymentMethod={paymentMethod === "once" || paymentMethod === "installment" ? (paymentMethod as "once" | "installment") : undefined}
-						selectedProperties={state?.selectedProperties}
+						selectedProperties={selectedProperties}
 					/>
 				</div>
 			</CustomCard>
