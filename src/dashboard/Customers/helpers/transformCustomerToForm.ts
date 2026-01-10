@@ -108,7 +108,7 @@ export function transformCustomerToInstallmentForm(customer: unknown): Installme
 			return {
 				fullName: full,
 				phone: toLocalPhone(phoneNum),
-				relationship: rel,
+				relationship: rel.charAt(0).toUpperCase() + rel.slice(1).toLowerCase(),
 				spouseName: (spouseFull || (isSpouse ? full : "")) as string,
 				spousePhone: toLocalPhone(spousePhoneRaw || (isSpouse ? phoneNum : "")),
 				address: ((nk.spouseAddress as string) || (nk.address as string) || "") as string,

@@ -122,7 +122,7 @@ export default function CustomerForm({
 			const desired = {
 				fullName: (nk.fullName as string) || "",
 				phone: toLocalPhone((nk.phoneNumber as string) || (nk.phone as string) || ""),
-				relationship: (nk.relationship as string) || "",
+				relationship: ((nk.relationship as string) || "").charAt(0).toUpperCase() + ((nk.relationship as string) || "").slice(1).toLowerCase(),
 				spouseName:
 					(nk.spouseFullName as string) ||
 					(nk.spouseName as string) ||

@@ -19,7 +19,6 @@ export function IndexPieChart() {
 	const pieData: Item[] = [
 		{ name: "Full Payment", value: incomeData?.fullPayment ?? 0 },
 		{ name: "Hire Purchase", value: incomeData?.hirePurchase ?? 0 },
-		{ name: "Unpaid Debt", value: incomeData?.unpaidDebt ?? 0 },
 	];
 
 	// Check if all values are zero
@@ -61,7 +60,7 @@ export function IndexPieChart() {
 
 	const arcs = pieLayout(pieData);
 
-	const colors = ["#751BE314", "#751BE3", "#E3901B"];
+	const colors = ["#751BE3", "#E3901B"];
 
 	// Format number with commas
 	const formatAmount = (num: number) => {

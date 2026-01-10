@@ -363,22 +363,6 @@ export default function EditPropertyDetailsModal({ open, onOpenChange, initial, 
 							</div>
 						</div>
 
-						{/* Quantity Assigned */}
-						<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-							<div>
-								<CustomInput
-									required
-									label="Quantity Assigned"
-									type="number"
-									value={form.quantityAssigned}
-									onChange={(e) => handleChange("quantityAssigned")(e.target.value)}
-									onWheel={handleNumberInputWheel}
-									className={twMerge(inputStyle)}
-									disabled
-								/>
-							</div>
-						</div>
-
 						{/* Vehicle-specific fields */}
 						{isVehicleCategory && (
 							<>

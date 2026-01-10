@@ -53,7 +53,7 @@ const PieLegend = () => {
 	const { data: incomeData } = useGetIncomeAnalytics();
 
 	const items: Array<{ color: string; label: string; value: number }> = [
-		{ color: "#7C3AED", label: "Full Payment", value: (incomeData as IncomeAnalytics | undefined)?.fullPayment ?? 0 },
+		{ color: "#751BE3", label: "Full Payment", value: (incomeData as IncomeAnalytics | undefined)?.fullPayment ?? 0 },
 		{ color: "#E3901B", label: "Hire purchase", value: (incomeData as IncomeAnalytics | undefined)?.hirePurchase ?? 0 },
 		{ color: "#F3E9FF", label: "Unpaid debt", value: (incomeData as IncomeAnalytics | undefined)?.unpaidDebt ?? 0 },
 	];

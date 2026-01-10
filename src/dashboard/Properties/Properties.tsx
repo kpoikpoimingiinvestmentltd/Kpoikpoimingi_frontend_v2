@@ -32,9 +32,14 @@ export default function Properties() {
 	const debouncedSearch = useDebounceSearch(searchQuery, 400);
 	const [sortBy, setSortBy] = React.useState<string>("createdAt");
 	const [sortOrder, setSortOrder] = React.useState<string>("desc");
+	const [isPublicFilter, setIsPublicFilter] = React.useState<string>("");
 	const [activeTab, setActiveTab] = React.useState("available");
 
-	const { data: propertiesData, isLoading, refetch } = useGetAllProperties(page, limit, debouncedSearch || undefined, sortBy, sortOrder);
+	const {
+		data: propertiesData,
+		isLoading,
+		refetch,
+	} = useGetAllProperties(page, limit, debouncedSearch || undefined, sortBy, sortOrder, isPublicFilter || undefined);
 
 	const [selected, setSelected] = React.useState<Record<string, boolean>>({});
 	const [confirmOpen, setConfirmOpen] = React.useState(false);
@@ -157,6 +162,15 @@ export default function Properties() {
 											],
 										},
 										{
+											key: "isPublic",
+											label: "Visibility",
+											type: "select",
+											options: [
+												{ value: "true", label: "Public" },
+												{ value: "false", label: "Private" },
+											],
+										},
+										{
 											key: "sortBy",
 											label: "Sort By",
 											type: "sortBy",
@@ -170,14 +184,23 @@ export default function Properties() {
 										{ key: "sortOrder", label: "Sort Order", type: "sortOrder" },
 									] as FilterField[]
 								}
-								initialValues={{ limit: String(limit), sortBy: sortBy || "", sortOrder: sortOrder || "" }}
+								initialValues={{
+									limit: String(limit),
+									sortBy: sortBy || "",
+									sortOrder: sortOrder || "",
+									...(isPublicFilter && { isPublic: isPublicFilter }),
+								}}
 								onApply={(filters) => {
 									setLimit(filters.limit ? Number(filters.limit) : 10);
 									setSortBy(filters.sortBy || "createdAt");
 									setSortOrder(filters.sortOrder || "desc");
+									setIsPublicFilter(filters.isPublic || "");
 									setPage(1);
 								}}
-								onReset={() => setSearchQuery("")}
+								onReset={() => {
+									setSearchQuery("");
+									setIsPublicFilter("");
+								}}
 							/>
 						</div>
 					</div>
