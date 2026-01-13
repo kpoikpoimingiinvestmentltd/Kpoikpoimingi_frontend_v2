@@ -7,9 +7,6 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import CustomCard from "@/components/base/CustomCard";
 import Profile from "./Profile";
 import VatInterest from "./VatInterest";
-import TermsAndConditions from "@/components/common/TermsAndConditions";
-import { useNavigate } from "react-router";
-import { _router } from "@/routes/_router";
 import { tabListStyle, tabStyle } from "../../components/common/commonStyles";
 import LogoutModal from "../../components/common/LogoutModal";
 import PageWrapper from "../../components/common/PageWrapper";
@@ -18,14 +15,6 @@ export default function Setting() {
 	const [editOpen, setEditOpen] = useState(false);
 	const [changePassOpen, setChangePassOpen] = useState(false);
 	const [logoutOpen, setLogoutOpen] = useState(false);
-	const navigate = useNavigate();
-
-	const handleLogoutConfirm = () => {
-		try {
-			localStorage.clear();
-		} catch (e) {}
-		navigate(_router.auth.login);
-	};
 
 	return (
 		<PageWrapper>
@@ -42,7 +31,7 @@ export default function Setting() {
 						type="button"
 						onClick={() => setChangePassOpen(true)}
 						className="flex items-center text-sm md:text-base gap-2 bg-primary rounded-sm px-8 py-2.5 active-scale transition text-white">
-						<span>Change Password</span>
+						<span>Reset Password</span>
 					</button>
 					<button
 						type="button"
@@ -62,9 +51,9 @@ export default function Setting() {
 						<TabsTrigger value="vat" className={tabStyle}>
 							VAT & Interest
 						</TabsTrigger>
-						<TabsTrigger value="terms" className={tabStyle}>
+						{/* <TabsTrigger value="terms" className={tabStyle}>
 							Terms & Conditions
-						</TabsTrigger>
+						</TabsTrigger> */}
 					</TabsList>
 
 					<TabsContent value="profile">
@@ -75,14 +64,14 @@ export default function Setting() {
 						<VatInterest />
 					</TabsContent>
 
-					<TabsContent value="terms">
+					{/* <TabsContent value="terms">
 						<TermsAndConditions />
-					</TabsContent>
+					</TabsContent> */}
 				</Tabs>
 			</CustomCard>
 			<EditProfileModal open={editOpen} onOpenChange={setEditOpen} />
 			<ChangePasswordModal open={changePassOpen} onOpenChange={setChangePassOpen} />
-			<LogoutModal open={logoutOpen} onOpenChange={setLogoutOpen} onConfirm={handleLogoutConfirm} />
+			<LogoutModal open={logoutOpen} onOpenChange={setLogoutOpen} />
 		</PageWrapper>
 	);
 }

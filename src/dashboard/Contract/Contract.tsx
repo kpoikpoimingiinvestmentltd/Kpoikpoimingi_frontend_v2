@@ -1,31 +1,147 @@
 import CustomCard from "@/components/base/CustomCard";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { EditIcon, FilePlusIcon, FilterIcon, IconWrapper, SearchIcon } from "@/assets/icons";
+import { EditIcon, FilePlusIcon, IconWrapper } from "@/assets/icons";
 import { _router } from "@/routes/_router";
 import Badge from "@/components/base/Badge";
 import PageTitles from "@/components/common/PageTitles";
 import CreateContractModal from "./CreateContractModal";
-import { inputStyle, preTableButtonStyle } from "@/components/common/commonStyles";
-import CustomInput from "@/components/base/CustomInput";
-import Image from "@/components/base/Image";
-import { media } from "@/resources/images";
+import SearchWithFilters from "@/components/common/SearchWithFilters";
 import { Link } from "react-router";
 import CompactPagination from "@/components/ui/compact-pagination";
 import React from "react";
 import EmptyData from "@/components/common/EmptyData";
-import ActionButton from "../../components/base/ActionButton";
-import ExportTrigger from "../../components/common/ExportTrigger";
+import { useGetAllContracts, useExportAllContracts } from "@/api/contracts";
+import { TableSkeleton } from "@/components/common/Skeleton";
+import { useDebounceSearch } from "@/hooks/useDebounceSearch";
+import ExportConfirmModal from "@/components/common/ExportConfirmModal";
+import ActionButton from "@/components/base/ActionButton";
+import { toast } from "sonner";
+import { extractErrorMessage } from "@/lib/utils";
 
 export default function Contract() {
-	const [isEmpty] = React.useState(false);
 	const [createOpen, setCreateOpen] = React.useState(false);
+	const [exportConfirmOpen, setExportConfirmOpen] = React.useState(false);
 	const [page, setPage] = React.useState(1);
-	const pages = Math.max(1, Math.ceil(customers.length / 10));
+	const [search, setSearch] = React.useState("");
+	const debouncedSearch = useDebounceSearch(search);
+
+	const [filters, setFilters] = React.useState<Record<string, string>>({});
+
+	React.useEffect(() => {
+		setPage(1);
+	}, [debouncedSearch]);
+
+	const sortBy = (filters.sortBy as string) || "createdAt";
+	const sortOrder = (filters.sortOrder as string) || "desc";
+
+	const { data = {}, isLoading } = useGetAllContracts(page, 10, debouncedSearch, sortBy, sortOrder, filters);
+	const dataTyped = data as Record<string, unknown>;
+	const contracts = Array.isArray(dataTyped?.data) ? (dataTyped?.data as unknown[]) : [];
+	const paginationData = dataTyped?.pagination as Record<string, unknown> | undefined;
+	const pages = (paginationData?.totalPages as number) || 1;
+
+	const exportMutation = useExportAllContracts();
+
+	const statusMap: Record<string, string> = {
+		"1": "Pending",
+		"2": "Paused",
+		"3": "Active",
+		"4": "Completed",
+		"5": "Terminated",
+		"6": "Cancelled",
+		"7": "Pending Down Payment",
+	};
+
+	const hasActiveFilters = Boolean(debouncedSearch || filters.statusId);
+
+	const getFilterLabels = () => {
+		const labels: Record<string, string> = {};
+		if (filters.statusId) {
+			labels["Status"] = statusMap[filters.statusId] || filters.statusId;
+		}
+		return labels;
+	};
+
+	const handleExportClick = async () => {
+		if (!hasActiveFilters) {
+			// No active filters, export all directly
+			try {
+				const blob = await exportMutation.mutateAsync({
+					search: undefined,
+					statusId: undefined,
+				});
+				const url = URL.createObjectURL(blob);
+				const link = document.createElement("a");
+				link.href = url;
+				link.download = `contracts-${new Date().toISOString().slice(0, 10)}.csv`;
+				document.body.appendChild(link);
+				link.click();
+				document.body.removeChild(link);
+				URL.revokeObjectURL(url);
+				toast.success("CSV exported successfully");
+			} catch (err) {
+				console.error("Failed to export contracts:", err);
+				toast.error(extractErrorMessage(err, "Failed to export contracts"));
+			}
+		} else {
+			// Show confirmation dialog
+			setExportConfirmOpen(true);
+		}
+	};
+
+	const handleExportFiltered = async () => {
+		try {
+			const blob = await exportMutation.mutateAsync({
+				search: debouncedSearch || undefined,
+				statusId: filters.statusId || undefined,
+			});
+			const url = URL.createObjectURL(blob);
+			const link = document.createElement("a");
+			link.href = url;
+			link.download = `contracts-filtered-${new Date().toISOString().slice(0, 10)}.csv`;
+			document.body.appendChild(link);
+			link.click();
+			document.body.removeChild(link);
+			URL.revokeObjectURL(url);
+			toast.success("CSV exported with filters");
+		} catch (err) {
+			console.error("Failed to export contracts:", err);
+			toast.error(extractErrorMessage(err, "Failed to export contracts"));
+		}
+	};
+
+	const handleExportAll = async () => {
+		try {
+			const blob = await exportMutation.mutateAsync({
+				search: undefined,
+				statusId: undefined,
+			});
+			const url = URL.createObjectURL(blob);
+			const link = document.createElement("a");
+			link.href = url;
+			link.download = `contracts-${new Date().toISOString().slice(0, 10)}.csv`;
+			document.body.appendChild(link);
+			link.click();
+			document.body.removeChild(link);
+			URL.revokeObjectURL(url);
+			toast.success("CSV exported successfully");
+		} catch (err) {
+			console.error("Failed to export contracts:", err);
+			toast.error(extractErrorMessage(err, "Failed to export contracts"));
+		}
+	};
 	return (
 		<div className="flex flex-col gap-y-6">
 			<div className="flex items-center justify-between flex-wrap gap-4 mb-4">
 				<PageTitles title="Contract" description="The contracts transaction between Kpo kpoi mingi investment and it customers" />
 				<div className="flex items-center gap-3">
+					<ActionButton
+						type="button"
+						className="bg-primary/10 text-primary hover:bg-primary/20"
+						onClick={handleExportClick}
+						disabled={exportMutation.isPending}>
+						<span className="text-sm">{exportMutation.isPending ? "Exporting..." : "Export CSV"}</span>
+					</ActionButton>
 					<button
 						type="button"
 						onClick={() => setCreateOpen(true)}
@@ -37,39 +153,64 @@ export default function Contract() {
 					</button>
 				</div>
 			</div>
-			<div className="min-h-80 flex">
-				{!isEmpty ? (
-					<CustomCard className="bg-white flex-grow w-full rounded-lg p-4 border border-gray-100">
-						<>
-							<div className="flex-grow max-w-sm mx-auto text-center gap-5 hidden flex-col items-center justify-center p-5">
-								<Image src={media.images.empty} alt="Empty Customer List" className="w-24" />
-								<p className="text-muted-foreground">You have no customers yet. When you do, they will appear here.</p>
-							</div>
+			<CustomCard className="bg-white flex-grow w-full rounded-lg p-4 border border-gray-100">
+				<div className="flex items-center justify-between flex-wrap gap-6">
+					<h2 className="font-semibold">All Contracts </h2>
+					<div className="flex items-center gap-2">
+						<SearchWithFilters
+							search={search}
+							onSearchChange={(v) => setSearch(v)}
+							placeholder="Search by name, property or contract code"
+							showFilter={true}
+							fields={[
+								{
+									key: "sortBy",
+									label: "Sort by field",
+									type: "sortBy",
+									options: [
+										{ value: "name", label: "name" },
+										{ value: "price", label: "price" },
+										{ value: "createdAt", label: "createdAt" },
+										{ value: "updatedAt", label: "updatedAt" },
+									],
+								},
+								{ key: "sortOrder", label: "Sort order", type: "sortOrder" },
+								{
+									key: "statusId",
+									label: "Status",
+									type: "select",
+									options: [
+										{ value: "1", label: "Pending" },
+										{ value: "2", label: "Paused" },
+										{ value: "3", label: "Active" },
+										{ value: "4", label: "Completed" },
+										{ value: "5", label: "Terminated" },
+										{ value: "6", label: "Cancelled" },
+										{ value: "7", label: "Pending Down Payment" },
+									],
+								},
+							]}
+							initialValues={filters}
+							onApply={(f) => {
+								setFilters(f);
+								setPage(1);
+							}}
+							onReset={() => setSearch("")}
+						/>
+					</div>
+				</div>
+				<div className="min-h-80 flex">
+					{isLoading ? (
+						<TableSkeleton rows={10} cols={8} />
+					) : contracts.length === 0 ? (
+						<div className="flex-grow flex items-center justify-center">
+							<EmptyData text="No Contracts at the moment" />
+						</div>
+					) : (
+						<div className="flex-grow w-full flex flex-col gap-y-8 rounded-lg mt-8">
 							<div className="w-full">
-								<div className="flex items-center justify-between flex-wrap gap-6">
-									<h2 className="font-semibold">All Contracts </h2>
-									<div className="flex items-center gap-2">
-										<div className="relative md:w-80">
-											<CustomInput
-												placeholder="Search by name, property or contract code"
-												aria-label="Search by name, property or contract code"
-												className={`max-w-[320px] ${inputStyle} h-10 pl-9`}
-												iconLeft={<SearchIcon />}
-											/>
-										</div>
-										<ActionButton type="button" className={`${preTableButtonStyle} text-white bg-primary ml-auto`}>
-											<IconWrapper className="text-base">
-												<FilterIcon />
-											</IconWrapper>
-											<span className="hidden sm:inline">Filter</span>
-										</ActionButton>
-									</div>
-								</div>
-								<div className="overflow-x-auto w-full mt-8">
+								<div className="overflow-x-auto w-full">
 									<Table>
-										{/* Create contract modal */}
-										<CreateContractModal open={createOpen} onOpenChange={setCreateOpen} />
-
 										<TableHeader className="[&_tr]:border-0">
 											<TableRow className="bg-[#EAF6FF] h-12 overflow-hidden py-4 rounded-lg">
 												<TableHead>Customer ID</TableHead>
@@ -77,150 +218,59 @@ export default function Contract() {
 												<TableHead>Property Name</TableHead>
 												<TableHead>Payment Type</TableHead>
 												<TableHead>Status</TableHead>
-												<TableHead>Total payment</TableHead>
+												<TableHead>Outstanding Balance</TableHead>
 												<TableHead>Date</TableHead>
 												<TableHead>Action</TableHead>
 											</TableRow>
 										</TableHeader>
 										<TableBody>
-											{customers.map((row, idx) => (
-												<TableRow key={idx} className="hover:bg-[#F6FBFF]">
-													<TableCell>{row.id}</TableCell>
-													<TableCell>{row.name}</TableCell>
-													<TableCell>{row.property}</TableCell>
-													<TableCell>{row.paymentType}</TableCell>
-													<TableCell>
-														<Badge value={row.status} size="sm" />
-													</TableCell>
-													<TableCell>{row.totalPayment}</TableCell>
-													<TableCell>{row.date}</TableCell>
-													<TableCell>
-														<div className="flex items-center">
-															<Link to={_router.dashboard.contractDetails.replace(":id", row.id)} className=" p-2 flex items-center">
-																<IconWrapper>
-																	<EditIcon />
-																</IconWrapper>
-															</Link>
-															<ExportTrigger className="text-primary" />
-														</div>
-													</TableCell>
-												</TableRow>
-											))}
+											{contracts.map((contract: unknown, idx: number) => {
+												const c = contract as Record<string, unknown>;
+												return (
+													<TableRow key={idx} className="hover:bg-[#F6FBFF]">
+														<TableCell>{((c.customer as Record<string, unknown>)?.customerCode as string) || "N/A"}</TableCell>
+														<TableCell>{((c.customer as Record<string, unknown>)?.fullName as string) || "N/A"}</TableCell>
+														<TableCell>{((c.property as Record<string, unknown>)?.name as string) || "N/A"}</TableCell>
+														<TableCell>{((c.paymentType as Record<string, unknown>)?.type as string) || "N/A"}</TableCell>
+														<TableCell>
+															<Badge value={((c.status as Record<string, unknown>)?.status as string) || "N/A"} size="sm" />
+														</TableCell>
+														<TableCell>₦{parseInt((c.outStandingBalance as string) || "0").toLocaleString()}</TableCell>
+														<TableCell>{new Date(c.createdAt as string).toLocaleDateString()}</TableCell>
+														<TableCell>
+															<div className="flex items-center">
+																<Link to={_router.dashboard.contractDetails.replace(":id", c.id as string)} className=" p-2 flex items-center">
+																	<IconWrapper>
+																		<EditIcon />
+																	</IconWrapper>
+																</Link>
+															</div>
+														</TableCell>
+													</TableRow>
+												);
+											})}
 										</TableBody>
 									</Table>
 								</div>
 							</div>
-						</>
 
-						<div className="mt-8 flex flex-col md:flex-row text-center md:text-start justify-center items-center">
-							<span className="text-sm text-nowrap">
-								Showing <span className="font-medium">1-10</span> of <span className="font-medium">100</span> results
-							</span>
-							<div className="ml-auto">
-								<CompactPagination page={page} pages={pages} onPageChange={setPage} />
-							</div>
+							<CompactPagination page={page} pages={pages} showRange onPageChange={setPage} />
 						</div>
-					</CustomCard>
-				) : (
-					<div className="flex-grow flex items-center justify-center">
-						<EmptyData text="No Customers at the moment" />
-					</div>
-				)}
-			</div>
+					)}
+				</div>
+			</CustomCard>
+
+			<CreateContractModal open={createOpen} onOpenChange={setCreateOpen} />
+
+			<ExportConfirmModal
+				open={exportConfirmOpen}
+				onOpenChange={setExportConfirmOpen}
+				searchTerm={debouncedSearch}
+				filterLabels={getFilterLabels()}
+				onExportFiltered={handleExportFiltered}
+				onExportAll={handleExportAll}
+				isLoading={exportMutation.isPending}
+			/>
 		</div>
 	);
 }
-
-// Mock data matching the provided image
-const customers = [
-	{
-		id: "123456",
-		name: "Tom Doe James",
-		property: "12 inches HP laptop",
-		paymentType: "Hire purchase",
-		status: "Active",
-		totalPayment: "500,000",
-		date: "30-4-2025",
-	},
-	{
-		id: "123456",
-		name: "Tom Doe James",
-		property: "12 inches HP laptop",
-		paymentType: "Hire purchase",
-		status: "Active",
-		totalPayment: "500,000",
-		date: "30-4-2025",
-	},
-	{
-		id: "123456",
-		name: "Tom Doe James",
-		property: "12 inches HP laptop",
-		paymentType: "Hire purchase",
-		status: "Active",
-		totalPayment: "500,000",
-		date: "30-4-2025",
-	},
-	{
-		id: "123456",
-		name: "Tom Doe James",
-		property: "12 inches HP laptop",
-		paymentType: "Hire purchase",
-		status: "Active",
-		totalPayment: "500,000",
-		date: "30-4-2025",
-	},
-	{
-		id: "123456",
-		name: "Tom Doe James",
-		property: "12 inches HP laptop",
-		paymentType: "Hire purchase",
-		status: "Pending",
-		totalPayment: "500,000",
-		date: "30-4-2025",
-	},
-	{
-		id: "123456",
-		name: "Tom Doe James",
-		property: "12 inches HP laptop",
-		paymentType: "Hire purchase",
-		status: "Pending",
-		totalPayment: "500,000",
-		date: "30-4-2025",
-	},
-	{
-		id: "123456",
-		name: "Tom Doe James",
-		property: "12 inches HP laptop",
-		paymentType: "Hire purchase",
-		status: "Terminated",
-		totalPayment: "500,000",
-		date: "30-4-2025",
-	},
-	{
-		id: "123456",
-		name: "Tom Doe James",
-		property: "12 inches HP laptop",
-		paymentType: "Hire purchase",
-		status: "Terminated",
-		totalPayment: "500,000",
-		date: "30-4-2025",
-	},
-	{
-		id: "123456",
-		name: "Tom Doe James",
-		property: "12 inches HP laptop",
-		paymentType: "Hire purchase",
-		status: "Paused",
-		totalPayment: "500,000",
-		date: "30-4-2025",
-	},
-	{
-		id: "123456",
-		name: "Tom Doe James",
-		property: "12 inches HP laptop",
-		paymentType: "Hire purchase",
-		status: "Paused",
-		totalPayment: "500,000",
-		date: "30-4-2025",
-	},
-];

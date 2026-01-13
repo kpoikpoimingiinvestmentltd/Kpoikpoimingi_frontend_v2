@@ -1,26 +1,123 @@
-// React import not required with new JSX runtime
 import PageTitles from "@/components/common/PageTitles";
 import CustomCard from "@/components/base/CustomCard";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { selectTriggerStyle, tabListStyle, tabStyle } from "@/components/common/commonStyles";
 import ActionButton from "@/components/base/ActionButton";
-import ExportTrigger from "@/components/common/ExportTrigger";
 import TabContractInformation from "./TabContractInformation";
 import TabPaymentPlan from "./TabPaymentPlan";
 import TabReceiptHistory from "./TabReceiptHistory";
 import PageWrapper from "../../components/common/PageWrapper";
-import { EditIcon, IconWrapper } from "../../assets/icons";
+// import { EditIcon, IconWrapper } from "../../assets/icons";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import CustomInput from "@/components/base/CustomInput";
 import TabDocument from "./TabDocument";
+import { useParams } from "react-router";
+import { useGetContractById, usePauseContract, useResumeContract, useTerminateContract } from "@/api/contracts";
+import { extractErrorMessage } from "@/lib/utils";
+import { Skeleton } from "@/components/common/Skeleton";
+import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function ContractDetails() {
+	const { id } = useParams();
+	const { data: contract, isLoading } = useGetContractById(id || "", !!id);
+	const queryClient = useQueryClient();
+
 	const [pauseOpen, setPauseOpen] = useState(false);
 	const [terminateOpen, setTerminateOpen] = useState(false);
 	const [pauseReason, setPauseReason] = useState("Health Crises");
 	const [otherPauseReason, setOtherPauseReason] = useState("");
+
+	const pauseMutation = usePauseContract(
+		(response) => {
+			const message = (response as { message?: string })?.message ?? "Contract paused successfully";
+			toast.success(message);
+			setPauseOpen(false);
+			setPauseReason("Health Crises");
+			setOtherPauseReason("");
+			queryClient.invalidateQueries({ queryKey: ["contract", id] });
+		},
+		(err) => {
+			const message = (err as { message?: string })?.message ?? "Failed to pause contract";
+			toast.error(message);
+		}
+	);
+
+	const resumeMutation = useResumeContract(
+		(response) => {
+			const message = (response as { message?: string })?.message ?? "Contract resumed successfully";
+			toast.success(message);
+			queryClient.invalidateQueries({ queryKey: ["contract", id] });
+		},
+		(err) => {
+			const message = (err as { message?: string })?.message ?? "Failed to resume contract";
+			toast.error(message);
+		}
+	);
+
+	const terminateMutation = useTerminateContract(
+		(response) => {
+			const message = (response as { message?: string })?.message ?? "Contract terminated successfully";
+			toast.success(message);
+			setTerminateOpen(false);
+			setOtherPauseReason("");
+			queryClient.invalidateQueries({ queryKey: ["contract", id] });
+		},
+		(err) => {
+			const message = extractErrorMessage(err, "Failed to terminate contract");
+			toast.error(message);
+		}
+	);
+
+	const handlePauseContract = () => {
+		if (!id) return;
+		const reason = pauseReason === "Other Reasons" ? otherPauseReason : pauseReason;
+		if (!reason.trim()) return;
+		pauseMutation.mutate({ id, reason });
+	};
+
+	const handleResumeContract = () => {
+		if (!id) return;
+		resumeMutation.mutate(id);
+	};
+
+	const handleTerminateContract = () => {
+		if (!id) return;
+		const reason = otherPauseReason || "";
+		if (!reason.trim()) {
+			toast.error("Please provide a reason for terminating the contract");
+			return;
+		}
+		terminateMutation.mutate({ id, reason });
+	};
+
+	if (isLoading) {
+		return (
+			<PageWrapper>
+				<div className="flex items-center justify-center min-h-96">
+					<Skeleton className="w-full h-96">
+						<div className="space-y-4">
+							<div className="h-8 w-1/3 bg-gray-200 rounded" />
+							<div className="h-4 w-full bg-gray-200 rounded" />
+							<div className="h-4 w-full bg-gray-200 rounded" />
+						</div>
+					</Skeleton>
+				</div>
+			</PageWrapper>
+		);
+	}
+
+	if (!contract) {
+		return (
+			<PageWrapper>
+				<div className="flex items-center justify-center min-h-96">
+					<p>Contract not found</p>
+				</div>
+			</PageWrapper>
+		);
+	}
 
 	return (
 		<PageWrapper>
@@ -28,8 +125,7 @@ export default function ContractDetails() {
 				<PageTitles title="Contract" description="The contracts transaction between Kpo kpoi mingi investment and it customers" />
 
 				<div className="flex items-center gap-3">
-					<ExportTrigger className="text-primary" />
-					<ActionButton
+					{/* <ActionButton
 						variant="ghost"
 						className="underline px-1"
 						leftIcon={
@@ -38,14 +134,23 @@ export default function ContractDetails() {
 							</IconWrapper>
 						}>
 						Edit
-					</ActionButton>
-					<ActionButton className="px-6 font-normal rounded-sm" variant="primary" onClick={() => setPauseOpen(true)}>
-						Pause
-					</ActionButton>
+					</ActionButton> */}
+					{!contract?.isPaused ? (
+						<ActionButton className="px-6 font-normal rounded-sm" variant="danger" onClick={() => setPauseOpen(true)}>
+							Pause
+						</ActionButton>
+					) : (
+						<ActionButton
+							className="px-6 font-normal rounded-sm"
+							variant="success"
+							onClick={handleResumeContract}
+							disabled={resumeMutation.status === "pending"}>
+							{resumeMutation.status === "pending" ? "Resuming..." : "Resume"}
+						</ActionButton>
+					)}
 					<ActionButton className="px-6 font-normal rounded-sm" variant="danger" onClick={() => setTerminateOpen(true)}>
 						Terminate
-					</ActionButton>
-
+					</ActionButton>{" "}
 					{/* Pause dialog */}
 					<Dialog open={pauseOpen} onOpenChange={setPauseOpen}>
 						<DialogContent>
@@ -79,11 +184,15 @@ export default function ContractDetails() {
 							)}
 
 							<DialogFooter className="mt-8">
-								<ActionButton className="w-full bg-primary text-white py-3">Pause Contract</ActionButton>
+								<ActionButton
+									className="w-full bg-primary text-white py-3"
+									onClick={handlePauseContract}
+									disabled={pauseMutation.status === "pending"}>
+									{pauseMutation.status === "pending" ? "Pausing..." : "Pause Contract"}
+								</ActionButton>
 							</DialogFooter>
 						</DialogContent>
 					</Dialog>
-
 					{/* Terminate dialog */}
 					<Dialog open={terminateOpen} onOpenChange={setTerminateOpen}>
 						<DialogContent>
@@ -101,7 +210,12 @@ export default function ContractDetails() {
 								/>
 							</div>
 							<DialogFooter className="mt-8">
-								<ActionButton className="w-full bg-primary text-white py-3">Terminate Now</ActionButton>
+								<ActionButton
+									className="w-full bg-primary text-white py-3"
+									onClick={handleTerminateContract}
+									disabled={terminateMutation.status === "pending"}>
+									{terminateMutation.status === "pending" ? "Terminating..." : "Terminate Now"}
+								</ActionButton>
 							</DialogFooter>
 						</DialogContent>
 					</Dialog>
@@ -125,21 +239,21 @@ export default function ContractDetails() {
 						</TabsTrigger>
 					</TabsList>
 
-					<div className="mt-6">
+					<div className="mt-4">
 						<TabsContent value="information">
-							<TabContractInformation />
+							<TabContractInformation contract={contract} />
 						</TabsContent>
 
 						<TabsContent value="plan">
-							<TabPaymentPlan />
+							<TabPaymentPlan contract={contract} />
 						</TabsContent>
 
 						<TabsContent value="receipt">
-							<TabReceiptHistory />
+							<TabReceiptHistory contract={contract} />
 						</TabsContent>
 
 						<TabsContent value="document">
-							<TabDocument />
+							<TabDocument contract={contract} />
 						</TabsContent>
 					</div>
 				</Tabs>

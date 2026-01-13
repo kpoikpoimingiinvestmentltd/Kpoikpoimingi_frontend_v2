@@ -9,6 +9,7 @@ import Customers from "../dashboard/Customers/Customers";
 import CustomerDetails from "../dashboard/Customers/CustomerDetails";
 import CustomerReceipt from "../dashboard/Customers/CustomerReceipt";
 import AddCustomer from "../dashboard/Customers/AddCustomer";
+import SelectProperties from "../dashboard/Customers/SelectProperties";
 import DashboardPageNotFound from "../error/DashboardPageNotFound";
 import Contract from "../dashboard/Contract/Contract";
 import ProductRequest from "../dashboard/ProductRequest/ProductRequest";
@@ -16,6 +17,7 @@ import NotificationsPage from "../dashboard/Notifications/NotificationsPage";
 import AddProperties from "../dashboard/Properties/AddProperties";
 import AuditCompliance from "../dashboard/AuditCompliance/AuditCompliance";
 import Payments from "../dashboard/Payment/Payments";
+import PaymentSuccess from "../dashboard/Payment/PaymentSuccess";
 import Receipt from "../dashboard/Receipt/Receipt";
 import Users from "../dashboard/Users/Users";
 import ReceiptDetails from "../dashboard/Receipt/ReceiptDetails";
@@ -25,14 +27,12 @@ import Properties from "../dashboard/Properties/Properties";
 import UserDetails from "../dashboard/Users/UserDetails";
 import ReportAnalytics from "../dashboard/ReportAnalytics/ReportAnalytics";
 import Debt from "../dashboard/Debt/Debt";
-import ViewDebtDetails from "../dashboard/Debt/ViewDebtDetails";
 import PropertyDetails from "../dashboard/Properties/PropertyDetails";
 import Categories from "../dashboard/Properties/Categories";
-import ManageCategories from "../dashboard/Properties/ManageCategories";
 import ContractDetails from "../dashboard/Contract/ContractDetails";
-import ContractReceipt from "../dashboard/Contract/ContractReceipt";
 import ProductRequestDetails from "../dashboard/ProductRequest/ProductRequestDetails";
 import SelectPaymentMethod from "../dashboard/Customers/SelectPaymentMethod";
+import DebtDetails from "../dashboard/Debt/DebtDetails";
 
 export const appRouter = createBrowserRouter([
 	{
@@ -73,6 +73,10 @@ export const appRouter = createBrowserRouter([
 				element: <SelectPaymentMethod />,
 			},
 			{
+				path: _router.dashboard.selectProperties,
+				element: <SelectProperties />,
+			},
+			{
 				path: _router.dashboard.customerDetails,
 				element: <CustomerDetails />,
 			},
@@ -101,15 +105,11 @@ export const appRouter = createBrowserRouter([
 				element: <ContractDetails />,
 			},
 			{
-				path: _router.dashboard.contractReceipt,
-				element: <ContractReceipt />,
-			},
-			{
 				path: _router.dashboard.properties,
 				element: <Properties />,
 			},
 			{
-				path: _router.dashboard.propertiesDetails,
+				path: _router.dashboard.propertiesDetailsPath,
 				element: <PropertyDetails />,
 			},
 			{
@@ -121,19 +121,19 @@ export const appRouter = createBrowserRouter([
 				element: <Categories />,
 			},
 			{
-				path: _router.dashboard.manageCategories,
-				element: <ManageCategories />,
-			},
-			{
 				path: _router.dashboard.payment,
 				element: <Payments />,
+			},
+			{
+				path: _router.dashboard.paymentSuccess,
+				element: <PaymentSuccess />,
 			},
 			{
 				path: _router.dashboard.users,
 				element: <Users />,
 			},
 			{
-				path: _router.dashboard.userDetails,
+				path: _router.dashboard.userDetailsPath,
 				element: <UserDetails />,
 			},
 			{
@@ -158,7 +158,7 @@ export const appRouter = createBrowserRouter([
 			},
 			{
 				path: _router.dashboard.debtDetails,
-				element: <ViewDebtDetails />,
+				element: <DebtDetails />,
 			},
 			{
 				path: _router.dashboard.reportAnalytics,

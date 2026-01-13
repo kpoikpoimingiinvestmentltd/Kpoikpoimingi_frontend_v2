@@ -1,7 +1,6 @@
 import * as React from "react";
 import { twMerge } from "tailwind-merge";
 import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
 import { IconWrapper } from "../../assets/icons";
 import { inputStyle } from "../common/commonStyles";
 
@@ -15,6 +14,9 @@ type CustomInputProps = React.ComponentProps<typeof Input> & {
 	containerClassName?: string;
 	label?: React.ReactNode;
 	labelClassName?: string;
+	onSearch?: (v: string) => void;
+	debounceMs?: number;
+	showClear?: boolean;
 };
 
 export default function CustomInput({
@@ -30,6 +32,34 @@ export default function CustomInput({
 	labelClassName,
 	...props
 }: CustomInputProps) {
+	// expose a couple extra props via props (onSearch, debounceMs, showClear)
+	const propsTyped = props as CustomInputProps & {
+		onSearch?: (v: string) => void;
+		debounceMs?: number;
+		showClear?: boolean;
+	};
+	const { onSearch, debounceMs = 300, showClear = false } = propsTyped;
+
+	const [internal, setInternal] = React.useState<string>((props.value as string) ?? "");
+
+	React.useEffect(() => {
+		const v = props.value as string | number | undefined;
+		// If no explicit value is provided (undefined), don't override internal state
+		if (typeof v === "undefined") return;
+		const normalized = v == null ? "" : String(v);
+		setInternal(normalized);
+	}, [props.value]);
+
+	React.useEffect(() => {
+		let mounted = true;
+		const id = setTimeout(() => {
+			if (mounted && typeof onSearch === "function") onSearch(internal);
+		}, debounceMs);
+		return () => {
+			mounted = false;
+			clearTimeout(id);
+		};
+	}, [internal, onSearch, debounceMs]);
 	const hasSuffix = Boolean(suffix);
 
 	return (
@@ -46,7 +76,7 @@ export default function CustomInput({
 				</div>
 			)}
 
-			<div className={"relative mt-auto"}>
+			<div className={"relative isolate mt-auto"}>
 				{iconLeft && (
 					<div className="absolute inset-y-0 left-0 opacity-50 pl-3 flex items-center pointer-events-none z-10">
 						<IconWrapper className="text-base">{iconLeft}</IconWrapper>
@@ -55,15 +85,12 @@ export default function CustomInput({
 
 				<Input
 					{...props}
-					className={twMerge(
-						cn(
-							// if iconLeft present, add padding-left; if suffix present, add padding-right
-							iconLeft ? "pl-10" : "pl-3",
-							hasSuffix ? "pr-14" : "pr-3"
-						),
-						inputStyle,
-						className
-					)}
+					value={internal}
+					onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+						setInternal(e.target.value);
+						if (typeof props.onChange === "function") props.onChange(e);
+					}}
+					className={twMerge(inputStyle, iconLeft ? "pl-10" : "pl-3", hasSuffix || iconRight ? "pr-12" : "pr-3", "truncate", className)}
 				/>
 
 				{iconRight && (
@@ -73,6 +100,19 @@ export default function CustomInput({
 				)}
 
 				{hasSuffix && <div className="absolute inset-y-0  opacity-50 right-3 flex items-center z-20 pointer-events-auto">{suffix}</div>}
+
+				{showClear && internal && (
+					<button
+						type="button"
+						aria-label="Clear search"
+						onClick={() => {
+							setInternal("");
+							if (typeof onSearch === "function") onSearch("");
+						}}
+						className="absolute right-3 top-1/2 -translate-y-1/2 p-1">
+						×
+					</button>
+				)}
 			</div>
 
 			{error && typeof error === "string" && <p className="text-xs text-destructive mt-1">{error}</p>}

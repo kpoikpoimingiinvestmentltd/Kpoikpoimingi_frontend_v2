@@ -33,14 +33,15 @@ export default function Avatar({ src = null, alt = "avatar", size = 128, variant
 	};
 
 	const baseClasses = twMerge(
-		"bg-card rounded-full border-2 border-dashed border-gray-200 flex items-center justify-center relative overflow-hidden",
+		"bg-card rounded-full border-2 border-dashed border-gray-200 flex items-center justify-center relative overflow-hidden group",
 		className
 	);
-	const overlayBtn = "flex items-center text-center flex-col gap-y-2 absolute justify-center inset-0 bg-black/50 text-white";
+	const overlayBtn =
+		"flex items-center text-center flex-col gap-y-2 absolute justify-center inset-0 bg-black/50 text-white opacity-0 group-hover:opacity-100 transition";
 
 	return (
 		<div className={baseClasses} style={{ width: size, height: size }}>
-			{preview ? <Image src={preview} alt={alt} className="w-full h-full object-cover" /> : <div className="text-gray-400">No image</div>}
+			{preview ? <Image src={preview} alt={alt} className="w-full h-full object-cover object-top" /> : <div className="text-gray-400">No image</div>}
 
 			{variant === "editable" && (
 				<>

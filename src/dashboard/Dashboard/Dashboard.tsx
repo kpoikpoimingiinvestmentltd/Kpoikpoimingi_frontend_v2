@@ -6,13 +6,17 @@ import PageTitles from "@/components/common/PageTitles";
 import { Link } from "react-router";
 import { _router } from "../../routes/_router";
 import { IconWrapper, PlusIcon } from "../../assets/icons";
+import { useGetIncomeAnalytics } from "@/api/analytics";
+import type { IncomeAnalytics } from "@/types/analytics";
 
 export default function Dashboard() {
 	return (
 		<div className="flex flex-col gap-y-6">
 			<div className="flex items-center flex-wrap justify-between gap-2">
 				<PageTitles title="Overview" description="Overview of major activities" />
-				<Link to={_router.dashboard.customerAdd} className="text-sm flex items-center gap-2 text-white py-2.5 px-4 rounded-sm bg-primary">
+				<Link
+					to={_router.dashboard.selectCustomerPaymentMethod}
+					className="text-sm flex items-center gap-2 text-white py-2.5 px-4 rounded-sm bg-primary">
 					<IconWrapper>
 						<PlusIcon />
 					</IconWrapper>
@@ -46,11 +50,18 @@ export default function Dashboard() {
 }
 
 const PieLegend = () => {
-	const items = [
-		{ color: "#7C3AED", label: "Full Payment", amount: "400,000" },
-		{ color: "#E3901B", label: "Hire purchase", amount: "500,000" },
-		{ color: "#F3E9FF", label: "Unpaid dept", amount: "500,000" },
+	const { data: incomeData } = useGetIncomeAnalytics();
+
+	const items: Array<{ color: string; label: string; value: number }> = [
+		{ color: "#751BE3", label: "Full Payment", value: (incomeData as IncomeAnalytics | undefined)?.fullPayment ?? 0 },
+		{ color: "#E3901B", label: "Hire purchase", value: (incomeData as IncomeAnalytics | undefined)?.hirePurchase ?? 0 },
+		{ color: "#F3E9FF", label: "Unpaid debt", value: (incomeData as IncomeAnalytics | undefined)?.unpaidDebt ?? 0 },
 	];
+
+	// Format number with commas
+	const formatAmount = (num: number) => {
+		return num.toLocaleString("en-US");
+	};
 
 	return (
 		<div className="flex flex-wrap justify-center lg:flex-col lg:items-start gap-4">
@@ -61,7 +72,7 @@ const PieLegend = () => {
 					</div>
 					<div>
 						<div className="font-medium">{it.label}</div>
-						<div className="text-[.89rem] text-gray-400">{it.amount}</div>
+						<div className="text-[.89rem] text-gray-400">{formatAmount(it.value)}</div>
 					</div>
 				</div>
 			))}

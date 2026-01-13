@@ -1,14 +1,39 @@
 import { pie, arc, type PieArcDatum } from "d3";
 import { scaleTime, scaleLinear, line as d3line, max, area as d3area, curveMonotoneX } from "d3";
+import { useGetIncomeAnalytics } from "@/api/analytics";
+import { Spinner } from "@/components/ui/spinner";
 
 type Item = { name: string; value: number };
-const data: Item[] = [
-	{ name: "AAPL", value: 25 },
-	{ name: "BTC", value: 25 },
-	{ name: "GOLD", value: 50 },
-];
 
 export function IndexPieChart() {
+	const { data: incomeData, isLoading } = useGetIncomeAnalytics();
+
+	if (isLoading) {
+		return (
+			<div className="flex items-center justify-center w-full h-64">
+				<Spinner className="size-8" />
+			</div>
+		);
+	}
+
+	const pieData: Item[] = [
+		{ name: "Full Payment", value: incomeData?.fullPayment ?? 0 },
+		{ name: "Hire Purchase", value: incomeData?.hirePurchase ?? 0 },
+	];
+
+	// Check if all values are zero
+	const totalValue = pieData.reduce((sum, item) => sum + item.value, 0);
+	if (totalValue === 0) {
+		return (
+			<div className="flex items-center justify-center w-full h-64 text-gray-400">
+				<div className="text-center">
+					<p className="text-sm font-medium">No income data</p>
+					<p className="text-xs">All values are currently zero</p>
+				</div>
+			</div>
+		);
+	}
+
 	const radius = 550; // Chart base dimensions
 	const gap = 0.08; // Gap between slices
 	// Smaller value -> thinner white separator (thinner donut bars)
@@ -33,12 +58,17 @@ export function IndexPieChart() {
 			.outerRadius(radius)
 			.cornerRadius(lightStrokeEffect + 2) || undefined;
 
-	const arcs = pieLayout(data);
+	const arcs = pieLayout(pieData);
 
-	const colors = ["#751BE314", "#751BE3", "#E3901B"];
+	const colors = ["#751BE3", "#E3901B"];
+
+	// Format number with commas
+	const formatAmount = (num: number) => {
+		return num.toLocaleString("en-US");
+	};
 
 	return (
-		<div className="relative">
+		<div className="relative flex flex-col items-center">
 			<svg viewBox={`-${radius} -${radius} ${radius * 2} ${radius * 2}`} className="max-w-[14.5rem] mx-auto">
 				{/* Define clip paths and colors for each slice */}
 				<defs>
@@ -67,66 +97,74 @@ export function IndexPieChart() {
 						{/* labels removed per design (no text inside curved bars) */}
 					</g>
 				))}
+
+				<text x="0" y="-30" textAnchor="middle" fill="#1F2937" style={{ fontSize: "150px", fontWeight: "500" }}>
+					{formatAmount(incomeData?.totalIncome ?? 0)}
+				</text>
+				<text x="0" y="80" textAnchor="middle" fill="#6B7280" style={{ fontSize: "70px", fontWeight: "400" }}>
+					Total income
+				</text>
+
+				{/* Yearly badge */}
+				<rect x="-110" y="140" width="220" height="80" rx="50" fill="#F3E9FF" />
+				<text x="0" y="195" textAnchor="middle" fill="#9CA3AF" style={{ fontSize: "50px", fontWeight: "400" }}>
+					Yearly
+				</text>
 			</svg>
 		</div>
 	);
 }
 
-const sales = [
-	{ date: "2023-04-30", value: 4 },
-	{ date: "2023-05-01", value: 6 },
-	{ date: "2023-05-02", value: 8 },
-	{ date: "2023-05-03", value: 7 },
-	{ date: "2023-05-04", value: 10 },
-	{ date: "2023-05-05", value: 12 },
-	{ date: "2023-05-06", value: 10.5 },
-	{ date: "2023-05-07", value: 6 },
-	{ date: "2023-05-08", value: 8 },
-	{ date: "2023-05-09", value: 7.5 },
-	{ date: "2023-05-10", value: 6 },
-	{ date: "2023-05-11", value: 8 },
-	{ date: "2023-05-12", value: 9 },
-	{ date: "2023-05-13", value: 10 },
-	{ date: "2023-05-14", value: 17 },
-	{ date: "2023-05-15", value: 14 },
-	{ date: "2023-05-16", value: 15 },
-	{ date: "2023-05-17", value: 20 },
-	{ date: "2023-05-18", value: 18 },
-	{ date: "2023-05-19", value: 16 },
-	{ date: "2023-05-20", value: 15 },
-	{ date: "2023-05-21", value: 16 },
-	{ date: "2023-05-22", value: 13 },
-	{ date: "2023-05-23", value: 11 },
-	{ date: "2023-05-24", value: 11 },
-	{ date: "2023-05-25", value: 13 },
-	{ date: "2023-05-26", value: 12 },
-	{ date: "2023-05-27", value: 9 },
-	{ date: "2023-05-28", value: 8 },
-	{ date: "2023-05-29", value: 10 },
-	{ date: "2023-05-30", value: 11 },
-	{ date: "2023-05-31", value: 8 },
-	{ date: "2023-06-01", value: 9 },
-	{ date: "2023-06-02", value: 10 },
-	{ date: "2023-06-03", value: 12 },
-	{ date: "2023-06-04", value: 13 },
-	{ date: "2023-06-05", value: 15 },
-	{ date: "2023-06-06", value: 13.5 },
-	{ date: "2023-06-07", value: 13 },
-	{ date: "2023-06-08", value: 13 },
-	{ date: "2023-06-09", value: 14 },
-	{ date: "2023-06-10", value: 13 },
-	{ date: "2023-06-11", value: 12.5 },
-];
-let areaChartData = sales.map((d) => ({ ...d, date: new Date(d.date) }));
-
 export const IndexAreaChart = () => {
+	const { data: incomeData, isLoading } = useGetIncomeAnalytics();
+
+	if (isLoading) {
+		return (
+			<div className="flex items-center justify-center h-72">
+				<Spinner className="size-8" />
+			</div>
+		);
+	}
+
+	// Convert monthly data to chart format
+	const monthlyData = incomeData?.monthlyIncomeData || [];
+	const chartData = monthlyData.map((d) => ({
+		date: new Date(2024, d.month - 1, 1), // Use current year
+		value: d.income,
+	}));
+
+	if (!chartData || chartData.length === 0) {
+		return (
+			<div className="flex items-center justify-center h-72 text-gray-400">
+				<div className="text-center">
+					<p className="text-sm font-medium">No income data</p>
+					<p className="text-xs">Monthly income data is not available</p>
+				</div>
+			</div>
+		);
+	}
+
+	// Check if all values are zero
+	const totalIncome = chartData.reduce((sum: number, item: { value: number }) => sum + item.value, 0);
+	if (totalIncome === 0) {
+		return (
+			<div className="flex items-center justify-center h-72 text-gray-400">
+				<div className="text-center">
+					<p className="text-sm font-medium">No income data</p>
+					<p className="text-xs">All income values are currently zero</p>
+				</div>
+			</div>
+		);
+	}
+
+	let areaChartData = chartData as { date: Date; value: number }[];
 	// Area chart implementation goes here
 	let xScale = scaleTime()
 		.domain([areaChartData[0].date, areaChartData[areaChartData.length - 1].date])
 		.range([0, 100]);
 
 	let yScale = scaleLinear()
-		.domain([0, max(areaChartData.map((d) => d.value)) ?? 0])
+		.domain([0, max(areaChartData, (d: { value: number }) => d.value) ?? 0])
 		.range([100, 0]);
 
 	let line = d3line<(typeof areaChartData)[number]>()

@@ -44,7 +44,7 @@ export default function AdminDashboardSidebar({ onClose }: { onClose?: () => voi
 			<header className="relative flex items-center justify-start before:absolute before:content-[''] before:h-68 before:w-72 before:rounded-full before:bg-white before:pointer-events-none before:-bottom-6 before:-left-1/4">
 				<button
 					type="button"
-					className="absolute left-0 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-300 hover:text-black dark:hover:text-white p-2 xl:hidden"
+					className="absolute right-0 bg-white rounded-lg top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-300 hover:text-black dark:hover:text-white p-2 xl:hidden"
 					onClick={() => onClose?.()}
 					aria-label="Close sidebar">
 					<IconWrapper>
@@ -53,7 +53,7 @@ export default function AdminDashboardSidebar({ onClose }: { onClose?: () => voi
 				</button>
 				<Image src={media.logos.logo} className="relative w-40 -mt-4" />
 			</header>
-			<div className="overflow-y-auto relative flex flex-col gap-y-4 mt-2 sidebar-links-container">
+			<div className="overflow-y-auto relative flex flex-col gap-y-4 mt-6 sidebar-links-container">
 				<ul className="flex flex-col items-start gap-y-0.5 w-full">
 					{links.map((link) => {
 						const active = isLinkActive(link.path);

@@ -1,557 +1,696 @@
 import React from "react";
-import CustomInput from "@/components/base/CustomInput";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
-import { inputStyle, labelStyle } from "@/components/common/commonStyles";
+import { useGetReferenceData } from "@/api/reference";
 import { twMerge } from "tailwind-merge";
-import UploadBox from "@/components/base/UploadBox";
-import { WhatsappIcon, CalendarIcon, PhoneIcon, EmailIcon } from "../../assets/icons";
-import CheckboxField from "@/components/base/CheckboxField";
-import ActionButton from "../../components/base/ActionButton";
+import { usePresignUploadMutation } from "@/api/presign-upload.api";
+import { uploadFileToPresignedUrl } from "@/utils/media-upload";
+import { createInternalCustomerRegistration, useUpdateCustomerRegistration } from "@/api/customer-registration";
+import { useCreateInternalFullPaymentRegistration } from "@/api/contracts";
+import { formatPhoneNumber, extractErrorMessage } from "@/lib/utils";
+import { toast } from "sonner";
+
+import { useCustomerFormState } from "./hooks/useCustomerFormState";
+import OncePaymentForm from "./forms/OncePaymentForm";
+import InstallmentPaymentForm from "./forms/InstallmentPaymentForm";
+import { getCustomerPaymentMethod } from "./helpers/transformCustomerToForm";
+import type { CustomerRegistrationPayload } from "@/types/customerRegistration";
+import type { OncePaymentForm as OncePaymentFormType, InstallmentPaymentForm as InstallmentPaymentFormType } from "@/types/customerRegistration";
+import {
+	extractRelationshipOptions,
+	extractPaymentFrequencyOptions,
+	extractDurationUnitOptions,
+	extractEmploymentStatusOptions,
+	extractStateOptions,
+} from "@/lib/referenceDataHelpers";
+import { useNavigate } from "react-router";
+import { _router } from "@/routes/_router";
 
 type Props = {
-	onSubmit?: (data: any) => void;
-	initial?: any;
+	onSubmit?: (data: unknown) => void;
+	onClose?: () => void;
+	initial?: Record<string, unknown>;
+	sectionTitle?: (additionalClasses?: string) => string;
+	centeredContainer?: (additionalClasses?: string) => string;
+	paymentMethod?: "once" | "installment";
+	selectedProperties?: Array<{
+		id: string;
+		name: string;
+		price: string;
+		quantity: number;
+		media?: string[];
+	}>;
 };
 
-export default function CustomerForm({ onSubmit, initial }: Props) {
-	const EACH_SECTION_TITLE = "text-lg font-normal";
-	const CENTERED_CONTAINER = "mx-auto w-full md:w-2/3";
-	const [form, setForm] = React.useState(() => ({
-		fullName: initial?.fullName ?? "",
-		email: initial?.email ?? "",
-		whatsapp: initial?.whatsapp ?? "",
-		dob: initial?.dob ?? "",
-		address: initial?.address ?? "",
-		isDriver: initial?.isDriver ?? false,
-		ninUploaded: initial?.ninUploaded ?? false,
-		driverLicenseUploaded: initial?.driverLicenseUploaded ?? false,
-		contractUploaded: initial?.contractUploaded ?? false,
-		nextOfKin: initial?.nextOfKin ?? { fullName: "", phone: "", relationship: "", spouseName: "", spousePhone: "", address: "" },
-		propertyName: initial?.propertyName ?? "",
-		paymentFrequency: initial?.paymentFrequency ?? "Monthly",
-		paymentDuration: initial?.paymentDuration ?? "",
-		downPayment: initial?.downPayment ?? "",
-		amountAvailable: initial?.amountAvailable ?? "",
-		clarification: initial?.clarification ?? { previousAgreement: false, completedAgreement: false, prevCompany: "", reason: "" },
-		employment: initial?.employment ?? { status: "", employerName: "", employerAddress: "" },
-		guarantors: initial?.guarantors ?? [
-			{
-				fullName: "",
-				occupation: "",
-				phone: "",
-				email: "",
-				employmentStatus: "",
-				homeAddress: "",
-				businessAddress: "",
-				stateOfOrigin: "",
-				votersUploaded: 0,
-			},
-			{
-				fullName: "",
-				occupation: "",
-				phone: "",
-				email: "",
-				employmentStatus: "",
-				homeAddress: "",
-				businessAddress: "",
-				stateOfOrigin: "",
-				votersUploaded: 0,
-			},
-		],
-	}));
+export default function CustomerForm({
+	onSubmit,
+	onClose,
+	initial,
+	sectionTitle: sectionTitleProp,
+	centeredContainer: centeredContainerProp,
+	paymentMethod: paymentMethodProp,
+	selectedProperties,
+}: Props) {
+	const baseEachSectionTitle = "text-lg font-normal";
+	const baseCenteredContainer = "mx-auto w-full md:w-2/3 w-full my-12";
 
-	const handleChange = (key: string, value: any) => setForm((s) => ({ ...s, [key]: value }));
+	const sectionTitle = sectionTitleProp || ((additionalClasses?: string) => twMerge(baseEachSectionTitle, additionalClasses));
+	const centeredContainer = centeredContainerProp || ((additionalClasses?: string) => twMerge(baseCenteredContainer, additionalClasses));
 
-	const handleSubmit = (e: React.FormEvent) => {
+	// Determine if we're in edit mode and which payment method to use
+	const isEditMode = !!initial?.id;
+	const detectedPaymentMethod = isEditMode ? getCustomerPaymentMethod(initial) : paymentMethodProp;
+	const paymentMethod = detectedPaymentMethod || paymentMethodProp;
+
+	// Form state
+	const { form, handleChange, uploadedFiles, setUploadedFiles, uploadedFieldsRef, resetFormCompletely } = useCustomerFormState(
+		paymentMethod,
+		initial,
+		selectedProperties
+	);
+
+	// Navigation helper
+	const navigate = useNavigate();
+
+	// API hooks
+	const [presignUpload] = usePresignUploadMutation();
+	const [isSubmitting, setIsSubmitting] = React.useState(false);
+
+	// Full payment registration mutation
+	const fullPaymentMutation = useCreateInternalFullPaymentRegistration(() => {
+		toast.success(`Registration created successfully!`);
+	});
+
+	const updateMutation = useUpdateCustomerRegistration(() => {
+		// no success toast here; parent will handle UI update
+	});
+
+	// Reference data for dropdowns
+	const { data: refData, isLoading: refLoading } = useGetReferenceData();
+
+	const didPrefillRef = React.useRef(false);
+	const nextPrefilledRef = React.useRef(false);
+	const isPropertyPrefilledRef = React.useRef(false);
+
+	React.useEffect(() => {
+		if (!initial) return;
+		if (nextPrefilledRef.current) return;
+		nextPrefilledRef.current = true;
+		try {
+			const toLocalPhone = (phone?: string | null) => {
+				if (!phone) return "";
+				const cleaned = String(phone).replace(/\D/g, "");
+				if (cleaned.startsWith("234")) return `0${cleaned.slice(3)}`;
+				if (cleaned.startsWith("0")) return cleaned;
+				if (cleaned.length === 10) return `0${cleaned}`;
+				return cleaned;
+			};
+
+			// Handle whatsapp number for "once" payment method
+			if (paymentMethod === "once") {
+				const phoneVal =
+					(initial as { phoneNumber?: string; phone?: string; whatsapp?: string })?.phoneNumber ||
+					(initial as { phoneNumber?: string; phone?: string; whatsapp?: string })?.phone ||
+					(initial as { phoneNumber?: string; phone?: string; whatsapp?: string })?.whatsapp;
+				if (phoneVal) {
+					handleChange("whatsapp", toLocalPhone(typeof phoneVal === "string" ? phoneVal : ""));
+				}
+			}
+
+			const nk = (initial as { nextOfKin?: Record<string, unknown> })?.nextOfKin;
+			if (!nk || typeof nk !== "object") return;
+
+			// Build desired nextOfKin object from initial
+			const desired = {
+				fullName: (nk.fullName as string) || "",
+				phone: toLocalPhone((nk.phoneNumber as string) || (nk.phone as string) || ""),
+				relationship: ((nk.relationship as string) || "").charAt(0).toUpperCase() + ((nk.relationship as string) || "").slice(1).toLowerCase(),
+				spouseName:
+					(nk.spouseFullName as string) ||
+					(nk.spouseName as string) ||
+					(((nk.relationship as string) || "").toLowerCase().includes("spouse") ? (nk.fullName as string) : undefined) ||
+					"",
+				spousePhone: toLocalPhone((nk.spousePhone as string) || (nk.phoneNumber as string) || (nk.phone as string) || ""),
+				address: (nk.spouseAddress as string) || (nk.address as string) || "" || "",
+			};
+
+			handleChange("nextOfKin", desired);
+		} catch {
+			// ignore
+		}
+	}, [initial, paymentMethod, handleChange]);
+
+	// Reset prefill flag when initial data changes
+	React.useEffect(() => {
+		didPrefillRef.current = false;
+	}, [initial]);
+
+	React.useEffect(() => {
+		if (didPrefillRef.current) return;
+		if (!initial) return;
+		if (paymentMethod !== "installment") return;
+		const toLocalPhone = (phone?: string | null) => {
+			if (!phone) return "";
+			const cleaned = String(phone).replace(/\D/g, "");
+			if (cleaned.startsWith("234")) return `0${cleaned.slice(3)}`;
+			if (cleaned.startsWith("0")) return cleaned;
+			if (cleaned.length === 10) return `0${cleaned}`;
+			return cleaned;
+		};
+
+		try {
+			const phoneVal =
+				(initial as { phoneNumber?: string; phone?: string })?.phoneNumber ?? (initial as { phoneNumber?: string; phone?: string })?.phone;
+			handleChange("whatsapp", toLocalPhone(typeof phoneVal === "string" ? phoneVal : ""));
+		} catch {
+			// ignore
+		}
+
+		// Also normalize nextOfKin phones if present
+		try {
+			const nk = (initial as { nextOfKin?: Record<string, unknown> })?.nextOfKin;
+			if (nk && typeof nk === "object") {
+				const nkPhoneVal = nk.phoneNumber ?? nk.phone ?? "";
+				const nkSpouseVal = nk.spousePhone ?? nk.phoneNumber ?? nk.phone ?? "";
+				const currNext = (form as InstallmentPaymentFormType).nextOfKin || {};
+				handleChange("nextOfKin", {
+					...currNext,
+					phone: toLocalPhone(typeof nkPhoneVal === "string" ? nkPhoneVal : ""),
+					spousePhone: toLocalPhone(typeof nkSpouseVal === "string" ? nkSpouseVal : ""),
+				});
+			}
+		} catch {
+			// ignore
+		}
+
+		// Normalize guarantor phones if present
+		try {
+			const gArr = (initial as { guarantors?: unknown[] })?.guarantors;
+			if (Array.isArray(gArr)) {
+				// Ensure we always have two guarantor slots in edit mode
+				const existing = (form as InstallmentPaymentFormType).guarantors || [];
+				const mapped = [0, 1].map((i) => {
+					const src = gArr[i] || {};
+					const srcObj = src as Record<string, unknown>;
+					const curr = existing[i] || {
+						fullName: "",
+						occupation: "",
+						phone: "",
+						email: "",
+						employmentStatus: "",
+						homeAddress: "",
+						businessAddress: "",
+						stateOfOrigin: "",
+						votersUploaded: 0,
+						hasAgreed: false,
+					};
+					return {
+						...curr,
+						fullName: srcObj.fullName ?? curr.fullName,
+						occupation: srcObj.occupation ?? curr.occupation,
+						phone: toLocalPhone(String(srcObj.phoneNumber ?? srcObj.phone ?? curr.phone ?? "")),
+						email: srcObj.email ?? curr.email,
+						employmentStatus: String(srcObj.employmentStatus ?? curr.employmentStatus ?? ""),
+						homeAddress: srcObj.homeAddress ?? curr.homeAddress,
+						businessAddress: srcObj.businessAddress ?? curr.businessAddress,
+						stateOfOrigin: srcObj.stateOfOrigin ?? curr.stateOfOrigin,
+						votersUploaded: curr.votersUploaded ?? 0,
+						hasAgreed: Boolean(srcObj.hasAgreed ?? curr.hasAgreed ?? false),
+					};
+				});
+				handleChange("guarantors", mapped);
+			}
+		} catch {
+			// ignore
+		}
+
+		didPrefillRef.current = true;
+	}, [initial, paymentMethod, handleChange]);
+
+	const relationshipOptions = React.useMemo(() => extractRelationshipOptions(refData), [refData]);
+	const paymentFrequencyOptions = React.useMemo(() => extractPaymentFrequencyOptions(refData), [refData]);
+	const durationUnitOptions = React.useMemo(() => extractDurationUnitOptions(refData), [refData]);
+	const employmentStatusOptions = React.useMemo(() => extractEmploymentStatusOptions(refData), [refData]);
+	const stateOfOriginOptions = React.useMemo(() => extractStateOptions(refData), [refData]);
+
+	React.useEffect(() => {
+		if (refLoading) return;
+		try {
+			const gArr = (form as InstallmentPaymentFormType).guarantors || [];
+			const mapped = gArr.map((g) => {
+				if (!g || !g.stateOfOrigin) return g;
+				if (stateOfOriginOptions.find((o) => o.key === g.stateOfOrigin)) return g;
+				const found = stateOfOriginOptions.find((o) => o.value.toLowerCase() === String(g.stateOfOrigin).toLowerCase());
+				if (found) return { ...g, stateOfOrigin: found.value };
+				return g;
+			});
+			const prev = JSON.stringify(gArr || []);
+			const next = JSON.stringify(mapped || []);
+			if (prev !== next) handleChange("guarantors", mapped);
+		} catch {
+			// ignore
+		}
+	}, [refLoading, stateOfOriginOptions, handleChange]);
+
+	// Normalize guarantor phone numbers to local editable format (e.g., +234... -> 0...)
+	React.useEffect(() => {
+		if (paymentMethod !== "installment") return;
+		try {
+			const toLocalPhone = (phone?: string | null) => {
+				if (!phone) return "";
+				const cleaned = String(phone).replace(/\D/g, "");
+				if (cleaned.startsWith("234")) return `0${cleaned.slice(3)}`;
+				if (cleaned.startsWith("0")) return cleaned;
+				if (cleaned.length === 10) return `0${cleaned}`;
+				return cleaned;
+			};
+
+			const gArr = (form as InstallmentPaymentFormType).guarantors || [];
+			const mapped = gArr.map((g) => {
+				const current = g || ({} as { phone?: string });
+				const rawPhone = current.phone ?? "";
+				const normalized = toLocalPhone(rawPhone);
+				if (normalized !== (current.phone ?? "")) {
+					return { ...current, phone: normalized };
+				}
+				return current;
+			});
+			const prev = JSON.stringify(gArr || []);
+			const next = JSON.stringify(mapped || []);
+			if (prev !== next) handleChange("guarantors", mapped);
+		} catch {
+			// ignore
+		}
+	}, [form, paymentMethod, handleChange]);
+
+	/**
+	 * Handle file upload for media documents
+	 */
+	async function handleFileUpload(file: File, fieldKey: string): Promise<string | null> {
+		if (!file) return null;
+
+		try {
+			// Step 1: Get presigned URL
+			const presignResult = await presignUpload({
+				filename: file.name,
+				contentType: file.type,
+				relatedTable: "customer",
+			}).unwrap();
+
+			const uploadUrl = presignResult.url ?? presignResult.uploadUrl;
+			if (!uploadUrl) {
+				throw new Error("Presign upload did not return an uploadUrl");
+			}
+
+			// Step 2: Upload file to presigned URL
+			const uploadResult = await uploadFileToPresignedUrl(uploadUrl, file);
+			if (!uploadResult.success) {
+				throw new Error(uploadResult.error ?? "Upload failed");
+			}
+
+			// Step 3: Get the media key
+			let mediaKey: string | undefined;
+			if (typeof presignResult.key === "string") mediaKey = presignResult.key;
+			else if (presignResult && typeof presignResult === "object") {
+				const pr = presignResult as Record<string, unknown>;
+				if (pr.data && typeof pr.data === "object") {
+					const dataObj = pr.data as Record<string, unknown>;
+					if (typeof dataObj.key === "string") mediaKey = dataObj.key;
+				}
+			}
+
+			if (mediaKey) {
+				// Track uploaded file
+				setUploadedFiles((prev) => ({
+					...prev,
+					[fieldKey]: fieldKey === "contract" ? [mediaKey] : [...(prev[fieldKey] ?? []), mediaKey],
+				}));
+
+				// Mark field as uploaded
+				uploadedFieldsRef.current.add(fieldKey);
+
+				return mediaKey;
+			}
+
+			return null;
+		} catch (err: unknown) {
+			console.error(`File upload failed for ${fieldKey}:`, err);
+			toast.error(`Upload failed: ${extractErrorMessage(err, "Unknown error")}`);
+			return null;
+		}
+	}
+
+	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
-		onSubmit?.(form);
+		setIsSubmitting(true);
+
+		try {
+			if (paymentMethod === "once") {
+				// For full payment - create internal full payment registration
+				const onceForm = form as OncePaymentFormType;
+
+				// Convert OncePaymentForm to FullPaymentRegistrationPayload
+				const fullPaymentPayload = {
+					fullName: onceForm.fullName,
+					email: onceForm.email,
+					phoneNumber: formatPhoneNumber(onceForm.whatsapp),
+					paymentTypeId: 2, // Full Payment
+					properties: onceForm.properties.map((prop) => ({
+						propertyId: prop.propertyId && String(prop.propertyId).trim() ? prop.propertyId : prop.propertyName,
+						quantity: Number(prop.quantity) || 0,
+						isCustomProperty: !!prop.isCustomProperty || !prop.propertyId,
+					})),
+				};
+
+				// Submit or update full payment registration
+				if (isEditMode) {
+					const initObj = initial && typeof initial === "object" ? (initial as Record<string, unknown>) : undefined;
+					const initId = initObj && typeof initObj.id === "string" ? initObj.id : "";
+					await updateMutation.mutateAsync({
+						id: initId,
+						payload: fullPaymentPayload as unknown as CustomerRegistrationPayload,
+					});
+				} else {
+					await fullPaymentMutation.mutateAsync(fullPaymentPayload);
+				}
+
+				// Reset form completely (localStorage + state)
+				resetFormCompletely();
+
+				// After successful creation, navigate back to customers list (non-edit)
+				if (!isEditMode) navigate(_router.dashboard.customers);
+
+				// Call parent onSubmit if provided
+				if (onSubmit) {
+					onSubmit({ ...fullPaymentPayload, message: "Registration saved successfully" });
+				}
+			} else {
+				// For installment - create internal registration
+				const installmentForm = form as InstallmentPaymentFormType;
+
+				// Build the customer registration payload
+				const payload: CustomerRegistrationPayload = {
+					fullName: installmentForm.fullName,
+					email: installmentForm.email,
+					homeAddress: installmentForm.address,
+					phoneNumber: formatPhoneNumber(installmentForm.whatsapp),
+					paymentTypeId: 1, // Hire Purchase
+					isDriver: installmentForm.isDriver ? "Yes" : "No",
+					requestAgreement: "I hereby request to be a customer of the company",
+					requestAgreementAt: new Date().toISOString(),
+					dateOfBirth: installmentForm.dob,
+					purposeOfProperty: installmentForm.clarification.reason,
+					downPayment: Number(installmentForm.downPayment) || 0,
+					previousHirePurchase:
+						installmentForm.clarification.previousAgreement === true ? "Yes" : installmentForm.clarification.previousAgreement === false ? "No" : "",
+					previousCompany: installmentForm.clarification.previousAgreement === true ? installmentForm.clarification.prevCompany || "" : "",
+					...(installmentForm.clarification.previousAgreement === true && {
+						wasPreviousCompleted: installmentForm.clarification.completedAgreement === true ? "Yes" : "No",
+					}),
+					nextOfKin: {
+						fullName: installmentForm.nextOfKin.fullName,
+						relationship: installmentForm.nextOfKin.relationship,
+						phoneNumber: formatPhoneNumber(installmentForm.nextOfKin.phone),
+						spouseFullName: installmentForm.nextOfKin.spouseName,
+						spousePhone: formatPhoneNumber(installmentForm.nextOfKin.spousePhone),
+						spouseAddress: installmentForm.nextOfKin.address,
+						isNextOfKinSpouse: installmentForm.nextOfKin.spouseName ? "Yes" : "No",
+					},
+					guarantors: installmentForm.guarantors.map((g, idx) => ({
+						fullName: g.fullName,
+						occupation: g.occupation,
+						employmentStatusId: Number(g.employmentStatus) || 0,
+						address: g.homeAddress,
+						stateOfOrigin: g.stateOfOrigin,
+						phoneNumber: formatPhoneNumber(g.phone),
+						companyAddress: g.businessAddress,
+						homeAddress: g.homeAddress,
+						email: g.email,
+						guarantorAgreement: "I agree to be a guarantor",
+						guarantorAgreementAt: new Date().toISOString(),
+						identityDocument: uploadedFiles[`guarantor_${idx}_doc`] || [],
+					})),
+					employmentDetails: {
+						employmentStatusId: Number(installmentForm.employment.status) || 0,
+						employerName: installmentForm.employment.employerName,
+						employerAddress: installmentForm.employment.employerAddress,
+						companyName: installmentForm.employment.companyName,
+						businessAddress: installmentForm.employment.businessAddress,
+						homeAddress: installmentForm.employment.homeAddress,
+					},
+					propertyInterestRequest: [
+						{
+							...(installmentForm.isCustomProperty
+								? {
+										customPropertyName: installmentForm.propertyName,
+										customPropertyPrice: Number(installmentForm.customPropertyPrice) || 0,
+										isCustomProperty: true,
+								  }
+								: {
+										propertyId: installmentForm.propertyId,
+										isCustomProperty: false,
+								  }),
+							paymentIntervalId: Number(installmentForm.paymentFrequency) || 0,
+							durationValue: Number(installmentForm.paymentDuration) || 0,
+							durationUnitId: Number(installmentForm.paymentDurationUnit) || 2,
+							downPayment: Number(installmentForm.downPayment) || 0,
+							quantity: 1,
+						},
+					],
+					mediaKeys: {
+						...(uploadedFiles.nin && { identificationDocument: uploadedFiles.nin }),
+						...(uploadedFiles.driverLicense && { driverLicense: uploadedFiles.driverLicense }),
+						...(uploadedFiles.indigeneCertificate && { indegeneCertificate: uploadedFiles.indigeneCertificate }),
+						...(uploadedFiles.guarantor_0_doc && { guarantor_0_doc: uploadedFiles.guarantor_0_doc }),
+						...(uploadedFiles.guarantor_1_doc && { guarantor_1_doc: uploadedFiles.guarantor_1_doc }),
+						...(uploadedFiles.contract && { signedContract: uploadedFiles.contract }),
+					},
+				};
+
+				// Submit or update registration
+				if (isEditMode) {
+					// Enforce two guarantors for installment/edit when required
+					if (paymentMethod === "installment") {
+						const gCount = Array.isArray((form as InstallmentPaymentFormType).guarantors)
+							? (form as InstallmentPaymentFormType).guarantors.length
+							: 0;
+						if (gCount < 2) {
+							toast.error("Please provide two guarantors before saving");
+							setIsSubmitting(false);
+							return;
+						}
+						// Require duration value before saving
+						const dur = Number((form as InstallmentPaymentFormType).paymentDuration || 0);
+						if (!dur || dur <= 0) {
+							toast.error("Duration value is required for hire purchase");
+							setIsSubmitting(false);
+							return;
+						}
+						// Require stateOfOrigin for guarantors
+						{
+							const missingIdx = ((form as InstallmentPaymentFormType).guarantors || []).findIndex(
+								(g) => !g || !g.stateOfOrigin || String(g.stateOfOrigin).trim() === ""
+							);
+							if (missingIdx >= 0) {
+								toast.error(`Guarantor ${missingIdx + 1}: State of origin is required`);
+								setIsSubmitting(false);
+								return;
+							}
+						}
+					}
+					await updateMutation.mutateAsync({
+						id: initial.id as string,
+						payload,
+					});
+
+					onClose?.();
+					if (onSubmit) onSubmit({ message: "Registration updated successfully" });
+				} else {
+					// For new registrations still enforce guarantor count for installment
+					if (paymentMethod === "installment") {
+						const gCount = Array.isArray((form as InstallmentPaymentFormType).guarantors)
+							? (form as InstallmentPaymentFormType).guarantors.length
+							: 0;
+						if (gCount < 2) {
+							toast.error("Please provide two guarantors before saving");
+							setIsSubmitting(false);
+							return;
+						}
+						const dur = Number((form as InstallmentPaymentFormType).paymentDuration || 0);
+						if (!dur || dur <= 0) {
+							toast.error("Duration value is required for hire purchase");
+							setIsSubmitting(false);
+							return;
+						}
+						// Require stateOfOrigin for guarantors
+						{
+							const missingIdx = ((form as InstallmentPaymentFormType).guarantors || []).findIndex(
+								(g) => !g || !g.stateOfOrigin || String(g.stateOfOrigin).trim() === ""
+							);
+							if (missingIdx >= 0) {
+								toast.error(`Guarantor ${missingIdx + 1}: State of origin is required`);
+								setIsSubmitting(false);
+								return;
+							}
+						}
+					}
+					const response = await createInternalCustomerRegistration(payload);
+					toast.success(`Registration created successfully! Code: ${response.registrationCode}`);
+				}
+
+				resetFormCompletely();
+				if (!isEditMode) navigate(_router.dashboard.customers);
+			}
+		} catch (err: unknown) {
+			console.error("Submission failed", err);
+			toast.error(`Submission failed: ${extractErrorMessage(err, "Unknown error")}`);
+		} finally {
+			setIsSubmitting(false);
+		}
 	};
 
+	// Validation helpers
+	const isOnceValid = () => {
+		if (paymentMethod !== "once") return true;
+		const f = form as OncePaymentFormType;
+		// Check all required fields
+		if (!f.fullName || String(f.fullName).trim() === "") return false;
+		if (!f.email || String(f.email).trim() === "") return false;
+		if (!f.whatsapp || String(f.whatsapp).trim() === "") return false;
+		const validProperties = f.properties.filter((p) => p.propertyName && String(p.propertyName).trim() !== "");
+		// Check that at least one property is filled
+		if (validProperties.length === 0) return false;
+		// Check each valid property has required fields
+		for (const p of validProperties) {
+			if (!p.quantity || Number(p.quantity) < 1) return false;
+		}
+		return true;
+	};
+
+	// When ref data loads, set defaults
+	React.useEffect(() => {
+		if (refLoading) return;
+	}, [refLoading, relationshipOptions, paymentFrequencyOptions, durationUnitOptions, employmentStatusOptions, stateOfOriginOptions]);
+
+	const onceValid = isOnceValid();
+
+	// Render Once Payment Form
+	if (paymentMethod === "once") {
+		return (
+			<OncePaymentForm
+				form={form as OncePaymentFormType}
+				handleChange={handleChange}
+				isSubmitting={isSubmitting}
+				onSubmit={handleSubmit}
+				centeredContainer={centeredContainer}
+				sectionTitle={sectionTitle}
+				isValid={onceValid}
+			/>
+		);
+	}
+
+	// Render Installment Payment Form
+	const missingFields: string[] = React.useMemo(() => {
+		if (paymentMethod !== "installment") return [];
+		const f = form as InstallmentPaymentFormType;
+		const miss: string[] = [];
+
+		// Personal details validation
+		if (!f.fullName || String(f.fullName).trim() === "") {
+			miss.push("Full name is required");
+		}
+		if (!f.email || String(f.email).trim() === "") {
+			miss.push("Email is required");
+		}
+		if (!f.whatsapp || String(f.whatsapp).trim() === "") {
+			miss.push("WhatsApp number is required");
+		}
+		if (!f.address || String(f.address).trim() === "") {
+			miss.push("Home address is required");
+		}
+		if (!f.dob || String(f.dob).trim() === "") {
+			miss.push("Date of birth is required");
+		}
+
+		// Next of Kin validation
+		if (!f.nextOfKin || !f.nextOfKin.fullName || String(f.nextOfKin.fullName).trim() === "") {
+			miss.push("Next of Kin full name is required");
+		}
+		if (!f.nextOfKin || !f.nextOfKin.relationship || String(f.nextOfKin.relationship).trim() === "") {
+			miss.push("Next of Kin relationship is required");
+		}
+		if (!f.nextOfKin || !f.nextOfKin.phone || String(f.nextOfKin.phone).trim() === "") {
+			miss.push("Next of Kin phone is required");
+		}
+
+		// Guarantors validation
+		if (!Array.isArray(f.guarantors) || f.guarantors.length < 2) {
+			miss.push("Two guarantors required");
+		} else {
+			f.guarantors.forEach((g, idx) => {
+				if (!g) return;
+				if (!g.fullName || String(g.fullName).trim() === "") {
+					miss.push(`Guarantor ${idx + 1}: Full name is required`);
+				}
+				if (!g.occupation || String(g.occupation).trim() === "") {
+					miss.push(`Guarantor ${idx + 1}: Occupation is required`);
+				}
+				if (!g.phone || String(g.phone).trim() === "") {
+					miss.push(`Guarantor ${idx + 1}: Phone number is required`);
+				}
+				if (!g.email || String(g.email).trim() === "") {
+					miss.push(`Guarantor ${idx + 1}: Email is required`);
+				}
+				if (!g.employmentStatus || String(g.employmentStatus).trim() === "") {
+					miss.push(`Guarantor ${idx + 1}: Employment status is required`);
+				}
+				if (!g.homeAddress || String(g.homeAddress).trim() === "") {
+					miss.push(`Guarantor ${idx + 1}: Home address is required`);
+				}
+				if (!g.stateOfOrigin || String(g.stateOfOrigin).trim() === "") {
+					miss.push(`Guarantor ${idx + 1}: State of origin is required`);
+				}
+			});
+		}
+
+		// Employment details validation
+		if (!f.employment || !f.employment.status || String(f.employment.status).trim() === "") {
+			miss.push("Employment status is required");
+		}
+		if ((!f.propertyName || String(f.propertyName).trim() === "") && (!f.propertyId || String(f.propertyId).trim() === "")) {
+			miss.push("Property name is required");
+		}
+
+		// Hire purchase specific validation
+		if (!f.paymentDuration || Number(f.paymentDuration) <= 0) {
+			miss.push("Payment duration is required for hire purchase");
+		}
+		if (!f.downPayment || Number(f.downPayment) < 0) {
+			miss.push("Down payment is required");
+		}
+
+		return miss;
+	}, [form, paymentMethod]);
+
 	return (
-		<form onSubmit={handleSubmit} className="space-y-6">
-			{/* Personal details - centered half width */}
-			<div className={CENTERED_CONTAINER}>
-				<h3 className={EACH_SECTION_TITLE}>Personal details</h3>
-
-				<div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-					<CustomInput
-						label="Full name"
-						required
-						labelClassName={labelStyle()}
-						value={form.fullName}
-						onChange={(e) => handleChange("fullName", e.target.value)}
-						className={twMerge(inputStyle)}
-					/>
-
-					<CustomInput
-						label="Email"
-						required
-						labelClassName={labelStyle()}
-						value={form.email}
-						onChange={(e) => handleChange("email", e.target.value)}
-						className={twMerge(inputStyle)}
-					/>
-				</div>
-
-				<div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-					<CustomInput
-						label="Whatsapp number"
-						required
-						labelClassName={labelStyle()}
-						value={form.whatsapp}
-						onChange={(e) => handleChange("whatsapp", e.target.value)}
-						className={twMerge(inputStyle)}
-						iconRight={<WhatsappIcon />}
-					/>
-					<CustomInput
-						label="Date of birth"
-						required
-						labelClassName={labelStyle()}
-						value={form.dob}
-						type="date"
-						onChange={(e) => handleChange("dob", e.target.value)}
-						className={twMerge(inputStyle)}
-						iconRight={<CalendarIcon />}
-					/>
-				</div>
-
-				<div className="mt-4">
-					<label className={labelStyle()}>Home Address*</label>
-					<Textarea
-						value={form.address}
-						onChange={(e) => handleChange("address", e.target.value)}
-						className={twMerge(inputStyle, "h-auto min-h-24")}
-					/>
-				</div>
-				<div className="mt-6">
-					<UploadBox placeholder="Upload Indigene certificate" />
-				</div>
-			</div>
-
-			<hr className="my-6" />
-
-			{/* Identification Document section */}
-			<div className={CENTERED_CONTAINER}>
-				<h3 className={EACH_SECTION_TITLE}>Identification Document</h3>
-				<div className="mt-4 flex items-center gap-4">
-					<div className="flex items-center gap-2">
-						<label className="text-sm mr-2">Are you a driver?</label>
-						<button
-							type="button"
-							onClick={() => handleChange("isDriver", true)}
-							className={form.isDriver ? "bg-primary text-white px-3 py-1 rounded" : "border px-3 py-1 rounded"}>
-							Yes
-						</button>
-						<button
-							type="button"
-							onClick={() => handleChange("isDriver", false)}
-							className={!form.isDriver ? "bg-primary text-white px-3 py-1 rounded" : "border px-3 py-1 rounded"}>
-							No
-						</button>
-					</div>
-				</div>
-
-				<hr className="my-6" />
-
-				<div className="mt-4 space-y-4">
-					<UploadBox placeholder="Upload NIN or Voters Card" />
-					<UploadBox placeholder="Upload Drivers License" />
-					<UploadBox placeholder="Upload signed contract" />
-				</div>
-			</div>
-			<hr className="my-6" />
-			{/* Next of Kin Details */}
-			<div className={CENTERED_CONTAINER}>
-				<h3 className={EACH_SECTION_TITLE}>Next Of Kin Details</h3>
-				<div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-					<CustomInput
-						label="Full Name"
-						required
-						labelClassName={labelStyle()}
-						value={form.nextOfKin.fullName}
-						onChange={(e) => handleChange("nextOfKin", { ...form.nextOfKin, fullName: e.target.value })}
-						className={twMerge(inputStyle)}
-					/>
-					<CustomInput
-						label="Phone number"
-						required
-						labelClassName={labelStyle()}
-						value={form.nextOfKin.phone}
-						onChange={(e) => handleChange("nextOfKin", { ...form.nextOfKin, phone: e.target.value })}
-						className={twMerge(inputStyle)}
-					/>
-				</div>
-
-				<div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-					<div className="col-span-full">
-						<label className={labelStyle()}>Relationship*</label>
-						<Select value={form.nextOfKin.relationship} onValueChange={(v) => handleChange("nextOfKin", { ...form.nextOfKin, relationship: v })}>
-							<SelectTrigger className={twMerge(inputStyle, "w-full min-h-11")}>
-								<SelectValue placeholder="Select relationship" />
-							</SelectTrigger>
-							<SelectContent>
-								<SelectItem value="Brother">Brother</SelectItem>
-								<SelectItem value="Sister">Sister</SelectItem>
-								<SelectItem value="Spouse">Spouse</SelectItem>
-							</SelectContent>
-						</Select>
-					</div>
-				</div>
-
-				<div className="mt-4">
-					<CustomInput
-						label="Spouse Name"
-						required
-						labelClassName={labelStyle()}
-						value={form.nextOfKin.spouseName}
-						onChange={(e) => handleChange("nextOfKin", { ...form.nextOfKin, spouseName: e.target.value })}
-						className={twMerge(inputStyle)}
-					/>
-				</div>
-
-				<div className="mt-4">
-					<label className={labelStyle()}>Address*</label>
-					<Textarea
-						value={form.nextOfKin.address}
-						onChange={(e) => handleChange("nextOfKin", { ...form.nextOfKin, address: e.target.value })}
-						className={twMerge(inputStyle)}
-					/>
-				</div>
-			</div>
-
-			<hr className="my-6" />
-
-			{/* Property Details */}
-			<div className={CENTERED_CONTAINER}>
-				<h3 className={EACH_SECTION_TITLE}>Property Details</h3>
-				<div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-					<CustomInput
-						label="Property Name"
-						required
-						labelClassName={labelStyle()}
-						value={form.propertyName}
-						onChange={(e) => handleChange("propertyName", e.target.value)}
-						className={twMerge(inputStyle)}
-					/>
-					<div>
-						<label className={labelStyle()}>Payment frequency*</label>
-						<Select value={form.paymentFrequency} onValueChange={(v) => handleChange("paymentFrequency", v)}>
-							<SelectTrigger className={twMerge(inputStyle, "w-full min-h-11")}>
-								<SelectValue placeholder="Select frequency" />
-							</SelectTrigger>
-							<SelectContent>
-								<SelectItem value="Monthly">Monthly</SelectItem>
-								<SelectItem value="Weekly">Weekly</SelectItem>
-							</SelectContent>
-						</Select>
-					</div>
-				</div>
-
-				<div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-					<CustomInput
-						label="Payment duration"
-						required
-						labelClassName={labelStyle()}
-						value={form.paymentDuration}
-						onChange={(e) => handleChange("paymentDuration", e.target.value)}
-						className={twMerge(inputStyle)}
-					/>
-					<CustomInput
-						label="Down payment amount"
-						required
-						labelClassName={labelStyle()}
-						value={form.downPayment}
-						onChange={(e) => handleChange("downPayment", e.target.value)}
-						className={twMerge(inputStyle)}
-					/>
-				</div>
-
-				<div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-					<CustomInput
-						label="Why do you need this property"
-						required
-						labelClassName={labelStyle()}
-						value={form.clarification.reason}
-						onChange={(e) => handleChange("clarification", { ...form.clarification, reason: e.target.value })}
-						className={twMerge(inputStyle)}
-					/>
-					<CustomInput
-						label="Amount available for down payment"
-						required
-						labelClassName={labelStyle()}
-						value={form.amountAvailable}
-						onChange={(e) => handleChange("amountAvailable", e.target.value)}
-						className={twMerge(inputStyle)}
-					/>
-				</div>
-			</div>
-
-			<hr className="my-6" />
-
-			{/* Clarification & Employment & Guarantor sections */}
-			<div className="mt-6 space-y-6">
-				<div className={CENTERED_CONTAINER}>
-					<h3 className={EACH_SECTION_TITLE}>Clarification Details</h3>
-					<div className="mt-4 flex items-center gap-4">
-						<div className="flex items-center gap-2">
-							<label className="text-sm">Have you previously entered hire purchase agreement?</label>
-							<button
-								type="button"
-								onClick={() => handleChange("clarification", { ...form.clarification, previousAgreement: true })}
-								className={form.clarification.previousAgreement ? "bg-primary text-white px-3 py-1 rounded" : "border px-3 py-1 rounded"}>
-								Yes
-							</button>
-							<button
-								type="button"
-								onClick={() => handleChange("clarification", { ...form.clarification, previousAgreement: false })}
-								className={!form.clarification.previousAgreement ? "bg-primary text-white px-3 py-1 rounded" : "border px-3 py-1 rounded"}>
-								No
-							</button>
-						</div>
-					</div>
-
-					<div className="my-4 flex items-center gap-4">
-						<div className="flex items-center gap-2">
-							<label className="text-sm">Have you completed that agreement?</label>
-							<button
-								type="button"
-								onClick={() => handleChange("clarification", { ...form.clarification, completedAgreement: true })}
-								className={form.clarification.completedAgreement ? "bg-primary text-white px-3 py-1 rounded" : "border px-3 py-1 rounded"}>
-								Yes
-							</button>
-							<button
-								type="button"
-								onClick={() => handleChange("clarification", { ...form.clarification, completedAgreement: false })}
-								className={!form.clarification.completedAgreement ? "bg-primary text-white px-3 py-1 rounded" : "border px-3 py-1 rounded"}>
-								No
-							</button>
-						</div>
-					</div>
-
-					<CustomInput
-						label="Previous Company"
-						required
-						labelClassName={labelStyle()}
-						value={form.clarification.prevCompany}
-						onChange={(e) => handleChange("clarification", { ...form.clarification, prevCompany: e.target.value })}
-						className={twMerge(inputStyle)}
-					/>
-				</div>
-
-				<hr className="my-6" />
-
-				<div className={CENTERED_CONTAINER}>
-					<h3 className={EACH_SECTION_TITLE}>Employment Details</h3>
-					<div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-						<div>
-							<label className={labelStyle()}>Employment status*</label>
-							<Select value={form.employment.status} onValueChange={(v) => handleChange("employment", { ...form.employment, status: v })}>
-								<SelectTrigger className={twMerge(inputStyle, "w-full min-h-11")}>
-									<SelectValue placeholder="Select status" />
-								</SelectTrigger>
-								<SelectContent>
-									<SelectItem value="Civil servant">Civil servant</SelectItem>
-									<SelectItem value="Self employer">Self employer</SelectItem>
-									<SelectItem value="Unemployed">Unemployed</SelectItem>
-								</SelectContent>
-							</Select>
-						</div>
-						<CustomInput
-							label="Employer name"
-							required
-							labelClassName={labelStyle()}
-							value={form.employment.employerName}
-							onChange={(e) => handleChange("employment", { ...form.employment, employerName: e.target.value })}
-							className={twMerge(inputStyle)}
-						/>
-					</div>
-
-					<div className="mt-4">
-						<label className={labelStyle()}>Employer address*</label>
-						<Textarea
-							value={form.employment.employerAddress}
-							onChange={(e) => handleChange("employment", { ...form.employment, employerAddress: e.target.value })}
-							className={twMerge(inputStyle)}
-						/>
-					</div>
-				</div>
-
-				{/* Guarantors */}
-				<div className={CENTERED_CONTAINER}>
-					<CheckboxField
-						labelClassName="font-normal text-stone-600"
-						wrapperClassName="items-start mb-4 gap-3"
-						id="authorization_agree"
-						label={
-							<span className="text-sm">
-								I hereby authorise <span className="font-medium">Kpoi Kpoi Mingi Investments Ltd</span> to retrieve the electrical appliance from me,
-								or any other person at my or any other place it may be found in the event of my default in paying the Hire Purchase sum as agreed.
-							</span>
-						}
-						labelPosition="right"
-					/>
-				</div>
-				{form.guarantors.map((g: any, idx: number) => (
-					<div key={idx} className={CENTERED_CONTAINER}>
-						<h3 className="text-lg font-medium">Guarantor ({idx + 1})</h3>
-
-						<div className="mt-4">
-							<CheckboxField
-								wrapperClassName="items-start mb-4 gap-3"
-								labelClassName="font-normal text-stone-600"
-								id={`guarantor_agree_${idx}`}
-								label={
-									<div>
-										<span className="text-sm">
-											As a guarantor, I hereby guaranty to pay all sums due under the Hire Purchase Agreement in the event of default by the
-											Applicant.
-										</span>
-										<p className="text-sm mt-3">
-											I accept that messages, notices, processes and other correspondences where necessary, sent to my WhatsApp number as shown herein
-											are properly delivered and served on me.
-										</p>
-									</div>
-								}
-								labelPosition="right"
-							/>
-						</div>
-
-						<div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-							<CustomInput
-								label="Full name"
-								required
-								labelClassName={labelStyle()}
-								value={g.fullName}
-								onChange={(e) => {
-									const next = [...form.guarantors];
-									next[idx] = { ...next[idx], fullName: e.target.value };
-									handleChange("guarantors", next);
-								}}
-								className={twMerge(inputStyle)}
-							/>
-							<CustomInput
-								label="Occupation"
-								required
-								labelClassName={labelStyle()}
-								value={g.occupation}
-								onChange={(e) => {
-									const next = [...form.guarantors];
-									next[idx] = { ...next[idx], occupation: e.target.value };
-									handleChange("guarantors", next);
-								}}
-								className={twMerge(inputStyle)}
-							/>
-						</div>
-
-						<div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-							<CustomInput
-								label="Phone number"
-								required
-								labelClassName={labelStyle()}
-								value={g.phone}
-								onChange={(e) => {
-									const next = [...form.guarantors];
-									next[idx] = { ...next[idx], phone: e.target.value };
-									handleChange("guarantors", next);
-								}}
-								className={twMerge(inputStyle)}
-								iconRight={<PhoneIcon />}
-							/>
-
-							<CustomInput
-								label="Email"
-								required
-								labelClassName={labelStyle()}
-								value={g.email}
-								onChange={(e) => {
-									const next = [...form.guarantors];
-									next[idx] = { ...next[idx], email: e.target.value };
-									handleChange("guarantors", next);
-								}}
-								className={twMerge(inputStyle)}
-								iconRight={<EmailIcon />}
-							/>
-						</div>
-
-						<div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-							<div>
-								<label className={labelStyle()}>Employment status*</label>
-								<Select
-									value={g.employmentStatus}
-									onValueChange={(v) => {
-										const next = [...form.guarantors];
-										next[idx] = { ...next[idx], employmentStatus: v };
-										handleChange("guarantors", next);
-									}}>
-									<SelectTrigger className={twMerge(inputStyle, "w-full min-h-11")}>
-										<SelectValue placeholder="Select status" />
-									</SelectTrigger>
-									<SelectContent>
-										<SelectItem value="Civil servant">Civil servant</SelectItem>
-										<SelectItem value="Self employer">Self employer</SelectItem>
-										<SelectItem value="Unemployed">Unemployed</SelectItem>
-									</SelectContent>
-								</Select>
-							</div>
-
-							<CustomInput
-								label="Home address"
-								required
-								labelClassName={labelStyle()}
-								value={g.homeAddress}
-								onChange={(e) => {
-									const next = [...form.guarantors];
-									next[idx] = { ...next[idx], homeAddress: e.target.value };
-									handleChange("guarantors", next);
-								}}
-								className={twMerge(inputStyle)}
-							/>
-						</div>
-
-						<div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-							<CustomInput
-								label="Business address"
-								required
-								labelClassName={labelStyle()}
-								value={g.businessAddress}
-								onChange={(e) => {
-									const next = [...form.guarantors];
-									next[idx] = { ...next[idx], businessAddress: e.target.value };
-									handleChange("guarantors", next);
-								}}
-								className={twMerge(inputStyle)}
-							/>
-
-							<CustomInput
-								label="State of origin"
-								required
-								labelClassName={labelStyle()}
-								value={g.stateOfOrigin}
-								onChange={(e) => {
-									const next = [...form.guarantors];
-									next[idx] = { ...next[idx], stateOfOrigin: e.target.value };
-									handleChange("guarantors", next);
-								}}
-								className={twMerge(inputStyle)}
-							/>
-						</div>
-
-						<div className="mt-7">
-							<UploadBox
-								placeholder="1 voters card uploaded"
-								hint={g.votersUploaded ? `${g.votersUploaded} voters card uploaded` : "PNG, JPG, PDF Only"}
-							/>
-						</div>
-					</div>
-				))}
-			</div>
-
-			<div className="flex justify-center mt-8">
-				<ActionButton type="submit" className="w-full md:w-2/3 bg-primary text-white py-3">
-					Save Changes
-				</ActionButton>
-			</div>
-		</form>
+		<InstallmentPaymentForm
+			form={form as InstallmentPaymentFormType}
+			handleChange={handleChange}
+			isSubmitting={isSubmitting}
+			onSubmit={handleSubmit}
+			uploadedFiles={uploadedFiles}
+			uploadedFieldsRef={uploadedFieldsRef}
+			handleFileUpload={handleFileUpload}
+			relationshipOptions={relationshipOptions}
+			paymentFrequencyOptions={paymentFrequencyOptions}
+			durationUnitOptions={durationUnitOptions}
+			employmentStatusOptions={employmentStatusOptions}
+			stateOfOriginOptions={stateOfOriginOptions}
+			refLoading={refLoading}
+			paymentMethod={paymentMethod}
+			centeredContainer={centeredContainer}
+			sectionTitle={sectionTitle}
+			setUploadedFiles={setUploadedFiles}
+			missingFields={missingFields}
+			isPropertyPrefilled={isPropertyPrefilledRef.current}
+		/>
 	);
 }

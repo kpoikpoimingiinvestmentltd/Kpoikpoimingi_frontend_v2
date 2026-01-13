@@ -53,21 +53,21 @@ export default function KeyValueRow({
 	return (
 		<div className={twMerge(`flex items-start justify-between py-2 gap-4`, className)}>
 			<aside {...(leftProps || {})} className={`text-start text-wrap`}>
-				<p className={twMerge("text-muted-foreground text-sm", leftClassName)}>{label}</p>
+				<p className={twMerge("text-muted-foreground text-xs min-[450px]:text-sm", leftClassName)}>{label}</p>
 			</aside>
 
 			<aside {...(rightProps || {})} className={twMerge(`flex items-center gap-4 justify-end max-w-[120px]`, rightClassName)}>
 				<div className="flex-1 text-right">
 					{variant === "text" ? (
 						link ? (
-							<Link to={href} className="text-primary underline-offset-2 hover:underline text-sm">
+							<Link to={href} className="text-primary underline-offset-2 hover:underline text-xs min-[450px]:text-sm">
 								{value}
 							</Link>
 						) : (
-							<div className="text-sm text-balance sm:text-nowrap">{value}</div>
+							<div className="text-xs min-[450px]:text-sm text-balance sm:text-nowrap">{value}</div>
 						)
 					) : variant === "action" ? (
-						<div className="text-sm">{value}</div>
+						<div className="text-xs min-[450px]:text-sm">{value}</div>
 					) : (
 						<div />
 					)}
@@ -82,15 +82,21 @@ export default function KeyValueRow({
 
 				{variant === "action" && action ? <div className={`flex items-center ${actionClassName || ""}`}>{action}</div> : null}
 
-				{variant === "files" && files && files.length ? (
+				{variant === "files" && files ? (
 					<div className="flex flex-col items-end space-y-3">
-						{files.map((f, i) => (
-							<Link key={i} to={f.url} download className="inline-flex items-center p-1" aria-label={f.label || `Download file ${i + 1}`}>
-								<IconWrapper className="text-4xl sm:text-5xl">
-									<FileIcon />
-								</IconWrapper>
-							</Link>
-						))}
+						{files.length ? (
+							files.map((f, i) => (
+								<Link key={i} to={f.url} download className="inline-flex items-center p-1" aria-label={f.label || `Download file ${i + 1}`}>
+									<IconWrapper className="text-4xl sm:text-5xl">
+										<FileIcon />
+									</IconWrapper>
+								</Link>
+							))
+						) : (
+							<IconWrapper className="text-4xl sm:text-5xl opacity-50">
+								<FileIcon />
+							</IconWrapper>
+						)}
 					</div>
 				) : null}
 			</aside>

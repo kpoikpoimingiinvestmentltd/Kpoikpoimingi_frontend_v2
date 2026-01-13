@@ -1,12 +1,39 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import CompactPagination from "@/components/ui/compact-pagination";
 import { tableHeaderRowStyle } from "../../components/common/commonStyles";
+import type { VATRecord } from "@/types/reports";
 
 interface VATCollectedProps {
-	rows: Array<any>;
+	rows: VATRecord[];
 	page: number;
 	pages: number;
 	onPageChange: (p: number) => void;
+}
+
+function formatCurrency(amount: string | number): string {
+	const numAmount = typeof amount === "string" ? parseFloat(amount) : amount;
+	return new Intl.NumberFormat("en-NG", {
+		style: "currency",
+		currency: "NGN",
+	}).format(numAmount);
+}
+
+function formatDate(dateString: string): string {
+	try {
+		const date = new Date(dateString);
+		return date.toLocaleDateString("en-NG", {
+			year: "numeric",
+			month: "2-digit",
+			day: "2-digit",
+		});
+	} catch {
+		return dateString;
+	}
+}
+
+function formatPercentage(rate: string): string {
+	const numRate = parseFloat(rate);
+	return `${(numRate * 100).toFixed(2)}%`;
 }
 
 export default function VATCollected({ rows, page, pages, onPageChange }: VATCollectedProps) {
@@ -20,27 +47,23 @@ export default function VATCollected({ rows, page, pages, onPageChange }: VATCol
 				<Table>
 					<TableHeader className={tableHeaderRowStyle}>
 						<TableRow>
+							<TableHead>Contract Code</TableHead>
 							<TableHead>Customer Name</TableHead>
-							<TableHead>Property Name</TableHead>
-							<TableHead>Payment Method</TableHead>
-							<TableHead>Payment Type</TableHead>
-							<TableHead>Total Amount</TableHead>
-							<TableHead>VAT Collected</TableHead>
+							<TableHead>Amount</TableHead>
+							<TableHead>VAT Amount</TableHead>
 							<TableHead>VAT Rate</TableHead>
 							<TableHead>Date</TableHead>
 						</TableRow>
 					</TableHeader>
 					<TableBody>
-						{rows.map((row: any, idx: number) => (
-							<TableRow key={idx} className="hover:bg-[#F6FBFF]">
-								<TableCell className="text-[#13121266] py-4">{row.customerName}</TableCell>
-								<TableCell className="text-[#13121266] py-4">{row.propertyName}</TableCell>
-								<TableCell className="text-[#13121266] py-4">{row.paymentMethod}</TableCell>
-								<TableCell className="text-[#13121266] py-4">{row.paymentType}</TableCell>
-								<TableCell className="text-[#13121266] py-4">{row.totalAmount}</TableCell>
-								<TableCell className="text-[#13121266] py-4">{row.vatCollected}</TableCell>
-								<TableCell className="text-[#13121266] py-4">{row.vatRate}</TableCell>
-								<TableCell className="text-[#13121266] py-4">{row.date}</TableCell>
+						{rows.map((row: VATRecord) => (
+							<TableRow key={row.id} className="hover:bg-[#F6FBFF]">
+								<TableCell className="text-[#13121266] py-4">{row.contract.contractCode}</TableCell>
+								<TableCell className="text-[#13121266] py-4">{row.customer.fullName}</TableCell>
+								<TableCell className="text-[#13121266] py-4">{formatCurrency(row.amount)}</TableCell>
+								<TableCell className="text-[#13121266] py-4">{formatCurrency(row.vatAmount)}</TableCell>
+								<TableCell className="text-[#13121266] py-4">{formatPercentage(row.vatRate)}</TableCell>
+								<TableCell className="text-[#13121266] py-4">{formatDate(row.createdAt)}</TableCell>
 							</TableRow>
 						))}
 					</TableBody>

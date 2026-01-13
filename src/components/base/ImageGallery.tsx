@@ -1,8 +1,9 @@
 import React from "react";
 import Image from "./Image";
 import { twMerge } from "tailwind-merge";
-import { IconWrapper, UploadCloudIcon } from "../../assets/icons";
+import { IconWrapper, UploadCloudIcon, CloseIcon } from "../../assets/icons";
 import ActionButton from "./ActionButton";
+import { Spinner } from "@/components/ui/spinner";
 
 type ThumbVariant = "dashed" | "solid" | "none";
 
@@ -18,10 +19,13 @@ type Props = {
 	containerBorder?: ContainerBorder;
 	containerBg?: string; // tailwind or raw color
 	uploadButtonPosition?: UploadButtonPosition;
-	onChange?: (files: File[]) => void; // upload handler
+	onChange?: (files: File[]) => void | Promise<void>; // upload handler
 	placeholderText?: string;
 	uploadButtonText?: string;
 	labelText?: string;
+	uploadedImages?: { src: string; onRemove?: () => void }[];
+	isUploading?: boolean;
+	isUploaded?: boolean;
 };
 
 export default function ImageGallery({
@@ -37,6 +41,8 @@ export default function ImageGallery({
 	placeholderText = "Upload Voters card",
 	uploadButtonText = "Upload",
 	labelText = "Property Image",
+	uploadedImages = [],
+	isUploading = false,
 }: Props) {
 	const imgs = Array.isArray(images) ? images : images ? [images] : [];
 	const [selected, setSelected] = React.useState(0);
@@ -51,20 +57,28 @@ export default function ImageGallery({
 	// local images state when component manages images internally (demo friendly)
 	const [localImgs, setLocalImgs] = React.useState<string[]>(imgs);
 	const inputRef = React.useRef<HTMLInputElement | null>(null);
-	const effectiveImgs = localImgs.length ? localImgs : imgs;
 
-	const handleFiles = (files?: FileList | null) => {
+	// Combine uploaded images with local images for display
+	const uploadedImageSrcs = uploadedImages.map((img) => img.src);
+	const effectiveImgs = [...uploadedImageSrcs, ...(localImgs.length ? localImgs : imgs)];
+
+	const handleFiles = async (files?: FileList | null) => {
 		if (!files) return;
 		const arr = Array.from(files);
-		if (onChange) onChange(arr);
-		// if no onChange provided, we still allow preview by creating object URLs
-		if (!onChange) {
+
+		// Set loading state if onChange is provided
+		if (onChange) {
+			const result = onChange(arr);
+			// Handle both Promise and void returns
+			if (result && typeof result === "object" && "then" in result) {
+				await result;
+			}
+		} else {
+			// if no onChange provided, we still allow preview by creating object URLs
 			const urls = arr.map((f) => URL.createObjectURL(f));
 			setLocalImgs((s) => [...s, ...urls]);
 		}
-	};
-
-	// (removed small add button) only main upload control remains
+	}; // (removed small add button) only main upload control remains
 
 	const containerBorderClass = containerBorder === "none" ? "border-0" : containerBorder === "solid" ? "border" : "border-dashed border-2";
 
@@ -78,11 +92,11 @@ export default function ImageGallery({
 
 	return (
 		<div className={`${twMerge("flex flex-col gap-4", className)}`}>
-			<div className={twMerge(`rounded-md p-6 flex flex-grow items-center justify-center relative min-h-52`, containerBg, containerBorderClass)}>
+			<div className={twMerge(`rounded-md p-6 flex flex-grow items-center justify-center relative md:h-80 h-92`, containerBg, containerBorderClass)}>
 				<div className="absolute top-4 left-4">{mode === "view" && <p className="text-sm text-black">{labelText}</p>}</div>
 
 				{effectiveImgs[selected] ? (
-					<Image src={effectiveImgs[selected]} alt={`image-${selected}`} className="w-52" />
+					<Image src={effectiveImgs[selected]} alt={`image-${selected}`} className="w-full md:w-[300px] h-52 md:h-64 object-center" />
 				) : (
 					<div className="flex items-center justify-center gap-y-3 flex-col text-center text-black">
 						<IconWrapper className="text-2xl rotate-y-180">
@@ -110,29 +124,52 @@ export default function ImageGallery({
 
 						<ActionButton
 							type="button"
+							disabled={isUploading}
 							className="gap-2 font-normal rounded-sm"
 							onClick={() => {
 								inputRef.current?.click();
 							}}>
-							<span>{uploadButtonText}</span>
-							<IconWrapper>
-								<UploadCloudIcon />
-							</IconWrapper>
+							{isUploading ? (
+								<>
+									<Spinner className="size-4" />
+									<span>Uploading...</span>
+								</>
+							) : (
+								<>
+									<span>{uploadButtonText}</span>
+									<IconWrapper>
+										<UploadCloudIcon />
+									</IconWrapper>
+								</>
+							)}
 						</ActionButton>
 					</div>
 				)}
 			</div>
 
-			{effectiveImgs && effectiveImgs.length > 1 && (
-				<div className="flex items-center gap-3 mt-2">
-					{effectiveImgs.map((s, i) => (
+			{effectiveImgs && effectiveImgs.length >= 1 && (
+				<div className="flex items-center gap-3 mt-2 flex-wrap">
+					{uploadedImages.map((uploadedImg, idx) => (
 						<div
-							key={i}
+							key={idx}
 							className={`rounded-md p-1 ${
 								thumbBg === "white" ? "bg-white" : thumbBg === "transparent" ? "bg-transparent" : thumbBg
-							} ${thumbBorderClass(i)} cursor-pointer`}
-							onClick={() => setSelected(i)}>
-							<Image src={s} alt={`thumb-${i}`} className="w-20 h-14 p-2 object-contain" />
+							} ${thumbBorderClass(idx)} cursor-pointer relative group`}
+							onClick={() => setSelected(idx)}>
+							<Image src={uploadedImg.src} alt={`thumb-${idx}`} className="w-20 h-14 p-2 object-contain" />
+							{uploadedImg.onRemove && (
+								<button
+									type="button"
+									onClick={(e) => {
+										e.stopPropagation();
+										uploadedImg.onRemove?.();
+									}}
+									className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center">
+									<IconWrapper>
+										<CloseIcon />
+									</IconWrapper>
+								</button>
+							)}
 						</div>
 					))}
 				</div>

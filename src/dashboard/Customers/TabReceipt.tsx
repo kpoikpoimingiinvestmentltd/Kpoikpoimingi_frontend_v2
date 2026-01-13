@@ -3,46 +3,40 @@ import CustomCard from "@/components/base/CustomCard";
 import SectionTitle from "@/components/common/SectionTitle";
 import PaymentCard from "@/components/base/PaymentCard";
 import { FileIcon } from "@/assets/icons";
-// ModalPaymentDetails is not used in this tab; keep if needed in the future.
-// import ModalPaymentDetails from "./ModalPaymentDetails";
+import type { ReceiptDto } from "@/types/receipt";
 import { useNavigate, useParams } from "react-router";
 import { _router } from "@/routes/_router";
 
-type Payment = { id: string; date: string };
-type ContractGroup = { id: string; title: string; payments: Payment[]; totalPaid?: string };
+type ApiReceiptItem = {
+	id: string;
+	receiptNumber?: string;
+	paymentDate?: string;
+	vatAmount?: string | number;
+	totalAmount?: string | number;
+	paymentType?: string;
+	amountPaid?: string | number;
+	paymentMethod?: string;
+	status?: string;
+	createdAt?: string;
+};
 
-const groups: ContractGroup[] = [
-	{
-		id: "c102",
-		title: "Contract 102(Hire Purchase): 12 inches HP laptop",
-		totalPaid: "3/6",
-		payments: [
-			{ id: "r1", date: "12-3-2025" },
-			{ id: "r2", date: "12-3-2025" },
-			{ id: "r3", date: "12-3-2025" },
-			{ id: "r4", date: "12-3-2025" },
-			{ id: "r5", date: "12-3-2025" },
-			{ id: "r6", date: "12-3-2025" },
-		],
-	},
-	{
-		id: "c101",
-		title: "Contract 101(Full Payment): 25kg gas cylinder",
-		totalPaid: "1/1",
-		payments: [{ id: "r7", date: "12-3-2025" }],
-	},
-];
+type ApiContractReceipts = {
+	contractId?: string;
+	contractCode?: string;
+	propertyName?: string;
+	propertyPrice?: string | number;
+	receipts?: ApiReceiptItem[];
+};
 
-export default function TabReceipt() {
+export default function TabReceipt({ receipts }: { receipts?: ReceiptDto[] | undefined }) {
 	const navigate = useNavigate();
 	const params = useParams();
 	const customerId = params.id ?? "";
 
-	const handleView = (p: Payment) => {
-		// Sanitize customer id (replace spaces with hyphens) so the URL remains readable
+	const handleView = (p: ApiReceiptItem) => {
 		const safeCustomerId = (customerId ?? "").trim().replace(/\s+/g, "-");
 		const path = _router.dashboard.customerDetailsReceipt.replace(":id", safeCustomerId || ":id");
-		navigate(`${path}?paymentId=${encodeURIComponent(p.id)}`);
+		navigate(`${path}?receiptId=${encodeURIComponent(p.id)}`);
 	};
 
 	return (
@@ -51,26 +45,46 @@ export default function TabReceipt() {
 				<SectionTitle title="Receipt" />
 
 				<div className="space-y-8 mt-4">
-					{groups.map((g) => (
-						<div key={g.id}>
-							<div className="flex items-center justify-between bg-[#F7F7F7] p-3 flex-wrap gap-3 rounded-sm text-sm mb-4">
-								<div>{g.title}</div>
-								<div className="text-sm text-muted-foreground">Total paid ({g.totalPaid})</div>
-							</div>
+					{Array.isArray((receipts as unknown as Record<string, unknown>)?.receipts) &&
+					((receipts as unknown as Record<string, unknown>).receipts as unknown[]).length > 0 ? (
+						((receipts as unknown as Record<string, unknown>).receipts as ApiContractReceipts[]).map((grp: ApiContractReceipts) => {
+							const title = `${grp.contractCode ?? grp.contractId ?? "Contract"} — ${grp.propertyName ?? ""}`;
+							const total = grp.propertyPrice ? Number(grp.propertyPrice).toLocaleString() : "-";
+							return (
+								<div key={grp.contractId ?? grp.contractCode ?? title}>
+									<div className="flex items-center justify-between bg-[#F7F7F7] p-3 flex-wrap gap-3 rounded-sm text-sm mb-4">
+										<div>
+											<div className="font-medium">{title}</div>
+											<div className="text-xs text-muted-foreground">Price: {total}</div>
+										</div>
+										<div className="text-sm text-muted-foreground">Total receipts ({grp.receipts ? grp.receipts.length : 0})</div>
+									</div>
 
-							<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-								{g.payments.map((p) => (
-									<PaymentCard
-										key={p.id}
-										p={{ id: p.id, status: "Successful", date: p.date }}
-										onView={() => handleView(p)}
-										variant="icon"
-										icon={<FileIcon />}
-									/>
-								))}
-							</div>
-						</div>
-					))}
+									<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+										{Array.isArray(grp.receipts) && grp.receipts.length > 0 ? (
+											grp.receipts.map((r) => (
+												<PaymentCard
+													key={r.id}
+													p={{
+														id: r.id,
+														status: r.status === "PAID" || r.status === "SUCCESS" ? "Successful" : "Failed",
+														date: r.paymentDate ?? r.createdAt ?? "",
+													}}
+													onView={() => handleView(r)}
+													variant="icon"
+													icon={<FileIcon />}
+												/>
+											))
+										) : (
+											<div className="text-sm text-muted-foreground">No receipts for this contract.</div>
+										)}
+									</div>
+								</div>
+							);
+						})
+					) : (
+						<div className="text-sm text-muted-foreground">No receipt records found.</div>
+					)}
 				</div>
 			</CustomCard>
 		</>

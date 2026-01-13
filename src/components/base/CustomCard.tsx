@@ -1,5 +1,15 @@
 import { twMerge } from "tailwind-merge";
+import React from "react";
 
-export default function CustomCard({ className = "", children }: { className?: string; children: React.ReactNode }) {
-	return <div className={`${twMerge("bg-white border border-gray-100 w-full rounded-lg p-4 h-full", className)}`}>{children}</div>;
-}
+// Forward ref so consumers can capture the card node for printing / PDF
+const CustomCard = React.forwardRef<HTMLDivElement, { className?: string; children: React.ReactNode }>(({ className = "", children }, ref) => {
+	return (
+		<div ref={ref} className={`${twMerge("bg-white border border-gray-100 w-full rounded-lg p-4 h-full", className)}`}>
+			{children}
+		</div>
+	);
+});
+
+CustomCard.displayName = "CustomCard";
+
+export default CustomCard;

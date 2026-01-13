@@ -1,103 +1,258 @@
-// icons not used in this file
-import ExportTrigger from "@/components/common/ExportTrigger";
-import PageTitles from "@/components/common/PageTitles";
-import React, { useMemo, useState } from "react";
+import { useState } from "react";
 import CompactPagination from "@/components/ui/compact-pagination";
 import EmptyData from "@/components/common/EmptyData";
 import CustomCard from "@/components/base/CustomCard";
+import { useGetAuditLogsGrouped, useExportAuditLogs } from "@/api/analytics";
+import PageTitles from "@/components/common/PageTitles";
+import { CardSkeleton } from "@/components/common/Skeleton";
+import SearchWithFilters from "@/components/common/SearchWithFilters";
+import type { FilterField } from "@/components/common/SearchWithFilters";
+import { useDebounceSearch } from "@/hooks/useDebounceSearch";
+import ExportConfirmModal from "@/components/common/ExportConfirmModal";
+import ActionButton from "@/components/base/ActionButton";
+import { toast } from "sonner";
+import { extractErrorMessage } from "@/lib/utils";
+import { ExportFileIcon, IconWrapper } from "../../assets/icons";
 
 export default function AuditCompliance() {
-	const [isEmpty] = React.useState(false);
+	const [page, setPage] = useState(1);
+	const pageSize = 10;
+	const [searchQuery, setSearchQuery] = useState<string>("");
+	const [filters, setFilters] = useState<Record<string, string>>({});
+	const [showExportModal, setShowExportModal] = useState(false);
 
-	const groups = [
+	const debouncedSearch = useDebounceSearch(searchQuery, 400);
+	const sortBy = filters.sortBy || "createdAt";
+	const sortOrder = filters.sortOrder || "desc";
+
+	const { data: auditData, isLoading } = useGetAuditLogsGrouped(page, pageSize, debouncedSearch || undefined, sortBy, sortOrder);
+
+	const auditDataTyped = auditData as Record<string, unknown> | undefined;
+	const groups = Array.isArray(auditDataTyped?.data) ? (auditDataTyped?.data as unknown[]) : [];
+	const paginationData = auditDataTyped?.pagination as Record<string, unknown> | undefined;
+	const pagination = { total: (paginationData?.total as number) ?? 0, totalPages: (paginationData?.totalPages as number) ?? 1 };
+	const isEmpty = !isLoading && groups.length === 0;
+
+	const exportMutation = useExportAuditLogs();
+
+	const filterFields: FilterField[] = [
 		{
-			title: "This Month",
-			items: Array.from({ length: 4 }).map((_, i) => ({
-				id: `tm-${i}`,
-				title: "Receipt Generated",
-				subtitle: "Staff Name: Jones Michael O.",
-				date: "12-03-2025",
-			})),
+			key: "sortBy",
+			label: "Sort by field",
+			type: "sortBy",
+			options: [
+				{ value: "name", label: "name" },
+				{ value: "price", label: "price" },
+				{ value: "createdAt", label: "createdAt" },
+				{ value: "updatedAt", label: "updatedAt" },
+			],
 		},
-		{
-			title: "12/03/2025",
-			items: Array.from({ length: 2 }).map((_, i) => ({
-				id: `d-${i}`,
-				title: "Receipt Generated",
-				subtitle: "Staff Name: Jones Michael O.",
-				date: "12-03-2025",
-			})),
-		},
+		{ key: "sortOrder", label: "Sort order", type: "sortOrder" },
 	];
 
-	const [page, setPage] = useState(1);
-	const pageSize = 4;
+	const handleFilterApply = (newFilters: Record<string, string>) => {
+		setFilters(newFilters);
+		setPage(1);
+	};
 
-	const flat = useMemo(() => {
-		return groups.flatMap((g) => g.items.map((it) => ({ ...it, groupTitle: g.title })));
-	}, [groups]);
+	const hasActiveFilters = !!(debouncedSearch || sortBy !== "createdAt" || sortOrder !== "desc");
 
-	const pages = Math.max(1, Math.ceil(flat.length / pageSize));
-	const visible = useMemo(() => {
-		const start = (page - 1) * pageSize;
-		return flat.slice(start, start + pageSize);
-	}, [flat, page]);
+	const getFilterLabels = () => {
+		const labels: Record<string, string> = {};
+		if (sortBy && sortBy !== "createdAt") labels["Sort By"] = sortBy;
+		if (sortOrder && sortOrder !== "desc") labels["Sort Order"] = sortOrder;
+		return labels;
+	};
 
-	const visibleGroups = useMemo(() => {
-		const map = new Map<string, typeof visible>();
-		visible.forEach((it) => {
-			const arr = map.get(it.groupTitle) || [];
-			arr.push(it);
-			map.set(it.groupTitle, arr);
-		});
-		return Array.from(map.entries()).map(([title, items]) => ({ title, items }));
-	}, [visible]);
+	const handleExportClick = () => {
+		if (hasActiveFilters) {
+			setShowExportModal(true);
+		} else {
+			handleExportAll();
+		}
+	};
+
+	const handleExportFiltered = async () => {
+		try {
+			const blob = await exportMutation.mutateAsync({
+				search: debouncedSearch || undefined,
+			});
+			const url = URL.createObjectURL(blob);
+			const link = document.createElement("a");
+			link.href = url;
+			link.download = `audit-logs-filtered-${new Date().toISOString().slice(0, 10)}.csv`;
+			document.body.appendChild(link);
+			link.click();
+			document.body.removeChild(link);
+			URL.revokeObjectURL(url);
+			toast.success("Audit logs exported successfully");
+			setShowExportModal(false);
+		} catch (err) {
+			toast.error(extractErrorMessage(err, "Failed to export audit logs"));
+		}
+	};
+
+	const handleExportAll = async () => {
+		try {
+			const blob = await exportMutation.mutateAsync({});
+			const url = URL.createObjectURL(blob);
+			const link = document.createElement("a");
+			link.href = url;
+			link.download = `audit-logs-${new Date().toISOString().slice(0, 10)}.csv`;
+			document.body.appendChild(link);
+			link.click();
+			document.body.removeChild(link);
+			URL.revokeObjectURL(url);
+			toast.success("Audit logs exported successfully");
+			setShowExportModal(false);
+		} catch (err) {
+			toast.error(extractErrorMessage(err, "Failed to export audit logs"));
+		}
+	};
 
 	return (
 		<div className="flex flex-col gap-y-6">
 			<div className="flex items-center justify-between flex-wrap gap-4 mb-4">
 				<PageTitles title="Audit & Compliance" description="This Contains all activities done indicating who performed the action" />
-				<div className="flex items-center gap-3">
-					<ExportTrigger title="Export" />
-				</div>
+				<ActionButton
+					type="button"
+					className="bg-primary/10 text-primary hover:bg-primary/20 flex items-center gap-2"
+					onClick={handleExportClick}
+					disabled={exportMutation.isPending}>
+					<IconWrapper className="text-base">
+						<ExportFileIcon />
+					</IconWrapper>
+					<span className="text-sm">{exportMutation.isPending ? "Exporting..." : "Export"}</span>
+				</ActionButton>
 			</div>
+
+			<div className="flex items-center gap-2">
+				<SearchWithFilters
+					search={searchQuery}
+					onSearchChange={setSearchQuery}
+					setPage={setPage}
+					placeholder="Search by staff name, email, or action"
+					showFilter={true}
+					fields={filterFields}
+					initialValues={filters}
+					onApply={handleFilterApply}
+					onReset={() => {
+						setSearchQuery("");
+						setFilters({});
+						setPage(1);
+					}}
+				/>
+			</div>
+
+			<ExportConfirmModal
+				open={showExportModal}
+				onOpenChange={setShowExportModal}
+				searchTerm={debouncedSearch}
+				filterLabels={getFilterLabels()}
+				onExportFiltered={handleExportFiltered}
+				onExportAll={handleExportAll}
+				isLoading={exportMutation.isPending}
+			/>
+
 			<div className="min-h-96 flex">
-				{!isEmpty ? (
-					<CustomCard className="bg-transparent p-0 border-0">
+				{isLoading ? (
+					<CustomCard className="bg-transparent p-0 border-0 w-full">
+						<div className="flex flex-col gap-y-4">
+							<CardSkeleton lines={3} />
+							<CardSkeleton lines={3} />
+							<CardSkeleton lines={3} />
+						</div>
+					</CustomCard>
+				) : isEmpty ? (
+					<EmptyData text="No Audit Records at the moment" />
+				) : (
+					<CustomCard className="bg-transparent p-0 border-0 w-full">
 						<div className="flex flex-col gap-y-6">
-							{visibleGroups.map((g) => (
-								<section key={g.title}>
-									<h3 className="text-sm font-medium mb-2 text-[#111827]">{g.title}</h3>
-									<div className="flex flex-col gap-y-4">
-										{g.items.map((it) => (
-											<RowItem key={it.id} title={it.title} subtitle={it.subtitle} date={it.date} />
-										))}
-									</div>
-								</section>
-							))}
+							{groups.map((group: unknown) => {
+								const g = group as Record<string, unknown>;
+								return (
+									<section key={g.title as string}>
+										<h3 className="text-sm font-medium mb-2 text-[#111827]">{g.title as string}</h3>
+										<div className="flex flex-col gap-y-4">
+											{Array.isArray(g.logs) &&
+												g.logs.map((log: unknown) => {
+													const l = log as Record<string, unknown>;
+													return (
+														<RowItem
+															key={l.id as string}
+															action={l.action as string}
+															staffName={l.staffName as string}
+															date={l.date as string}
+															time={l.time as string}
+														/>
+													);
+												})}
+										</div>
+									</section>
+								);
+							})}
 						</div>
 						<div className="mt-10">
 							<div className="ml-auto">
-								<CompactPagination page={page} pages={pages} onPageChange={setPage} />
+								<CompactPagination page={page} pages={pagination.totalPages} onPageChange={setPage} />
 							</div>
 						</div>
 					</CustomCard>
-				) : (
-					<EmptyData text="No Audit Records at the moment" />
 				)}
 			</div>
 		</div>
 	);
 }
 
-function RowItem({ title, subtitle, date }: { title: string; subtitle: string; date: string }) {
+function RowItem({ action, staffName, date, time }: { action: string; staffName: string; date: string; time: string }) {
+	const formatDate = (dateStr: string) => {
+		try {
+			const parts = dateStr.split("/");
+			const day = parseInt(parts[0]);
+			const month = parseInt(parts[1]) - 1; // months are 0-indexed
+			const year = parseInt(parts[2]);
+			const dateObj = new Date(year, month, day);
+
+			const shortFormat = dateStr;
+
+			const longFormat = dateObj.toLocaleDateString("en-US", {
+				day: "numeric",
+				month: "long",
+				year: "numeric",
+			});
+
+			return { shortFormat, longFormat };
+		} catch {
+			return { shortFormat: dateStr, longFormat: dateStr };
+		}
+	};
+
+	const formatTime = (timeStr: string) => {
+		try {
+			// Parse time string like "19:41"
+			const [hours, minutes] = timeStr.split(":").map(Number);
+			const period = hours >= 12 ? "PM" : "AM";
+			const hours12 = hours % 12 || 12;
+			return `${hours12}:${String(minutes).padStart(2, "0")} ${period}`;
+		} catch {
+			return timeStr;
+		}
+	};
+
+	const { shortFormat, longFormat } = formatDate(date);
+	const time12 = formatTime(time);
+
 	return (
-		<div className="rounded-lg bg-white p-5 border border-gray-100 flex items-start justify-between">
+		<div className="rounded-lg bg-white p-5 gap-6 border border-gray-100 flex items-start justify-between">
 			<div>
-				<h4 className="font-medium">{title}</h4>
-				<p className="text-sm text-muted-foreground mt-2">{subtitle}</p>
+				<h4 className="font-medium">{action}</h4>
+				<p className="text-sm text-muted-foreground mt-2">Staff Name: {staffName || "N/A"}</p>
 			</div>
-			<div className="text-right text-sm text-muted-foreground">Date: {date}</div>
+			<div className="text-right text-sm text-muted-foreground">
+				<div className="md:hidden">{shortFormat}</div>
+				<div className="hidden md:block">{longFormat}</div>
+				<div>{time12}</div>
+			</div>
 		</div>
 	);
 }

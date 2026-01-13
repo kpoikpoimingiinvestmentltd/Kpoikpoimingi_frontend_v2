@@ -7,17 +7,27 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { media } from "@/resources/images";
 import { modalContentStyle } from "../../components/common/commonStyles";
 
-export default function TabCustomerDetails() {
+export default function TabCustomerDetails({ data }: { data: Record<string, unknown> }) {
 	const customer = {
-		name: "Tom Doe James",
-		email: "dunny@gmail.com",
-		whatsapp: "+2348134567890",
-		dob: "8 June, 2000",
+		name: (data?.fullName as string) || "N/A",
+		email: (data?.email as string) || "N/A",
+		whatsapp: (data?.phoneNumber as string) || "N/A",
+		dob: (data?.dateOfBirth as string) || "N/A",
 		paymentMethod: "Hire Purchase",
-		driversLicense: media.images.demoId,
-		nin: media.images.demoId,
-		indigene: media.images.demoId,
 	};
+
+	const firstFile = (keys: string[]) => {
+		const mf = (data?.mediaFiles as Record<string, unknown>) || {};
+		for (const k of keys) {
+			const arr = mf[k] as Record<string, unknown>[];
+			if (Array.isArray(arr) && arr.length > 0) return arr[0] as Record<string, unknown>;
+		}
+		return null;
+	};
+
+	const driversLicenseFile = firstFile(["driverLicense", "driver_license"]);
+	const ninFile = firstFile(["identificationDocument", "nin", "identification"]);
+	const indigeneFile = firstFile(["indegeneCertificate", "indigeneCertificate", "indigene_certificate"]);
 
 	const [previewOpen, setPreviewOpen] = useState(false);
 	const [previewImage, setPreviewImage] = useState<string | null>(null);
@@ -49,14 +59,18 @@ export default function TabCustomerDetails() {
 						variant="action"
 						leftClassName="text-sm text-muted-foreground"
 						action={
-							<button
-								aria-label="View Driver's License"
-								onClick={() => openPreview(customer.driversLicense, "Driver's License")}
-								className="inline-flex items-center p-1">
-								<IconWrapper className="text-4xl sm:text-5xl">
-									<FileIcon />
-								</IconWrapper>
-							</button>
+							driversLicenseFile ? (
+								<button
+									aria-label="View Driver's License"
+									onClick={() => openPreview(driversLicenseFile.fileUrl as string, (driversLicenseFile.filename as string) || "Driver's License")}
+									className="inline-flex items-center p-1">
+									<IconWrapper className="text-4xl sm:text-5xl">
+										<FileIcon />
+									</IconWrapper>
+								</button>
+							) : (
+								<span className="text-sm text-muted-foreground">Driver's license not uploaded yet</span>
+							)
 						}
 					/>
 
@@ -66,11 +80,18 @@ export default function TabCustomerDetails() {
 						variant="action"
 						leftClassName="text-sm text-muted-foreground"
 						action={
-							<button aria-label="View NIN" onClick={() => openPreview(customer.nin, "NIN")} className="inline-flex items-center p-1">
-								<IconWrapper className="text-4xl sm:text-5xl">
-									<FileIcon />
-								</IconWrapper>
-							</button>
+							ninFile ? (
+								<button
+									aria-label="View NIN"
+									onClick={() => openPreview(ninFile.fileUrl as string, (ninFile.filename as string) || "NIN")}
+									className="inline-flex items-center p-1">
+									<IconWrapper className="text-4xl sm:text-5xl">
+										<FileIcon />
+									</IconWrapper>
+								</button>
+							) : (
+								<span className="text-sm text-muted-foreground">NIN not uploaded yet</span>
+							)
 						}
 					/>
 
@@ -80,14 +101,18 @@ export default function TabCustomerDetails() {
 						variant="action"
 						leftClassName="text-sm text-muted-foreground"
 						action={
-							<button
-								aria-label="View Indigene certificate"
-								onClick={() => openPreview(customer.indigene, "Indigene certificate")}
-								className="inline-flex items-center p-1">
-								<IconWrapper className="text-4xl sm:text-5xl">
-									<FileIcon />
-								</IconWrapper>
-							</button>
+							indigeneFile ? (
+								<button
+									aria-label="View Indigene certificate"
+									onClick={() => openPreview(indigeneFile.fileUrl as string, (indigeneFile.filename as string) || "Indigene certificate")}
+									className="inline-flex items-center p-1">
+									<IconWrapper className="text-4xl sm:text-5xl">
+										<FileIcon />
+									</IconWrapper>
+								</button>
+							) : (
+								<span className="text-sm text-muted-foreground">Indigene certificate not uploaded yet</span>
+							)
 						}
 					/>
 				</div>

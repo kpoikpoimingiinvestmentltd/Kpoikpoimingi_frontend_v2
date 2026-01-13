@@ -19,9 +19,9 @@ export const DashboardIcon = () => (
 
 export const UserIcon = () => (
 	<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
-		<g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}>
-			<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
-			<circle cx={12} cy={7} r={4}></circle>
+		<g fill="none" stroke="currentColor" strokeWidth={2}>
+			<circle cx={12} cy={6} r={4}></circle>
+			<path d="M20 17.5c0 2.485 0 4.5-8 4.5s-8-2.015-8-4.5S7.582 13 12 13s8 2.015 8 4.5Z"></path>
 		</g>
 	</svg>
 );
@@ -165,11 +165,12 @@ export const LogoutIcon = () => (
 );
 
 export const SettingIcon = () => (
-	<svg xmlns="http://www.w3.org/2000/svg" width="1.1em" height="1.1em" viewBox="0 0 24 24">
-		<g fill="none" stroke="currentColor" strokeWidth={1.5}>
-			<circle cx={12} cy={12} r={3}></circle>
-			<path d="M13.765 2.152C13.398 2 12.932 2 12 2s-1.398 0-1.765.152a2 2 0 0 0-1.083 1.083c-.092.223-.129.484-.143.863a1.62 1.62 0 0 1-.79 1.353a1.62 1.62 0 0 1-1.567.008c-.336-.178-.579-.276-.82-.308a2 2 0 0 0-1.478.396C4.04 5.79 3.806 6.193 3.34 7s-.7 1.21-.751 1.605a2 2 0 0 0 .396 1.479c.148.192.355.353.676.555c.473.297.777.803.777 1.361s-.304 1.064-.777 1.36c-.321.203-.529.364-.676.556a2 2 0 0 0-.396 1.479c.052.394.285.798.75 1.605c.467.807.7 1.21 1.015 1.453a2 2 0 0 0 1.479.396c.24-.032.483-.13.819-.308a1.62 1.62 0 0 1 1.567.008c.483.28.77.795.79 1.353c.014.38.05.64.143.863a2 2 0 0 0 1.083 1.083C10.602 22 11.068 22 12 22s1.398 0 1.765-.152a2 2 0 0 0 1.083-1.083c.092-.223.129-.483.143-.863c.02-.558.307-1.074.79-1.353a1.62 1.62 0 0 1 1.567-.008c.336.178.579.276.819.308a2 2 0 0 0 1.479-.396c.315-.242.548-.646 1.014-1.453s.7-1.21.751-1.605a2 2 0 0 0-.396-1.479c-.148-.192-.355-.353-.676-.555A1.62 1.62 0 0 1 19.562 12c0-.558.304-1.064.777-1.36c.321-.203.529-.364.676-.556a2 2 0 0 0 .396-1.479c-.052-.394-.285-.798-.75-1.605c-.467-.807-.7-1.21-1.015-1.453a2 2 0 0 0-1.479-.396c-.24.032-.483.13-.82.308a1.62 1.62 0 0 1-1.566-.008a1.62 1.62 0 0 1-.79-1.353c-.014-.38-.05-.64-.143-.863a2 2 0 0 0-1.083-1.083Z"></path>
-		</g>
+	<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 1024 1024">
+		<path
+			fill="currentColor"
+			d="M600.704 64a32 32 0 0 1 30.464 22.208l35.2 109.376c14.784 7.232 28.928 15.36 42.432 24.512l112.384-24.192a32 32 0 0 1 34.432 15.36L944.32 364.8a32 32 0 0 1-4.032 37.504l-77.12 85.12a357 357 0 0 1 0 49.024l77.12 85.248a32 32 0 0 1 4.032 37.504l-88.704 153.6a32 32 0 0 1-34.432 15.296L708.8 803.904c-13.44 9.088-27.648 17.28-42.368 24.512l-35.264 109.376A32 32 0 0 1 600.704 960H423.296a32 32 0 0 1-30.464-22.208L357.696 828.48a352 352 0 0 1-42.56-24.64l-112.32 24.256a32 32 0 0 1-34.432-15.36L79.68 659.2a32 32 0 0 1 4.032-37.504l77.12-85.248a357 357 0 0 1 0-48.896l-77.12-85.248A32 32 0 0 1 79.68 364.8l88.704-153.6a32 32 0 0 1 34.432-15.296l112.32 24.256c13.568-9.152 27.776-17.408 42.56-24.64l35.2-109.312A32 32 0 0 1 423.232 64H600.64zm-23.424 64H446.72l-36.352 113.088l-24.512 11.968a294 294 0 0 0-34.816 20.096l-22.656 15.36l-116.224-25.088l-65.28 113.152l79.68 88.192l-1.92 27.136a293 293 0 0 0 0 40.192l1.92 27.136l-79.808 88.192l65.344 113.152l116.224-25.024l22.656 15.296a294 294 0 0 0 34.816 20.096l24.512 11.968L446.72 896h130.688l36.48-113.152l24.448-11.904a288 288 0 0 0 34.752-20.096l22.592-15.296l116.288 25.024l65.28-113.152l-79.744-88.192l1.92-27.136a293 293 0 0 0 0-40.256l-1.92-27.136l79.808-88.128l-65.344-113.152l-116.288 24.96l-22.592-15.232a288 288 0 0 0-34.752-20.096l-24.448-11.904L577.344 128zM512 320a192 192 0 1 1 0 384a192 192 0 0 1 0-384m0 64a128 128 0 1 0 0 256a128 128 0 0 0 0-256"
+			strokeWidth={15.5}
+			stroke="currentColor"></path>
 	</svg>
 );
 
@@ -783,5 +784,178 @@ export const SpinnerIcon = () => (
 	<svg className="text-current animate-spin" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
 		<circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
 		<path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+	</svg>
+);
+
+export const ContractCancelledIcon = () => (
+	<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
+		<mask id="SVGOQxyObRQ">
+			<g fill="none" stroke="#fff" strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}>
+				<path
+					strokeDasharray={64}
+					strokeDashoffset={64}
+					d="M13.5 3l5.5 5.5v11.5c0 0.55 -0.45 1 -1 1h-12c-0.55 0 -1 -0.45 -1 -1v-16c0 -0.55 0.45 -1 1 -1Z">
+					<animate fill="freeze" attributeName="stroke-dashoffset" dur="0.6s" values="64;0"></animate>
+				</path>
+				<path d="M14.5 3.5l2.25 2.25l2.25 2.25z" opacity={0}>
+					<animate fill="freeze" attributeName="d" begin="0.6s" dur="0.2s" values="M14.5 3.5l2.25 2.25l2.25 2.25z;M14.5 3.5l0 4.5l4.5 0z"></animate>
+					<set fill="freeze" attributeName="opacity" begin="0.6s" to={1}></set>
+				</path>
+				<path strokeDasharray={8} strokeDashoffset={8} d="M9 13h6">
+					<animate fill="freeze" attributeName="stroke-dashoffset" begin="0.8s" dur="0.2s" values="8;0"></animate>
+				</path>
+				<path strokeDasharray={4} strokeDashoffset={4} d="M9 17h3">
+					<animate fill="freeze" attributeName="stroke-dashoffset" begin="1s" dur="0.2s" values="4;0"></animate>
+				</path>
+				<path fill="#000" fillOpacity={0} stroke="none" d="M19 13c3.31 0 6 2.69 6 6c0 3.31 -2.69 6 -6 6c-3.31 0 -6 -2.69 -6 -6c0 -3.31 2.69 -6 6 -6Z">
+					<set fill="freeze" attributeName="fill-opacity" begin="1.2s" to={1}></set>
+				</path>
+				<path strokeDasharray={8} strokeDashoffset={8} d="M17 17l4 4">
+					<animate fill="freeze" attributeName="stroke-dashoffset" begin="1.2s" dur="0.2s" values="8;0"></animate>
+				</path>
+				<path strokeDasharray={8} strokeDashoffset={8} d="M21 17l-4 4">
+					<animate fill="freeze" attributeName="stroke-dashoffset" begin="1.4s" dur="0.2s" values="8;0"></animate>
+				</path>
+			</g>
+		</mask>
+		<rect width={24} height={24} fill="currentColor" mask="url(#SVGOQxyObRQ)"></rect>
+	</svg>
+);
+
+export const ContractTerminatedIcon = () => (
+	<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
+		<mask id="SVG5C9HtdGc">
+			<g fill="none" stroke="#fff" strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}>
+				<path
+					strokeDasharray={64}
+					strokeDashoffset={64}
+					d="M13.5 3l5.5 5.5v11.5c0 0.55 -0.45 1 -1 1h-12c-0.55 0 -1 -0.45 -1 -1v-16c0 -0.55 0.45 -1 1 -1Z">
+					<animate fill="freeze" attributeName="stroke-dashoffset" dur="0.6s" values="64;0"></animate>
+				</path>
+				<path d="M14.5 3.5l2.25 2.25l2.25 2.25z" opacity={0}>
+					<animate fill="freeze" attributeName="d" begin="0.6s" dur="0.2s" values="M14.5 3.5l2.25 2.25l2.25 2.25z;M14.5 3.5l0 4.5l4.5 0z"></animate>
+					<set fill="freeze" attributeName="opacity" begin="0.6s" to={1}></set>
+				</path>
+				<path strokeDasharray={8} strokeDashoffset={8} d="M9 13h6">
+					<animate fill="freeze" attributeName="stroke-dashoffset" begin="0.8s" dur="0.2s" values="8;0"></animate>
+				</path>
+				<path strokeDasharray={4} strokeDashoffset={4} d="M9 17h3">
+					<animate fill="freeze" attributeName="stroke-dashoffset" begin="1s" dur="0.2s" values="4;0"></animate>
+				</path>
+				<path
+					fill="#000"
+					fillOpacity={0}
+					stroke="#000"
+					strokeDasharray={32}
+					strokeDashoffset={32}
+					strokeWidth={6}
+					d="M18.5 14c2.48 0 4.5 2.02 4.5 4.5c0 2.48 -2.02 4.5 -4.5 4.5c-2.48 0 -4.5 -2.02 -4.5 -4.5c0 -2.48 2.02 -4.5 4.5 -4.5Z">
+					<set fill="freeze" attributeName="fill-opacity" begin="1.2s" to={1}></set>
+					<set fill="freeze" attributeName="stroke-dashoffset" begin="1.2s" to={0}></set>
+				</path>
+				<path
+					strokeDasharray={32}
+					strokeDashoffset={32}
+					d="M18.5 14c2.48 0 4.5 2.02 4.5 4.5c0 2.48 -2.02 4.5 -4.5 4.5c-2.48 0 -4.5 -2.02 -4.5 -4.5c0 -2.48 2.02 -4.5 4.5 -4.5Z">
+					<animate fill="freeze" attributeName="stroke-dashoffset" begin="1.2s" dur="0.4s" values="32;0"></animate>
+				</path>
+				<path strokeDasharray={10} strokeDashoffset={10} d="M16 16l5 5">
+					<animate fill="freeze" attributeName="stroke-dashoffset" begin="1.6s" dur="0.2s" values="10;0"></animate>
+				</path>
+			</g>
+		</mask>
+		<rect width={24} height={24} fill="currentColor" mask="url(#SVG5C9HtdGc)"></rect>
+	</svg>
+);
+
+export const ContractPausedIcon = () => (
+	<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
+		<mask id="SVG9Xc9jeKA">
+			<g fill="none" stroke="#fff" strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}>
+				<path
+					strokeDasharray={64}
+					strokeDashoffset={64}
+					d="M13.5 3l5.5 5.5v11.5c0 0.55 -0.45 1 -1 1h-12c-0.55 0 -1 -0.45 -1 -1v-16c0 -0.55 0.45 -1 1 -1Z">
+					<animate fill="freeze" attributeName="stroke-dashoffset" dur="0.6s" values="64;0"></animate>
+				</path>
+				<path d="M14.5 3.5l2.25 2.25l2.25 2.25z" opacity={0}>
+					<animate fill="freeze" attributeName="d" begin="0.6s" dur="0.2s" values="M14.5 3.5l2.25 2.25l2.25 2.25z;M14.5 3.5l0 4.5l4.5 0z"></animate>
+					<set fill="freeze" attributeName="opacity" begin="0.6s" to={1}></set>
+				</path>
+				<path strokeDasharray={8} strokeDashoffset={8} d="M9 13h6">
+					<animate fill="freeze" attributeName="stroke-dashoffset" begin="0.8s" dur="0.2s" values="8;0"></animate>
+				</path>
+				<path strokeDasharray={4} strokeDashoffset={4} d="M9 17h3">
+					<animate fill="freeze" attributeName="stroke-dashoffset" begin="1s" dur="0.2s" values="4;0"></animate>
+				</path>
+				<path fill="#000" fillOpacity={0} stroke="none" d="M19 13c3.31 0 6 2.69 6 6c0 3.31 -2.69 6 -6 6c-3.31 0 -6 -2.69 -6 -6c0 -3.31 2.69 -6 6 -6Z">
+					<set fill="freeze" attributeName="fill-opacity" begin="1.2s" to={1}></set>
+				</path>
+				<path strokeDasharray={8} strokeDashoffset={8} d="M16 19h6">
+					<animate fill="freeze" attributeName="stroke-dashoffset" begin="1.2s" dur="0.2s" values="8;0"></animate>
+				</path>
+			</g>
+		</mask>
+		<rect width={24} height={24} fill="currentColor" mask="url(#SVG9Xc9jeKA)"></rect>
+	</svg>
+);
+
+export const MissedPaymentIcon = () => (
+	<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
+		<g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}>
+			<path d="M9.5 3h5A1.5 1.5 0 0 1 16 4.5A3.5 3.5 0 0 1 12.5 8h-1A3.5 3.5 0 0 1 8 4.5A1.5 1.5 0 0 1 9.5 3"></path>
+			<path d="M12.5 21H8a4 4 0 0 1-4-4v-1a8 8 0 0 1 15.943-.958M16 19h6"></path>
+		</g>
+	</svg>
+);
+
+export const ReceiptIssuedIcon = () => (
+	<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
+		<path
+			fill="currentColor"
+			d="M10 8h6a1 1 0 0 0 0-2h-6a1 1 0 0 0 0 2m-2 4h8a1 1 0 0 0 0-2H8a1 1 0 0 0 0 2m0 4h8a1 1 0 0 0 0-2H8a1 1 0 0 0 0 2M20 2H4a1 1 0 0 0-1 1v18a1 1 0 0 0 1.6.8l2.07-1.55l2.06 1.55a1 1 0 0 0 1.2 0L12 20.25l2.07 1.55a1 1 0 0 0 1.2 0l2.06-1.55l2.07 1.55a1 1 0 0 0 1.05.09A1 1 0 0 0 21 21V3a1 1 0 0 0-1-1m-1 17l-1.07-.8a1 1 0 0 0-1.2 0l-2.06 1.55l-2.07-1.55a1 1 0 0 0-1.2 0l-2.07 1.55l-2.06-1.55a1 1 0 0 0-1.2 0L5 19V4h14Z"
+			strokeWidth={0.2}
+			stroke="currentColor"></path>
+	</svg>
+);
+
+export const NewCustomerAddIcon = () => (
+	<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
+		<g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}>
+			<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+			<circle cx={9} cy={7} r={4}></circle>
+			<path d="M19 8v6m3-3h-6"></path>
+		</g>
+	</svg>
+);
+
+export const ContractResumedIcon = () => (
+	<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
+		<path
+			fill="currentColor"
+			d="M6 2a2 2 0 0 0-2 2v7.498a6.5 6.5 0 0 1 1.5-.422V4a.5.5 0 0 1 .5-.5h6V8a2 2 0 0 0 2 2h4.5v10a.5.5 0 0 1-.5.5h-5.732A6.5 6.5 0 0 1 11.19 22H18a2 2 0 0 0 2-2V9.828a2 2 0 0 0-.586-1.414l-5.828-5.828A2 2 0 0 0 12.172 2zm11.38 6.5H14a.5.5 0 0 1-.5-.5V4.62zM11.19 13a6.5 6.5 0 0 0-2.186-1.5h6.246a.75.75 0 0 1 0 1.5zm.94 1.25c.27.466.484.97.632 1.5h2.488a.75.75 0 0 0 0-1.5zM13 17.5q0 .51-.076 1h2.326a.75.75 0 0 0 0-1.5h-2.269q.02.248.019.5M6.5 12a5.5 5.5 0 1 1 0 11a5.5 5.5 0 0 1 0-11m.5 2.5a.5.5 0 0 0-1 0v3a.5.5 0 0 0 .5.5H9a.5.5 0 0 0 0-1H7z"
+			strokeWidth={0.2}
+			stroke="currentColor"></path>
+	</svg>
+);
+
+export const CameraIcon = () => (
+	<svg xmlns="http://www.w3.org/2000/svg" width="1.2em" height="1.2em" viewBox="0 0 20 20">
+		<path
+			fill="currentColor"
+			d="M6.783 2.826A1.5 1.5 0 0 1 8.123 2h3.764a1.5 1.5 0 0 1 1.342.83L13.814 4h1.69a2.5 2.5 0 0 1 2.5 2.5v2.195a2.9 2.9 0 0 0-1-.56V6.5a1.5 1.5 0 0 0-1.5-1.5h-2a.5.5 0 0 1-.446-.276l-.723-1.447A.5.5 0 0 0 11.887 3H8.123a.5.5 0 0 0-.447.275l-.728 1.449a.5.5 0 0 1-.446.275H4.504a1.5 1.5 0 0 0-1.5 1.5V14.5a1.5 1.5 0 0 0 1.5 1.5H8.22l-.163.653q-.044.176-.054.347h-3.5a2.5 2.5 0 0 1-2.5-2.5v-8a2.5 2.5 0 0 1 2.5-2.5h1.69zm7.104 6.23A4.002 4.002 0 0 0 6 10c0 1.89 1.31 3.473 3.072 3.892a3 3 0 0 1 .202-.222l.67-.67A3 3 0 1 1 13 9.944zm.922.492l-4.83 4.83a2.2 2.2 0 0 0-.577 1.02l-.375 1.498a.89.89 0 0 0 1.079 1.078l1.498-.374a2.2 2.2 0 0 0 1.02-.578l4.83-4.83a1.87 1.87 0 0 0-2.645-2.644"
+			strokeWidth={0.4}
+			stroke="currentColor"></path>
+	</svg>
+);
+
+export const SwitchIcon = () => (
+	<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
+		<path
+			fill="currentColor"
+			d="M13.685 5.25h.03a.75.75 0 0 1 0 1.5c-1.292 0-2.275 0-3.058.063c-.785.063-1.283.183-1.636.371a3.94 3.94 0 0 0-1.677 1.764c-.19.394-.304.88-.363 1.638c-.06.764-.06 1.738-.06 3.094v.11l1.12-1.12a.75.75 0 0 1 1.06 1.06l-2.4 2.4a.75.75 0 0 1-1.086-.027l-2.171-2.4a.75.75 0 0 1 1.112-1.006l.865.956v-.005c0-1.317 0-2.35.065-3.179c.066-.844.202-1.542.509-2.176a5.44 5.44 0 0 1 2.319-2.431c.625-.335 1.37-.476 2.224-.544c.85-.068 1.891-.068 3.147-.068m4.162 2.4a.75.75 0 0 1 .538.247l2.171 2.4a.75.75 0 0 1-1.112 1.006l-.865-.956v.005c0 1.317 0 2.35-.065 3.179c-.066.844-.201 1.542-.509 2.176a5.44 5.44 0 0 1-2.319 2.431c-.625.335-1.37.476-2.224.544c-.85.068-1.891.068-3.146.068h-.03a.75.75 0 0 1 0-1.5c1.291 0 2.274 0 3.057-.063c.785-.063 1.283-.183 1.636-.372a3.94 3.94 0 0 0 1.677-1.763c.19-.394.304-.88.363-1.638c.06-.764.06-1.738.06-3.094v-.11l-1.12 1.12a.75.75 0 0 1-1.06-1.06l2.4-2.4a.75.75 0 0 1 .548-.22"
+			stroke-width="0.5"
+			stroke="currentColor"
+		/>
 	</svg>
 );

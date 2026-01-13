@@ -36,7 +36,10 @@ const statusClassMap: Record<string, string> = {
 	cancelled: "bg-red-100 text-red-800",
 	canceled: "bg-red-100 text-red-800",
 	expired: "bg-orange-100 text-orange-800",
+	terminated: "bg-red-100 text-red-800",
+	paused: "bg-yellow-100 text-yellow-800",
 	primary: "bg-primary/10 text-primary",
+	completed: "bg-green-800 text-white",
 };
 
 // small dot color classes keyed by normalized status
@@ -51,6 +54,9 @@ const statusDotMap: Record<string, string> = {
 	canceled: "bg-red-500",
 	primary: "bg-primary",
 	expired: "bg-orange-500",
+	terminated: "bg-red-500",
+	paused: "bg-amber-400",
+	completed: "bg-white",
 };
 
 function normalizeStatus(s: string) {
@@ -60,13 +66,14 @@ function normalizeStatus(s: string) {
 function prettyLabel(s: string) {
 	if (!s) return "";
 	return s
-		.split(/[_\-\s]+/)
+		.toLowerCase() // normalize to lowercase first
+		.split(/[_\-\s,]+/) // split by delimiters including comma
+		.filter((part) => part.length > 0) // remove empty strings
 		.map((part) => part.charAt(0).toUpperCase() + part.slice(1))
 		.join(" ");
 }
 
 export default function Badge({ value, mapping, className, size = "md", label, status, showDot = false }: BadgeProps) {
-	// Resolve to a string status (existing logic preserved)
 	let statusStr: string;
 
 	if (typeof value === "number") {
@@ -75,8 +82,6 @@ export default function Badge({ value, mapping, className, size = "md", label, s
 		statusStr = (mapping && mapping[value]) ?? value;
 	}
 
-	// If the caller provided an explicit `status`, use it for styling; otherwise use
-	// the status derived from `value` (preserves current behavior).
 	const statusSource = status ?? String(statusStr);
 	const key = normalizeStatus(String(statusSource));
 	const variantClasses = statusClassMap[key] ?? "bg-muted text-muted-foreground";
@@ -84,7 +89,6 @@ export default function Badge({ value, mapping, className, size = "md", label, s
 	const sizeClasses =
 		size === "sm" ? "text-xs px-2 py-0.5 rounded" : size === "lg" ? "text-sm px-3 py-1 rounded-md" : "text-sm px-2.5 py-1 rounded-md";
 
-	// Display text: prefer explicit `label` when provided, otherwise keep previous behavior
 	const display = label ?? prettyLabel(String(statusStr));
 
 	return (

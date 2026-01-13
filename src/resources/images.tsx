@@ -10,6 +10,9 @@ import verticalCuts from "@/assets/images/others/vertical-edge.svg";
 import alertImage from "@/assets/images/others/7fc5a39ad9923a2a6f9e13d665758b830df5afef.png";
 import demoId from "@/assets/images/others/64b87f3da74b33a0fa9231f9fe6a0177bcc42f4a.png";
 import pdfImage from "@/assets/images/others/830f25f9ec6eed85712bfe7d3c24a90b96ab7e0b.png";
+import jpgImage from "@/assets/images/others/830f25f9ec6eed85712bfe7d3c24a90b96ab7e0d.png";
+import pngImage from "@/assets/images/others/830f25f9ec6eed85712bfe7d3c24a90b96ab7e0c.png";
+import noImage from "@/assets/images/others/830f25f9ec6eed85712bfe7d3c24a90b96ab7e0e.png";
 import noDocument from "@/assets/images/others/16976b02c5ab5524c8223459612b6c3df7083bab.png";
 
 import _product1 from "@/assets/images/others/4043137ced74e177d258a68f79ed4289f738e2fc.png";
@@ -19,8 +22,7 @@ import _product4 from "@/assets/images/others/4190605a079b29b14b7a92a8e421c68d4e
 import _product5 from "@/assets/images/others/b30e256e296f0e0faf3c86e1752b3fe2d402da56.png";
 import coin from "@/assets/images/others/9f893334561d69b9c19b1814bf7486d38563fefd.png";
 
-const avatar =
-	"https://images.unsplash.com/photo-1633332755192-727a05c4013d?fm=jpg&q=60&w=3000&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8dXNlcnxlbnwwfHwwfHx8MA%3D%3D";
+import avatar from "@/assets/images/others/profile-icon.png";
 
 const logos = {
 	logo,
@@ -38,6 +40,9 @@ const images = {
 	avatar,
 	demoId,
 	pdfImage,
+	jpgImage,
+	pngImage,
+	noImage,
 	noDocument,
 	_product1,
 	_product2,

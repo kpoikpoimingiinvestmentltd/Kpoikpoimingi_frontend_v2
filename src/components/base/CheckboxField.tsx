@@ -42,7 +42,7 @@ export default function CheckboxField({
 				className={twMerge(checkboxStyle, checkboxClassName)}
 				checked={checked}
 				defaultChecked={defaultChecked}
-				onCheckedChange={(v: any) => onCheckedChange?.(!!v)}
+				onCheckedChange={(v: unknown) => onCheckedChange?.(!!v)}
 				disabled={disabled}
 			/>
 			{labelPosition === "right" && label && (
