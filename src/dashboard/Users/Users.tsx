@@ -12,34 +12,78 @@ import { modalContentStyle } from "@/components/common/commonStyles";
 import { formatPhoneNumber } from "@/lib/utils";
 import { useGetAllUsers, useResetPassword, useSuspendUser, useUpdateUser, useUploadUserProfile } from "@/api/user";
 import { TableSkeleton } from "@/components/common/Skeleton";
-import { useDispatch, useSelector } from "react-redux";
-import type { RootState } from "@/store";
-import { setUsers } from "@/store/usersSlice";
 import ConfirmModal from "@/components/common/ConfirmModal";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { deleteUserRequest } from "@/api/user";
 import type { ResetPasswordResponse, SuspendUserResponse, User } from "@/types/user";
 import EmptyData from "@/components/common/EmptyData";
-import { Link, useNavigate } from "react-router";
+import { Link, useNavigate, useSearchParams } from "react-router";
 import { _router } from "../../routes/_router";
 import SearchWithFilters from "@/components/common/SearchWithFilters";
 import type { FilterField } from "@/components/common/SearchWithFilters";
-import { useDebounceSearch } from "@/hooks/useDebounceSearch";
 import { media } from "@/resources/images";
+import { useDebounceSearch } from "@/hooks/useDebounceSearch";
 import SuccessModal from "../../components/common/SuccessModal";
 
 export default function Users() {
-	const [isEmpty] = React.useState(false);
-	const [page, setPage] = React.useState(1);
-	const [limit, setLimit] = React.useState<number>(10);
-	const [searchQuery, setSearchQuery] = React.useState<string>("");
-	const debouncedSearch = useDebounceSearch(searchQuery, 400);
-	const [sortBy, setSortBy] = React.useState<string>("createdAt");
-	const [sortOrder, setSortOrder] = React.useState<string>("desc");
+	const [searchParams, setSearchParams] = useSearchParams();
 	const navigate = useNavigate();
-	const dispatch = useDispatch();
-	const storedUsers = useSelector((s: RootState) => s.users.list ?? []);
+
+	// Initialize state from URL params
+	const [page, setPage] = React.useState(() => {
+		const pageParam = searchParams.get("page");
+		return pageParam ? parseInt(pageParam, 10) : 1;
+	});
+	const [search, setSearch] = React.useState(() => {
+		return searchParams.get("search") || "";
+	});
+	const [filters, setFilters] = React.useState<Record<string, string>>(() => {
+		const urlFilters: Record<string, string> = {};
+		const limit = searchParams.get("limit");
+		const sortBy = searchParams.get("sortBy");
+		const sortOrder = searchParams.get("sortOrder");
+		if (limit) urlFilters.limit = limit;
+		if (sortBy) urlFilters.sortBy = sortBy;
+		if (sortOrder) urlFilters.sortOrder = sortOrder;
+		return urlFilters;
+	});
+
+	const debouncedSearch = useDebounceSearch(search);
+
+	// Initialize URL params on mount if not present
+	React.useEffect(() => {
+		const hasParams = searchParams.has("page") || searchParams.has("sortBy") || searchParams.has("sortOrder");
+		if (!hasParams) {
+			const params = new URLSearchParams();
+			params.set("page", "1");
+			params.set("sortBy", "createdAt");
+			params.set("sortOrder", "desc");
+			setSearchParams(params, { replace: true });
+		}
+	}, [searchParams, setSearchParams]);
+
+	// Update URL when state changes
+	React.useEffect(() => {
+		const params = new URLSearchParams(searchParams);
+		params.set("page", page.toString());
+		params.set("search", search);
+		if (filters.limit) params.set("limit", filters.limit);
+		else params.delete("limit");
+		if (filters.sortBy) params.set("sortBy", filters.sortBy);
+		else params.delete("sortBy");
+		if (filters.sortOrder) params.set("sortOrder", filters.sortOrder);
+		else params.delete("sortOrder");
+		setSearchParams(params, { replace: true });
+	}, [page, search, filters, setSearchParams]);
+
+	React.useEffect(() => {
+		setPage(1);
+	}, [debouncedSearch]);
+
+	const limit = Number((filters.limit as string) || "10");
+	const sortBy = (filters.sortBy as string) || "createdAt";
+	const sortOrder = (filters.sortOrder as string) || "desc";
 
 	// delete confirmation state
 	const [toDelete, setToDelete] = React.useState<{ id?: string; title?: string } | null>(null);
@@ -65,20 +109,7 @@ export default function Users() {
 
 	const deleteMutation = useMutation<any, unknown, string>({
 		mutationFn: (id: string) => deleteUserRequest(id),
-		onMutate: async (id: string) => {
-			await queryClient.cancelQueries({ queryKey: ["users"] });
-			const prev = storedUsers;
-			setTimeout(() => {
-				// optimistic UI: remove user from local store immediately
-				const next = (storedUsers || []).filter((u: unknown) => (u as { id: string }).id !== id);
-				dispatch(setUsers(next));
-			}, 0);
-			return { prev };
-		},
-		onError: (_err: unknown, _id: unknown, context: unknown) => {
-			if ((context as { prev?: typeof storedUsers })?.prev) {
-				dispatch(setUsers((context as { prev?: typeof storedUsers }).prev!));
-			}
+		onError: (_err: unknown, _id: unknown, _context: unknown) => {
 			toast.error("Failed to delete user");
 		},
 		onSuccess: () => {
@@ -94,7 +125,26 @@ export default function Users() {
 	const updateMutation = useUpdateUser();
 	const uploadProfileMutation = useUploadUserProfile();
 
-	const { data: usersData, isLoading } = useGetAllUsers(page, limit, debouncedSearch || undefined, sortBy, sortOrder);
+	const { data: usersData, isLoading, isFetching } = useGetAllUsers(page, limit, debouncedSearch || undefined, sortBy, sortOrder);
+
+	const handleSearchChange = (value: string) => {
+		setSearch(value);
+	};
+
+	const handlePageChange = (newPage: number) => {
+		setPage(newPage);
+	};
+
+	const handleFiltersApply = (newFilters: Record<string, string>) => {
+		setFilters(newFilters);
+		setPage(1);
+	};
+
+	const handleFiltersReset = () => {
+		setSearch("");
+		setFilters({});
+		setPage(1);
+	};
 
 	const users = React.useMemo((): User[] => {
 		if (!usersData || typeof usersData !== "object") return [];
@@ -202,18 +252,15 @@ export default function Users() {
 			</div>
 
 			<div className="min-h-96 flex">
-				{!isEmpty ? (
+				{isLoading || isFetching || users.length > 0 ? (
 					<CustomCard className="bg-white flex-grow w-full rounded-lg p-4 border border-gray-100">
 						<div className="flex items-center justify-between flex-wrap gap-6">
 							<h2 className="font-semibold">All Users</h2>
 							<div className="flex items-center gap-2">
 								<SearchWithFilters
-									search={searchQuery}
-									onSearchChange={(v) => {
-										setSearchQuery(v);
-										setPage(1);
-									}}
-									setPage={setPage}
+									search={search}
+									onSearchChange={handleSearchChange}
+									setPage={handlePageChange}
 									placeholder="Search by user full name or email"
 									fields={
 										[
@@ -241,25 +288,14 @@ export default function Users() {
 											{ key: "sortOrder", label: "Sort Order", type: "sortOrder" },
 										] as FilterField[]
 									}
-									initialValues={{ limit: String(limit), sortBy: sortBy || "", sortOrder: sortOrder || "" }}
-									onApply={(filters) => {
-										setLimit(filters.limit ? Number(filters.limit) : 10);
-										setSortBy(filters.sortBy || "createdAt");
-										setSortOrder(filters.sortOrder || "desc");
-										setPage(1);
-									}}
-									onReset={() => {
-										setSearchQuery("");
-										setLimit(10);
-										setSortBy("createdAt");
-										setSortOrder("desc");
-										setPage(1);
-									}}
+									initialValues={{ limit: filters.limit || "10", sortBy: filters.sortBy || "", sortOrder: filters.sortOrder || "" }}
+									onApply={handleFiltersApply}
+									onReset={handleFiltersReset}
 								/>
 							</div>
 						</div>
 
-						{isLoading ? (
+						{isLoading || isFetching ? (
 							<TableSkeleton rows={6} cols={6} />
 						) : users.length === 0 ? (
 							<EmptyData text="No Users at the moment" />
@@ -357,7 +393,7 @@ export default function Users() {
 									</Table>
 								</div>
 
-								<CompactPagination page={page} pages={pages} showRange onPageChange={setPage} />
+								<CompactPagination page={page} pages={pages} showRange onPageChange={handlePageChange} />
 							</>
 						)}
 					</CustomCard>

@@ -7,8 +7,8 @@ import TabReceipt from "./TabReceipt";
 import TabDocument from "./TabDocument";
 import TabContractInfo from "./TabContractInfo";
 import PageWrapper from "../../components/common/PageWrapper";
-import { useParams } from "react-router";
-import { useState } from "react";
+import { useParams, useSearchParams } from "react-router";
+import { useState, useCallback } from "react";
 import {
 	useGetCustomer,
 	useGetCustomerContracts,
@@ -22,6 +22,8 @@ import EditCustomerModal from "./EditCustomerModal";
 
 export default function CustomerDetails() {
 	const { id } = useParams();
+	const [searchParams, setSearchParams] = useSearchParams();
+	const activeTab = searchParams.get("tab") || "details";
 	const { data: customer } = useGetCustomer(id, true);
 	const { data: approvedRegistrations } = useGetCustomerApprovedRegistrations(id, true);
 	const { data: contracts, isLoading: isLoadingContracts } = useGetCustomerContracts(id, true);
@@ -29,6 +31,15 @@ export default function CustomerDetails() {
 	const { data: documents } = useGetCustomerDocuments(id, true);
 	const { data: receipts } = useGetCustomerReceipts(id, true);
 	const [isEditOpen, setIsEditOpen] = useState(false);
+
+	const handleTabChange = useCallback(
+		(tab: string) => {
+			const params = new URLSearchParams(searchParams);
+			params.set("tab", tab);
+			setSearchParams(params);
+		},
+		[searchParams, setSearchParams]
+	);
 
 	const hasFullName = (obj: unknown): obj is { fullName?: string } => typeof obj === "object" && obj !== null && "fullName" in obj;
 
@@ -122,7 +133,7 @@ export default function CustomerDetails() {
 			</div>
 
 			<CustomCard className="p-4 sm:p-6 border-0">
-				<Tabs defaultValue="details">
+				<Tabs value={activeTab} onValueChange={handleTabChange}>
 					<TabsList className={tabListStyle}>
 						<TabsTrigger value="details" className={tabStyle}>
 							Customer details

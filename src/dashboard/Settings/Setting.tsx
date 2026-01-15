@@ -10,11 +10,21 @@ import VatInterest from "./VatInterest";
 import { tabListStyle, tabStyle } from "../../components/common/commonStyles";
 import LogoutModal from "../../components/common/LogoutModal";
 import PageWrapper from "../../components/common/PageWrapper";
+import { useSearchParams } from "react-router";
 
 export default function Setting() {
+	const [searchParams, setSearchParams] = useSearchParams();
 	const [editOpen, setEditOpen] = useState(false);
 	const [changePassOpen, setChangePassOpen] = useState(false);
 	const [logoutOpen, setLogoutOpen] = useState(false);
+
+	const activeTab = searchParams.get("tab") || "profile";
+
+	const handleTabChange = (value: string) => {
+		const params = new URLSearchParams(searchParams);
+		params.set("tab", value);
+		setSearchParams(params);
+	};
 
 	return (
 		<PageWrapper>
@@ -43,7 +53,7 @@ export default function Setting() {
 			</div>
 
 			<CustomCard className="p-5 sm:p-6 mt-8 border-0">
-				<Tabs defaultValue="profile">
+				<Tabs value={activeTab} onValueChange={handleTabChange}>
 					<TabsList className={tabListStyle}>
 						<TabsTrigger value="profile" className={tabStyle}>
 							Profile

@@ -8,7 +8,7 @@ import CompactPagination from "@/components/ui/compact-pagination";
 import SearchWithFilters from "@/components/common/SearchWithFilters";
 import type { FilterField } from "@/components/common/SearchWithFilters";
 import { _router } from "@/routes/_router";
-import { Link } from "react-router";
+import { Link, useSearchParams } from "react-router";
 import { useGetProductRequests, useDeleteRegistration, useExportProductRequests } from "@/api/productRequest";
 import type { ProductRequestItem, ProductRequestResponse } from "@/types/productRequest";
 import ConfirmModal from "@/components/common/ConfirmModal";
@@ -21,13 +21,49 @@ import ActionButton from "@/components/base/ActionButton";
 import { extractErrorMessage } from "@/lib/utils";
 
 export default function ProductRequest() {
-	const [page, setPage] = React.useState(1);
-	const [limit, setLimit] = React.useState(10);
-	const [search, setSearch] = React.useState("");
-	const [exportConfirmOpen, setExportConfirmOpen] = React.useState(false);
+	const [searchParams, setSearchParams] = useSearchParams();
+
+	const page = Number(searchParams.get("page")) || 1;
+	const limit = Number(searchParams.get("limit")) || 10;
+	const search = searchParams.get("search") || "";
+	const sortBy = searchParams.get("sortBy") || "createdAt";
+	const sortOrder = searchParams.get("sortOrder") || "desc";
+
+	// Initialize URL params on mount if not present
+	React.useEffect(() => {
+		const hasParams =
+			searchParams.has("page") ||
+			searchParams.has("limit") ||
+			searchParams.has("search") ||
+			searchParams.has("sortBy") ||
+			searchParams.has("sortOrder");
+		if (!hasParams) {
+			const params = new URLSearchParams();
+			params.set("page", "1");
+			params.set("limit", "10");
+			params.set("sortBy", "createdAt");
+			params.set("sortOrder", "desc");
+			setSearchParams(params);
+		}
+	}, []);
+
 	const debouncedSearch = useDebounceSearch(search, 400);
-	const [sortBy, setSortBy] = React.useState<string | undefined>(undefined);
-	const [sortOrder, setSortOrder] = React.useState<string | undefined>(undefined);
+	const [exportConfirmOpen, setExportConfirmOpen] = React.useState(false);
+
+	const updateSearchParams = React.useCallback(
+		(updates: Record<string, string | number | null>) => {
+			const params = new URLSearchParams(searchParams);
+			Object.entries(updates).forEach(([key, value]) => {
+				if (value === null) {
+					params.delete(key);
+				} else {
+					params.set(key, String(value));
+				}
+			});
+			setSearchParams(params);
+		},
+		[searchParams, setSearchParams]
+	);
 
 	const query = useGetProductRequests(page, limit, debouncedSearch || "", sortBy, sortOrder);
 	const isLoading = query.isLoading || query.isFetching;
@@ -40,6 +76,27 @@ export default function ProductRequest() {
 
 	const [toDelete, setToDelete] = React.useState<{ id?: string; title?: string } | null>(null);
 	const [confirmOpen, setConfirmOpen] = React.useState(false);
+
+	const handleSearchChange = (value: string) => {
+		updateSearchParams({ search: value || null, page: 1 });
+	};
+
+	const handlePageChange = (newPage: number) => {
+		updateSearchParams({ page: newPage });
+	};
+
+	const handleFiltersApply = (filters: Record<string, string>) => {
+		updateSearchParams({
+			limit: filters.limit || null,
+			sortBy: filters.sortBy || null,
+			sortOrder: filters.sortOrder || null,
+			page: 1,
+		});
+	};
+
+	const handleFiltersReset = () => {
+		updateSearchParams({ search: null, limit: null, sortBy: null, sortOrder: null, page: null });
+	};
 
 	const handleExportClick = async () => {
 		if (!debouncedSearch) {
@@ -125,11 +182,8 @@ export default function ProductRequest() {
 					<div className="flex items-center gap-2">
 						<SearchWithFilters
 							search={search}
-							onSearchChange={(v) => {
-								setSearch(v);
-								setPage(1);
-							}}
-							setPage={setPage}
+							onSearchChange={handleSearchChange}
+							setPage={handlePageChange}
 							placeholder="Search here"
 							fields={
 								[
@@ -159,13 +213,8 @@ export default function ProductRequest() {
 								] as FilterField[]
 							}
 							initialValues={{ limit: String(limit), sortBy: sortBy || "", sortOrder: sortOrder || "" }}
-							onApply={(filters) => {
-								setLimit(filters.limit ? Number(filters.limit) : 10);
-								setSortBy(filters.sortBy || "createdAt");
-								setSortOrder(filters.sortOrder || "desc");
-								setPage(1);
-							}}
-							onReset={() => setSearch("")}
+							onApply={handleFiltersApply}
+							onReset={handleFiltersReset}
 						/>
 					</div>
 				</div>
@@ -206,7 +255,9 @@ export default function ProductRequest() {
 													<TableCell>{new Date(item.dateCreated).toLocaleDateString()}</TableCell>
 													<TableCell>
 														<div className="flex items-center gap-2">
-															<Link to={_router.dashboard.productRequestDetails.replace(":id", item.id)} className="p-2 flex items-center">
+															<Link
+																to={`${_router.dashboard.productRequestDetails.replace(":id", item.id)}?tab=information`}
+																className="p-2 flex items-center">
 																<IconWrapper className="text-xl">
 																	<EditIcon />
 																</IconWrapper>
@@ -238,7 +289,7 @@ export default function ProductRequest() {
 									<span className="font-medium">{pagination?.total ?? 0}</span> results
 								</span>
 								<div className="ml-auto">
-									<CompactPagination page={page} pages={pagination?.totalPages ?? 1} onPageChange={setPage} />
+									<CompactPagination page={page} pages={pagination?.totalPages ?? 1} onPageChange={handlePageChange} />
 								</div>
 							</div>
 						</div>

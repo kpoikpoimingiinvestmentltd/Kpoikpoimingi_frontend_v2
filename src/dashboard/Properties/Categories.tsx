@@ -18,19 +18,47 @@ import { TableSkeleton } from "@/components/common/Skeleton";
 import { twMerge } from "tailwind-merge";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { _router } from "../../routes/_router";
+import { useSearchParams } from "react-router";
 
 // (moved into component state)
 
 export default function Categories() {
+	const [searchParams, setSearchParams] = useSearchParams();
+
+	// Initialize state from URL params
 	const [categories, setCategories] = React.useState<any[]>([]);
-	const [query, setQuery] = React.useState("");
-	const [categoryFilter, setCategoryFilter] = React.useState<string | null>(null);
+	const [query, setQuery] = React.useState(() => {
+		return searchParams.get("search") || "";
+	});
+	const [categoryFilter, setCategoryFilter] = React.useState<string | null>(() => {
+		return searchParams.get("filter") || null;
+	});
 	const dispatch = useDispatch();
-	const [page, setPage] = React.useState(1);
-	const [limit] = React.useState(10);
+	const [page, setPage] = React.useState(() => {
+		const pageParam = searchParams.get("page");
+		return pageParam ? parseInt(pageParam, 10) : 1;
+	});
+	const [limit] = React.useState(() => {
+		const limitParam = searchParams.get("limit");
+		return limitParam ? parseInt(limitParam, 10) : 10;
+	});
 	const { data: fetchedCategories, isLoading } = useGetAllCategories(page, limit, true);
 	const queryClient = useQueryClient();
 	const isEmpty = categories.length === 0 && !isLoading;
+
+	// Update URL when state changes
+	React.useEffect(() => {
+		const params = new URLSearchParams(searchParams);
+		params.set("page", page.toString());
+		params.set("limit", limit.toString());
+		params.set("search", query);
+		if (categoryFilter) {
+			params.set("filter", categoryFilter);
+		} else {
+			params.delete("filter");
+		}
+		setSearchParams(params, { replace: true });
+	}, [page, limit, query, categoryFilter, setSearchParams]);
 
 	const createMutation = useMutation<unknown, unknown, { category?: string; subCategories?: string[] }>({
 		mutationFn: (vars: { category?: string; subCategories?: string[] }) =>
@@ -187,7 +215,10 @@ export default function Categories() {
 											className={twMerge(inputStyle, `max-w-[320px] h-10 pl-9`)}
 											iconLeft={<SearchIcon />}
 											value={query}
-											onChange={(e) => setQuery(e.target.value)}
+											onChange={(e) => {
+												setQuery(e.target.value);
+												setPage(1);
+											}}
 										/>
 
 										{/* Confirm delete modal */}

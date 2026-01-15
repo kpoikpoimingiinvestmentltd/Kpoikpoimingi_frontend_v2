@@ -24,22 +24,64 @@ import ActionButton from "../../components/base/ActionButton";
 import { RectangleSkeleton } from "@/components/common/Skeleton";
 import { toast } from "sonner";
 import { extractErrorMessage } from "@/lib/utils";
+import { useSearchParams } from "react-router";
 
 export default function Properties() {
-	const [page, setPage] = React.useState(1);
-	const [limit, setLimit] = React.useState<number>(10);
-	const [searchQuery, setSearchQuery] = React.useState<string>("");
+	const [searchParams, setSearchParams] = useSearchParams();
+
+	// Initialize state from URL params
+	const [page, setPage] = React.useState(() => {
+		const pageParam = searchParams.get("page");
+		return pageParam ? parseInt(pageParam, 10) : 1;
+	});
+	const [limit, setLimit] = React.useState(() => {
+		const limitParam = searchParams.get("limit");
+		return limitParam ? parseInt(limitParam, 10) : 10;
+	});
+	const [searchQuery, setSearchQuery] = React.useState(() => {
+		return searchParams.get("search") || "";
+	});
+	const [sortBy, setSortBy] = React.useState(() => {
+		return searchParams.get("sortBy") || "createdAt";
+	});
+	const [sortOrder, setSortOrder] = React.useState(() => {
+		return searchParams.get("sortOrder") || "desc";
+	});
+	const [isPublicFilter, setIsPublicFilter] = React.useState(() => {
+		return searchParams.get("isPublic") || "";
+	});
+	const [activeTab, setActiveTab] = React.useState(() => {
+		return searchParams.get("tab") || "available";
+	});
+
 	const debouncedSearch = useDebounceSearch(searchQuery, 400);
-	const [sortBy, setSortBy] = React.useState<string>("createdAt");
-	const [sortOrder, setSortOrder] = React.useState<string>("desc");
-	const [isPublicFilter, setIsPublicFilter] = React.useState<string>("");
-	const [activeTab, setActiveTab] = React.useState("available");
+
+	// Update URL when state changes
+	React.useEffect(() => {
+		const params = new URLSearchParams(searchParams);
+		params.set("page", page.toString());
+		params.set("limit", limit.toString());
+		params.set("search", searchQuery);
+		params.set("sortBy", sortBy);
+		params.set("sortOrder", sortOrder);
+		params.set("isPublic", isPublicFilter);
+		params.set("tab", activeTab);
+		setSearchParams(params, { replace: true });
+	}, [page, limit, searchQuery, sortBy, sortOrder, isPublicFilter, activeTab, setSearchParams]);
 
 	const {
 		data: propertiesData,
 		isLoading,
 		refetch,
-	} = useGetAllProperties(page, limit, debouncedSearch || undefined, sortBy, sortOrder, isPublicFilter || undefined);
+	} = useGetAllProperties(
+		page,
+		limit,
+		debouncedSearch || undefined,
+		sortBy,
+		sortOrder,
+		isPublicFilter || undefined,
+		activeTab === "available" ? "available" : activeTab === "low" ? "low" : "out"
+	);
 
 	const [selected, setSelected] = React.useState<Record<string, boolean>>({});
 	const [confirmOpen, setConfirmOpen] = React.useState(false);

@@ -8,7 +8,7 @@ import TabPaymentPlan from "./TabPaymentPlan";
 import TabReceiptHistory from "./TabReceiptHistory";
 import PageWrapper from "../../components/common/PageWrapper";
 // import { EditIcon, IconWrapper } from "../../assets/icons";
-import { useState } from "react";
+import React, { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import CustomInput from "@/components/base/CustomInput";
@@ -19,9 +19,11 @@ import { extractErrorMessage } from "@/lib/utils";
 import { Skeleton } from "@/components/common/Skeleton";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+import { useSearchParams } from "react-router";
 
 export default function ContractDetails() {
 	const { id } = useParams();
+	const [searchParams, setSearchParams] = useSearchParams();
 	const { data: contract, isLoading } = useGetContractById(id || "", !!id);
 	const queryClient = useQueryClient();
 
@@ -29,6 +31,18 @@ export default function ContractDetails() {
 	const [terminateOpen, setTerminateOpen] = useState(false);
 	const [pauseReason, setPauseReason] = useState("Health Crises");
 	const [otherPauseReason, setOtherPauseReason] = useState("");
+
+	// Initialize active tab from URL params
+	const [activeTab, setActiveTab] = useState(() => {
+		return searchParams.get("tab") || "information";
+	});
+
+	// Update URL when active tab changes
+	React.useEffect(() => {
+		const params = new URLSearchParams(searchParams);
+		params.set("tab", activeTab);
+		setSearchParams(params, { replace: true });
+	}, [activeTab, setSearchParams]);
 
 	const pauseMutation = usePauseContract(
 		(response) => {
@@ -223,7 +237,7 @@ export default function ContractDetails() {
 			</div>
 
 			<CustomCard className="p-4 sm:p-6 border-0">
-				<Tabs defaultValue="information">
+				<Tabs value={activeTab} onValueChange={setActiveTab}>
 					<TabsList className={tabListStyle}>
 						<TabsTrigger value="information" className={tabStyle}>
 							Contract information

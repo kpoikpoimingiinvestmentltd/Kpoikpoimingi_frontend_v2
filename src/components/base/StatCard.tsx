@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { ChevronDownIcon, IconWrapper } from "../../assets/icons";
 import { Skeleton } from "../ui/skeleton";
 import { twMerge } from "tailwind-merge";
@@ -33,16 +33,23 @@ export default function StatCard({
 	period: externalPeriod,
 	onPeriodChange,
 }: StatCardProps) {
+	// Hooks must be at top level
+	const periods = ["Daily", "Weekly", "Monthly", "Yearly"];
+	const [period, setPeriod] = useState<string>(externalPeriod || "Monthly");
+
+	useEffect(() => {
+		if (externalPeriod) {
+			setPeriod(externalPeriod.charAt(0).toUpperCase() + externalPeriod.slice(1));
+		}
+	}, [externalPeriod]);
+
+	const handlePeriodChange = (newPeriod: string) => {
+		setPeriod(newPeriod);
+		onPeriodChange?.(newPeriod.toLowerCase());
+	};
+
 	// Income stat variant component
 	function IncomeStat() {
-		const periods = ["Daily", "Weekly", "Monthly", "Yearly"];
-		const [period, setPeriod] = useState<string>(externalPeriod || "Monthly");
-
-		const handlePeriodChange = (newPeriod: string) => {
-			setPeriod(newPeriod);
-			onPeriodChange?.(newPeriod.toLowerCase());
-		};
-
 		return (
 			<>
 				<div className="mt-2">

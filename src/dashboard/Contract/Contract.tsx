@@ -17,15 +17,60 @@ import ExportConfirmModal from "@/components/common/ExportConfirmModal";
 import ActionButton from "@/components/base/ActionButton";
 import { toast } from "sonner";
 import { extractErrorMessage } from "@/lib/utils";
+import { useSearchParams } from "react-router";
 
 export default function Contract() {
+	const [searchParams, setSearchParams] = useSearchParams();
+
+	// Initialize state from URL params
+	const [page, setPage] = React.useState(() => {
+		const pageParam = searchParams.get("page");
+		return pageParam ? parseInt(pageParam, 10) : 1;
+	});
+	const [search, setSearch] = React.useState(() => {
+		return searchParams.get("search") || "";
+	});
+	const [filters, setFilters] = React.useState<Record<string, string>>(() => {
+		const urlFilters: Record<string, string> = {};
+		const sortBy = searchParams.get("sortBy");
+		const sortOrder = searchParams.get("sortOrder");
+		const statusId = searchParams.get("statusId");
+		if (sortBy) urlFilters.sortBy = sortBy;
+		if (sortOrder) urlFilters.sortOrder = sortOrder;
+		if (statusId) urlFilters.statusId = statusId;
+		return urlFilters;
+	});
+
 	const [createOpen, setCreateOpen] = React.useState(false);
 	const [exportConfirmOpen, setExportConfirmOpen] = React.useState(false);
-	const [page, setPage] = React.useState(1);
-	const [search, setSearch] = React.useState("");
+
 	const debouncedSearch = useDebounceSearch(search);
 
-	const [filters, setFilters] = React.useState<Record<string, string>>({});
+	// Initialize URL params on mount if not present
+	React.useEffect(() => {
+		const hasParams = searchParams.has("page") || searchParams.has("sortBy") || searchParams.has("sortOrder");
+		if (!hasParams) {
+			const params = new URLSearchParams();
+			params.set("page", "1");
+			params.set("sortBy", "createdAt");
+			params.set("sortOrder", "desc");
+			setSearchParams(params, { replace: true });
+		}
+	}, [searchParams, setSearchParams]);
+
+	// Update URL when state changes
+	React.useEffect(() => {
+		const params = new URLSearchParams(searchParams);
+		params.set("page", page.toString());
+		params.set("search", search);
+		if (filters.sortBy) params.set("sortBy", filters.sortBy);
+		else params.delete("sortBy");
+		if (filters.sortOrder) params.set("sortOrder", filters.sortOrder);
+		else params.delete("sortOrder");
+		if (filters.statusId) params.set("statusId", filters.statusId);
+		else params.delete("statusId");
+		setSearchParams(params, { replace: true });
+	}, [page, search, filters, setSearchParams]);
 
 	React.useEffect(() => {
 		setPage(1);
@@ -34,7 +79,7 @@ export default function Contract() {
 	const sortBy = (filters.sortBy as string) || "createdAt";
 	const sortOrder = (filters.sortOrder as string) || "desc";
 
-	const { data = {}, isLoading } = useGetAllContracts(page, 10, debouncedSearch, sortBy, sortOrder, filters);
+	const { data = {}, isLoading, isFetching } = useGetAllContracts(page, 10, debouncedSearch, sortBy, sortOrder, filters);
 	const dataTyped = data as Record<string, unknown>;
 	const contracts = Array.isArray(dataTyped?.data) ? (dataTyped?.data as unknown[]) : [];
 	const paginationData = dataTyped?.pagination as Record<string, unknown> | undefined;
@@ -195,12 +240,16 @@ export default function Contract() {
 								setFilters(f);
 								setPage(1);
 							}}
-							onReset={() => setSearch("")}
+							onReset={() => {
+								setSearch("");
+								setFilters({});
+								setPage(1);
+							}}
 						/>
 					</div>
 				</div>
 				<div className="min-h-80 flex">
-					{isLoading ? (
+					{isLoading || isFetching ? (
 						<TableSkeleton rows={10} cols={8} />
 					) : contracts.length === 0 ? (
 						<div className="flex-grow flex items-center justify-center">

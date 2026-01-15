@@ -14,7 +14,7 @@ export default function TableForIndex() {
 		<CustomCard className="bg-white w-full rounded-lg p-4 border border-gray-100">
 			<div className="flex items-center justify-between mb-2">
 				<h2 className="font-semibold">Recent Customers</h2>
-				<Link to="#" className="text-primary text-sm font-medium hover:underline">
+				<Link to={_router.dashboard.customers} className="text-primary text-sm font-medium hover:underline">
 					View all
 				</Link>
 			</div>

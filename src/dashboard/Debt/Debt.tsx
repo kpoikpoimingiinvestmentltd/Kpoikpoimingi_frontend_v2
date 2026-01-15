@@ -6,7 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { tableHeaderRowStyle } from "@/components/common/commonStyles";
 import CompactPagination from "@/components/ui/compact-pagination";
 import { EyeIcon, IconWrapper, ExportFileIcon } from "@/assets/icons";
-import { Link } from "react-router";
+import { Link, useSearchParams } from "react-router";
 import { _router } from "@/routes/_router";
 import React from "react";
 import PageWrapper from "../../components/common/PageWrapper";
@@ -24,13 +24,49 @@ import { extractErrorMessage } from "@/lib/utils";
 import ExportConfirmModal from "@/components/common/ExportConfirmModal";
 
 export default function Debt() {
-	const [page, setPage] = React.useState(1);
-	const [limit, setLimit] = React.useState<number>(10);
-	const [searchQuery, setSearchQuery] = React.useState<string>("");
+	const [searchParams, setSearchParams] = useSearchParams();
+
+	const page = Number(searchParams.get("page")) || 1;
+	const limit = Number(searchParams.get("limit")) || 10;
+	const search = searchParams.get("search") || "";
+	const sortBy = searchParams.get("sortBy") || "createdAt";
+	const sortOrder = searchParams.get("sortOrder") || "desc";
+
+	// Initialize URL params on mount if not present
+	React.useEffect(() => {
+		const hasParams =
+			searchParams.has("page") ||
+			searchParams.has("limit") ||
+			searchParams.has("search") ||
+			searchParams.has("sortBy") ||
+			searchParams.has("sortOrder");
+		if (!hasParams) {
+			const params = new URLSearchParams();
+			params.set("page", "1");
+			params.set("limit", "10");
+			params.set("sortBy", "createdAt");
+			params.set("sortOrder", "desc");
+			setSearchParams(params);
+		}
+	}, []);
+
+	const debouncedSearch = useDebounceSearch(search, 400);
 	const [exportOpen, setExportOpen] = useState(false);
-	const debouncedSearch = useDebounceSearch(searchQuery, 400);
-	const [sortBy, setSortBy] = React.useState<string>("createdAt");
-	const [sortOrder, setSortOrder] = React.useState<string>("desc");
+
+	const updateSearchParams = React.useCallback(
+		(updates: Record<string, string | number | null>) => {
+			const params = new URLSearchParams(searchParams);
+			Object.entries(updates).forEach(([key, value]) => {
+				if (value === null) {
+					params.delete(key);
+				} else {
+					params.set(key, String(value));
+				}
+			});
+			setSearchParams(params);
+		},
+		[searchParams, setSearchParams]
+	);
 
 	const { data: debtData = {} as Record<string, unknown>, isLoading } = useGetAllContractDebts(
 		page,
@@ -44,7 +80,7 @@ export default function Debt() {
 
 	// Smart Export Handlers
 	const handleExportClick = async () => {
-		const hasActiveFilters = !!searchQuery;
+		const hasActiveFilters = !!search;
 		if (hasActiveFilters) {
 			setExportOpen(true);
 		} else {
@@ -54,14 +90,14 @@ export default function Debt() {
 
 	const getFilterLabels = () => {
 		const labels: Record<string, string> = {};
-		if (searchQuery) labels["Search"] = searchQuery;
+		if (search) labels["Search"] = search;
 		return labels;
 	};
 
 	const handleExportFiltered = async () => {
 		try {
 			const blob = await exportMutation.mutateAsync({
-				search: searchQuery || undefined,
+				search: search || undefined,
 			});
 			const url = URL.createObjectURL(blob);
 			const link = document.createElement("a");
@@ -161,12 +197,11 @@ export default function Debt() {
 						<h2 className="font-semibold">All Debtors ( Customers Owning )</h2>
 						<div className="flex items-center gap-2">
 							<SearchWithFilters
-								search={searchQuery}
+								search={search}
 								onSearchChange={(v) => {
-									setSearchQuery(v);
-									setPage(1);
+									updateSearchParams({ search: v || null, page: 1 });
 								}}
-								setPage={setPage}
+								setPage={(newPage) => updateSearchParams({ page: newPage })}
 								placeholder="Search by contract code, customer name, or property name"
 								fields={
 									[
@@ -197,17 +232,15 @@ export default function Debt() {
 								}
 								initialValues={{ limit: String(limit), sortBy: sortBy || "", sortOrder: sortOrder || "" }}
 								onApply={(filters) => {
-									setLimit(filters.limit ? Number(filters.limit) : 10);
-									setSortBy(filters.sortBy || "createdAt");
-									setSortOrder(filters.sortOrder || "desc");
-									setPage(1);
+									updateSearchParams({
+										limit: filters.limit || null,
+										sortBy: filters.sortBy || null,
+										sortOrder: filters.sortOrder || null,
+										page: 1,
+									});
 								}}
 								onReset={() => {
-									setSearchQuery("");
-									setLimit(10);
-									setSortBy("createdAt");
-									setSortOrder("desc");
-									setPage(1);
+									updateSearchParams({ search: null, limit: null, sortBy: null, sortOrder: null, page: null });
 								}}
 							/>
 						</div>
@@ -264,7 +297,7 @@ export default function Debt() {
 									</TableBody>
 								</Table>
 
-								<CompactPagination page={page} pages={pages} showRange onPageChange={setPage} />
+								<CompactPagination page={page} pages={pages} showRange onPageChange={(newPage) => updateSearchParams({ page: newPage })} />
 							</>
 						) : (
 							<div className="text-center py-8 text-muted-foreground">No debtors found</div>
