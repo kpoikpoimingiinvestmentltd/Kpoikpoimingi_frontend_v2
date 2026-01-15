@@ -72,3 +72,14 @@ export function useSendReceiptPdfToEmail() {
 			sendReceiptPdfToEmail(id, pdfBase64, recipientEmail),
 	});
 }
+
+export async function trackReceiptDownload(id: string) {
+	const url = API_ROUTES.receipt.trackDownload(id);
+	return apiPost(url, {}) as Promise<any>;
+}
+
+export function useTrackReceiptDownload() {
+	return useMutation({
+		mutationFn: (id: string) => trackReceiptDownload(id),
+	});
+}

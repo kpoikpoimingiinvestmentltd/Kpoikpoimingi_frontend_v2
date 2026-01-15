@@ -1,7 +1,7 @@
 import { toast } from "sonner";
 import html2canvas from "html2canvas";
 import { jsPDF } from "jspdf";
-import { sendReceiptPdfToEmail } from "@/api/receipt";
+import { sendReceiptPdfToEmail, trackReceiptDownload } from "@/api/receipt";
 
 export const generatePDF = async (element: HTMLElement, filename: string, isForSharing = false) => {
 	if (!element) return null;
@@ -84,6 +84,16 @@ export const generatePDF = async (element: HTMLElement, filename: string, isForS
 export const handleDownloadPDF = async (element: HTMLElement, receiptNumber?: string | number, receiptId?: string | number) => {
 	const filename = `receipt-${receiptNumber || receiptId || "unknown"}.pdf`;
 	await generatePDF(element, filename, false);
+
+	// Track the download
+	if (receiptId) {
+		try {
+			await trackReceiptDownload(String(receiptId));
+		} catch (err) {
+			console.error("Failed to track receipt download:", err);
+			// Don't show error toast - tracking failure shouldn't block the download
+		}
+	}
 };
 
 export const handleSharePDF = async (element: HTMLElement, receiptNumber?: string | number, receiptId?: string | number) => {

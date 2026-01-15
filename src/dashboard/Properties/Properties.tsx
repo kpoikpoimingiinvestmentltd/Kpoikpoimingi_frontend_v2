@@ -415,7 +415,7 @@ export default function Properties() {
 										id: propertyToEdit.id,
 										name: propertyToEdit.name,
 										price: propertyToEdit.price,
-										quantityTotal: propertyToEdit.quantityTotal ?? 0,
+										quantityTotal: propertyToEdit.quantityAvailable ?? propertyToEdit.quantityTotal ?? 0,
 										quantityAssigned: propertyToEdit.quantityAssigned ?? 0,
 										status: propertyToEdit.status?.status ?? "",
 										condition: propertyToEdit.condition ?? "",

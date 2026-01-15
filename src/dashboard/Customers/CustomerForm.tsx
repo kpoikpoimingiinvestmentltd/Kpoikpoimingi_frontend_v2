@@ -251,7 +251,7 @@ export default function CustomerForm({
 				if (stateOfOriginOptions.find((o) => o.key === g.stateOfOrigin)) return g;
 				const found = stateOfOriginOptions.find((o) => o.value.toLowerCase() === String(g.stateOfOrigin).toLowerCase());
 				if (found) return { ...g, stateOfOrigin: found.key };
-				return g;
+				return { ...g, stateOfOrigin: "" };
 			});
 			const prev = JSON.stringify(gArr || []);
 			const next = JSON.stringify(mapped || []);
@@ -259,7 +259,7 @@ export default function CustomerForm({
 		} catch {
 			// ignore
 		}
-	}, [refLoading, stateOfOriginOptions, handleChange]);
+	}, [refLoading, stateOfOriginOptions, handleChange, (form as InstallmentPaymentFormType).guarantors]);
 
 	// Normalize guarantor phone numbers to local editable format (e.g., +234... -> 0...)
 	React.useEffect(() => {

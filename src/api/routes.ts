@@ -108,6 +108,7 @@ export const API_ROUTES = {
 		getReceiptsById: (id: string) => `/receipt/${id}`,
 		generateReceipt: "/generate-receipt",
 		sendToEmail: (id: string) => `/receipt/${id}/email`,
+		trackDownload: (id: string) => `/receipt/${id}/track-download`,
 	},
 	analytics: {
 		getAnalyticsOverview: "/analytics",
