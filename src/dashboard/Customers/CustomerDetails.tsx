@@ -61,8 +61,6 @@ export default function CustomerDetails() {
 			: getStringField(Array.isArray(approvedRegistrations) ? approvedRegistrations[0] : approvedRegistrations, "fullName") ?? ""
 		: "";
 
-	const registrationForEdit = Array.isArray(approvedRegistrations) ? approvedRegistrations[0] : approvedRegistrations || customer;
-
 	const registrationsFromCustomer = getArrayField(customer, "registrations");
 	const registrationsToPass =
 		registrationsFromCustomer && registrationsFromCustomer.length > 0
@@ -70,6 +68,13 @@ export default function CustomerDetails() {
 			: Array.isArray(approvedRegistrations) && approvedRegistrations.length > 0
 			? approvedRegistrations
 			: undefined;
+
+	const registrationForEdit =
+		registrationsFromCustomer && registrationsFromCustomer.length > 0
+			? registrationsFromCustomer[0]
+			: Array.isArray(approvedRegistrations)
+			? approvedRegistrations[0]
+			: approvedRegistrations || customer;
 
 	const resolveIsFullPayment = (): boolean => {
 		// check top-level customer
@@ -194,7 +199,7 @@ export default function CustomerDetails() {
 				</Tabs>
 			</CustomCard>
 
-			<EditCustomerModal open={isEditOpen} onOpenChange={setIsEditOpen} initial={registrationForEdit} />
+			<EditCustomerModal open={isEditOpen} onOpenChange={setIsEditOpen} initial={registrationForEdit} documents={documents} />
 		</PageWrapper>
 	);
 }

@@ -94,7 +94,7 @@ export function transformCustomerToInstallmentForm(customer: unknown): Installme
 		whatsapp: toLocalPhone((c.phoneNumber || c.phone || "") as string),
 		dob: toDateInput(c.dateOfBirth ?? c.dob),
 		address: (c.homeAddress || (c.employmentDetails && (c.employmentDetails as Record<string, unknown>).homeAddress) || c.address || "") as string,
-		isDriver: c.isDriver === "Yes" || c.isDriver === true ? true : c.isDriver === "No" || c.isDriver === false ? false : undefined,
+		isDriver: c.isDriver === "Yes" || c.isDriver === true ? true : false,
 		nextOfKin: (() => {
 			const nk = (c.nextOfKin as Record<string, unknown>) || {};
 			const rel = (nk.relationship as string) || "";
@@ -148,7 +148,20 @@ export function transformCustomerToInstallmentForm(customer: unknown): Installme
 			reason: (c.purposeOfProperty || "") as string,
 		},
 		employment: {
-			status: String((c.employmentDetails && (c.employmentDetails as Record<string, unknown>).employmentStatusId) || ""),
+			status: String(
+				(c.employmentDetails && (c.employmentDetails as Record<string, unknown>).employmentStatusId) ||
+					(c.employmentDetails &&
+					(c.employmentDetails as Record<string, unknown>).employmentStatus &&
+					typeof (c.employmentDetails as Record<string, unknown>).employmentStatus === "object" &&
+					"status" in ((c.employmentDetails as Record<string, unknown>).employmentStatus as Record<string, unknown>)
+						? ((c.employmentDetails as Record<string, unknown>).employmentStatus as { status: string }).status === "EMPLOYED"
+							? "1"
+							: ((c.employmentDetails as Record<string, unknown>).employmentStatus as { status: string }).status === "SELF EMPLOYED"
+							? "2"
+							: ""
+						: (c.employmentDetails as Record<string, unknown>).employmentStatus) ||
+					""
+			),
 			employerName: String((c.employmentDetails && (c.employmentDetails as Record<string, unknown>).employerName) || ""),
 			employerAddress: String((c.employmentDetails && (c.employmentDetails as Record<string, unknown>).employerAddress) || ""),
 			companyName: String((c.employmentDetails && (c.employmentDetails as Record<string, unknown>).companyName) || ""),
@@ -162,11 +175,22 @@ export function transformCustomerToInstallmentForm(customer: unknown): Installme
 				occupation: (gg.occupation || "") as string,
 				phone: toLocalPhone((gg.phoneNumber || gg.phone || "") as string),
 				email: (gg.email || "") as string,
-				employmentStatus: String(gg.employmentStatusId || gg.employmentStatus || ""),
+				employmentStatus: String(
+					gg.employmentStatusId ||
+						(typeof gg.employmentStatus === "object" && gg.employmentStatus && "status" in gg.employmentStatus
+							? (gg.employmentStatus as { status: string }).status === "EMPLOYED"
+								? "1"
+								: (gg.employmentStatus as { status: string }).status === "SELF EMPLOYED"
+								? "2"
+								: ""
+							: gg.employmentStatus) ||
+						""
+				),
 				homeAddress: (gg.homeAddress || gg.address || "") as string,
 				businessAddress: (gg.companyAddress || gg.businessAddress || "") as string,
 				stateOfOrigin: String(gg.stateOfOrigin || ""),
 				votersUploaded: (gg.votersUploaded as number) || 0,
+				hasAgreed: Boolean(gg.hasAgreed ?? false),
 			};
 		}),
 		hasRequestAgreement: Boolean(c.hasRequestAgreement),

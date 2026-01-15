@@ -233,7 +233,11 @@ export default function Contract() {
 														<TableCell>{((c.property as Record<string, unknown>)?.name as string) || "N/A"}</TableCell>
 														<TableCell>{((c.paymentType as Record<string, unknown>)?.type as string) || "N/A"}</TableCell>
 														<TableCell>
-															<Badge value={((c.status as Record<string, unknown>)?.status as string) || "N/A"} size="sm" />
+															<Badge
+																value={statusMap[String(c.statusId)] || ((c.status as Record<string, unknown>)?.status as string) || "N/A"}
+																size="sm"
+																status={String(c.statusId) === "7" ? "pending" : undefined}
+															/>
 														</TableCell>
 														<TableCell>₦{parseInt((c.outStandingBalance as string) || "0").toLocaleString()}</TableCell>
 														<TableCell>{new Date(c.createdAt as string).toLocaleDateString()}</TableCell>

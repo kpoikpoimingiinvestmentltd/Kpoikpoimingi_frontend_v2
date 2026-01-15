@@ -96,6 +96,8 @@ export default function NextOfKinSection({
 												<SelectItem value="Daughter">Daughter</SelectItem>
 												<SelectItem value="Brother">Brother</SelectItem>
 												<SelectItem value="Sister">Sister</SelectItem>
+												<SelectItem value="Niece">Niece</SelectItem>
+												<SelectItem value="Nephew">Nephew</SelectItem>
 												<SelectItem value="Grandfather">Grandfather</SelectItem>
 												<SelectItem value="Grandmother">Grandmother</SelectItem>
 												<SelectItem value="Uncle">Uncle</SelectItem>
@@ -166,6 +168,8 @@ export default function NextOfKinSection({
 												<SelectItem value="Daughter">Daughter</SelectItem>
 												<SelectItem value="Brother">Brother</SelectItem>
 												<SelectItem value="Sister">Sister</SelectItem>
+												<SelectItem value="Niece">Niece</SelectItem>
+												<SelectItem value="Nephew">Nephew</SelectItem>
 												<SelectItem value="Grandfather">Grandfather</SelectItem>
 												<SelectItem value="Grandmother">Grandmother</SelectItem>
 												<SelectItem value="Uncle">Uncle</SelectItem>

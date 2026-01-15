@@ -45,7 +45,9 @@ export default function TableForIndex() {
 								const cust = customer as Record<string, unknown>;
 								return (
 									<TableRow key={idx} className="hover:bg-[#F6FBFF]">
-										<TableCell>{String(cust.id)}</TableCell>
+										<TableCell title={String(cust.customerCode || cust.id)}>
+											<span className="max-w-40 block truncate">{String(cust.customerCode || cust.id)}</span>
+										</TableCell>
 										<TableCell>{String(cust.fullName)}</TableCell>
 										<TableCell>{String(cust.email || "-")}</TableCell>
 										<TableCell>{String(cust.phoneNumber || "-")}</TableCell>

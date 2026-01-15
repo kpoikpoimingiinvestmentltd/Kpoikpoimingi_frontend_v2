@@ -121,6 +121,7 @@ export default function Customers() {
 				const it = item as Record<string, unknown>;
 				return {
 					id: String(it.id ?? `cust-${idx}`),
+					customerCode: String(it.customerCode ?? ""),
 					fullName: String(it.fullName ?? it.name ?? ""),
 					email: String(it.email ?? ""),
 					phoneNumber: it.phoneNumber ? String(it.phoneNumber) : undefined,
@@ -129,7 +130,7 @@ export default function Customers() {
 					registrations: it.registrations as CustomerRow["registrations"],
 				} as CustomerRow;
 			}
-			return { id: `cust-${idx}`, fullName: "", email: "" } as CustomerRow;
+			return { id: `cust-${idx}`, customerCode: "", fullName: "", email: "" } as CustomerRow;
 		});
 	}, [customersData]);
 
@@ -245,8 +246,8 @@ export default function Customers() {
 										<TableBody>
 											{customersList.map((row, idx: number) => (
 												<TableRow key={row.id || idx} className="hover:bg-[#F6FBFF]">
-													<TableCell className="text-[#13121266]" title={row.id}>
-														<span className="max-w-40 block truncate">{row.id}</span>
+													<TableCell className="text-[#13121266]" title={row.customerCode}>
+														<span className="max-w-40 block truncate">{row.customerCode}</span>
 													</TableCell>
 													<TableCell className="text-[#13121266]">{row.fullName}</TableCell>
 													<TableCell className="text-[#13121266]">{row.email}</TableCell>

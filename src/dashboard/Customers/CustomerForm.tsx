@@ -208,7 +208,18 @@ export default function CustomerForm({
 						occupation: srcObj.occupation ?? curr.occupation,
 						phone: toLocalPhone(String(srcObj.phoneNumber ?? srcObj.phone ?? curr.phone ?? "")),
 						email: srcObj.email ?? curr.email,
-						employmentStatus: String(srcObj.employmentStatus ?? curr.employmentStatus ?? ""),
+						employmentStatus: String(
+							srcObj.employmentStatusId ||
+								(typeof srcObj.employmentStatus === "object" && srcObj.employmentStatus && "status" in srcObj.employmentStatus
+									? (srcObj.employmentStatus as { status: string }).status === "EMPLOYED"
+										? "1"
+										: (srcObj.employmentStatus as { status: string }).status === "SELF EMPLOYED"
+										? "2"
+										: ""
+									: srcObj.employmentStatus) ||
+								curr.employmentStatus ||
+								""
+						),
 						homeAddress: srcObj.homeAddress ?? curr.homeAddress,
 						businessAddress: srcObj.businessAddress ?? curr.businessAddress,
 						stateOfOrigin: srcObj.stateOfOrigin ?? curr.stateOfOrigin,
@@ -239,7 +250,7 @@ export default function CustomerForm({
 				if (!g || !g.stateOfOrigin) return g;
 				if (stateOfOriginOptions.find((o) => o.key === g.stateOfOrigin)) return g;
 				const found = stateOfOriginOptions.find((o) => o.value.toLowerCase() === String(g.stateOfOrigin).toLowerCase());
-				if (found) return { ...g, stateOfOrigin: found.value };
+				if (found) return { ...g, stateOfOrigin: found.key };
 				return g;
 			});
 			const prev = JSON.stringify(gArr || []);

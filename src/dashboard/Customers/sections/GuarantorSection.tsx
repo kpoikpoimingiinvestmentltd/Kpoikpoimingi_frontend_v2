@@ -213,7 +213,7 @@ export default function GuarantorSection({
 											</>
 										) : (
 											stateOfOriginOptions?.map((it) => (
-												<SelectItem key={it.key} value={it.value}>
+												<SelectItem key={it.key} value={it.key}>
 													{it.value}
 												</SelectItem>
 											))

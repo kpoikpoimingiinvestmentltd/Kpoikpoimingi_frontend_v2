@@ -74,6 +74,7 @@ export type GetAllCustomersResponse = {
 
 export type CustomerRow = {
 	id: string;
+	customerCode: string;
 	fullName: string;
 	email: string;
 	phoneNumber?: string;
