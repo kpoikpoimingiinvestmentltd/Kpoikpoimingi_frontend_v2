@@ -55,6 +55,46 @@ export default function Properties() {
 	});
 
 	const debouncedSearch = useDebounceSearch(searchQuery, 400);
+	const [, setIsMounted] = React.useState(false);
+
+	// Sync state when URL params change (e.g., browser back/forward, refresh)
+	React.useEffect(() => {
+		const pageParam = searchParams.get("page");
+		const newPage = pageParam ? parseInt(pageParam, 10) : 1;
+		setPage(newPage);
+
+		const limitParam = searchParams.get("limit");
+		const newLimit = limitParam ? parseInt(limitParam, 10) : 10;
+		setLimit(newLimit);
+
+		setSearchQuery(searchParams.get("search") || "");
+		setSortBy(searchParams.get("sortBy") || "createdAt");
+		setSortOrder(searchParams.get("sortOrder") || "desc");
+		setIsPublicFilter(searchParams.get("isPublic") || "");
+		setActiveTab(searchParams.get("tab") || "available");
+	}, [searchParams]);
+
+	// Initialize URL params on mount if not present
+	React.useEffect(() => {
+		const hasParams =
+			searchParams.has("page") ||
+			searchParams.has("limit") ||
+			searchParams.has("search") ||
+			searchParams.has("sortBy") ||
+			searchParams.has("sortOrder") ||
+			searchParams.has("isPublic") ||
+			searchParams.has("tab");
+		if (!hasParams) {
+			const params = new URLSearchParams();
+			params.set("page", "1");
+			params.set("limit", "10");
+			params.set("sortBy", "createdAt");
+			params.set("sortOrder", "desc");
+			params.set("tab", "available");
+			setSearchParams(params, { replace: true });
+		}
+		setIsMounted(true);
+	}, []);
 
 	// Update URL when state changes
 	React.useEffect(() => {
@@ -154,12 +194,19 @@ export default function Properties() {
 	}, [properties, activeTab]);
 
 	const paginatedItems = React.useMemo(() => {
-		const start = (page - 1) * limit;
-		const end = start + limit;
-		return filteredItems.slice(start, end);
-	}, [filteredItems, page, limit]);
+		return filteredItems;
+	}, [filteredItems]);
 
 	const pages = Math.ceil(filteredItems.length / limit);
+
+	React.useEffect(() => {
+		if (propertiesData) {
+			const totalPages = (propertiesData as any)?.pagination?.totalPages ?? 1;
+			if (page > totalPages) {
+				setPage(1);
+			}
+		}
+	}, [propertiesData, page]);
 
 	return (
 		<div className="flex flex-col gap-y-6">
@@ -167,7 +214,12 @@ export default function Properties() {
 				<CustomCard className="bg-white flex-grow w-full rounded-lg p-4 border border-gray-100">
 					<div className="flex items-center justify-between flex-wrap gap-6">
 						<div className="flex items-center gap-4">
-							<Tabs value={activeTab} onValueChange={setActiveTab}>
+							<Tabs
+								value={activeTab}
+								onValueChange={(value) => {
+									setActiveTab(value);
+									setPage(1);
+								}}>
 								<TabsList className={tabListStyle}>
 									<TabsTrigger className={tabStyle} value="available">
 										Available
@@ -371,7 +423,14 @@ export default function Properties() {
 							</>
 						)}
 					</div>
-					<CompactPagination page={page} pages={pages} onPageChange={setPage} showRange />
+					<CompactPagination
+						page={page}
+						pages={(propertiesData as any)?.pagination?.totalPages ?? pages}
+						onPageChange={setPage}
+						showRange
+						total={(propertiesData as any)?.pagination?.total ?? filteredItems.length}
+						perPage={limit}
+					/>
 
 					{/* Success dialog moved to AddProperties.tsx */}
 

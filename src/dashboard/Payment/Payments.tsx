@@ -54,6 +54,33 @@ export default function Payments() {
 	const [exportOpen, setExportOpen] = useState(false);
 
 	const debouncedSearch = useDebounceSearch(search);
+	const [, setIsMounted] = React.useState(false);
+
+	// Sync state when URL params change (e.g., browser back/forward, refresh)
+	React.useEffect(() => {
+		const pageParam = searchParams.get("page");
+		const newPage = pageParam ? parseInt(pageParam, 10) : 1;
+		setPage(newPage);
+		setSearch(searchParams.get("search") || "");
+		const urlFilters: Record<string, string> = {};
+		const sortBy = searchParams.get("sortBy");
+		const sortOrder = searchParams.get("sortOrder");
+		const dueDateFrom = searchParams.get("dueDateFrom");
+		const dueDateTo = searchParams.get("dueDateTo");
+		const dateFrom = searchParams.get("dateFrom");
+		const dateTo = searchParams.get("dateTo");
+		const isOverdue = searchParams.get("isOverdue");
+		const statusId = searchParams.get("statusId");
+		if (sortBy) urlFilters.sortBy = sortBy;
+		if (sortOrder) urlFilters.sortOrder = sortOrder;
+		if (dueDateFrom) urlFilters.dueDateFrom = dueDateFrom;
+		if (dueDateTo) urlFilters.dueDateTo = dueDateTo;
+		if (dateFrom) urlFilters.dateFrom = dateFrom;
+		if (dateTo) urlFilters.dateTo = dateTo;
+		if (isOverdue) urlFilters.isOverdue = isOverdue;
+		if (statusId) urlFilters.statusId = statusId;
+		setFilters(urlFilters);
+	}, [searchParams]);
 
 	// Initialize URL params on mount if not present
 	React.useEffect(() => {
@@ -75,7 +102,8 @@ export default function Payments() {
 			params.set("sortOrder", "asc");
 			setSearchParams(params, { replace: true });
 		}
-	}, [searchParams, setSearchParams]);
+		setIsMounted(true);
+	}, []);
 
 	// Update URL when state changes
 	React.useEffect(() => {
@@ -100,10 +128,6 @@ export default function Payments() {
 		else params.delete("statusId");
 		setSearchParams(params, { replace: true });
 	}, [page, search, filters, setSearchParams]);
-
-	React.useEffect(() => {
-		setPage(1);
-	}, [debouncedSearch]);
 
 	const sortBy = filters.sortBy || "dueDate";
 	const sortOrder = filters.sortOrder || "asc";
@@ -377,7 +401,7 @@ export default function Payments() {
 									<span className="font-medium">{(paginationData?.totalCount as number) || 0}</span> results
 								</span>
 								<div className="ml-auto">
-									<CompactPagination page={page} pages={pages} onPageChange={(newPage) => dispatch(setPage(newPage))} />
+									<CompactPagination page={page} pages={pages} onPageChange={setPage} />
 								</div>
 							</div>
 						</CustomCard>

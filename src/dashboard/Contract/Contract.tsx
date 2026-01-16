@@ -45,10 +45,35 @@ export default function Contract() {
 	const [exportConfirmOpen, setExportConfirmOpen] = React.useState(false);
 
 	const debouncedSearch = useDebounceSearch(search);
+	const [, setIsMounted] = React.useState(false);
+
+	// Sync state with URL params on mount and when URL changes (back/forward navigation)
+	React.useEffect(() => {
+		const pageParam = searchParams.get("page");
+		const newPage = pageParam ? parseInt(pageParam, 10) : 1;
+		setPage(newPage);
+
+		const searchParam = searchParams.get("search") || "";
+		setSearch(searchParam);
+
+		const urlFilters: Record<string, string> = {};
+		const sortBy = searchParams.get("sortBy");
+		const sortOrder = searchParams.get("sortOrder");
+		const statusId = searchParams.get("statusId");
+		if (sortBy) urlFilters.sortBy = sortBy;
+		if (sortOrder) urlFilters.sortOrder = sortOrder;
+		if (statusId) urlFilters.statusId = statusId;
+		setFilters(urlFilters);
+	}, [searchParams]);
 
 	// Initialize URL params on mount if not present
 	React.useEffect(() => {
-		const hasParams = searchParams.has("page") || searchParams.has("sortBy") || searchParams.has("sortOrder");
+		const hasParams =
+			searchParams.has("page") ||
+			searchParams.has("search") ||
+			searchParams.has("sortBy") ||
+			searchParams.has("sortOrder") ||
+			searchParams.has("statusId");
 		if (!hasParams) {
 			const params = new URLSearchParams();
 			params.set("page", "1");
@@ -56,7 +81,8 @@ export default function Contract() {
 			params.set("sortOrder", "desc");
 			setSearchParams(params, { replace: true });
 		}
-	}, [searchParams, setSearchParams]);
+		setIsMounted(true);
+	}, []);
 
 	// Update URL when state changes
 	React.useEffect(() => {
@@ -71,10 +97,6 @@ export default function Contract() {
 		else params.delete("statusId");
 		setSearchParams(params, { replace: true });
 	}, [page, search, filters, setSearchParams]);
-
-	React.useEffect(() => {
-		setPage(1);
-	}, [debouncedSearch]);
 
 	const sortBy = (filters.sortBy as string) || "createdAt";
 	const sortOrder = (filters.sortOrder as string) || "desc";

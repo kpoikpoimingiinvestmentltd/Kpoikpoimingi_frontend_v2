@@ -23,11 +23,45 @@ import { extractErrorMessage } from "@/lib/utils";
 export default function ProductRequest() {
 	const [searchParams, setSearchParams] = useSearchParams();
 
-	const page = Number(searchParams.get("page")) || 1;
-	const limit = Number(searchParams.get("limit")) || 10;
-	const search = searchParams.get("search") || "";
-	const sortBy = searchParams.get("sortBy") || "createdAt";
-	const sortOrder = searchParams.get("sortOrder") || "desc";
+	// Initialize state from URL params
+	const [page, setPage] = React.useState(() => {
+		const pageParam = searchParams.get("page");
+		return pageParam ? parseInt(pageParam, 10) : 1;
+	});
+	const [search, setSearch] = React.useState(() => {
+		return searchParams.get("search") || "";
+	});
+	const [filters, setFilters] = React.useState<Record<string, string>>(() => {
+		const urlFilters: Record<string, string> = {};
+		const limit = searchParams.get("limit");
+		const sortBy = searchParams.get("sortBy");
+		const sortOrder = searchParams.get("sortOrder");
+		if (limit) urlFilters.limit = limit;
+		if (sortBy) urlFilters.sortBy = sortBy;
+		if (sortOrder) urlFilters.sortOrder = sortOrder;
+		return urlFilters;
+	});
+
+	const debouncedSearch = useDebounceSearch(search, 400);
+	const [, setIsMounted] = React.useState(false);
+
+	React.useEffect(() => {
+		const pageParam = searchParams.get("page");
+		const newPage = pageParam ? parseInt(pageParam, 10) : 1;
+		setPage(newPage);
+
+		const searchParam = searchParams.get("search") || "";
+		setSearch(searchParam);
+
+		const urlFilters: Record<string, string> = {};
+		const limit = searchParams.get("limit");
+		const sortBy = searchParams.get("sortBy");
+		const sortOrder = searchParams.get("sortOrder");
+		if (limit) urlFilters.limit = limit;
+		if (sortBy) urlFilters.sortBy = sortBy;
+		if (sortOrder) urlFilters.sortOrder = sortOrder;
+		setFilters(urlFilters);
+	}, [searchParams]);
 
 	// Initialize URL params on mount if not present
 	React.useEffect(() => {
@@ -43,27 +77,30 @@ export default function ProductRequest() {
 			params.set("limit", "10");
 			params.set("sortBy", "createdAt");
 			params.set("sortOrder", "desc");
-			setSearchParams(params);
+			setSearchParams(params, { replace: true });
 		}
+		setIsMounted(true);
 	}, []);
 
-	const debouncedSearch = useDebounceSearch(search, 400);
-	const [exportConfirmOpen, setExportConfirmOpen] = React.useState(false);
+	// Update URL when state changes
+	React.useEffect(() => {
+		const params = new URLSearchParams(searchParams);
+		params.set("page", page.toString());
+		params.set("search", search);
+		if (filters.limit) params.set("limit", filters.limit);
+		else params.delete("limit");
+		if (filters.sortBy) params.set("sortBy", filters.sortBy);
+		else params.delete("sortBy");
+		if (filters.sortOrder) params.set("sortOrder", filters.sortOrder);
+		else params.delete("sortOrder");
+		setSearchParams(params, { replace: true });
+	}, [page, search, filters, setSearchParams]);
 
-	const updateSearchParams = React.useCallback(
-		(updates: Record<string, string | number | null>) => {
-			const params = new URLSearchParams(searchParams);
-			Object.entries(updates).forEach(([key, value]) => {
-				if (value === null) {
-					params.delete(key);
-				} else {
-					params.set(key, String(value));
-				}
-			});
-			setSearchParams(params);
-		},
-		[searchParams, setSearchParams]
-	);
+	const limit = Number((filters.limit as string) || "10");
+	const sortBy = (filters.sortBy as string) || "createdAt";
+	const sortOrder = (filters.sortOrder as string) || "desc";
+
+	const [exportConfirmOpen, setExportConfirmOpen] = React.useState(false);
 
 	const query = useGetProductRequests(page, limit, debouncedSearch || "", sortBy, sortOrder);
 	const isLoading = query.isLoading || query.isFetching;
@@ -78,24 +115,22 @@ export default function ProductRequest() {
 	const [confirmOpen, setConfirmOpen] = React.useState(false);
 
 	const handleSearchChange = (value: string) => {
-		updateSearchParams({ search: value || null, page: 1 });
+		setSearch(value);
 	};
 
 	const handlePageChange = (newPage: number) => {
-		updateSearchParams({ page: newPage });
+		setPage(newPage);
 	};
 
-	const handleFiltersApply = (filters: Record<string, string>) => {
-		updateSearchParams({
-			limit: filters.limit || null,
-			sortBy: filters.sortBy || null,
-			sortOrder: filters.sortOrder || null,
-			page: 1,
-		});
+	const handleFiltersApply = (newFilters: Record<string, string>) => {
+		setFilters(newFilters);
+		setPage(1);
 	};
 
 	const handleFiltersReset = () => {
-		updateSearchParams({ search: null, limit: null, sortBy: null, sortOrder: null, page: null });
+		setSearch("");
+		setFilters({});
+		setPage(1);
 	};
 
 	const handleExportClick = async () => {
@@ -212,7 +247,7 @@ export default function ProductRequest() {
 									{ key: "sortOrder", label: "Sort Order", type: "sortOrder" },
 								] as FilterField[]
 							}
-							initialValues={{ limit: String(limit), sortBy: sortBy || "", sortOrder: sortOrder || "" }}
+							initialValues={{ limit: filters.limit || "10", sortBy: filters.sortBy || "", sortOrder: filters.sortOrder || "" }}
 							onApply={handleFiltersApply}
 							onReset={handleFiltersReset}
 						/>

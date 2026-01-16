@@ -45,6 +45,28 @@ export default function Categories() {
 	const { data: fetchedCategories, isLoading } = useGetAllCategories(page, limit, true);
 	const queryClient = useQueryClient();
 	const isEmpty = categories.length === 0 && !isLoading;
+	const [, setIsMounted] = React.useState(false);
+
+	// Sync state when URL params change (e.g., browser back/forward, refresh)
+	React.useEffect(() => {
+		const pageParam = searchParams.get("page");
+		const newPage = pageParam ? parseInt(pageParam, 10) : 1;
+		setPage(newPage);
+		setQuery(searchParams.get("search") || "");
+		setCategoryFilter(searchParams.get("filter") || null);
+	}, [searchParams]);
+
+	// Initialize URL params on mount if not present
+	React.useEffect(() => {
+		const hasParams = searchParams.has("page") || searchParams.has("search") || searchParams.has("filter");
+		if (!hasParams) {
+			const params = new URLSearchParams();
+			params.set("page", "1");
+			params.set("limit", "10");
+			setSearchParams(params, { replace: true });
+		}
+		setIsMounted(true);
+	}, []);
 
 	// Update URL when state changes
 	React.useEffect(() => {

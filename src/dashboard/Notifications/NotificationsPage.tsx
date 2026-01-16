@@ -22,10 +22,18 @@ import { useMarkAllNotificationsRead } from "@/api/notifications";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useSearchParams } from "react-router";
 
 export default function NotificationsPage() {
-	const [page, setPage] = React.useState(1);
+	const [searchParams, setSearchParams] = useSearchParams();
+
+	// Initialize page from URL params
+	const [page, setPage] = React.useState(() => {
+		const pageParam = searchParams.get("page");
+		return pageParam ? parseInt(pageParam, 10) : 1;
+	});
 	const [limit] = React.useState(20);
+	const [, setIsMounted] = React.useState(false);
 	const dispatch = useDispatch();
 	const storeState = useSelector((s: RootState) => s.notifications);
 
@@ -34,6 +42,24 @@ export default function NotificationsPage() {
 	const queryClient = useQueryClient();
 	const markAllMutation = useMarkAllNotificationsRead();
 
+	// Sync state when URL params change (e.g., browser back/forward, refresh)
+	React.useEffect(() => {
+		const pageParam = searchParams.get("page");
+		const newPage = pageParam ? parseInt(pageParam, 10) : 1;
+		setPage(newPage);
+	}, [searchParams]);
+
+	// Initialize URL params on mount if not present
+	React.useEffect(() => {
+		const hasParams = searchParams.has("page");
+		if (!hasParams) {
+			const params = new URLSearchParams();
+			params.set("page", "1");
+			setSearchParams(params, { replace: true });
+		}
+		setIsMounted(true);
+	}, []);
+
 	React.useEffect(() => {
 		dispatch(setLoading(!!isFetching || !!isLoading));
 	}, [isFetching, isLoading, dispatch]);
@@ -41,6 +67,13 @@ export default function NotificationsPage() {
 	React.useEffect(() => {
 		dispatch(setLoading(!!markAllMutation.isPending));
 	}, [markAllMutation.isPending, dispatch]);
+
+	// Update URL when page changes
+	React.useEffect(() => {
+		const params = new URLSearchParams(searchParams);
+		params.set("page", page.toString());
+		setSearchParams(params, { replace: true });
+	}, [page, setSearchParams]);
 
 	React.useEffect(() => {
 		if (!data) return;

@@ -38,6 +38,25 @@ export default function ReceiptTable() {
 
 	const debouncedSearch = useDebounceSearch(search);
 
+	// Sync state with URL params on mount and when URL changes (back/forward navigation)
+	React.useEffect(() => {
+		const pageParam = searchParams.get("page");
+		const newPage = pageParam ? parseInt(pageParam, 10) : 1;
+		setPage(newPage);
+
+		const searchParam = searchParams.get("search") || "";
+		setSearch(searchParam);
+
+		const urlFilters: Record<string, string> = {};
+		const limit = searchParams.get("limit");
+		const sortBy = searchParams.get("sortBy");
+		const sortOrder = searchParams.get("sortOrder");
+		if (limit) urlFilters.limit = limit;
+		if (sortBy) urlFilters.sortBy = sortBy;
+		if (sortOrder) urlFilters.sortOrder = sortOrder;
+		setFilters(urlFilters);
+	}, [searchParams]);
+
 	// Initialize URL params on mount if not present
 	React.useEffect(() => {
 		const hasParams =
@@ -54,7 +73,7 @@ export default function ReceiptTable() {
 			params.set("sortOrder", "desc");
 			setSearchParams(params, { replace: true });
 		}
-	}, [searchParams, setSearchParams]);
+	}, []);
 
 	// Update URL when state changes
 	React.useEffect(() => {
@@ -69,10 +88,6 @@ export default function ReceiptTable() {
 		else params.delete("sortOrder");
 		setSearchParams(params, { replace: true });
 	}, [page, search, filters, setSearchParams]);
-
-	React.useEffect(() => {
-		setPage(1);
-	}, [debouncedSearch]);
 
 	const limit = Number((filters.limit as string) || "10");
 	const sortBy = (filters.sortBy as string) || "createdAt";

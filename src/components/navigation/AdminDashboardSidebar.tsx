@@ -18,12 +18,14 @@ import {
 	CustomersIcon,
 	CartIcon,
 } from "@/assets/icons";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 export default function AdminDashboardSidebar({ onClose }: { onClose?: () => void; onLogoutOpen?: () => void }) {
 	const location = useLocation();
 	const pathname = location.pathname;
 	const propertiesBase = _router.dashboard.properties; // "/dashboard/properties"
 	const [submenuOpenManual, setSubmenuOpenManual] = React.useState<boolean | null>(null);
+	const { data: user } = useCurrentUser();
 
 	const isLinkActive = (linkPath: string) => {
 		if (linkPath === _router.dashboard.index) {
@@ -55,75 +57,77 @@ export default function AdminDashboardSidebar({ onClose }: { onClose?: () => voi
 			</header>
 			<div className="overflow-y-auto relative flex flex-col gap-y-4 mt-6 sidebar-links-container">
 				<ul className="flex flex-col items-start gap-y-0.5 w-full">
-					{links.map((link) => {
-						const active = isLinkActive(link.path);
-						const baseLinkClass = `flex w-full items-center text-start before:right-0 before:h-full before:w-0.5 before:content-[''] before:absolute relative gap-x-4 py-2.5 px-4 rounded-sm rounded-r-none active-scale transition-colors ${
-							active ? "bg-white/20 before:bg-white" : "text-black before:bg-transparent  hover:bg-white/15"
-						}`;
+					{links
+						.filter((link) => user?.role && link.allowedRoles.includes(user.role.role))
+						.map((link) => {
+							const active = isLinkActive(link.path);
+							const baseLinkClass = `flex w-full items-center text-start before:right-0 before:h-full before:w-0.5 before:content-[''] before:absolute relative gap-x-4 py-2.5 px-4 rounded-sm rounded-r-none active-scale transition-colors ${
+								active ? "bg-white/20 before:bg-white" : "text-black before:bg-transparent  hover:bg-white/15"
+							}`;
 
-						if (link.linkname === "Properties") {
-							const autoOpen = pathname === propertiesBase || pathname.startsWith(propertiesBase + "/");
-							const submenuOpen = submenuOpenManual === null ? autoOpen : submenuOpenManual;
+							if (link.linkname === "Properties") {
+								const autoOpen = pathname === propertiesBase || pathname.startsWith(propertiesBase + "/");
+								const submenuOpen = submenuOpenManual === null ? autoOpen : submenuOpenManual;
+								return (
+									<li key={link.linkname} className="w-full">
+										<div className={`flex items-center justify-between w-full ${baseLinkClass}`}>
+											<NavLink to={propertiesBase} onClick={() => onClose?.()} className="flex items-center gap-x-4 justify-between">
+												<IconWrapper className="text-[1.35rem] text-primary p-1.5 rounded-full bg-white">
+													<link.icon />
+												</IconWrapper>
+												<span className="font-medium text-sm text-white">{link.linkname}</span>
+											</NavLink>
+											<button
+												type="button"
+												aria-expanded={submenuOpen}
+												onClick={(e) => {
+													e.stopPropagation();
+													e.preventDefault();
+													setSubmenuOpenManual((prev) => (prev === null ? !autoOpen : !prev));
+												}}
+												className="text-white/90 hover:text-white">
+												<IconWrapper className={`text-xl ${submenuOpen ? "rotate-180" : ""} transition-transform`}>
+													<ChevronDownIcon />
+												</IconWrapper>
+											</button>
+										</div>
+
+										{/* Submenu */}
+										<div className={`bg-white/20 flex flex-col gap-y-[3px] w-full p-2.5 rounded-sm mt-1 ${submenuOpen ? "block" : "hidden"}`}>
+											<NavLink
+												to={_router.dashboard.addProperties}
+												onClick={() => onClose?.()}
+												className={`py-1.5 text-[.9rem] px-3.5 text-white/90 flex rounded ${
+													pathname === _router.dashboard.addProperties || pathname.startsWith(_router.dashboard.addProperties + "/")
+														? "bg-[#1312120d]"
+														: ""
+												}`}>
+												Add Properties
+											</NavLink>
+											<NavLink
+												to={_router.dashboard.categories}
+												onClick={() => onClose?.()}
+												className={`py-1.5 text-[.9rem] px-3.5 text-white/90 flex rounded ${
+													pathname === _router.dashboard.categories || pathname.startsWith(_router.dashboard.categories + "/") ? "bg-[#1312120d]" : ""
+												}`}>
+												Manage Categories
+											</NavLink>
+										</div>
+									</li>
+								);
+							}
+
 							return (
 								<li key={link.linkname} className="w-full">
-									<div className={`flex items-center justify-between w-full ${baseLinkClass}`}>
-										<NavLink to={propertiesBase} onClick={() => onClose?.()} className="flex items-center gap-x-4 justify-between">
-											<IconWrapper className="text-[1.35rem] text-primary p-1.5 rounded-full bg-white">
-												<link.icon />
-											</IconWrapper>
-											<span className="font-medium text-sm text-white">{link.linkname}</span>
-										</NavLink>
-										<button
-											type="button"
-											aria-expanded={submenuOpen}
-											onClick={(e) => {
-												e.stopPropagation();
-												e.preventDefault();
-												setSubmenuOpenManual((prev) => (prev === null ? !autoOpen : !prev));
-											}}
-											className="text-white/90 hover:text-white">
-											<IconWrapper className={`text-xl ${submenuOpen ? "rotate-180" : ""} transition-transform`}>
-												<ChevronDownIcon />
-											</IconWrapper>
-										</button>
-									</div>
-
-									{/* Submenu */}
-									<div className={`bg-white/20 flex flex-col gap-y-[3px] w-full p-2.5 rounded-sm mt-1 ${submenuOpen ? "block" : "hidden"}`}>
-										<NavLink
-											to={_router.dashboard.addProperties}
-											onClick={() => onClose?.()}
-											className={`py-1.5 text-[.9rem] px-3.5 text-white/90 flex rounded ${
-												pathname === _router.dashboard.addProperties || pathname.startsWith(_router.dashboard.addProperties + "/")
-													? "bg-[#1312120d]"
-													: ""
-											}`}>
-											Add Properties
-										</NavLink>
-										<NavLink
-											to={_router.dashboard.categories}
-											onClick={() => onClose?.()}
-											className={`py-1.5 text-[.9rem] px-3.5 text-white/90 flex rounded ${
-												pathname === _router.dashboard.categories || pathname.startsWith(_router.dashboard.categories + "/") ? "bg-[#1312120d]" : ""
-											}`}>
-											Manage Categories
-										</NavLink>
-									</div>
+									<NavLink to={link.path} onClick={() => onClose?.()} className={baseLinkClass}>
+										<IconWrapper className="text-[1.35rem] text-primary p-1.5 rounded-full bg-white">
+											<link.icon />
+										</IconWrapper>
+										<span className="font-medium text-[.925rem] text-white">{link.linkname}</span>
+									</NavLink>
 								</li>
 							);
-						}
-
-						return (
-							<li key={link.linkname} className="w-full">
-								<NavLink to={link.path} onClick={() => onClose?.()} className={baseLinkClass}>
-									<IconWrapper className="text-[1.35rem] text-primary p-1.5 rounded-full bg-white">
-										<link.icon />
-									</IconWrapper>
-									<span className="font-medium text-[.925rem] text-white">{link.linkname}</span>
-								</NavLink>
-							</li>
-						);
-					})}
+						})}
 				</ul>
 				{/* <ul className="flex flex-col items-start gap-y-2">
 					<li className="flex w-full items-center text-start gap-x-4 rounded-sm transition-colors justify-between">
@@ -148,50 +152,60 @@ const links = [
 		icon: DashboardIcon,
 		linkname: "Dashboard",
 		path: _router.dashboard.index,
+		allowedRoles: ["SUPER_ADMIN", "ADMIN", "STAFF"],
 	},
 	{
 		icon: CustomersIcon,
 		linkname: "Customers",
 		path: _router.dashboard.customers,
+		allowedRoles: ["SUPER_ADMIN", "ADMIN", "STAFF"],
 	},
 	{
 		icon: ContractIcon,
 		linkname: "Contract",
 		path: _router.dashboard.contract,
+		allowedRoles: ["SUPER_ADMIN", "ADMIN", "STAFF"],
 	},
 	{
 		icon: CartIcon,
 		linkname: "Properties",
 		path: _router.dashboard.properties,
+		allowedRoles: ["SUPER_ADMIN", "ADMIN", "STAFF"],
 	},
 	{
 		icon: UsersIcon,
 		linkname: "Users",
 		path: _router.dashboard.users,
+		allowedRoles: ["SUPER_ADMIN"],
 	},
 	{
 		icon: ReceiptIcon,
 		linkname: "Receipt",
 		path: _router.dashboard.receipt,
+		allowedRoles: ["SUPER_ADMIN", "ADMIN", "STAFF"],
 	},
 	{
 		icon: PayoutIcon,
 		linkname: "Payment",
 		path: _router.dashboard.payment,
+		allowedRoles: ["SUPER_ADMIN", "ADMIN", "STAFF"],
 	},
 	{
 		icon: DebtIcon,
 		linkname: "Debt",
 		path: _router.dashboard.debt,
+		allowedRoles: ["SUPER_ADMIN", "ADMIN", "STAFF"],
 	},
 	{
 		icon: ReportIcon,
 		linkname: "Report & Analytics",
 		path: _router.dashboard.reportAnalytics,
+		allowedRoles: ["SUPER_ADMIN", "ADMIN"],
 	},
 	{
 		icon: AuditIcon,
 		linkname: "Audit & Compliance",
 		path: _router.dashboard.auditAndCompliance,
+		allowedRoles: ["ADMIN", "SUPER_ADMIN"],
 	},
 ];
