@@ -65,7 +65,7 @@ export const appRouter = createBrowserRouter([
 			{
 				path: _router.dashboard.notifications,
 				element: (
-					<ProtectedRoute allowedRoles={ROLE_BASED_ACCESS.notificationsSendEmails}>
+					<ProtectedRoute allowedRoles={ROLE_BASED_ACCESS.notifications}>
 						<NotificationsPage />
 					</ProtectedRoute>
 				),

@@ -194,18 +194,24 @@ const links = [
 		icon: DebtIcon,
 		linkname: "Debt",
 		path: _router.dashboard.debt,
-		allowedRoles: ["SUPER_ADMIN", "ADMIN", "STAFF"],
+		allowedRoles: ["SUPER_ADMIN"],
 	},
 	{
 		icon: ReportIcon,
 		linkname: "Report & Analytics",
 		path: _router.dashboard.reportAnalytics,
-		allowedRoles: ["SUPER_ADMIN", "ADMIN"],
+		allowedRoles: ["SUPER_ADMIN"],
 	},
 	{
 		icon: AuditIcon,
 		linkname: "Audit & Compliance",
 		path: _router.dashboard.auditAndCompliance,
-		allowedRoles: ["ADMIN", "SUPER_ADMIN"],
+		allowedRoles: ["SUPER_ADMIN"],
+	},
+	{
+		icon: AuditIcon,
+		linkname: "Notifications",
+		path: _router.dashboard.notifications,
+		allowedRoles: ["STAFF", "ADMIN", "SUPER_ADMIN"],
 	},
 ];

@@ -7,6 +7,7 @@ import { CardSkeleton, RectangleSkeleton } from "@/components/common/Skeleton";
 import type { ReceiptDetail } from "@/types/receipt";
 import { useRef } from "react";
 import { handleDownloadPDF as downloadPDF, handleSharePDF as sharePDF } from "@/utils/pdfUtils";
+import { useCanPerformAction } from "@/hooks/usePermissions";
 
 export default function ReceiptDetails() {
 	const params = useParams();
@@ -17,6 +18,8 @@ export default function ReceiptDetails() {
 	const { data, isLoading } = useGetReceiptById(id);
 	const receipt: ReceiptDetail | null = data ?? null;
 	const receiptRef = useRef<HTMLDivElement>(null);
+	const canDownloadReceipt = useCanPerformAction("receiptDownload");
+	const canSendEmails = useCanPerformAction("notificationsSendEmails");
 
 	if (isLoading) {
 		return (
@@ -63,6 +66,8 @@ export default function ReceiptDetails() {
 				emailBody="Please find attached the receipt."
 				onDownload={handleDownloadPDF}
 				onShare={handleSharePDF}
+				shouldDownload={canDownloadReceipt}
+				shouldShare={canSendEmails}
 				receiptId={id}>
 				<ReceiptContent receipt={receipt} />
 			</ReceiptWrapper>

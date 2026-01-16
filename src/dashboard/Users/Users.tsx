@@ -25,10 +25,12 @@ import type { FilterField } from "@/components/common/SearchWithFilters";
 import { media } from "@/resources/images";
 import { useDebounceSearch } from "@/hooks/useDebounceSearch";
 import SuccessModal from "../../components/common/SuccessModal";
+import { useCanPerformAction } from "@/hooks/usePermissions";
 
 export default function Users() {
 	const [searchParams, setSearchParams] = useSearchParams();
 	const navigate = useNavigate();
+	const canDelete = useCanPerformAction("delete");
 
 	// Initialize state from URL params
 	const [page, setPage] = React.useState(() => {
@@ -387,15 +389,19 @@ export default function Users() {
 																			setResetPasswordConfirmOpen(true);
 																		},
 																	},
-																	{
-																		key: "delete",
-																		label: "Delete",
-																		danger: true,
-																		action: () => {
-																			setToDelete({ id: (row as Record<string, unknown>).id as string, title: String(getName(row)) });
-																			setConfirmOpen(true);
-																		},
-																	},
+																	...(canDelete
+																		? [
+																				{
+																					key: "delete",
+																					label: "Delete",
+																					danger: true,
+																					action: () => {
+																						setToDelete({ id: (row as Record<string, unknown>).id as string, title: String(getName(row)) });
+																						setConfirmOpen(true);
+																					},
+																				},
+																		  ]
+																		: []),
 																].map((it) => (
 																	<DropdownMenuItem
 																		key={it.key}

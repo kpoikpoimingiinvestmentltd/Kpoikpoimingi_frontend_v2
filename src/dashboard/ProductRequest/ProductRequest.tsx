@@ -19,6 +19,7 @@ import EmptyData from "@/components/common/EmptyData";
 import ExportConfirmModal from "@/components/common/ExportConfirmModal";
 import ActionButton from "@/components/base/ActionButton";
 import { extractErrorMessage } from "@/lib/utils";
+import { useCanDelete, useCanExport } from "@/hooks/usePermissions";
 
 export default function ProductRequest() {
 	const [searchParams, setSearchParams] = useSearchParams();
@@ -111,6 +112,9 @@ export default function ProductRequest() {
 	const deleteMutation = useDeleteRegistration();
 	const exportMutation = useExportProductRequests();
 
+	const canDelete = useCanDelete();
+	const canExport = useCanExport();
+
 	const [toDelete, setToDelete] = React.useState<{ id?: string; title?: string } | null>(null);
 	const [confirmOpen, setConfirmOpen] = React.useState(false);
 
@@ -198,16 +202,18 @@ export default function ProductRequest() {
 			<div className="flex items-center justify-between flex-wrap gap-4 mb-4">
 				<PageTitles title="Product Request" description="This is all the product request from customers" />
 				<div className="flex items-center gap-3">
-					<ActionButton
-						type="button"
-						className="flex items-center gap-2 bg-primary/10 text-primary hover:bg-primary/20"
-						onClick={handleExportClick}
-						disabled={exportMutation.isPending}>
-						<IconWrapper>
-							<ExportFileIcon />
-						</IconWrapper>
-						<span>{exportMutation.isPending ? "Exporting..." : "Export"}</span>
-					</ActionButton>
+					{canExport && (
+						<ActionButton
+							type="button"
+							className="flex items-center gap-2 bg-primary/10 text-primary hover:bg-primary/20"
+							onClick={handleExportClick}
+							disabled={exportMutation.isPending}>
+							<IconWrapper>
+								<ExportFileIcon />
+							</IconWrapper>
+							<span>{exportMutation.isPending ? "Exporting..." : "Export"}</span>
+						</ActionButton>
+					)}
 				</div>
 			</div>
 
@@ -297,18 +303,20 @@ export default function ProductRequest() {
 																	<EditIcon />
 																</IconWrapper>
 															</Link>
-															<button
-																type="button"
-																title="Delete"
-																onClick={() => {
-																	setToDelete({ id: item.id, title: item.name });
-																	setConfirmOpen(true);
-																}}
-																className="text-red-500 p-2">
-																<IconWrapper className="text-xl">
-																	<TrashIcon />
-																</IconWrapper>
-															</button>
+															{canDelete && (
+																<button
+																	type="button"
+																	title="Delete"
+																	onClick={() => {
+																		setToDelete({ id: item.id, title: item.name });
+																		setConfirmOpen(true);
+																	}}
+																	className="text-red-500 p-2">
+																	<IconWrapper className="text-xl">
+																		<TrashIcon />
+																	</IconWrapper>
+																</button>
+															)}
 														</div>
 													</TableCell>
 												</TableRow>

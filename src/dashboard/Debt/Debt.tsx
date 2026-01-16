@@ -22,9 +22,11 @@ import ActionButton from "@/components/base/ActionButton";
 import { toast } from "sonner";
 import { extractErrorMessage } from "@/lib/utils";
 import ExportConfirmModal from "@/components/common/ExportConfirmModal";
+import { useCanPerformAction } from "@/hooks/usePermissions";
 
 export default function Debt() {
 	const [searchParams, setSearchParams] = useSearchParams();
+	const canExport = useCanPerformAction("export");
 
 	const page = Number(searchParams.get("page")) || 1;
 	const limit = Number(searchParams.get("limit")) || 10;
@@ -163,16 +165,18 @@ export default function Debt() {
 			<div className="flex items-center justify-between flex-wrap gap-4 mb-4">
 				<PageTitles title="Debt" description="This contains all customers owing for product they signed to buy on installment" />
 				<div className="flex items-center gap-3">
-					<ActionButton
-						type="button"
-						className="bg-primary/10 text-primary hover:bg-primary/20 flex items-center gap-2"
-						onClick={handleExportClick}
-						disabled={exportMutation.isPending}>
-						<IconWrapper className="text-base">
-							<ExportFileIcon />
-						</IconWrapper>
-						<span className="text-sm">{exportMutation.isPending ? "Exporting..." : "Export"}</span>
-					</ActionButton>
+					{canExport && (
+						<ActionButton
+							type="button"
+							className="bg-primary/10 text-primary hover:bg-primary/20 flex items-center gap-2"
+							onClick={handleExportClick}
+							disabled={exportMutation.isPending}>
+							<IconWrapper className="text-base">
+								<ExportFileIcon />
+							</IconWrapper>
+							<span className="text-sm">{exportMutation.isPending ? "Exporting..." : "Export"}</span>
+						</ActionButton>
+					)}
 				</div>
 			</div>
 

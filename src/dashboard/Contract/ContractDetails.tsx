@@ -20,12 +20,14 @@ import { Skeleton } from "@/components/common/Skeleton";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "react-router";
+import { useCanPerformAction } from "@/hooks/usePermissions";
 
 export default function ContractDetails() {
 	const { id } = useParams();
 	const [searchParams, setSearchParams] = useSearchParams();
 	const { data: contract, isLoading } = useGetContractById(id || "", !!id);
 	const queryClient = useQueryClient();
+	const canTerminateContract = useCanPerformAction("contractTerminate");
 
 	const [pauseOpen, setPauseOpen] = useState(false);
 	const [terminateOpen, setTerminateOpen] = useState(false);
@@ -162,9 +164,11 @@ export default function ContractDetails() {
 							{resumeMutation.status === "pending" ? "Resuming..." : "Resume"}
 						</ActionButton>
 					)}
-					<ActionButton className="px-6 font-normal rounded-sm" variant="danger" onClick={() => setTerminateOpen(true)}>
-						Terminate
-					</ActionButton>{" "}
+					{canTerminateContract && (
+						<ActionButton className="px-6 font-normal rounded-sm" variant="danger" onClick={() => setTerminateOpen(true)}>
+							Terminate
+						</ActionButton>
+					)}{" "}
 					{/* Pause dialog */}
 					<Dialog open={pauseOpen} onOpenChange={setPauseOpen}>
 						<DialogContent>

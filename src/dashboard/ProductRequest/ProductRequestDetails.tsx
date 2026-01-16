@@ -12,6 +12,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useParams, useNavigate, useSearchParams } from "react-router";
 import { _router } from "@/routes/_router";
+import { useCanPerformAction } from "@/hooks/usePermissions";
 import TabProductInformation from "./TabProductInformation";
 import TabCustomerDetails from "./TabCustomerDetails";
 import TabNextOfKin from "./TabNextOfKin";
@@ -40,6 +41,9 @@ export default function ProductRequestDetails() {
 	);
 
 	const { data: registrationData, isLoading: registrationLoading } = useGetProductRequestById(id || "");
+
+	const canDecline = useCanPerformAction("productRequestDecline");
+	const canDelete = useCanPerformAction("delete");
 
 	const paymentTypeId = (registrationData as Record<string, unknown>)?.paymentTypeId as number;
 	const isContractSent = (registrationData as Record<string, unknown>)?.isContractSent as boolean;
@@ -209,18 +213,22 @@ export default function ProductRequestDetails() {
 							{sendMutation.isPending ? "Sending..." : "Send Contract"}
 						</ActionButton>
 					)}
-					<ActionButton className="px-6 font-normal rounded-sm" variant="danger" onClick={() => setConfirmOpen(true)}>
-						Decline
-					</ActionButton>
-					<ActionButton
-						className="px-6 font-normal rounded-sm"
-						variant="danger"
-						onClick={() => {
-							setConfirmAction("delete");
-							setConfirmOpen(true);
-						}}>
-						Delete
-					</ActionButton>
+					{canDecline && (
+						<ActionButton className="px-6 font-normal rounded-sm" variant="danger" onClick={() => setConfirmOpen(true)}>
+							Decline
+						</ActionButton>
+					)}
+					{canDelete && (
+						<ActionButton
+							className="px-6 font-normal rounded-sm"
+							variant="danger"
+							onClick={() => {
+								setConfirmAction("delete");
+								setConfirmOpen(true);
+							}}>
+							Delete
+						</ActionButton>
+					)}
 				</div>
 			</div>
 			{anyGuarantorMissingState && (

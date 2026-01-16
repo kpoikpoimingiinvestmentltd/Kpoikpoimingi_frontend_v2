@@ -18,9 +18,11 @@ import ActionButton from "@/components/base/ActionButton";
 import { toast } from "sonner";
 import { extractErrorMessage } from "@/lib/utils";
 import { useSearchParams } from "react-router";
+import { useCanPerformAction } from "@/hooks/usePermissions";
 
 export default function Contract() {
 	const [searchParams, setSearchParams] = useSearchParams();
+	const canExport = useCanPerformAction("export");
 
 	// Initialize state from URL params
 	const [page, setPage] = React.useState(() => {
@@ -202,13 +204,15 @@ export default function Contract() {
 			<div className="flex items-center justify-between flex-wrap gap-4 mb-4">
 				<PageTitles title="Contract" description="The contracts transaction between Kpo kpoi mingi investment and it customers" />
 				<div className="flex items-center gap-3">
-					<ActionButton
-						type="button"
-						className="bg-primary/10 text-primary hover:bg-primary/20"
-						onClick={handleExportClick}
-						disabled={exportMutation.isPending}>
-						<span className="text-sm">{exportMutation.isPending ? "Exporting..." : "Export CSV"}</span>
-					</ActionButton>
+					{canExport && (
+						<ActionButton
+							type="button"
+							className="bg-primary/10 text-primary hover:bg-primary/20"
+							onClick={handleExportClick}
+							disabled={exportMutation.isPending}>
+							<span className="text-sm">{exportMutation.isPending ? "Exporting..." : "Export CSV"}</span>
+						</ActionButton>
+					)}
 					<button
 						type="button"
 						onClick={() => setCreateOpen(true)}

@@ -21,9 +21,13 @@ import { toast } from "sonner";
 import { extractErrorMessage } from "@/lib/utils";
 import { useDebounceSearch } from "@/hooks/useDebounceSearch";
 import ExportConfirmModal from "@/components/common/ExportConfirmModal";
+import { useCanPerformAction } from "@/hooks/usePermissions";
 
 export default function Customers() {
 	const [searchParams, setSearchParams] = useSearchParams();
+	const canSendEmails = useCanPerformAction("notificationsSendEmails");
+	const canDelete = useCanPerformAction("delete");
+	const canExport = useCanPerformAction("export");
 
 	// Initialize state from URL params
 	const [page, setPage] = React.useState(() => {
@@ -238,19 +242,23 @@ export default function Customers() {
 			<div className="flex items-center justify-between flex-wrap gap-4 mb-4">
 				<PageTitles title="Customers" description="List of people who patronize Kpo kpoi mingi investment" />
 				<div className="flex items-center gap-3">
-					<ActionButton
-						type="button"
-						className="bg-primary/10 text-primary gap-2 hover:bg-primary/20"
-						onClick={handleExportClick}
-						disabled={exportMutation.isPending}>
-						<span className="text-sm">{exportMutation.isPending ? "Exporting..." : "Export CSV"}</span>
-					</ActionButton>
-					<ActionButton type="button" className="bg-primary/10 text-primary gap-2 hover:bg-primary/20" onClick={() => setIsSendEmailOpen(true)}>
-						<span className="text-sm">Send Email</span>
-						<IconWrapper className="opacity-50">
-							<SendEmailIcon />
-						</IconWrapper>
-					</ActionButton>
+					{canExport && (
+						<ActionButton
+							type="button"
+							className="bg-primary/10 text-primary gap-2 hover:bg-primary/20"
+							onClick={handleExportClick}
+							disabled={exportMutation.isPending}>
+							<span className="text-sm">{exportMutation.isPending ? "Exporting..." : "Export CSV"}</span>
+						</ActionButton>
+					)}
+					{canSendEmails && (
+						<ActionButton type="button" className="bg-primary/10 text-primary gap-2 hover:bg-primary/20" onClick={() => setIsSendEmailOpen(true)}>
+							<span className="text-sm">Send Email</span>
+							<IconWrapper className="opacity-50">
+								<SendEmailIcon />
+							</IconWrapper>
+						</ActionButton>
+					)}
 					<Link
 						to={_router.dashboard.selectCustomerPaymentMethod}
 						className="flex items-center gap-2 bg-primary rounded-sm px-4 py-2.5 active-scale transition text-white">
@@ -355,17 +363,19 @@ export default function Customers() {
 																</IconWrapper>
 															</Link>
 														)}
-														<button
-															type="button"
-															className="text-red-500"
-															onClick={() => {
-																setSelectedCustomerId(row.id);
-																setDeleteOpen(true);
-															}}>
-															<IconWrapper className="text-xl py-1.5">
-																<TrashIcon />
-															</IconWrapper>
-														</button>
+														{canDelete && (
+															<button
+																type="button"
+																className="text-red-500"
+																onClick={() => {
+																	setSelectedCustomerId(row.id);
+																	setDeleteOpen(true);
+																}}>
+																<IconWrapper className="text-xl py-1.5">
+																	<TrashIcon />
+																</IconWrapper>
+															</button>
+														)}
 													</TableCell>
 												</TableRow>
 											))}

@@ -11,14 +11,16 @@ import { tabListStyle, tabStyle } from "../../components/common/commonStyles";
 import LogoutModal from "../../components/common/LogoutModal";
 import PageWrapper from "../../components/common/PageWrapper";
 import { useSearchParams } from "react-router";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 export default function Setting() {
 	const [searchParams, setSearchParams] = useSearchParams();
 	const [editOpen, setEditOpen] = useState(false);
 	const [changePassOpen, setChangePassOpen] = useState(false);
 	const [logoutOpen, setLogoutOpen] = useState(false);
+	const { data: user } = useCurrentUser();
 
-	const activeTab = searchParams.get("tab") || "profile";
+	const activeTab = user?.role?.role !== "SUPER_ADMIN" && searchParams.get("tab") === "vat" ? "profile" : searchParams.get("tab") || "profile";
 
 	const handleTabChange = (value: string) => {
 		const params = new URLSearchParams(searchParams);
@@ -58,9 +60,11 @@ export default function Setting() {
 						<TabsTrigger value="profile" className={tabStyle}>
 							Profile
 						</TabsTrigger>
-						<TabsTrigger value="vat" className={tabStyle}>
-							VAT & Interest
-						</TabsTrigger>
+						{user?.role?.role === "SUPER_ADMIN" && (
+							<TabsTrigger value="vat" className={tabStyle}>
+								VAT & Interest
+							</TabsTrigger>
+						)}
 						{/* <TabsTrigger value="terms" className={tabStyle}>
 							Terms & Conditions
 						</TabsTrigger> */}
@@ -70,9 +74,11 @@ export default function Setting() {
 						<Profile />
 					</TabsContent>
 
-					<TabsContent value="vat">
-						<VatInterest />
-					</TabsContent>
+					{user?.role?.role === "SUPER_ADMIN" && (
+						<TabsContent value="vat">
+							<VatInterest />
+						</TabsContent>
+					)}
 
 					{/* <TabsContent value="terms">
 						<TermsAndConditions />

@@ -25,9 +25,11 @@ import { RectangleSkeleton } from "@/components/common/Skeleton";
 import { toast } from "sonner";
 import { extractErrorMessage } from "@/lib/utils";
 import { useSearchParams } from "react-router";
+import { useCanPerformAction } from "@/hooks/usePermissions";
 
 export default function Properties() {
 	const [searchParams, setSearchParams] = useSearchParams();
+	const canDelete = useCanPerformAction("delete");
 
 	// Initialize state from URL params
 	const [page, setPage] = React.useState(() => {
@@ -394,18 +396,20 @@ export default function Properties() {
 																		<span>Edit details</span>
 																	</button>
 																</DropdownMenuItem>
-																<DropdownMenuItem
-																	onClick={() => {
-																		setDeleteType("single");
-																		setPropertyToDelete(prod);
-																		setConfirmOpen(true);
-																	}}
-																	className="flex items-center gap-2 text-red-600 cursor-pointer">
-																	<IconWrapper className="text-base">
-																		<TrashIcon />
-																	</IconWrapper>
-																	<span>Delete</span>
-																</DropdownMenuItem>
+																{canDelete && (
+																	<DropdownMenuItem
+																		onClick={() => {
+																			setDeleteType("single");
+																			setPropertyToDelete(prod);
+																			setConfirmOpen(true);
+																		}}
+																		className="flex items-center gap-2 text-red-600 cursor-pointer">
+																		<IconWrapper className="text-base">
+																			<TrashIcon />
+																		</IconWrapper>
+																		<span>Delete</span>
+																	</DropdownMenuItem>
+																)}
 															</DropdownMenuContent>
 														</DropdownMenu>
 													</div>

@@ -19,11 +19,13 @@ import { twMerge } from "tailwind-merge";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { _router } from "../../routes/_router";
 import { useSearchParams } from "react-router";
+import { useCanPerformAction } from "@/hooks/usePermissions";
 
 // (moved into component state)
 
 export default function Categories() {
 	const [searchParams, setSearchParams] = useSearchParams();
+	const canDelete = useCanPerformAction("delete");
 
 	// Initialize state from URL params
 	const [categories, setCategories] = React.useState<any[]>([]);
@@ -353,17 +355,19 @@ export default function Categories() {
 																	<EditIcon />
 																</IconWrapper>
 															</button>
-															<button
-																type="button"
-																className="text-red-500 bg-transparent p-2 flex items-center"
-																onClick={() => {
-																	setToDelete({ id: row.id, title: row.title });
-																	setConfirmOpen(true);
-																}}>
-																<IconWrapper>
-																	<TrashIcon />
-																</IconWrapper>
-															</button>
+															{canDelete && (
+																<button
+																	type="button"
+																	className="text-red-500 bg-transparent p-2 flex items-center"
+																	onClick={() => {
+																		setToDelete({ id: row.id, title: row.title });
+																		setConfirmOpen(true);
+																	}}>
+																	<IconWrapper>
+																		<TrashIcon />
+																	</IconWrapper>
+																</button>
+															)}
 														</TableCell>
 													</TableRow>
 												));

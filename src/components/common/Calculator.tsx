@@ -154,7 +154,19 @@ export default function Calculator() {
 
 	return (
 		<div>
-			<Popover open={open} onOpenChange={setOpen}>
+			<Popover
+				open={open}
+				onOpenChange={(isOpen) => {
+					setOpen(isOpen);
+					if (!isOpen) {
+						// Clear inputs when closing
+						setPrincipal(0);
+						setRate(0);
+						setInterval("daily");
+						setDuration(0);
+						setTotal(null);
+					}
+				}}>
 				<div
 					className={`fixed z-50 right-6 bottom-6 before:content-[''] before:inset-0 before:fixed ${
 						open ? "before:z-[29] before:bg-black/50 before:pointer-events-auto" : "before:pointer-events-none"
