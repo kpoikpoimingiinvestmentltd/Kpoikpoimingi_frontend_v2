@@ -32,6 +32,7 @@ type Props = {
 	setUploadedFiles: React.Dispatch<React.SetStateAction<FileUploadState>>;
 	missingFields?: string[];
 	isPropertyPrefilled?: boolean;
+	submitButtonText?: string;
 };
 
 export default function InstallmentPaymentFormComponent({
@@ -54,6 +55,7 @@ export default function InstallmentPaymentFormComponent({
 	setUploadedFiles,
 	missingFields = [],
 	isPropertyPrefilled = false,
+	submitButtonText,
 }: Props) {
 	const formRef = React.useRef<HTMLFormElement | null>(null);
 
@@ -175,7 +177,7 @@ export default function InstallmentPaymentFormComponent({
 							<span>Processing...</span>
 						</>
 					) : (
-						"Save Changes"
+						submitButtonText || "Save Changes"
 					)}
 				</ActionButton>
 			</div>

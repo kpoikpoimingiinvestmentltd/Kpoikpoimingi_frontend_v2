@@ -38,6 +38,7 @@ type Props = {
 		quantity: number;
 		media?: string[];
 	}>;
+	submitButtonText?: string;
 };
 
 export default function CustomerForm({
@@ -48,6 +49,7 @@ export default function CustomerForm({
 	centeredContainer: centeredContainerProp,
 	paymentMethod: paymentMethodProp,
 	selectedProperties,
+	submitButtonText,
 }: Props) {
 	const baseEachSectionTitle = "text-lg font-normal";
 	const baseCenteredContainer = "mx-auto w-full md:w-2/3 w-full my-12";
@@ -594,6 +596,7 @@ export default function CustomerForm({
 				centeredContainer={centeredContainer}
 				sectionTitle={sectionTitle}
 				isValid={onceValid}
+				submitButtonText={submitButtonText}
 			/>
 		);
 	}
@@ -702,6 +705,7 @@ export default function CustomerForm({
 			setUploadedFiles={setUploadedFiles}
 			missingFields={missingFields}
 			isPropertyPrefilled={isPropertyPrefilledRef.current}
+			submitButtonText={submitButtonText}
 		/>
 	);
 }

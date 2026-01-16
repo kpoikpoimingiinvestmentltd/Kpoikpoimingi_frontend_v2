@@ -218,6 +218,10 @@ export function transformCustomerToOnceForm(customer: unknown): OncePaymentForm 
 			return {
 				propertyName: (p.customPropertyName || nestedProperty.name || "") as string,
 				quantity: (p.quantity as number) || 1,
+				propertyId: (p.propertyId as string) || "",
+				isCustomProperty: Boolean(p.isCustomProperty),
+				customPropertyPrice: (p.customPropertyPrice as number) || undefined,
+				isPrefilled: true,
 			};
 		}),
 	};

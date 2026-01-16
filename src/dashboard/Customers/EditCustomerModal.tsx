@@ -1,4 +1,4 @@
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader } from "@/components/ui/dialog";
 import CustomerForm from "./CustomerForm";
 import { modalContentStyle } from "../../components/common/commonStyles";
 import React from "react";
@@ -28,7 +28,16 @@ export default function EditCustomerModal({ open, onOpenChange, initial, documen
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
 			<DialogContent className={modalContentStyle()}>
-				<CustomerForm centeredContainer={() => "md:w-4/5 mx-auto"} initial={mergedInitial} onSubmit={onSave} onClose={() => onOpenChange(false)} />
+				<DialogHeader className="justify-center flex-row mt-5">
+					<h2 className="text-lg font-semibold">Edit Customer</h2>
+				</DialogHeader>
+				<CustomerForm
+					centeredContainer={() => "md:w-4/5 mx-auto"}
+					initial={mergedInitial}
+					onSubmit={onSave}
+					onClose={() => onOpenChange(false)}
+					submitButtonText="Update Customer"
+				/>
 			</DialogContent>
 		</Dialog>
 	);

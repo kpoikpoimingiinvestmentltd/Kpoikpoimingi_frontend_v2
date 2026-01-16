@@ -58,6 +58,7 @@ export default function EditProductRequest({ open, onOpenChange, initial, onSave
 					onSubmit={onSave}
 					centeredContainer={() => "mx-auto w-full md:w-3/4"}
 					paymentMethod={forceInstallment ? "installment" : undefined}
+					submitButtonText="Update Product Request"
 				/>
 			</DialogContent>
 		</Dialog>
