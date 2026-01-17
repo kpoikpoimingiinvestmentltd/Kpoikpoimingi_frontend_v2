@@ -4,7 +4,6 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import ActionButton from "@/components/base/ActionButton";
 import CustomInput from "@/components/base/CustomInput";
-import UploadBox from "@/components/base/UploadBox";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { useUpdateContract } from "@/api/contracts";
 import { toast } from "sonner";
@@ -12,8 +11,6 @@ import { extractErrorMessage } from "@/lib/utils";
 import { useQueryClient } from "@tanstack/react-query";
 import type { CustomerContract } from "@/api/contracts";
 import { modalContentStyle, labelStyle, selectTriggerStyle, radioStyle } from "@/components/common/commonStyles";
-import { usePresignUploadMutation } from "@/api/presign-upload.api";
-import { uploadFileToPresignedUrl } from "@/utils/media-upload";
 import { CalendarIcon } from "@/assets/icons";
 import ContractSuccessModal from "@/dashboard/Contract/ContractSuccessModal";
 
@@ -25,8 +22,8 @@ type Props = {
 
 export default function EditContractModal({ isOpen, onClose, contract }: Props) {
 	const queryClient = useQueryClient();
-	const [presignUpload] = usePresignUploadMutation();
-	const [isUploading, setIsUploading] = React.useState(false);
+	const [showSuccessModal, setShowSuccessModal] = React.useState(false);
+	const [generatedLink, setGeneratedLink] = React.useState<string>("");
 
 	const [formData, setFormData] = React.useState({
 		remarks: "",
@@ -37,10 +34,6 @@ export default function EditContractModal({ isOpen, onClose, contract }: Props) 
 		durationUnitId: "",
 		paymentMethod: "link",
 	});
-
-	const [uploadedContractFiles, setUploadedContractFiles] = React.useState<{ name: string; onRemove?: () => void }[]>([]);
-	const [showSuccessModal, setShowSuccessModal] = React.useState(false);
-	const [generatedLink, setGeneratedLink] = React.useState<string>("");
 
 	// Determine if this is a hire purchase (paymentTypeId === 1) or full payment (paymentTypeId === 2)
 	const isHirePurchase = contract?.paymentTypeId === 1;
@@ -66,7 +59,6 @@ export default function EditContractModal({ isOpen, onClose, contract }: Props) 
 				durationUnitId: contract.durationUnitId ? String(contract.durationUnitId) : "",
 				paymentMethod: "link",
 			});
-			setUploadedContractFiles([]);
 		}
 	}, [contract, isOpen]);
 
@@ -98,49 +90,6 @@ export default function EditContractModal({ isOpen, onClose, contract }: Props) 
 
 	const handleSelectChange = (name: string, value: string) => {
 		setFormData((prev) => ({ ...prev, [name]: value }));
-	};
-
-	const handleContractDocumentUpload = async (files: File[]) => {
-		if (!files || files.length === 0) return;
-
-		// Only accept the first file
-		const file = files[0];
-		setIsUploading(true);
-
-		try {
-			const presignResult = await presignUpload({
-				filename: file.name,
-				contentType: file.type,
-				relatedTable: "contract",
-			}).unwrap();
-
-			const uploadUrl = (presignResult as any).url ?? (presignResult as any).uploadUrl;
-			if (!uploadUrl) {
-				throw new Error("Presign upload did not return an uploadUrl");
-			}
-
-			const uploadResult = await uploadFileToPresignedUrl(uploadUrl, file);
-			if (!uploadResult.success) {
-				throw new Error(uploadResult.error ?? "Upload failed");
-			}
-
-			// Add to uploaded files list (single file only)
-			setUploadedContractFiles([
-				{
-					name: file.name,
-					onRemove: () => {
-						setUploadedContractFiles([]);
-					},
-				},
-			]);
-
-			toast.success("Contract document uploaded successfully");
-		} catch (err: unknown) {
-			const message = extractErrorMessage(err, "Upload failed");
-			toast.error(message);
-		} finally {
-			setIsUploading(false);
-		}
 	};
 
 	const handleSubmit = async () => {
@@ -367,18 +316,6 @@ export default function EditContractModal({ isOpen, onClose, contract }: Props) 
 								/>
 							</div>
 
-							{/* Contract Document Upload */}
-							<div className="w-full md:col-span-2 mt-4">
-								<UploadBox
-									placeholder={uploadedContractFiles.length > 0 ? "1 document uploaded" : "Upload Contract Document"}
-									hint={uploadedContractFiles.length > 0 ? "1 document uploaded" : "PNG, JPG, PDF Only"}
-									isUploading={isUploading}
-									isUploaded={uploadedContractFiles.length > 0}
-									uploadedFiles={uploadedContractFiles}
-									onChange={handleContractDocumentUpload}
-								/>
-							</div>
-
 							{/* Action Buttons */}
 							<div className="w-full md:col-span-2 flex gap-3 pt-4">
 								<ActionButton
@@ -393,7 +330,7 @@ export default function EditContractModal({ isOpen, onClose, contract }: Props) 
 									type="button"
 									className="w-full bg-primary text-white py-3"
 									onClick={handleSubmit}
-									disabled={updateMutation.status === "pending" || isUploading}>
+									disabled={updateMutation.status === "pending"}>
 									{updateMutation.status === "pending" ? "Saving Changes..." : "Save Changes"}
 								</ActionButton>
 							</div>
