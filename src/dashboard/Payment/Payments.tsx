@@ -18,6 +18,7 @@ import { extractErrorMessage } from "@/lib/utils";
 import ExportConfirmModal from "@/components/common/ExportConfirmModal";
 import { useSearchParams } from "react-router";
 import React from "react";
+import { useCanExport } from "@/hooks/usePermissions";
 
 export default function Payments() {
 	const [searchParams, setSearchParams] = useSearchParams();
@@ -55,6 +56,7 @@ export default function Payments() {
 
 	const debouncedSearch = useDebounceSearch(search);
 	const [, setIsMounted] = React.useState(false);
+	const canExport = useCanExport();
 
 	// Sync state when URL params change (e.g., browser back/forward, refresh)
 	React.useEffect(() => {
@@ -299,16 +301,18 @@ export default function Payments() {
 			<div className="flex items-center justify-between flex-wrap gap-4 mb-4">
 				<PageTitles title="Due Payments" description="The list of all paid debt and pending payment" />
 				<div className="flex items-center gap-3">
-					<ActionButton
-						type="button"
-						className="bg-primary/10 text-primary hover:bg-primary/20 flex items-center gap-2"
-						onClick={handleExportClick}
-						disabled={exportMutation.isPending}>
-						<IconWrapper className="text-base">
-							<ExportFileIcon />
-						</IconWrapper>
-						<span className="text-sm">{exportMutation.isPending ? "Exporting..." : "Export"}</span>
-					</ActionButton>
+					{canExport && (
+						<ActionButton
+							type="button"
+							className="bg-primary/10 text-primary hover:bg-primary/20 flex items-center gap-2"
+							onClick={handleExportClick}
+							disabled={exportMutation.isPending}>
+							<IconWrapper className="text-base">
+								<ExportFileIcon />
+							</IconWrapper>
+							<span className="text-sm">{exportMutation.isPending ? "Exporting..." : "Export"}</span>
+						</ActionButton>
+					)}
 				</div>
 			</div>
 
