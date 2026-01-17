@@ -21,6 +21,8 @@ import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "react-router";
 import { useCanPerformAction } from "@/hooks/usePermissions";
+import { EditIcon, IconWrapper } from "../../assets/icons";
+import EditContractModal from "@/components/common/EditContractModal";
 
 export default function ContractDetails() {
 	const { id } = useParams();
@@ -29,6 +31,7 @@ export default function ContractDetails() {
 	const queryClient = useQueryClient();
 	const canTerminateContract = useCanPerformAction("contractTerminate");
 
+	const [editOpen, setEditOpen] = useState(false);
 	const [pauseOpen, setPauseOpen] = useState(false);
 	const [terminateOpen, setTerminateOpen] = useState(false);
 	const [pauseReason, setPauseReason] = useState("Health Crises");
@@ -141,16 +144,17 @@ export default function ContractDetails() {
 				<PageTitles title="Contract" description="The contracts transaction between Kpo kpoi mingi investment and it customers" />
 
 				<div className="flex items-center gap-3">
-					{/* <ActionButton
+					<ActionButton
 						variant="ghost"
 						className="underline px-1"
 						leftIcon={
 							<IconWrapper className="text-xl">
 								<EditIcon />
 							</IconWrapper>
-						}>
+						}
+						onClick={() => setEditOpen(true)}>
 						Edit
-					</ActionButton> */}
+					</ActionButton>
 					{!contract?.isPaused ? (
 						<ActionButton className="px-6 font-normal rounded-sm" variant="danger" onClick={() => setPauseOpen(true)}>
 							Pause
@@ -276,6 +280,9 @@ export default function ContractDetails() {
 					</div>
 				</Tabs>
 			</CustomCard>
+
+			{/* Edit Contract Modal */}
+			<EditContractModal isOpen={editOpen} onClose={() => setEditOpen(false)} contract={contract} />
 		</PageWrapper>
 	);
 }

@@ -1,5 +1,5 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { apiPost, apiGet } from "@/services/apiClient";
+import { apiPost, apiGet, apiPatch } from "@/services/apiClient";
 import { apiGetFile } from "@/services/apiClient";
 import { API_ROUTES } from "./routes";
 import type { InternalFullPaymentRegistrationPayload, FullPaymentRegistrationResponse } from "@/types/customerRegistration";
@@ -247,6 +247,32 @@ export async function resumeContract(id: string) {
 export function useResumeContract(onSuccess?: (data: unknown) => void, onError?: (err: unknown) => void) {
 	return useMutation<unknown, unknown, string>({
 		mutationFn: (id: string) => resumeContract(id),
+		onSuccess: (data) => onSuccess?.(data),
+		onError: (err) => onError?.(err),
+	});
+}
+
+export type UpdateContractPayload = {
+	remarks?: string;
+	downPayment?: number | string;
+	intervalId?: number | string;
+	durationValue?: number | string;
+	durationUnitId?: number | string;
+	startDate?: string;
+	endDate?: string;
+	isCash?: boolean;
+	contractDocument?: string;
+};
+
+export async function updateContract(id: string, payload: UpdateContractPayload) {
+	return apiPatch(API_ROUTES.contracts.editContract(id), payload);
+}
+
+export function useUpdateContract(onSuccess?: (data: unknown) => void, onError?: (err: unknown) => void) {
+	return useMutation<unknown, unknown, { id: string; payload: UpdateContractPayload }>({
+		mutationFn: async ({ id, payload }) => {
+			return updateContract(id, payload);
+		},
 		onSuccess: (data) => onSuccess?.(data),
 		onError: (err) => onError?.(err),
 	});

@@ -79,6 +79,7 @@ export const API_ROUTES = {
 	},
 	contracts: {
 		createContract: "/contracts/create",
+		editContract: (id: string) => `/contracts/${id}`,
 		getContractPayments: (id: string) => `/contracts/${id}/payments`,
 		getSignedContract: (id: string) => `/contracts/${id}/signed-contract`,
 		getAllContracts: "/contracts",

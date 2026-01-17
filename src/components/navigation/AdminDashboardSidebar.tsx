@@ -17,6 +17,7 @@ import {
 	ContractIcon,
 	CustomersIcon,
 	CartIcon,
+	NotificationIcon,
 } from "@/assets/icons";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 
@@ -209,7 +210,7 @@ const links = [
 		allowedRoles: ["SUPER_ADMIN"],
 	},
 	{
-		icon: AuditIcon,
+		icon: NotificationIcon,
 		linkname: "Notifications",
 		path: _router.dashboard.notifications,
 		allowedRoles: ["STAFF", "ADMIN", "SUPER_ADMIN"],
