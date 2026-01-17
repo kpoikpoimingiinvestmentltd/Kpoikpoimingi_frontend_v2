@@ -3,7 +3,7 @@ import { useGetReferenceData } from "@/api/reference";
 import { twMerge } from "tailwind-merge";
 import { usePresignUploadMutation } from "@/api/presign-upload.api";
 import { uploadFileToPresignedUrl } from "@/utils/media-upload";
-import { createInternalCustomerRegistration, useUpdateCustomerRegistration, confirmEmailVerification } from "@/api/customer-registration";
+import { createInternalCustomerRegistration, useUpdateCustomerRegistration } from "@/api/customer-registration";
 import { useCreateInternalFullPaymentRegistration } from "@/api/contracts";
 import { formatPhoneNumber, extractErrorMessage } from "@/lib/utils";
 import { toast } from "sonner";
@@ -487,7 +487,7 @@ export default function CustomerForm({
 			setIsSubmitting(false);
 		}
 	};
-	const handleEmailVerification = async (token: string) => {
+	const handleEmailVerification = async () => {
 		if (!pendingSubmission) return;
 
 		try {
