@@ -385,6 +385,11 @@ export default function CustomerForm({
 					await fullPaymentMutation.mutateAsync(fullPaymentPayload);
 				}
 
+				// Clear localStorage drafts after successful creation
+				if (!isEditMode) {
+					localStorage.removeItem("customer_registration_draft");
+				}
+
 				// Reset form completely (localStorage + state)
 				resetFormCompletely();
 
@@ -547,6 +552,11 @@ export default function CustomerForm({
 					}
 					const response = await createInternalCustomerRegistration(payload);
 					toast.success(`Registration created successfully! Code: ${response.registrationCode}`);
+				}
+
+				// Clear localStorage drafts after successful creation
+				if (!isEditMode) {
+					localStorage.removeItem("customer_registration_draft");
 				}
 
 				resetFormCompletely();

@@ -33,7 +33,7 @@ export default function EmploymentDetailsSection({
 		<div className={centeredContainer()}>
 			<h3 className={sectionTitle()}>Employment Details</h3>
 			<div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-				<div>
+				<div className={isSelfEmployed ? "col-span-2" : ""}>
 					<label className={labelStyle()}>Employment status*</label>
 					<Select value={form.employment.status} onValueChange={(v) => handleChange("employment", { ...form.employment, status: v })}>
 						<SelectTrigger className={twMerge(inputStyle, "w-full min-h-11 cursor-pointer")}>
@@ -58,24 +58,6 @@ export default function EmploymentDetailsSection({
 
 				{isSelfEmployed ? (
 					<>
-						<CustomInput
-							label="Company name"
-							required
-							labelClassName={labelStyle()}
-							value={form.employment.companyName}
-							onChange={(e) => handleChange("employment", { ...form.employment, companyName: e.target.value })}
-							className={twMerge(inputStyle)}
-						/>
-
-						<div className="mt-4 col-span-full">
-							<label className={labelStyle()}>Business address*</label>
-							<Textarea
-								value={form.employment.businessAddress}
-								onChange={(e) => handleChange("employment", { ...form.employment, businessAddress: e.target.value })}
-								className={twMerge(inputStyle)}
-							/>
-						</div>
-
 						<div className="mt-4 col-span-full">
 							<label className={labelStyle()}>Home address*</label>
 							<Textarea
@@ -88,19 +70,19 @@ export default function EmploymentDetailsSection({
 				) : (
 					<>
 						<CustomInput
-							label="Employer name"
+							label="Company name"
 							required
 							labelClassName={labelStyle()}
-							value={form.employment.employerName}
-							onChange={(e) => handleChange("employment", { ...form.employment, employerName: e.target.value })}
+							value={form.employment.companyName}
+							onChange={(e) => handleChange("employment", { ...form.employment, companyName: e.target.value })}
 							className={twMerge(inputStyle)}
 						/>
 
 						<div className="mt-4 col-span-full">
-							<label className={labelStyle()}>Employer address*</label>
+							<label className={labelStyle()}>Company address*</label>
 							<Textarea
-								value={form.employment.employerAddress}
-								onChange={(e) => handleChange("employment", { ...form.employment, employerAddress: e.target.value })}
+								value={form.employment.businessAddress}
+								onChange={(e) => handleChange("employment", { ...form.employment, businessAddress: e.target.value })}
 								className={twMerge(inputStyle)}
 							/>
 						</div>
