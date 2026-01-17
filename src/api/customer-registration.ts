@@ -19,6 +19,15 @@ export async function updateCustomerRegistration(id: string, payload: CustomerRe
 	return apiPut<CustomerRegistrationResponse>(API_ROUTES.customerRegistration.updateCustomerRegistration(id), payload);
 }
 
+// Email verification functions
+export async function requestEmailVerification(email: string) {
+	return apiPost<{ message: string }>(API_ROUTES.customerRegistration.requestEmailVerification, { email });
+}
+
+export async function confirmEmailVerification(email: string, otp: string) {
+	return apiPost<{ message: string; emailVerificationToken?: string }>(API_ROUTES.customerRegistration.confirmEmailVerification, { email, otp });
+}
+
 export function useUpdateCustomerRegistration(onSuccess?: (data: CustomerRegistrationResponse) => void, onError?: (error: unknown) => void) {
 	return useMutation<CustomerRegistrationResponse, Error, { id: string; payload: CustomerRegistrationPayload }>({
 		mutationFn: ({ id, payload }) => updateCustomerRegistration(id, payload),

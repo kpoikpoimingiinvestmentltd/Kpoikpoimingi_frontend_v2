@@ -66,6 +66,8 @@ export const API_ROUTES = {
 		updateCustomerRegistration: (id: string) => `/customer-registration/${id}`,
 		declineCustomerRegistration: (id: string) => `/customer-registration/${id}/decline`,
 		exportCustomerRegistrations: "/customer-registration/export/csv",
+		requestEmailVerification: "/customer-registration/email/verify/request",
+		confirmEmailVerification: "/customer-registration/email/verify/confirm",
 	},
 	contractDocument: {
 		send: "/contract-document/send",
