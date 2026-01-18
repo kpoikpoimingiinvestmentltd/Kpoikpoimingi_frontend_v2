@@ -99,6 +99,7 @@ export const API_ROUTES = {
 	},
 	paymentLink: {
 		create: "/payment-link/create",
+		getByContract: (contractId: string) => `/payment-link/contract/${contractId}`,
 	},
 	payment: {
 		getPendingPayments: "/payment/pending",

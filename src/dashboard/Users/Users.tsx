@@ -251,12 +251,12 @@ export default function Users() {
 		return !!(obj.fullName || obj.email || obj.username || obj.id);
 	};
 
-	const getName = (r: unknown) => (isUser(r) ? r.fullName ?? r.username ?? r.email ?? r.id : (r as Record<string, unknown>).name ?? "-");
-	const getPhone = (r: unknown) => (isUser(r) ? r.phoneNumber ?? "-" : (r as Record<string, unknown>).phone ?? "-");
+	const getName = (r: unknown) => (isUser(r) ? (r.fullName ?? r.username ?? r.email ?? r.id) : ((r as Record<string, unknown>).name ?? "-"));
+	const getPhone = (r: unknown) => (isUser(r) ? (r.phoneNumber ?? "-") : ((r as Record<string, unknown>).phone ?? "-"));
 	const getRole = (r: unknown) =>
-		isUser(r) ? (typeof r.role === "string" ? r.role : r.role?.role ?? "-") : (r as Record<string, unknown>).role ?? "-";
+		isUser(r) ? (typeof r.role === "string" ? r.role : (r.role?.role ?? "-")) : ((r as Record<string, unknown>).role ?? "-");
 	const getAssigned = (r: unknown) =>
-		isUser(r) ? r.numberOfAssignedCustomers ?? "-" : (r as Record<string, unknown>).numberOfAssignedCustomers ?? "-";
+		isUser(r) ? (r.numberOfAssignedCustomers ?? "-") : ((r as Record<string, unknown>).numberOfAssignedCustomers ?? "-");
 	const getSalary = (r: unknown) => (r as Record<string, unknown>).salaryAmount ?? "-";
 
 	return (
@@ -340,11 +340,11 @@ export default function Users() {
 										<TableBody>
 											{users.map((row: unknown, idx: number) => (
 												<TableRow key={idx} className="hover:bg-[#F6FBFF]">
-													<TableCell className="text-[#13121266]">{renderField(getName(row))}</TableCell>
-													<TableCell className="text-[#13121266]">{renderField(getPhone(row))}</TableCell>
-													<TableCell className="text-[#13121266]">{renderField(getRole(row))}</TableCell>
-													<TableCell className="text-[#13121266]">{renderField(getAssigned(row))}</TableCell>
-													<TableCell className="text-[#13121266]">{renderField(getSalary(row))}</TableCell>
+													<TableCell>{renderField(getName(row))}</TableCell>
+													<TableCell>{renderField(getPhone(row))}</TableCell>
+													<TableCell>{renderField(getRole(row))}</TableCell>
+													<TableCell>{renderField(getAssigned(row))}</TableCell>
+													<TableCell>{renderField(getSalary(row))}</TableCell>
 													<TableCell className="flex items-center gap-1">
 														<DropdownMenu>
 															<DropdownMenuTrigger asChild>
@@ -400,7 +400,7 @@ export default function Users() {
 																						setConfirmOpen(true);
 																					},
 																				},
-																		  ]
+																			]
 																		: []),
 																].map((it) => (
 																	<DropdownMenuItem
@@ -598,7 +598,7 @@ export default function Users() {
 									value: <span className="text-primary font-medium">{generatedPassword}</span>,
 									variant: "inline",
 								},
-						  ]
+							]
 						: []
 				}
 				actions={[

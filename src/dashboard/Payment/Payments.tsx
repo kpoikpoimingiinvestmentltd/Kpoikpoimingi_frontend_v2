@@ -375,15 +375,15 @@ export default function Payments() {
 
 												return (
 													<TableRow key={(p.id as string) || idx} className="hover:bg-[#F6FBFF]">
-														<TableCell className="text-[#13121266] py-4">{p.contractCode as string}</TableCell>
-														<TableCell className="text-[#13121266] py-4">{p.customerName as string}</TableCell>
-														<TableCell className="text-[#13121266] py-4">{p.customerEmail as string}</TableCell>
-														<TableCell className="text-[#13121266] py-4">{p.propertyName as string}</TableCell>
-														<TableCell className="text-[#13121266] py-4">₦{p.amount as string}</TableCell>
-														<TableCell className="text-[#13121266] py-4">₦{p.lateFees as string}</TableCell>
-														<TableCell className="text-[#13121266] py-4 font-medium">₦{p.totalDue as string}</TableCell>
-														<TableCell className="text-[#13121266] py-4">{dueDate}</TableCell>
-														<TableCell className="text-[#13121266] py-4">
+														<TableCell className="py-4">{p.contractCode as string}</TableCell>
+														<TableCell className="py-4">{p.customerName as string}</TableCell>
+														<TableCell className="py-4">{p.customerEmail as string}</TableCell>
+														<TableCell className="py-4">{p.propertyName as string}</TableCell>
+														<TableCell className="py-4">₦{p.amount as string}</TableCell>
+														<TableCell className="py-4">₦{p.lateFees as string}</TableCell>
+														<TableCell className="py-4 font-medium">₦{p.totalDue as string}</TableCell>
+														<TableCell className="py-4">{dueDate}</TableCell>
+														<TableCell className="py-4">
 															<Badge
 																value={isOverdueStatus ? "Overdue" : statusStr || "Unknown"}
 																status={isOverdueStatus ? "banned" : undefined}

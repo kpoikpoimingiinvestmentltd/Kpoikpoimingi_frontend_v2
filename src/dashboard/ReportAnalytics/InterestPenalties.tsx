@@ -54,13 +54,13 @@ export default function InterestPenalties({ rows, page, pages, onPageChange, pag
 					<TableBody>
 						{rows.map((row: PenaltyRecord, idx: number) => (
 							<TableRow key={idx} className="hover:bg-[#F6FBFF]">
-								<TableCell className="text-[#13121266] py-4">{row.contractCode}</TableCell>
-								<TableCell className="text-[#13121266] py-4">{row.propertyName}</TableCell>
-								<TableCell className="text-[#13121266] py-4">{row.customerName}</TableCell>
-								<TableCell className="text-[#13121266] py-4">{formatCurrency(row.totalAmount)}</TableCell>
-								<TableCell className="text-[#13121266] py-4">{formatCurrency(row.lateFee)}</TableCell>
-								<TableCell className="text-[#13121266] py-4">{row.interestRate}</TableCell>
-								<TableCell className="text-[#13121266] py-4">{formatDate(row.dueDate)}</TableCell>
+								<TableCell className="py-4">{row.contractCode}</TableCell>
+								<TableCell className="py-4">{row.propertyName}</TableCell>
+								<TableCell className="py-4">{row.customerName}</TableCell>
+								<TableCell className="py-4">{formatCurrency(row.totalAmount)}</TableCell>
+								<TableCell className="py-4">{formatCurrency(row.lateFee)}</TableCell>
+								<TableCell className="py-4">{row.interestRate}</TableCell>
+								<TableCell className="py-4">{formatDate(row.dueDate)}</TableCell>
 							</TableRow>
 						))}
 					</TableBody>

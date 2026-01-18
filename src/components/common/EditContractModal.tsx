@@ -26,7 +26,6 @@ export default function EditContractModal({ isOpen, onClose, contract }: Props) 
 	const [generatedLink, setGeneratedLink] = React.useState<string>("");
 
 	const [formData, setFormData] = React.useState({
-		remarks: "",
 		downPayment: "",
 		startDate: "",
 		intervalId: "",
@@ -51,7 +50,6 @@ export default function EditContractModal({ isOpen, onClose, contract }: Props) 
 			};
 
 			setFormData({
-				remarks: contract.remarks || "",
 				downPayment: contract.downPayment || "",
 				startDate: formatDateForInput(contract.startDate),
 				intervalId: contract.intervalId ? String(contract.intervalId) : "",
@@ -98,7 +96,6 @@ export default function EditContractModal({ isOpen, onClose, contract }: Props) 
 		try {
 			const payload: Record<string, unknown> = {};
 
-			if (formData.remarks) payload.remarks = formData.remarks;
 			if (formData.downPayment) payload.downPayment = formData.downPayment;
 			if (formData.startDate) payload.startDate = formData.startDate;
 
@@ -304,17 +301,6 @@ export default function EditContractModal({ isOpen, onClose, contract }: Props) 
 									</div>
 								</>
 							)}
-
-							{/* Remarks */}
-							<div className="w-full md:col-span-2">
-								<CustomInput
-									label="Remarks (Optional)"
-									name="remarks"
-									value={formData.remarks}
-									onChange={handleInputChange}
-									placeholder="Enter any additional remarks"
-								/>
-							</div>
 
 							{/* Action Buttons */}
 							<div className="w-full md:col-span-2 flex gap-3 pt-4">

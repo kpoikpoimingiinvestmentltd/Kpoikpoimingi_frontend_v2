@@ -338,17 +338,17 @@ export default function Customers() {
 										<TableBody>
 											{customersList.map((row, idx: number) => (
 												<TableRow key={row.id || idx} className="hover:bg-[#F6FBFF]">
-													<TableCell className="text-[#13121266]" title={row.customerCode}>
+													<TableCell title={row.customerCode}>
 														<span className="max-w-40 block truncate">{row.customerCode}</span>
 													</TableCell>
-													<TableCell className="text-[#13121266]">{row.fullName}</TableCell>
-													<TableCell className="text-[#13121266]">{row.email}</TableCell>
-													<TableCell className="text-[#13121266]">{row.phoneNumber ?? "-"}</TableCell>
-													<TableCell className="text-[#13121266]">
+													<TableCell>{row.fullName}</TableCell>
+													<TableCell>{row.email}</TableCell>
+													<TableCell>{row.phoneNumber ?? "-"}</TableCell>
+													<TableCell>
 														<Badge value={row.status || "Active"} size="sm" />
 													</TableCell>
-													<TableCell className="text-[#13121266]">{row.createdAt ? new Date(row.createdAt).toLocaleDateString() : "-"}</TableCell>
-													<TableCell className="text-[#13121266]">
+													<TableCell>{row.createdAt ? new Date(row.createdAt).toLocaleDateString() : "-"}</TableCell>
+													<TableCell>
 														<Badge
 															value={row.registrations?.some((reg) => reg.isCurrent) ? "Current" : "Not Current"}
 															size="sm"

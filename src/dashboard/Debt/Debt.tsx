@@ -273,12 +273,12 @@ export default function Debt() {
 											const row = r as Record<string, unknown>;
 											return (
 												<TableRow key={i}>
-													<TableCell className="text-[#13121266]">{row.contractCode as string}</TableCell>
-													<TableCell className="text-[#13121266]">{row.customerName as string}</TableCell>
-													<TableCell className="text-[#13121266]">{row.propertyName as string}</TableCell>
-													<TableCell className="text-[#13121266]">NGN {((row.amountPaid as number) || 0).toLocaleString()}</TableCell>
-													<TableCell className="text-[#13121266]">NGN {((row.totalDebt as number) || 0).toLocaleString()}</TableCell>
-													<TableCell className="text-[#13121266]">{row.date as string}</TableCell>
+													<TableCell>{row.contractCode as string}</TableCell>
+													<TableCell>{row.customerName as string}</TableCell>
+													<TableCell>{row.propertyName as string}</TableCell>
+													<TableCell>NGN {((row.amountPaid as number) || 0).toLocaleString()}</TableCell>
+													<TableCell>NGN {((row.totalDebt as number) || 0).toLocaleString()}</TableCell>
+													<TableCell>{row.date as string}</TableCell>
 													<TableCell>
 														<span
 															className={twMerge(

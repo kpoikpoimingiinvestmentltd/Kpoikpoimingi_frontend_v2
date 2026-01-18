@@ -5,6 +5,7 @@ import { selectTriggerStyle, tabListStyle, tabStyle } from "@/components/common/
 import ActionButton from "@/components/base/ActionButton";
 import TabContractInformation from "./TabContractInformation";
 import TabPaymentPlan from "./TabPaymentPlan";
+import TabPaymentLinks from "./TabPaymentLinks";
 import TabReceiptHistory from "./TabReceiptHistory";
 import PageWrapper from "../../components/common/PageWrapper";
 // import { EditIcon, IconWrapper } from "../../assets/icons";
@@ -253,6 +254,9 @@ export default function ContractDetails() {
 						<TabsTrigger value="plan" className={tabStyle}>
 							Payment Plan & Schedule
 						</TabsTrigger>
+						<TabsTrigger value="payment-links" className={tabStyle}>
+							Payment Links
+						</TabsTrigger>
 						<TabsTrigger value="receipt" className={tabStyle}>
 							Receipt & Payment History
 						</TabsTrigger>
@@ -268,6 +272,10 @@ export default function ContractDetails() {
 
 						<TabsContent value="plan">
 							<TabPaymentPlan contract={contract} />
+						</TabsContent>
+
+						<TabsContent value="payment-links">
+							<TabPaymentLinks contract={contract} />
 						</TabsContent>
 
 						<TabsContent value="receipt">

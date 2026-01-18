@@ -470,3 +470,50 @@ export function useCreatePaymentLink(onSuccess?: (data: { paymentLink: string; r
 		onError: (err) => onError?.(err),
 	});
 }
+
+export type PaymentLinkItem = {
+	id: string;
+	contractId: string;
+	customerId: string;
+	paymentMethodId: number;
+	amount: string;
+	dueDate: string;
+	createdById: string;
+	remarks: string | null;
+	method: string | null;
+	statusId: number;
+	createdAt: string;
+	updatedAt: string;
+	paymentLink: string;
+	expiresAt: string | null;
+	isExpired: boolean;
+	reference: string;
+	status: {
+		id: number;
+		status: string;
+	};
+	paymentMethod: {
+		id: number;
+		method: string;
+	};
+	contract: {
+		id: string;
+		contractCode: string;
+		status: {
+			id: number;
+			status: string;
+		};
+	};
+};
+
+export async function getContractPaymentLinks(contractId: string) {
+	return apiGet(API_ROUTES.paymentLink.getByContract(contractId)) as Promise<PaymentLinkItem[]>;
+}
+
+export function useGetContractPaymentLinks(contractId: string, enabled = true) {
+	return useQuery<PaymentLinkItem[], unknown>({
+		queryKey: ["payment-links", contractId],
+		queryFn: () => getContractPaymentLinks(contractId),
+		enabled: !!contractId && enabled,
+	});
+}

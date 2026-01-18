@@ -169,13 +169,13 @@ export default function DebtDetails() {
 						<TableBody>
 							{paymentSchedule.map((payment, idx) => (
 								<TableRow key={idx} className="hover:bg-[#F6FBFF]">
-									<TableCell className="text-[#13121266] py-4">{payment.paymentNumber}</TableCell>
-									<TableCell className="text-[#13121266] py-4">₦{payment.amount.toLocaleString()}</TableCell>
-									<TableCell className="text-[#13121266] py-4">{new Date(payment.dueDate).toLocaleDateString()}</TableCell>
-									<TableCell className="text-[#13121266] py-4">
+									<TableCell className="py-4">{payment.paymentNumber}</TableCell>
+									<TableCell className="py-4">₦{payment.amount.toLocaleString()}</TableCell>
+									<TableCell className="py-4">{new Date(payment.dueDate).toLocaleDateString()}</TableCell>
+									<TableCell className="py-4">
 										<Badge value={payment.status} status={payment.isOverdue ? "banned" : "success"} size="sm" />
 									</TableCell>
-									<TableCell className="text-[#13121266] py-4">₦{payment.paidAmount.toLocaleString()}</TableCell>
+									<TableCell className="py-4">₦{payment.paidAmount.toLocaleString()}</TableCell>
 								</TableRow>
 							))}
 						</TableBody>
