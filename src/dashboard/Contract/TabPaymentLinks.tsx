@@ -71,11 +71,11 @@ export default function TabPaymentLinks({ contract }: { contract?: Contract }) {
 				<div className="overflow-x-auto mt-8">
 					<Table>
 						<TableHeader className="[&_tr]:border-0">
-							<TableRow className="bg-[#EAF6FF] hover:bg-[#EAF6FF] h-12 rounded-lg">
-								<TableHead className="border-r border-gray-200 text-center">Amount</TableHead>
-								<TableHead className="border-r border-gray-200 text-center">Due Date</TableHead>
-								<TableHead className="border-r border-gray-200 text-center">Created Date</TableHead>
-								<TableHead className="border-r border-gray-200 text-center">Status</TableHead>
+							<TableRow className="bg-[#EAF6FF] *:not-last:border-r  *:not-last:border-gray-200 *:text-center hover:bg-[#EAF6FF] h-12 rounded-lg">
+								<TableHead>Amount</TableHead>
+								<TableHead>Due Date</TableHead>
+								<TableHead>Created Date</TableHead>
+								<TableHead>Status</TableHead>
 								<TableHead className="text-center">Payment Link</TableHead>
 							</TableRow>
 						</TableHeader>
