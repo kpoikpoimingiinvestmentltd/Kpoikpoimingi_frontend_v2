@@ -17,7 +17,7 @@ export default function TabPaymentLinks({ contract }: { contract?: Contract }) {
 
 	const handleCopyLink = (link: string) => {
 		navigator.clipboard.writeText(link);
-		toast.success("Payment link copied to clipboard!");
+		toast.info("Payment link copied to clipboard!");
 	};
 
 	const formatDate = (dateString: string) => {
@@ -30,9 +30,9 @@ export default function TabPaymentLinks({ contract }: { contract?: Contract }) {
 
 	const formatCurrency = (value: string | number) => {
 		const num = typeof value === "string" ? parseFloat(value) : value;
-		return new Intl.NumberFormat("en-US", {
+		return new Intl.NumberFormat("en-NG", {
 			style: "currency",
-			currency: "USD",
+			currency: "NGN",
 		}).format(num);
 	};
 
@@ -100,14 +100,17 @@ export default function TabPaymentLinks({ contract }: { contract?: Contract }) {
 										{link.status?.status?.toUpperCase() === "PAID" ? (
 											<span className="text-sm text-green-600 font-medium">Payment Completed</span>
 										) : (
-											<div className="flex items-center justify-center gap-2">
-												<ActionButton variant="outline" onClick={() => handleCopyLink(link.paymentLink)} className="flex items-center gap-2">
-													<IconWrapper>
+											<div className="flex items-center text-sm justify-center gap-2">
+												<ActionButton
+													variant="outline"
+													onClick={() => handleCopyLink(link.paymentLink)}
+													className="flex items-center gap-2 text-sm py-1.5 px-2">
+													<IconWrapper className="text-lg">
 														<CopyIcon />
 													</IconWrapper>
-													Copy Link
+													<span> Copy Link</span>
 												</ActionButton>
-												<ActionButton variant="ghost" onClick={() => window.open(link.paymentLink, "_blank")}>
+												<ActionButton variant="primary" className="py-1.5" onClick={() => window.open(link.paymentLink, "_blank")}>
 													View
 												</ActionButton>
 											</div>
