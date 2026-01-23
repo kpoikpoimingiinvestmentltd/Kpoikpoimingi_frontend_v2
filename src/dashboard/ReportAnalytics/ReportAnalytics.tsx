@@ -71,7 +71,8 @@ export default function ReportAnalytics() {
 		const hasParams = searchParams.has("tab") || searchParams.has("vatPage") || searchParams.has("penaltyPage");
 
 		// Get values from URL or use defaults
-		const urlTab = searchParams.get("tab") || "vat";
+		const urlTabRaw = searchParams.get("tab") || "vat";
+		const urlTab = urlTabRaw === "vat" || urlTabRaw === "interest" ? urlTabRaw : "vat";
 		const urlVatPage = parseInt(searchParams.get("vatPage") || "1", 10);
 		const urlPenaltyPage = parseInt(searchParams.get("penaltyPage") || "1", 10);
 		const urlIncomePeriod = searchParams.get("incomePeriod") || "daily";
@@ -89,7 +90,7 @@ export default function ReportAnalytics() {
 		const urlPenaltySearch = searchParams.get("penaltySearch") || "";
 
 		// Dispatch to Redux to restore state
-		dispatch(setTab(urlTab));
+		dispatch(setTab(urlTab as "vat" | "interest"));
 		dispatch(setVatPage(urlVatPage));
 		dispatch(setPenaltyPage(urlPenaltyPage));
 		dispatch(setIncomePeriod(urlIncomePeriod));
@@ -202,7 +203,7 @@ export default function ReportAnalytics() {
 		isFilterApplied ? vatToDate || undefined : undefined,
 		vatSortBy,
 		vatSortOrder,
-		tab === "vat"
+		tab === "vat",
 	);
 
 	const vatRows: VATRecord[] = vatData?.data || [];
@@ -214,7 +215,7 @@ export default function ReportAnalytics() {
 		penaltySearch || undefined,
 		penaltySortBy,
 		penaltySortOrder,
-		tab === "interest"
+		tab === "interest",
 	);
 
 	const penaltyRows: PenaltyRecord[] = penaltiesData?.data || [];
@@ -572,12 +573,12 @@ export default function ReportAnalytics() {
 															vatSortOrder: vatSortOrder,
 															vatFromDate: vatFromDate || "",
 															vatToDate: vatToDate || "",
-													  }
+														}
 													: {
 															penaltyLimit: String(penaltyLimit),
 															penaltySortBy: penaltySortBy,
 															penaltySortOrder: penaltySortOrder,
-													  }
+														}
 											}
 											onApply={tab === "vat" ? handleVATFilterApply : handlePenaltyFilterApply}
 											onReset={tab === "vat" ? handleVATFilterReset : handlePenaltyFilterReset}
@@ -585,19 +586,21 @@ export default function ReportAnalytics() {
 									</div>
 								</div>
 
-								{/* <div className="mt-6 rounded-md bg-[#F3FBFF] p-4"> */}
-								{/* <div className="flex flex-col justify-between">
-										<div className="text-sm flex gap-3 items-center flex-wrap text-gray-500">
-											<span>{tab === "vat" ? "Total VAT Amount" : "Total Penalties Amount"}</span>
-											{tab === "vat" && isFilterApplied && vatFromDate && vatToDate && (
-												<span className="text-xs">
-													From {vatFromDate} To {vatToDate}
-												</span>
-											)}
+								{tab === "vat" && (
+									<div className="mt-6 rounded-md bg-[#F3FBFF] p-4">
+										<div className="flex flex-col justify-between">
+											<div className="text-sm flex gap-3 items-center flex-wrap text-gray-500">
+												<span>Total VAT Amount</span>
+												{isFilterApplied && vatFromDate && vatToDate && (
+													<span className="text-xs">
+														From {vatFromDate} To {vatToDate}
+													</span>
+												)}
+											</div>
+											<div className="mt-3 text-2xl font-medium">NGN {(vatData?.totals?.totalVatAmount || 0).toLocaleString()}</div>
 										</div>
-										<div className="mt-3 text-2xl font-medium">NGN 50,000,000</div>
-									</div> */}
-								{/* </div> */}
+									</div>
+								)}
 
 								<CustomCard className="mt-4 bg-card p-3">
 									{tab === "vat" ? (
