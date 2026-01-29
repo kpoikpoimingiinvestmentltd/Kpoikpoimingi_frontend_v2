@@ -19,6 +19,7 @@ import {
 } from "@/api/customer";
 import { EditIcon, IconWrapper } from "@/assets/icons";
 import EditCustomerModal from "./EditCustomerModal";
+import ActionButton from "../../components/base/ActionButton";
 
 export default function CustomerDetails() {
 	const { id } = useParams();
@@ -38,7 +39,7 @@ export default function CustomerDetails() {
 			params.set("tab", tab);
 			setSearchParams(params);
 		},
-		[searchParams, setSearchParams]
+		[searchParams, setSearchParams],
 	);
 
 	const hasFullName = (obj: unknown): obj is { fullName?: string } => typeof obj === "object" && obj !== null && "fullName" in obj;
@@ -69,7 +70,7 @@ export default function CustomerDetails() {
 	const displayName = customer
 		? hasFullName(customer) && customer.fullName
 			? customer.fullName
-			: getStringField(Array.isArray(approvedRegistrations) ? approvedRegistrations[0] : approvedRegistrations, "fullName") ?? ""
+			: (getStringField(Array.isArray(approvedRegistrations) ? approvedRegistrations[0] : approvedRegistrations, "fullName") ?? "")
 		: "";
 
 	const registrationsFromCustomer = getArrayField(customer, "registrations");
@@ -77,15 +78,15 @@ export default function CustomerDetails() {
 		registrationsFromCustomer && registrationsFromCustomer.length > 0
 			? registrationsFromCustomer
 			: Array.isArray(approvedRegistrations) && approvedRegistrations.length > 0
-			? approvedRegistrations
-			: undefined;
+				? approvedRegistrations
+				: undefined;
 
 	const registrationForEdit =
 		registrationsFromCustomer && registrationsFromCustomer.length > 0
 			? registrationsFromCustomer[0]
 			: Array.isArray(approvedRegistrations)
-			? approvedRegistrations[0]
-			: approvedRegistrations || customer;
+				? approvedRegistrations[0]
+				: approvedRegistrations || customer;
 
 	const resolveIsFullPayment = (): boolean => {
 		// check top-level customer
@@ -121,14 +122,15 @@ export default function CustomerDetails() {
 					<p className="text-sm text-muted-foreground mt-1">{String(displayName)}</p>
 				</div>
 				<div className="flex items-center gap-3">
-					<button
+					<ActionButton
+						type="button"
 						onClick={() => setIsEditOpen(true)}
-						className="flex items-center gap-0.5 px-4 py-2 text-sm text-black underline hover:bg-slate-50 rounded-md transition">
+						className="flex items-center gap-0.5 px-4 py-2 text-sm hover:text-black dark:bg-primary dark:text-white rounded-md transition">
 						<IconWrapper className="text-xl">
 							<EditIcon />
 						</IconWrapper>
 						<span>Edit</span>
-					</button>
+					</ActionButton>
 				</div>
 			</div>
 
@@ -177,8 +179,8 @@ export default function CustomerDetails() {
 													getStringField(customer, "phoneNumber") ??
 													getStringField(customer, "phone") ??
 													(Array.isArray(approvedRegistrations)
-														? getStringField(approvedRegistrations[0], "phoneNumber") ?? getStringField(approvedRegistrations[0], "phone")
-														: getStringField(approvedRegistrations, "phoneNumber") ?? getStringField(approvedRegistrations, "phone")),
+														? (getStringField(approvedRegistrations[0], "phoneNumber") ?? getStringField(approvedRegistrations[0], "phone"))
+														: (getStringField(approvedRegistrations, "phoneNumber") ?? getStringField(approvedRegistrations, "phone"))),
 												customerCode:
 													getStringField(customer, "customerCode") ??
 													(customer && typeof customer === "object" ? String((customer as Record<string, unknown>).id) : undefined),
@@ -189,7 +191,7 @@ export default function CustomerDetails() {
 													(Array.isArray(approvedRegistrations)
 														? getNumberField(approvedRegistrations[0], "paymentTypeId")
 														: getNumberField(approvedRegistrations, "paymentTypeId")),
-										  }
+											}
 										: null
 								}
 							/>

@@ -100,7 +100,7 @@ export default function ImageGallery({
 				{effectiveImgs[selected] ? (
 					<Image src={effectiveImgs[selected]} alt={`image-${selected}`} className="w-full md:w-[300px] h-52 md:h-64 object-center" />
 				) : (
-					<div className="flex items-center justify-center gap-y-3 flex-col text-center text-black">
+					<div className="flex items-center justify-center gap-y-3 flex-col text-center">
 						<IconWrapper className="text-2xl rotate-y-180">
 							<UploadCloudIcon />
 						</IconWrapper>

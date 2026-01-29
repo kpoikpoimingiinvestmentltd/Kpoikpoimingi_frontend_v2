@@ -160,9 +160,10 @@ export default function InstallmentPaymentFormComponent({
 					checked={((form as unknown as Record<string, unknown>).hasRequestAgreement as boolean) ?? false}
 					onCheckedChange={(checked) => handleChange("hasRequestAgreement", checked)}
 					label={
-						<span className="text-sm">
-							I hereby authorise <span className="font-medium">Kpoi Kpoi Mingi Investments Ltd</span> to retrieve the electrical appliance from me, or
-							any other person at my or any other place it may be found in the event of my default in paying the Hire Purchase sum as agreed.
+						<span className="text-[#131212B2] dark:text-white">
+							I hereby authorise <b className="font-medium dark:text-primary text-black">Kpoi Kpoi Mingi Investments Ltd</b> to retrieve the
+							electrical appliance from me, or any other person at my or any other place it may be found in the event of my default in paying the Hire
+							Purchase sum as agreed.
 						</span>
 					}
 					labelPosition="right"

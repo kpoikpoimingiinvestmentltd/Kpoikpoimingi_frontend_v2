@@ -46,8 +46,8 @@ export default function TabCustomerDetails({ customer }: { customer?: CustomerDe
 		const candidates = Array.isArray(rec["propertyInterestRequest"])
 			? (rec["propertyInterestRequest"] as unknown[])
 			: Array.isArray(rec["properties"])
-			? (rec["properties"] as unknown[])
-			: [];
+				? (rec["properties"] as unknown[])
+				: [];
 		candidates.forEach((p) => {
 			if (p && typeof p === "object") allProps.push(p as Record<string, unknown>);
 		});
@@ -375,9 +375,10 @@ export default function TabCustomerDetails({ customer }: { customer?: CustomerDe
 					</section>
 				)}
 				<div>
-					<small className="text-[#131212B2]">
-						I hereby authorise <b className="font-medium text-black">Kpoi Kpoi Mingi Investments Ltd</b> to retrieve the electrical appliance from me,
-						or any other person at my or any other place it may be found in the event of my default in paying the Hire Purchase sum as agreed.
+					<small className="text-[#131212B2] dark:text-white">
+						I hereby authorise <b className="font-medium dark:text-primary text-black">Kpoi Kpoi Mingi Investments Ltd</b> to retrieve the electrical
+						appliance from me, or any other person at my or any other place it may be found in the event of my default in paying the Hire
+						Purchase sum as agreed.
 					</small>
 				</div>
 				{!isFullPayment && (
