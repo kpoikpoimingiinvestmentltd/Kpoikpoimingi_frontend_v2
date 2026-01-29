@@ -125,7 +125,7 @@ export default function Customers() {
 		(err: unknown) => {
 			console.error("Error deleting customer:", err);
 			toast.error(extractErrorMessage(err, "Failed to delete customer"));
-		}
+		},
 	);
 
 	const handleSearchChange = (value: string) => {
@@ -324,7 +324,7 @@ export default function Customers() {
 								<div className="overflow-x-auto w-full">
 									<Table>
 										<TableHeader className={tableHeaderRowStyle}>
-											<TableRow className="bg-[#EAF6FF] h-12 overflow-hidden py-4 rounded-lg">
+											<TableRow className="bg-[#EAF6FF] dark:bg-neutral-900/80 h-12 overflow-hidden py-4 rounded-lg">
 												<TableHead>Customer ID</TableHead>
 												<TableHead>Name</TableHead>
 												<TableHead>Email</TableHead>
@@ -337,7 +337,7 @@ export default function Customers() {
 										</TableHeader>
 										<TableBody>
 											{customersList.map((row, idx: number) => (
-												<TableRow key={row.id || idx} className="hover:bg-[#F6FBFF]">
+												<TableRow key={row.id || idx} className="hover:bg-[#F6FBFF] dark:hover:bg-neutral-900/50">
 													<TableCell title={row.customerCode}>
 														<span className="max-w-40 block truncate">{row.customerCode}</span>
 													</TableCell>

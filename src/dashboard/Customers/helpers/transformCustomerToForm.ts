@@ -121,29 +121,29 @@ export function transformCustomerToInstallmentForm(customer: unknown): Installme
 		paymentFrequency: String((firstInterest && firstInterest.paymentIntervalId) || ""),
 		paymentDuration: String((firstInterest && firstInterest.durationValue) || ""),
 		paymentDurationUnit: String((firstInterest && firstInterest.durationUnitId) || ""),
-		downPayment: String((firstInterest && firstInterest.downPayment) || (c.downPayment as string) || ""),
-		amountAvailable: firstInterest && firstInterest.downPayment ? String(firstInterest.downPayment) : "",
+		downPayment: String(firstInterest && firstInterest.downPayment != null ? firstInterest.downPayment : c.downPayment != null ? c.downPayment : ""),
+		amountAvailable: firstInterest && firstInterest.downPayment != null ? String(firstInterest.downPayment) : "",
 		clarification: {
 			previousAgreement:
 				typeof c.previousHirePurchase === "string"
 					? (c.previousHirePurchase as string).toLowerCase().startsWith("y")
 						? true
 						: (c.previousHirePurchase as string).toLowerCase().startsWith("n")
-						? false
-						: null
+							? false
+							: null
 					: typeof c.previousHirePurchase === "boolean"
-					? (c.previousHirePurchase as boolean)
-					: null,
+						? (c.previousHirePurchase as boolean)
+						: null,
 			completedAgreement:
 				typeof c.wasPreviousCompleted === "string"
 					? (c.wasPreviousCompleted as string).toLowerCase().startsWith("y")
 						? true
 						: (c.wasPreviousCompleted as string).toLowerCase().startsWith("n")
-						? false
-						: null
+							? false
+							: null
 					: typeof c.wasPreviousCompleted === "boolean"
-					? (c.wasPreviousCompleted as boolean)
-					: null,
+						? (c.wasPreviousCompleted as boolean)
+						: null,
 			prevCompany: (c.previousCompany || "") as string,
 			reason: (c.purposeOfProperty || "") as string,
 		},
@@ -157,15 +157,24 @@ export function transformCustomerToInstallmentForm(customer: unknown): Installme
 						? ((c.employmentDetails as Record<string, unknown>).employmentStatus as { status: string }).status === "EMPLOYED"
 							? "1"
 							: ((c.employmentDetails as Record<string, unknown>).employmentStatus as { status: string }).status === "SELF EMPLOYED"
-							? "2"
-							: ""
+								? "2"
+								: ""
 						: (c.employmentDetails as Record<string, unknown>).employmentStatus) ||
-					""
+					"",
 			),
 			employerName: String((c.employmentDetails && (c.employmentDetails as Record<string, unknown>).employerName) || ""),
 			employerAddress: String((c.employmentDetails && (c.employmentDetails as Record<string, unknown>).employerAddress) || ""),
-			companyName: String((c.employmentDetails && (c.employmentDetails as Record<string, unknown>).companyName) || ""),
-			businessAddress: String((c.employmentDetails && (c.employmentDetails as Record<string, unknown>).businessAddress) || ""),
+			// Map employer fields into company fields when company fields are absent
+			companyName: String(
+				(c.employmentDetails && (c.employmentDetails as Record<string, unknown>).companyName) ||
+					(c.employmentDetails && (c.employmentDetails as Record<string, unknown>).employerName) ||
+					"",
+			),
+			businessAddress: String(
+				(c.employmentDetails && (c.employmentDetails as Record<string, unknown>).businessAddress) ||
+					(c.employmentDetails && (c.employmentDetails as Record<string, unknown>).employerAddress) ||
+					"",
+			),
 			homeAddress: String((c.employmentDetails && (c.employmentDetails as Record<string, unknown>).homeAddress) || ""),
 		},
 		guarantors: guarantorsArray.map((g) => {
@@ -181,10 +190,10 @@ export function transformCustomerToInstallmentForm(customer: unknown): Installme
 							? (gg.employmentStatus as { status: string }).status === "EMPLOYED"
 								? "1"
 								: (gg.employmentStatus as { status: string }).status === "SELF EMPLOYED"
-								? "2"
-								: ""
+									? "2"
+									: ""
 							: gg.employmentStatus) ||
-						""
+						"",
 				),
 				homeAddress: (gg.homeAddress || gg.address || "") as string,
 				businessAddress: (gg.companyAddress || gg.businessAddress || "") as string,

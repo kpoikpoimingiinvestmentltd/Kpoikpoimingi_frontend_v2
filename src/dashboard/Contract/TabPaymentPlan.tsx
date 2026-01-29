@@ -33,7 +33,7 @@ export default function TabPaymentPlan({ contract }: { contract?: Contract }) {
 	} = useGetPaymentSchedules(
 		contract?.id || "",
 		true,
-		5 * 60 * 1000 // 5 minutes in milliseconds
+		5 * 60 * 1000, // 5 minutes in milliseconds
 	);
 
 	const generateLinkMutation = useGeneratePaymentLink(
@@ -47,7 +47,7 @@ export default function TabPaymentPlan({ contract }: { contract?: Contract }) {
 			const message = (err as { message?: string })?.message ?? "Failed to generate payment link";
 			toast.error(message);
 			setLoadingScheduleId(null);
-		}
+		},
 	);
 
 	const handleGenerateLink = (scheduleId: string) => {
@@ -68,7 +68,7 @@ export default function TabPaymentPlan({ contract }: { contract?: Contract }) {
 				displayStatus: schedule.displayStatus,
 				canGenerateLink: schedule.canGenerateLink,
 				paymentLink: schedule.paymentLink,
-		  }))
+			}))
 		: [];
 
 	const totalAmount = (Array.isArray(schedules) ? schedules : [])
@@ -87,31 +87,31 @@ export default function TabPaymentPlan({ contract }: { contract?: Contract }) {
 						<div className="overflow-x-auto">
 							<Table>
 								<TableHeader className="[&_tr]:border-0">
-									<TableRow className="bg-[#EAF6FF] hover:bg-[#EAF6FF] h-12 overflow-hidden py-4 rounded-lg">
-										<TableHead className="border-r border-gray-200 text-center">Payment #</TableHead>
-										<TableHead className="border-r border-gray-200 text-center">Due Date</TableHead>
-										<TableHead className="border-r border-gray-200 text-center">Amount</TableHead>
-										<TableHead className="border-r border-gray-200 text-center">Late Fees</TableHead>
-										<TableHead className="border-r border-gray-200 text-center">Total Due</TableHead>
+									<TableRow className="bg-[#EAF6FF] dark:bg-neutral-900/80 hover:bg-[#EAF6FF] dark:hover:bg-neutral-900/50 h-12 overflow-hidden py-4 rounded-lg">
+										<TableHead className="border-r dark:border-r-neutral-800 border-gray-200 text-center">Payment #</TableHead>
+										<TableHead className="border-r dark:border-r-neutral-800 border-gray-200 text-center">Due Date</TableHead>
+										<TableHead className="border-r dark:border-r-neutral-800 border-gray-200 text-center">Amount</TableHead>
+										<TableHead className="border-r dark:border-r-neutral-800 border-gray-200 text-center">Late Fees</TableHead>
+										<TableHead className="border-r dark:border-r-neutral-800 border-gray-200 text-center">Total Due</TableHead>
 										<TableHead className="text-center">Status & Payment Link</TableHead>
 									</TableRow>
 								</TableHeader>
 								<TableBody>
 									{[...Array(5)].map((_, i) => (
-										<TableRow key={i} className="hover:bg-[#F6FBFF]">
-											<TableCell className="py-6 border-r border-gray-200 text-center">
+										<TableRow key={i} className="hover:bg-[#F6FBFF] dark:hover:bg-neutral-900/50">
+											<TableCell className="py-6 border-r border-gray-200 dark:border-r-neutral-800 text-center">
 												<Skeleton className="h-4 w-8 mx-auto" />
 											</TableCell>
-											<TableCell className="py-6 border-r border-gray-200 text-center">
+											<TableCell className="py-6 border-r border-gray-200 dark:border-r-neutral-800 text-center">
 												<Skeleton className="h-4 w-24 mx-auto" />
 											</TableCell>
-											<TableCell className="py-6 border-r border-gray-200 text-center">
+											<TableCell className="py-6 border-r border-gray-200 dark:border-r-neutral-800 text-center">
 												<Skeleton className="h-4 w-20 mx-auto" />
 											</TableCell>
-											<TableCell className="py-6 border-r border-gray-200 text-center">
+											<TableCell className="py-6 border-r border-gray-200 dark:border-r-neutral-800 text-center">
 												<Skeleton className="h-4 w-16 mx-auto" />
 											</TableCell>
-											<TableCell className="py-6 border-r border-gray-200 text-center">
+											<TableCell className="py-6 border-r border-gray-200 dark:border-r-neutral-800 text-center">
 												<Skeleton className="h-4 w-20 mx-auto" />
 											</TableCell>
 											<TableCell className="py-6 text-center">
@@ -120,13 +120,13 @@ export default function TabPaymentPlan({ contract }: { contract?: Contract }) {
 										</TableRow>
 									))}
 									<TableRow>
-										<TableCell className="py-4 border-r border-gray-200"></TableCell>
-										<TableCell className="py-4 border-r border-gray-200"></TableCell>
-										<TableCell className="py-4 text-center font-medium border-r border-gray-200">
+										<TableCell className="py-4 border-r border-gray-200 dark:border-r-neutral-800"></TableCell>
+										<TableCell className="py-4 border-r border-gray-200 dark:border-r-neutral-800"></TableCell>
+										<TableCell className="py-4 text-center font-medium border-r border-gray-200 dark:border-r-neutral-800">
 											<Skeleton className="h-4 w-12 mx-auto" />
 										</TableCell>
-										<TableCell className="py-4 text-center border-r border-gray-200"></TableCell>
-										<TableCell className="py-4 text-center font-medium border-r border-gray-200">
+										<TableCell className="py-4 text-center border-r border-gray-200 dark:border-r-neutral-800"></TableCell>
+										<TableCell className="py-4 text-center font-medium border-r border-gray-200 dark:border-r-neutral-800">
 											<Skeleton className="h-4 w-24 mx-auto" />
 										</TableCell>
 										<TableCell className="py-4" />
@@ -145,19 +145,19 @@ export default function TabPaymentPlan({ contract }: { contract?: Contract }) {
 						<div className="overflow-x-auto">
 							<Table>
 								<TableHeader className="[&_tr]:border-0">
-									<TableRow className="bg-[#EAF6FF] hover:bg-[#EAF6FF] h-12 overflow-hidden py-4 rounded-lg">
-										<TableHead className="border-r border-gray-200 text-center">Payment #</TableHead>
-										<TableHead className="border-r border-gray-200 text-center">Due Date</TableHead>
-										<TableHead className="border-r border-gray-200 text-center">Amount</TableHead>
-										<TableHead className="border-r border-gray-200 text-center">Late Fees</TableHead>
-										<TableHead className="border-r border-gray-200 text-center">Total Due</TableHead>
+									<TableRow className="bg-[#EAF6FF] dark:bg-neutral-900/80 hover:bg-[#EAF6FF] dark:hover:bg-neutral-900/50 h-12 overflow-hidden py-4 rounded-lg">
+										<TableHead className="border-r border-gray-200 dark:border-r-neutral-800 text-center">Payment #</TableHead>
+										<TableHead className="border-r border-gray-200 dark:border-r-neutral-800 text-center">Due Date</TableHead>
+										<TableHead className="border-r border-gray-200 dark:border-r-neutral-800 text-center">Amount</TableHead>
+										<TableHead className="border-r border-gray-200 dark:border-r-neutral-800 text-center">Late Fees</TableHead>
+										<TableHead className="border-r border-gray-200 dark:border-r-neutral-800 text-center">Total Due</TableHead>
 										<TableHead className="text-center">Status & Payment Link</TableHead>
 									</TableRow>
 								</TableHeader>
 
 								<TableBody>
 									{displaySchedules.map((schedule: Record<string, unknown>, i: number) => (
-										<TableRow key={schedule.id as string} className="hover:bg-[#F6FBFF]">
+										<TableRow key={schedule.id as string} className="hover:bg-[#F6FBFF] dark:hover:bg-neutral-900/50">
 											<TableCell className="py-6 border-r border-gray-200 text-center">{i + 1}</TableCell>
 											<TableCell className="py-6 border-r border-gray-200 text-center">{schedule.date as string}</TableCell>
 											<TableCell className="py-6 border-r border-gray-200 text-center">₦{schedule.amount as number}</TableCell>
@@ -203,7 +203,7 @@ export default function TabPaymentPlan({ contract }: { contract?: Contract }) {
 																	disabled={loadingScheduleId === (schedule.id as string)}
 																	className={twMerge(
 																		"active-scale bg-white text-transparent bg-clip-text bg-gradient-to-r from-[#03B4FA] to-[#026B94] disabled:bg-white disabled:opacity-90 border border-stone-100 px-6 py-2 rounded-full rounded-l-none text-sm shadow-xl",
-																		loadingScheduleId === (schedule.id as string) && "opacity-50 cursor-not-allowed"
+																		loadingScheduleId === (schedule.id as string) && "opacity-50 cursor-not-allowed",
 																	)}>
 																	{loadingScheduleId === (schedule.id as string) ? "Generating..." : "Generate Link"}
 																</button>
@@ -214,7 +214,7 @@ export default function TabPaymentPlan({ contract }: { contract?: Contract }) {
 																disabled={loadingScheduleId === (schedule.id as string)}
 																className={twMerge(
 																	"active-scale bg-white text-transparent bg-clip-text bg-gradient-to-r from-[#03B4FA] to-[#026B94] px-6 py-2 rounded-full rounded-l-none text-sm shadow-xl",
-																	loadingScheduleId === (schedule.id as string) && "opacity-50 cursor-not-allowed"
+																	loadingScheduleId === (schedule.id as string) && "opacity-50 cursor-not-allowed",
 																)}>
 																{loadingScheduleId === (schedule.id as string) ? "Generating..." : "Generate Link"}
 															</button>

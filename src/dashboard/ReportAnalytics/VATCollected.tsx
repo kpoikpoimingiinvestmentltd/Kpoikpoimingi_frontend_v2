@@ -57,7 +57,7 @@ export default function VATCollected({ rows, page, pages, onPageChange }: VATCol
 					</TableHeader>
 					<TableBody>
 						{rows.map((row: VATRecord) => (
-							<TableRow key={row.id} className="hover:bg-[#F6FBFF]">
+							<TableRow key={row.id} className="hover:bg-[#F6FBFF] dark:hover:bg-neutral-900/50">
 								<TableCell className="py-4">{row.contract.contractCode}</TableCell>
 								<TableCell className="py-4">{row.customer.fullName}</TableCell>
 								<TableCell className="py-4">{formatCurrency(row.amount)}</TableCell>

@@ -328,7 +328,7 @@ export default function Users() {
 								<div className="overflow-x-auto w-full mt-8">
 									<Table>
 										<TableHeader className={tableHeaderRowStyle}>
-											<TableRow className="bg-[#EAF6FF] h-12 overflow-hidden py-4 rounded-lg">
+											<TableRow className="bg-[#EAF6FF] dark:bg-neutral-900/80 h-12 overflow-hidden py-4 rounded-lg">
 												<TableHead>Name</TableHead>
 												<TableHead>Phone Number</TableHead>
 												<TableHead>User Role</TableHead>
@@ -339,7 +339,7 @@ export default function Users() {
 										</TableHeader>
 										<TableBody>
 											{users.map((row: unknown, idx: number) => (
-												<TableRow key={idx} className="hover:bg-[#F6FBFF]">
+												<TableRow key={idx} className="hover:bg-[#F6FBFF] dark:hover:bg-neutral-900/50">
 													<TableCell>{renderField(getName(row))}</TableCell>
 													<TableCell>{renderField(getPhone(row))}</TableCell>
 													<TableCell>{renderField(getRole(row))}</TableCell>

@@ -179,8 +179,8 @@ function NotificationItem({ title, time, type }: Notification) {
 	};
 	const icon = iconMap[type ?? "default"] ?? iconMap.default;
 	return (
-		<div className="flex items-start gap-4 p-5 rounded-md bg-card">
-			<IconWrapper className="bg-[#1312120D] w-10 h-10 text-xl text-primary rounded-md">{icon}</IconWrapper>
+		<div className="flex items-center gap-4 p-5 rounded-md bg-card">
+			<IconWrapper className="bg-[#1312120D] dark:bg-neutral-800 w-10 h-10 text-xl text-primary rounded-sm">{icon}</IconWrapper>
 			<div className="flex-1">
 				<div className="flex justify-between items-center gap-5 flex-wrap">
 					<div className="max-w-2xl">

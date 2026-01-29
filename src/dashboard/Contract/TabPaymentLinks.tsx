@@ -71,7 +71,7 @@ export default function TabPaymentLinks({ contract }: { contract?: Contract }) {
 				<div className="overflow-x-auto mt-8">
 					<Table>
 						<TableHeader className="[&_tr]:border-0">
-							<TableRow className="bg-[#EAF6FF] *:not-last:border-r  *:not-last:border-gray-200 *:text-center hover:bg-[#EAF6FF] h-12 rounded-lg">
+							<TableRow className="bg-[#EAF6FF] dark:bg-neutral-900/80 *:not-last:border-r  *:not-last:border-gray-200 *:text-center hover:bg-[#EAF6FF] dark:hover:bg-neutral-900/50 h-12 rounded-lg">
 								<TableHead>Amount</TableHead>
 								<TableHead>Due Date</TableHead>
 								<TableHead>Created Date</TableHead>
@@ -81,7 +81,7 @@ export default function TabPaymentLinks({ contract }: { contract?: Contract }) {
 						</TableHeader>
 						<TableBody>
 							{paymentLinks.map((link) => (
-								<TableRow key={link.id} className="border-b border-gray-100 hover:bg-gray-50 h-16">
+								<TableRow key={link.id} className="border-b border-gray-100 hover:bg-gray-50 dark:hover:bg-neutral-900/50 h-16">
 									<TableCell className="border-r border-gray-100 text-center">
 										<span className="font-semibold">{formatCurrency(link.amount)}</span>
 									</TableCell>

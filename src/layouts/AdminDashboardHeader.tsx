@@ -16,6 +16,7 @@ import { AvatarSkeleton, RectangleSkeleton } from "@/components/common/Skeleton"
 import GenerateReceiptModal from "@/dashboard/Receipt/GenerateReceiptModal";
 import EditProfileModal from "@/dashboard/Settings/EditProfileModal";
 import { Link, NavLink, useLocation, useNavigate } from "react-router";
+import { ThemeToggle } from "@/components/common/ThemeToggle";
 
 const PAGES_WITH_BACK_BUTTON = [
 	_router.dashboard.customerDetails,
@@ -47,7 +48,7 @@ export default function AdminDashboardHeader({ onSidebarOpen, onLogoutOpen }: Ad
 	});
 
 	return (
-		<div className="bg-white border-b border-gray-100 p-4 flex items-center justify-between sticky top-0 z-2">
+		<div className="bg-white dark:bg-neutral-900 border-b border-gray-100 dark:border-neutral-800 p-4 flex items-center justify-between sticky top-0 z-2">
 			<div className="flex items-center gap-1">
 				<button className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-neutral-800 xl:hidden" onClick={onSidebarOpen} aria-label="Open sidebar">
 					<IconWrapper>
@@ -77,6 +78,9 @@ export default function AdminDashboardHeader({ onSidebarOpen, onLogoutOpen }: Ad
 						<ReceiptPlusIcon />
 					</IconWrapper>
 				</button>
+
+				<ThemeToggle />
+
 				<NavLink
 					to={_router.dashboard.settings}
 					className={({ isActive }) =>
@@ -93,7 +97,7 @@ export default function AdminDashboardHeader({ onSidebarOpen, onLogoutOpen }: Ad
 
 				<DropdownMenu>
 					<DropdownMenuTrigger asChild>
-						<button className="flex items-center gap-3 p-1 rounded-md hover:bg-gray-50 cursor-pointer">
+						<button className="flex items-center gap-3 p-1.5 rounded-md hover:bg-gray-50 dark:hover:bg-neutral-800 cursor-pointer">
 							<UserAvatarContent />
 						</button>
 					</DropdownMenuTrigger>
@@ -103,7 +107,7 @@ export default function AdminDashboardHeader({ onSidebarOpen, onLogoutOpen }: Ad
 							const user = currentUserForDropdown as Record<string, unknown>;
 							const displayName = (user.fullName as string) ?? (user.email as string) ?? (user.username as string) ?? "User";
 							const displayRole =
-								typeof user.role === "string" ? (user.role as string) : ((user.role as Record<string, unknown>)?.role as string) ?? "";
+								typeof user.role === "string" ? (user.role as string) : (((user.role as Record<string, unknown>)?.role as string) ?? "");
 							return (
 								<div className="px-3 py-2 sm:hidden border-b">
 									<div className="flex flex-col items-start">
@@ -200,7 +204,7 @@ function UserAvatarContent() {
 	const role =
 		typeof (data as Record<string, unknown>).role === "string"
 			? ((data as Record<string, unknown>).role as string)
-			: (((data as Record<string, unknown>).role as Record<string, unknown>)?.role as string) ?? "";
+			: ((((data as Record<string, unknown>).role as Record<string, unknown>)?.role as string) ?? "");
 	const initials = name
 		.split(" ")
 		.map((n) => n[0])

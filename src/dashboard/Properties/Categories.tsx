@@ -121,7 +121,7 @@ export default function Categories() {
 			const prev = categories;
 			setCategories((prevState) => {
 				const next = prevState.map((c) =>
-					c.id === id ? { ...c, title: category ?? c.title, subs: (subCategories ?? c.subs).filter((s: string) => s.trim()) } : c
+					c.id === id ? { ...c, title: category ?? c.title, subs: (subCategories ?? c.subs).filter((s: string) => s.trim()) } : c,
 				);
 				dispatch(setCategoriesAction(next));
 				return next;
@@ -313,8 +313,8 @@ export default function Categories() {
 								) : (
 									<Table>
 										<TableHeader className="[&_tr]:border-0">
-											<TableRow className="bg-[#EAF6FF] h-12 overflow-hidden py-4 rounded-lg">
-												<TableHead>Product Categories</TableHead>
+											<TableRow className="bg-[#EAF6FF] dark:bg-neutral-900/80 h-12 overflow-hidden py-4 rounded-lg">
+												<TableHead>Main Categories</TableHead>
 												<TableHead>Sub Categories</TableHead>
 												<TableHead>Number Of Products</TableHead>
 												<TableHead>Action</TableHead>
@@ -336,7 +336,7 @@ export default function Categories() {
 													return false;
 												});
 												return filtered.map((row) => (
-													<TableRow key={row.id} className="hover:bg-[#F6FBFF]">
+													<TableRow key={row.id} className="hover:bg-[#F6FBFF] dark:hover:bg-neutral-900/50">
 														<TableCell className="text-[#13121280] align-top capitalize">{row.title}</TableCell>
 														<TableCell className="text-[#13121280] align-top">
 															<div className="text-balance w-80">{row.subs.join(", ")}</div>
@@ -345,7 +345,7 @@ export default function Categories() {
 														<TableCell className="flex items-center gap-1">
 															<button
 																type="button"
-																className="p-2 flex items-center text-slate-600"
+																className="p-2 flex items-center"
 																onClick={() => {
 																	setEditing({ id: row.id, title: row.title, subs: row.subs });
 																	setModalMode("edit");

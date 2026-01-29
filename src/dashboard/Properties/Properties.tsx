@@ -122,7 +122,7 @@ export default function Properties() {
 		sortBy,
 		sortOrder,
 		isPublicFilter || undefined,
-		activeTab === "available" ? "available" : activeTab === "low" ? "low" : "out"
+		activeTab === "available" ? "available" : activeTab === "low" ? "low" : "out",
 	);
 
 	const [selected, setSelected] = React.useState<Record<string, boolean>>({});
@@ -142,7 +142,7 @@ export default function Properties() {
 		(err) => {
 			console.error("Error updating property:", err);
 			toast.error(extractErrorMessage(err, "Failed to update property"));
-		}
+		},
 	);
 
 	const selectedCount = Object.keys(selected).length;
@@ -305,7 +305,7 @@ export default function Properties() {
 						{isLoading ? (
 							<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
 								{Array.from({ length: 10 }).map((_, i) => (
-									<div key={i} className="bg-white rounded-md p-4">
+									<div key={i} className="bg-white dark:bg-neutral-700 rounded-md p-4">
 										<RectangleSkeleton className="h-32 w-full mb-3" />
 										<RectangleSkeleton className="h-4 w-3/4 mb-2" />
 										<RectangleSkeleton className="h-4 w-1/2" />
@@ -498,7 +498,7 @@ export default function Properties() {
 										vehicleChassisNumber: propertyToEdit.vehicleChassisNumber ?? "",
 										vehicleType: propertyToEdit.vehicleType ?? "",
 										vehicleRegistrationNumber: propertyToEdit.vehicleRegistrationNumber ?? "",
-								  }
+									}
 								: {
 										id: "",
 										name: "",
@@ -519,7 +519,7 @@ export default function Properties() {
 										vehicleChassisNumber: "",
 										vehicleType: "",
 										vehicleRegistrationNumber: "",
-								  }
+									}
 						}
 						onSave={(formData: unknown) => {
 							if (propertyToEdit?.id) {

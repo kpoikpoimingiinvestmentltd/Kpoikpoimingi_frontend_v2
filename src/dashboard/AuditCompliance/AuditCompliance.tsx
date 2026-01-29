@@ -52,7 +52,7 @@ export default function AuditCompliance() {
 			});
 			setSearchParams(params);
 		},
-		[searchParams, setSearchParams]
+		[searchParams, setSearchParams],
 	);
 
 	const { data: auditData, isLoading } = useGetAuditLogsGrouped(page, pageSize, debouncedSearch || undefined, sortBy, sortOrder);
@@ -196,7 +196,7 @@ export default function AuditCompliance() {
 
 			<div className="min-h-96 flex">
 				{isLoading ? (
-					<CustomCard className="bg-transparent p-0 border-0 w-full">
+					<CustomCard className="bg-transparent dark:bg-transparent p-0 border-0 w-full">
 						<div className="flex flex-col gap-y-4">
 							<CardSkeleton lines={3} />
 							<CardSkeleton lines={3} />
@@ -206,13 +206,13 @@ export default function AuditCompliance() {
 				) : isEmpty ? (
 					<EmptyData text="No Audit Records at the moment" />
 				) : (
-					<CustomCard className="bg-transparent p-0 border-0 w-full">
+					<CustomCard className="bg-transparent p-0 dark:bg-transparent border-0 w-full">
 						<div className="flex flex-col gap-y-6">
 							{groups.map((group: unknown) => {
 								const g = group as Record<string, unknown>;
 								return (
 									<section key={g.title as string}>
-										<h3 className="text-sm font-medium mb-2 text-[#111827]">{g.title as string}</h3>
+										<h3 className="text-sm font-medium mb-2">{g.title as string}</h3>
 										<div className="flex flex-col gap-y-4">
 											{Array.isArray(g.logs) &&
 												g.logs.map((log: unknown) => {
@@ -283,7 +283,7 @@ function RowItem({ action, staffName, date, time }: { action: string; staffName:
 	const time12 = formatTime(time);
 
 	return (
-		<div className="rounded-lg bg-white p-5 gap-6 border border-gray-100 flex items-start justify-between">
+		<CustomCard className="p-5 gap-6 border border-gray-100 flex items-start justify-between">
 			<div>
 				<h4 className="font-medium">{action}</h4>
 				<p className="text-sm text-muted-foreground mt-2">Staff Name: {staffName || "N/A"}</p>
@@ -293,6 +293,6 @@ function RowItem({ action, staffName, date, time }: { action: string; staffName:
 				<div className="hidden md:block">{longFormat}</div>
 				<div>{time12}</div>
 			</div>
-		</div>
+		</CustomCard>
 	);
 }

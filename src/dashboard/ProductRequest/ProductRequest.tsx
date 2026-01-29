@@ -273,7 +273,7 @@ export default function ProductRequest() {
 								<div className="overflow-x-auto w-full">
 									<Table>
 										<TableHeader className="[&_tr]:border-0">
-											<TableRow className="bg-[#EAF6FF] h-12 overflow-hidden py-4 rounded-lg">
+											<TableRow className="bg-[#EAF6FF] dark:bg-neutral-900/80 h-12 overflow-hidden py-4 rounded-lg">
 												<TableHead>Request From</TableHead>
 												<TableHead>Property Type</TableHead>
 												<TableHead>Payment Method</TableHead>
@@ -285,7 +285,7 @@ export default function ProductRequest() {
 										</TableHeader>
 										<TableBody>
 											{items.map((item) => (
-												<TableRow key={item.id} className="hover:bg-[#F6FBFF]">
+												<TableRow key={item.id} className="hover:bg-[#F6FBFF] dark:hover:bg-neutral-900/50">
 													<TableCell>{item.name}</TableCell>
 													<TableCell>{item.propertyType}</TableCell>
 													<TableCell>{item.paymentMethod}</TableCell>

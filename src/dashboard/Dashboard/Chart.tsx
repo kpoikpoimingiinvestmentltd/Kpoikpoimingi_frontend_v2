@@ -1,12 +1,14 @@
 import { pie, arc, type PieArcDatum } from "d3";
 import { scaleTime, scaleLinear, line as d3line, max, area as d3area, curveMonotoneX } from "d3";
 import { useGetIncomeAnalytics } from "@/api/analytics";
+import { useTheme } from "@/hooks/useTheme";
 import { Spinner } from "@/components/ui/spinner";
 
 type Item = { name: string; value: number };
 
 export function IndexPieChart() {
 	const { data: incomeData, isLoading } = useGetIncomeAnalytics();
+	const { isDark } = useTheme();
 
 	if (isLoading) {
 		return (
@@ -98,16 +100,16 @@ export function IndexPieChart() {
 					</g>
 				))}
 
-				<text x="0" y="-30" textAnchor="middle" fill="#1F2937" style={{ fontSize: "150px", fontWeight: "500" }}>
+				<text x="0" y="-30" textAnchor="middle" fill={isDark ? "#FFFFFF" : "#1F2937"} style={{ fontSize: "150px", fontWeight: "500" }}>
 					{formatAmount(incomeData?.totalIncome ?? 0)}
 				</text>
-				<text x="0" y="80" textAnchor="middle" fill="#6B7280" style={{ fontSize: "70px", fontWeight: "400" }}>
+				<text x="0" y="80" textAnchor="middle" fill={isDark ? "#F3F4F6" : "#6B7280"} style={{ fontSize: "70px", fontWeight: "400" }}>
 					Total income
 				</text>
 
 				{/* Yearly badge */}
-				<rect x="-110" y="140" width="220" height="80" rx="50" fill="#F3E9FF" />
-				<text x="0" y="195" textAnchor="middle" fill="#9CA3AF" style={{ fontSize: "50px", fontWeight: "400" }}>
+				<rect x="-110" y="140" width="220" height="80" rx="50" fill={isDark ? "#8826d9" : "#F3E9FF"} />
+				<text x="0" y="195" textAnchor="middle" fill={isDark ? "#fff" : "#9CA3AF"} style={{ fontSize: "50px", fontWeight: "400" }}>
 					Yearly
 				</text>
 			</svg>

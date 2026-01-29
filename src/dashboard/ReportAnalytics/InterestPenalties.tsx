@@ -53,7 +53,7 @@ export default function InterestPenalties({ rows, page, pages, onPageChange, pag
 					</TableHeader>
 					<TableBody>
 						{rows.map((row: PenaltyRecord, idx: number) => (
-							<TableRow key={idx} className="hover:bg-[#F6FBFF]">
+							<TableRow key={idx} className="hover:bg-[#F6FBFF] dark:hover:bg-neutral-900/50">
 								<TableCell className="py-4">{row.contractCode}</TableCell>
 								<TableCell className="py-4">{row.propertyName}</TableCell>
 								<TableCell className="py-4">{row.customerName}</TableCell>

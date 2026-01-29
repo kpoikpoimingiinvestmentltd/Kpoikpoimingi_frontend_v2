@@ -34,7 +34,9 @@ export default function EmploymentDetailsSection({
 			<h3 className={sectionTitle()}>Employment Details</h3>
 			<div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
 				<div className={isSelfEmployed ? "col-span-2" : ""}>
-					<label className={labelStyle()}>Employment status*</label>
+					<label className={labelStyle()}>
+						Employment status <sup className="dark:text-red-500">*</sup>
+					</label>
 					<Select value={form.employment.status} onValueChange={(v) => handleChange("employment", { ...form.employment, status: v })}>
 						<SelectTrigger className={twMerge(inputStyle, "w-full min-h-11 cursor-pointer")}>
 							<SelectValue placeholder="Select status" />
@@ -59,7 +61,9 @@ export default function EmploymentDetailsSection({
 				{isSelfEmployed ? (
 					<>
 						<div className="mt-4 col-span-full">
-							<label className={labelStyle()}>Home address*</label>
+							<label className={labelStyle()}>
+								Home address <sup className="dark:text-red-500">*</sup>
+							</label>
 							<Textarea
 								value={form.employment.homeAddress}
 								onChange={(e) => handleChange("employment", { ...form.employment, homeAddress: e.target.value })}
@@ -79,7 +83,9 @@ export default function EmploymentDetailsSection({
 						/>
 
 						<div className="mt-4 col-span-full">
-							<label className={labelStyle()}>Company address*</label>
+							<label className={labelStyle()}>
+								Company address <sup className="dark:text-red-500">*</sup>
+							</label>
 							<Textarea
 								value={form.employment.businessAddress}
 								onChange={(e) => handleChange("employment", { ...form.employment, businessAddress: e.target.value })}

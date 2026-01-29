@@ -26,13 +26,13 @@ export default function SelectPaymentMethod() {
 							<div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
 								<button
 									onClick={() => handleSelect("once")}
-									className="mx-auto w-[80%] md:w-72 rounded-full py-6 px-8 text-lg font-medium shadow-sm transition-colors duration-150 border-2 border-primary/70 text-primary bg-white hover:bg-primary/5">
+									className="mx-auto w-[80%] dark:bg-neutral-900 dark:hover:bg-neutral-700 md:w-72 rounded-full py-6 px-8 text-lg font-medium shadow-sm transition-colors duration-150 border-2 border-primary/70 text-primary bg-white hover:bg-primary/5">
 									Pay at once
 								</button>
 
 								<button
 									onClick={() => handleSelect("installment")}
-									className="mx-auto w-[80%] md:w-72 rounded-full py-6 px-8 text-lg font-medium shadow-lg transition-colors duration-150 border-2 border-primary/70 text-primary bg-white hover:bg-primary/5">
+									className="mx-auto w-[80%] dark:bg-neutral-900 dark:hover:bg-neutral-700 md:w-72 rounded-full py-6 px-8 text-lg font-medium shadow-lg transition-colors duration-150 border-2 border-primary/70 text-primary bg-white hover:bg-primary/5">
 									Pay instalmentlly
 								</button>
 							</div>

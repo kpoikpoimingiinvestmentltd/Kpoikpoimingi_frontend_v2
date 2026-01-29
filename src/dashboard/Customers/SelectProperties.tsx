@@ -191,7 +191,7 @@ export default function SelectProperties() {
 					{propertiesLoading ? (
 						<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
 							{Array.from({ length: 10 }).map((_, i) => (
-								<div key={i} className="bg-white rounded-md p-4 border border-gray-100">
+								<div key={i} className="bg-white dark:bg-neutral-700 rounded-md p-4 border border-gray-100 dark:border-gray-600">
 									<RectangleSkeleton className="h-32 w-full mb-3" />
 									<RectangleSkeleton className="h-4 w-3/4 mb-2" />
 									<RectangleSkeleton className="h-4 w-1/2 mb-3" />
@@ -216,12 +216,12 @@ export default function SelectProperties() {
 										<div
 											key={property.id}
 											className={twMerge(
-												"bg-white rounded-md p-4 border border-gray-100 transition-all",
-												isSelected && "border-primary bg-primary/5 shadow-md",
-												isDisabled && "opacity-50 cursor-not-allowed"
+												"bg-white dark:bg-neutral-700 rounded-md p-4 border border-gray-100 dark:border-gray-600 transition-all",
+												isSelected && "border-primary bg-primary/5 dark:bg-primary/20 shadow-md dark:shadow-primary/20",
+												isDisabled && "opacity-50 cursor-not-allowed",
 											)}>
 											{/* Image Container */}
-											<div className="h-32 flex items-center justify-center overflow-hidden bg-gray-50 rounded mb-3 relative group">
+											<div className="h-28 flex items-center justify-center overflow-hidden bg-gray-50 dark:bg-neutral-600 rounded mb-3 relative group">
 												<Image src={imgSrc} alt={property.name} className="max-h-full object-contain" />
 												<button
 													type="button"
@@ -238,12 +238,10 @@ export default function SelectProperties() {
 											</div>
 											{/* Content */}
 											<div>
-												<h5 className="text-sm opacity-70 truncate">{property.name}</h5>
-												<p className="text-primary font-semibold text-base mb-3">₦{parseFloat(property.price).toLocaleString()}</p>
-
+												<h5 className="text-sm opacity-70 dark:opacity-100 dark:text-gray-300 truncate">{property.name}</h5>
 												{/* Action Buttons/Controls */}
 												{isSelected ? (
-													<div className="flex items-center gap-1 bg-gray-50 rounded p-1">
+													<div className="flex items-center gap-1 bg-gray-50 dark:bg-neutral-800 mt-2 rounded p-1">
 														<button
 															type="button"
 															onClick={() => handleQuantityChange(property.id, -1)}
@@ -269,7 +267,7 @@ export default function SelectProperties() {
 														type="button"
 														onClick={() => handlePropertySelect(property)}
 														disabled={isDisabled}
-														className="w-full bg-primary active-scale text-white text-sm py-2 hover:bg-primary/90">
+														className="w-full bg-primary mt-2 active-scale text-white text-sm py-2 hover:bg-primary/90">
 														Select
 													</ActionButton>
 												)}
@@ -285,7 +283,7 @@ export default function SelectProperties() {
 							{selectedProperties.length > 0 && (
 								<div className="border-t pt-6 mt-6">
 									<h3 className="font-semibold mb-4">Selected Properties ({selectedProperties.length})</h3>
-									<div className="bg-gray-50 p-4 rounded-md mb-6 max-h-48 overflow-y-auto">
+									<CustomCard className="bg-gray-50 p-4 rounded-md mb-6 max-h-48 overflow-y-auto">
 										{selectedProperties.map((prop) => (
 											<div key={prop.id} className="flex justify-between items-center mb-2 pb-2 border-b last:border-b-0">
 												<span className="text-sm">
@@ -295,7 +293,7 @@ export default function SelectProperties() {
 												<span className="font-semibold text-primary">₦{(parseFloat(prop.price) * prop.quantity).toLocaleString()}</span>
 											</div>
 										))}
-									</div>
+									</CustomCard>
 								</div>
 							)}
 						</>
@@ -341,7 +339,7 @@ export default function SelectProperties() {
 													onClick={() => setImageIndex(idx)}
 													className={twMerge(
 														"w-16 h-16 flex-shrink-0 rounded border-2 overflow-hidden bg-gray-50 transition-colors",
-														idx === imageIndex ? "border-primary" : "border-gray-200 hover:border-gray-300"
+														idx === imageIndex ? "border-primary" : "border-gray-200 hover:border-gray-300",
 													)}>
 													<Image src={img} alt="Thumbnail" className="w-full h-full object-contain" />
 												</button>

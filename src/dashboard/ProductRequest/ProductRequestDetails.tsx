@@ -37,7 +37,7 @@ export default function ProductRequestDetails() {
 			params.set("tab", tab);
 			setSearchParams(params);
 		},
-		[searchParams, setSearchParams]
+		[searchParams, setSearchParams],
 	);
 
 	const { data: registrationData, isLoading: registrationLoading } = useGetProductRequestById(id || "");
@@ -148,7 +148,7 @@ export default function ProductRequestDetails() {
 				}
 				copy.mediaFiles = transformMediaFiles(copy.mediaFiles as Record<string, unknown> | undefined);
 				return copy;
-		  })()
+			})()
 		: undefined;
 
 	const anyGuarantorMissingState = (() => {
@@ -241,7 +241,7 @@ export default function ProductRequestDetails() {
 			)}
 			{/* Full Payment Details UI */}
 			{(registrationData as Record<string, unknown>)?.paymentTypeId === 2 ? (
-				<CustomCard className="p-4 sm:p-6 border-0">
+				<CustomCard className="py-0 px-2 border-0">
 					<TabFullPaymentDetails
 						data={displayedData as Record<string, unknown>}
 						loading={registrationLoading}
@@ -316,8 +316,8 @@ export default function ProductRequestDetails() {
 									? "Approving..."
 									: "Approve"
 								: deleteMutation.isPending
-								? "Deleting..."
-								: "Delete",
+									? "Deleting..."
+									: "Delete",
 						onClick: async () => {
 							if (!id) return false;
 							try {

@@ -65,9 +65,9 @@ export default function CustomInput({
 	return (
 		<div className={twMerge("relative flex flex-col", containerClassName)}>
 			{label && (
-				<label className={twMerge("text-sm block mb-1.5 text-balance", labelClassName)}>
+				<label className={twMerge("text-sm dark:text-gray-300 block mb-1.5 text-balance", labelClassName)}>
 					{label}
-					{required && <sup>*</sup>}
+					{required && <sup className="dark:text-red-500">*</sup>}
 				</label>
 			)}
 			{floatingLeft && (

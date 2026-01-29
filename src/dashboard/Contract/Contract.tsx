@@ -226,7 +226,7 @@ export default function Contract() {
 			</div>
 			<CustomCard className="bg-white flex-grow w-full rounded-lg p-4 border border-gray-100">
 				<div className="flex items-center justify-between flex-wrap gap-6">
-					<h2 className="font-semibold">All Contracts </h2>
+					<h2 className="font-medium dark:text-gray-300">All Contracts </h2>
 					<div className="flex items-center gap-2">
 						<SearchWithFilters
 							search={search}
@@ -287,7 +287,7 @@ export default function Contract() {
 								<div className="overflow-x-auto w-full">
 									<Table>
 										<TableHeader className="[&_tr]:border-0">
-											<TableRow className="bg-[#EAF6FF] h-12 overflow-hidden py-4 rounded-lg">
+											<TableRow className="bg-[#EAF6FF] dark:bg-neutral-900/80 h-12 overflow-hidden py-4 rounded-lg">
 												<TableHead>Customer ID</TableHead>
 												<TableHead>Name</TableHead>
 												<TableHead>Property Name</TableHead>
@@ -302,7 +302,7 @@ export default function Contract() {
 											{contracts.map((contract: unknown, idx: number) => {
 												const c = contract as Record<string, unknown>;
 												return (
-													<TableRow key={idx} className="hover:bg-[#F6FBFF]">
+													<TableRow key={idx} className="hover:bg-[#F6FBFF] dark:hover:bg-neutral-900/50">
 														<TableCell>{((c.customer as Record<string, unknown>)?.customerCode as string) || "N/A"}</TableCell>
 														<TableCell>{((c.customer as Record<string, unknown>)?.fullName as string) || "N/A"}</TableCell>
 														<TableCell>{((c.property as Record<string, unknown>)?.name as string) || "N/A"}</TableCell>

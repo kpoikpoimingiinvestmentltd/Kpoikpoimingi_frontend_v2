@@ -21,7 +21,7 @@ export default function TableForIndex() {
 			<div className="overflow-x-auto w-full mt-4">
 				<Table>
 					<TableHeader className="[&_tr]:border-0">
-						<TableRow className="bg-[#EAF6FF] h-12 overflow-hidden py-4 rounded-lg">
+						<TableRow className="bg-[#EAF6FF] dark:bg-neutral-900/80 h-12 overflow-hidden py-4 rounded-lg">
 							<TableHead>Customer ID</TableHead>
 							<TableHead>Name</TableHead>
 							<TableHead>Email</TableHead>

@@ -26,13 +26,13 @@ export default function ActionButton({
 	const variantClass = (() => {
 		switch (variant) {
 			case "outline":
-				return "bg-transparent border border-primary text-primary bg-gray-50";
+				return "bg-transparent dark:bg-neutral-700 border border-primary text-primary bg-gray-50";
 			case "danger":
 				return "bg-red-600 text-white hover:bg-red-700";
 			case "success":
 				return "bg-emerald-600 text-white hover:bg-emerald-700";
 			case "ghost":
-				return "bg-transparent text-black font-normal";
+				return "bg-transparent text-black dark:text-white font-normal";
 			case "primary":
 			default:
 				return "bg-primary text-white hover:bg-primary";

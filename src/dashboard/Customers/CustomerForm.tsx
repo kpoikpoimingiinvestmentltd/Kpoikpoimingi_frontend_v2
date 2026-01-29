@@ -66,7 +66,7 @@ export default function CustomerForm({
 	const { form, handleChange, uploadedFiles, setUploadedFiles, uploadedFieldsRef, resetFormCompletely } = useCustomerFormState(
 		paymentMethod,
 		initial,
-		selectedProperties
+		selectedProperties,
 	);
 
 	// Navigation helper
@@ -93,6 +93,13 @@ export default function CustomerForm({
 
 	// Reference data for dropdowns
 	const { data: refData, isLoading: refLoading } = useGetReferenceData();
+
+	// Reference-derived select options (declare early to avoid TDZ when effects use them)
+	const relationshipOptions = React.useMemo(() => extractRelationshipOptions(refData), [refData]);
+	const paymentFrequencyOptions = React.useMemo(() => extractPaymentFrequencyOptions(refData), [refData]);
+	const durationUnitOptions = React.useMemo(() => extractDurationUnitOptions(refData), [refData]);
+	const employmentStatusOptions = React.useMemo(() => extractEmploymentStatusOptions(refData), [refData]);
+	const stateOfOriginOptions = React.useMemo(() => extractStateOptions(refData), [refData]);
 
 	const didPrefillRef = React.useRef(false);
 	const nextPrefilledRef = React.useRef(false);
@@ -222,15 +229,15 @@ export default function CustomerForm({
 									? (srcObj.employmentStatus as { status: string }).status === "EMPLOYED"
 										? "1"
 										: (srcObj.employmentStatus as { status: string }).status === "SELF EMPLOYED"
-										? "2"
-										: ""
+											? "2"
+											: ""
 									: srcObj.employmentStatus) ||
 								curr.employmentStatus ||
-								""
+								"",
 						),
 						homeAddress: srcObj.homeAddress ?? curr.homeAddress,
 						businessAddress: srcObj.businessAddress ?? curr.businessAddress,
-						stateOfOrigin: srcObj.stateOfOrigin ?? curr.stateOfOrigin,
+						stateOfOrigin: (srcObj.stateOfOrigin ?? curr.stateOfOrigin ?? "") as string,
 						votersUploaded: curr.votersUploaded ?? 0,
 						hasAgreed: Boolean(srcObj.hasAgreed ?? curr.hasAgreed ?? false),
 					};
@@ -244,22 +251,28 @@ export default function CustomerForm({
 		didPrefillRef.current = true;
 	}, [initial, paymentMethod, handleChange]);
 
-	const relationshipOptions = React.useMemo(() => extractRelationshipOptions(refData), [refData]);
-	const paymentFrequencyOptions = React.useMemo(() => extractPaymentFrequencyOptions(refData), [refData]);
-	const durationUnitOptions = React.useMemo(() => extractDurationUnitOptions(refData), [refData]);
-	const employmentStatusOptions = React.useMemo(() => extractEmploymentStatusOptions(refData), [refData]);
-	const stateOfOriginOptions = React.useMemo(() => extractStateOptions(refData), [refData]);
-
 	React.useEffect(() => {
 		if (refLoading) return;
 		try {
+			const initGArr = Array.isArray((initial as { guarantors?: unknown[] })?.guarantors)
+				? ((initial as { guarantors?: unknown[] })?.guarantors as unknown[])
+				: [];
 			const gArr = (form as InstallmentPaymentFormType).guarantors || [];
-			const mapped = gArr.map((g) => {
-				if (!g || !g.stateOfOrigin) return g;
+			const mapped = gArr.map((g, idx) => {
+				if (!g) return g;
+				// If already a valid key, keep it
 				if (stateOfOriginOptions.find((o) => o.key === g.stateOfOrigin)) return g;
-				const found = stateOfOriginOptions.find((o) => o.value.toLowerCase() === String(g.stateOfOrigin).toLowerCase());
+				// Try current raw value first
+				let raw = g.stateOfOrigin ?? "";
+				// Fallback to initial data's stateOfOrigin if current is empty
+				if (!raw && initGArr[idx] && typeof initGArr[idx] === "object") {
+					const src = initGArr[idx] as Record<string, unknown>;
+					raw = String(src.stateOfOrigin ?? src.stateOfOrigin ?? "");
+				}
+				if (!raw) return g;
+				const found = stateOfOriginOptions.find((o) => o.value.toLowerCase() === String(raw).toLowerCase());
 				if (found) return { ...g, stateOfOrigin: found.key };
-				return { ...g, stateOfOrigin: "" };
+				return g;
 			});
 			const prev = JSON.stringify(gArr || []);
 			const next = JSON.stringify(mapped || []);
@@ -450,11 +463,11 @@ export default function CustomerForm({
 										customPropertyName: installmentForm.propertyName,
 										customPropertyPrice: Number(installmentForm.customPropertyPrice) || 0,
 										isCustomProperty: true,
-								  }
+									}
 								: {
 										propertyId: installmentForm.propertyId,
 										isCustomProperty: false,
-								  }),
+									}),
 							paymentIntervalId: Number(installmentForm.paymentFrequency) || 0,
 							durationValue: Number(installmentForm.paymentDuration) || 0,
 							durationUnitId: Number(installmentForm.paymentDurationUnit) || 2,
@@ -529,7 +542,7 @@ export default function CustomerForm({
 							throw new Error("Duration value is required for hire purchase");
 						}
 						const missingIdx = ((form as InstallmentPaymentFormType).guarantors || []).findIndex(
-							(g) => !g || !g.stateOfOrigin || String(g.stateOfOrigin).trim() === ""
+							(g) => !g || !g.stateOfOrigin || String(g.stateOfOrigin).trim() === "",
 						);
 						if (missingIdx >= 0) {
 							throw new Error(`Guarantor ${missingIdx + 1}: State of origin is required`);
@@ -553,7 +566,7 @@ export default function CustomerForm({
 							throw new Error("Duration value is required for hire purchase");
 						}
 						const missingIdx = ((form as InstallmentPaymentFormType).guarantors || []).findIndex(
-							(g) => !g || !g.stateOfOrigin || String(g.stateOfOrigin).trim() === ""
+							(g) => !g || !g.stateOfOrigin || String(g.stateOfOrigin).trim() === "",
 						);
 						if (missingIdx >= 0) {
 							throw new Error(`Guarantor ${missingIdx + 1}: State of origin is required`);

@@ -89,7 +89,7 @@ export default function SearchWithFilters({
 
 					<PopoverContent className="w-[320px] max-h-[400px] overflow-y-auto px-3.5 py-3">
 						<div className="mb-4">
-							<h5 className="text-sm text-gray-600">Filter Options</h5>
+							<h5 className="text-sm dark:text-gray-200 text-gray-600">Filter Options</h5>
 						</div>
 						<div className="space-y-3">
 							{fields.map((f) => (
@@ -191,8 +191,12 @@ export default function SearchWithFilters({
 								</div>
 							))}
 
-							<div className="flex bg-white sticky -bottom-3 py-2 items-center justify-between gap-2 pt-2">
-								<ActionButton type="button" variant="ghost" className="px-3 py-2 text-xs" onClick={handleReset}>
+							<div className="flex bg-white dark:bg-transparent sticky -bottom-3 py-2 items-center justify-between gap-2 pt-2">
+								<ActionButton
+									type="button"
+									variant="ghost"
+									className="px-3 dark:text-white border hover:bg-neutral-700 py-2 text-xs"
+									onClick={handleReset}>
 									Reset
 								</ActionButton>
 								<div className="flex gap-2">

@@ -4,6 +4,7 @@ import { twMerge } from "tailwind-merge";
 import { IconWrapper, UploadCloudIcon, CloseIcon } from "../../assets/icons";
 import ActionButton from "./ActionButton";
 import { Spinner } from "@/components/ui/spinner";
+import CustomCard from "./CustomCard";
 
 type ThumbVariant = "dashed" | "solid" | "none";
 
@@ -49,7 +50,7 @@ export default function ImageGallery({
 
 	const thumbBorderClass = (i: number) => {
 		if (thumbVariant === "none") return "border-transparent";
-		if (thumbVariant === "solid") return `${i === selected ? "border-primary" : "border-stone-100"} border-2`;
+		if (thumbVariant === "solid") return `${i === selected ? "border-primary" : "border-stone-100 dark:border-stone-400"} border-2`;
 		// dashed
 		return `${i === selected ? "border-primary" : "border-transparent"} border-dashed border-2`;
 	};
@@ -92,8 +93,9 @@ export default function ImageGallery({
 
 	return (
 		<div className={`${twMerge("flex flex-col gap-4", className)}`}>
-			<div className={twMerge(`rounded-md p-6 flex flex-grow items-center justify-center relative md:h-80 h-92`, containerBg, containerBorderClass)}>
-				<div className="absolute top-4 left-4">{mode === "view" && <p className="text-sm text-black">{labelText}</p>}</div>
+			<CustomCard
+				className={twMerge(`rounded-md p-6 flex flex-grow items-center justify-center relative md:h-80 h-92`, containerBg, containerBorderClass)}>
+				<div className="absolute top-4 left-4">{mode === "view" && <p className="text-sm">{labelText}</p>}</div>
 
 				{effectiveImgs[selected] ? (
 					<Image src={effectiveImgs[selected]} alt={`image-${selected}`} className="w-full md:w-[300px] h-52 md:h-64 object-center" />
@@ -112,12 +114,12 @@ export default function ImageGallery({
 							uploadButtonPosition === "top-right"
 								? "top-4 right-4"
 								: uploadButtonPosition === "top-left"
-								? "top-4 left-4"
-								: uploadButtonPosition === "bottom-right"
-								? "bottom-4 right-4"
-								: uploadButtonPosition === "bottom-left"
-								? "bottom-4 left-4"
-								: "inset-0 flex items-center justify-center"
+									? "top-4 left-4"
+									: uploadButtonPosition === "bottom-right"
+										? "bottom-4 right-4"
+										: uploadButtonPosition === "bottom-left"
+											? "bottom-4 left-4"
+											: "inset-0 flex items-center justify-center"
 						}`}>
 						{/* hidden file input triggered by the ActionButton */}
 						<input id="kkm-image-upload-input" ref={inputRef} type="file" className="hidden" multiple onChange={(e) => handleFiles(e.target.files)} />
@@ -145,14 +147,14 @@ export default function ImageGallery({
 						</ActionButton>
 					</div>
 				)}
-			</div>
+			</CustomCard>
 
 			{effectiveImgs && effectiveImgs.length >= 1 && (
 				<div className="flex items-center gap-3 mt-2 flex-wrap">
 					{uploadedImages.map((uploadedImg, idx) => (
 						<div
 							key={idx}
-							className={`rounded-md p-1 ${
+							className={`rounded-md p-1 dark:bg-neutral-700 ${
 								thumbBg === "white" ? "bg-white" : thumbBg === "transparent" ? "bg-transparent" : thumbBg
 							} ${thumbBorderClass(idx)} cursor-pointer relative group`}
 							onClick={() => setSelected(idx)}>

@@ -119,7 +119,7 @@ export default function Calculator() {
 				y: e.clientY - dragOffset.y,
 			});
 		},
-		[isDragging, dragOffset]
+		[isDragging, dragOffset],
 	);
 
 	const handleMouseUp = () => {
@@ -195,7 +195,7 @@ export default function Calculator() {
 							<div className="text-lg font-medium mb-3">Simple Interest Calculator</div>
 						</header>
 						<div className="relative">
-							<div className="absolute -bottom-5 -right-10 w-0 h-0 border-t-[6px] border-t-transparent border-r-[55px] border-r-white border-b-[71px] border-b-transparent [transform:rotate(-5deg)translate(-44px,26px)] sm:[transform:rotate(-23deg)translate(-32px,20px)]"></div>
+							<div className="absolute -bottom-5 -right-10 w-0 h-0 border-t-[6px] border-t-transparent border-r-[55px] dark:border-r-neutral-900 border-r-white border-b-[71px] border-b-transparent [transform:rotate(-5deg)translate(-44px,26px)] sm:[transform:rotate(-23deg)translate(-32px,20px)]"></div>
 							<div className="flex flex-col gap-y-2.5 relative">
 								<CustomInput
 									type="number"

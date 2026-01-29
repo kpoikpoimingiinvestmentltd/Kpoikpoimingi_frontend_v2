@@ -45,10 +45,10 @@ export default function Profile() {
 	const userRole =
 		typeof (user as Record<string, unknown>).role === "string"
 			? ((user as Record<string, unknown>).role as string)
-			: (((user as Record<string, unknown>).role as Record<string, unknown>)?.role as string) ?? "N/A";
+			: ((((user as Record<string, unknown>).role as Record<string, unknown>)?.role as string) ?? "N/A");
 
 	return (
-		<CustomCard className="mt-4 border-none p-5 sm:p-6 bg-[#fafafa]">
+		<CustomCard className="mt-4 bg-[#fafafa]">
 			<div className="flex flex-col gap-6">
 				<div className="w-28 h-28 group rounded-full overflow-hidden relative">
 					{(() => {
@@ -65,7 +65,7 @@ export default function Profile() {
 						return src ? (
 							<Image src={src} alt={(user as Record<string, unknown>).fullName as string} className="w-full h-full object-cover" />
 						) : (
-							<Avatar className="w-full h-full">
+							<Avatar className="w-full h-full border bg-neutral-700">
 								<AvatarFallback className="text-2xl">{initials}</AvatarFallback>
 							</Avatar>
 						);

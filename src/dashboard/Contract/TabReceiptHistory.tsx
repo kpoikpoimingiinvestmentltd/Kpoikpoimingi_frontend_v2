@@ -87,7 +87,7 @@ export default function TabReceiptHistory({ contract }: Props) {
 								<div className="mt-4">
 									<button
 										onClick={() => navigate(_router.dashboard.receiptDetails.replace(":id", p.receiptId))}
-										className="w-full bg-[#E6F7FF] flex items-center gap-2 justify-center text-sm text-primary py-3 rounded-md">
+										className="w-full bg-[#E6F7FF] dark:bg-primary dark:text-white flex items-center gap-2 justify-center text-sm text-primary py-3 rounded-md">
 										<span>View Receipt</span>
 										<IconWrapper>
 											<EyeIcon />

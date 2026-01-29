@@ -521,8 +521,8 @@ export default function ReportAnalytics() {
 			<CustomCard className="flex min-h-96 flex-col gap-y-6 md:p-8">
 				{!isEmpty ? (
 					<div className="flex flex-col gap-y-6">
-						<CustomCard className="p-4 border-0 bg-card">
-							<div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+						<CustomCard className="p-0 border-0 bg-card">
+							<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 								{stats.map((s) => (
 									<StatCard
 										key={s.id}
@@ -587,10 +587,10 @@ export default function ReportAnalytics() {
 								</div>
 
 								{tab === "vat" && (
-									<div className="mt-6 rounded-md bg-[#F3FBFF] p-4">
+									<CustomCard className="mt-6 rounded-md dark:bg-neutral-800 bg-[#F3FBFF] p-4">
 										<div className="flex flex-col justify-between">
-											<div className="text-sm flex gap-3 items-center flex-wrap text-gray-500">
-												<span>Total VAT Amount</span>
+											<div className="text-sm flex gap-3 items-center flex-wrap">
+												<span className=" text-gray-500 dark:text-gray-200">Total VAT Amount</span>
 												{isFilterApplied && vatFromDate && vatToDate && (
 													<span className="text-xs">
 														From {vatFromDate} To {vatToDate}
@@ -599,7 +599,7 @@ export default function ReportAnalytics() {
 											</div>
 											<div className="mt-3 text-2xl font-medium">NGN {(vatData?.totals?.totalVatAmount || 0).toLocaleString()}</div>
 										</div>
-									</div>
+									</CustomCard>
 								)}
 
 								<CustomCard className="mt-4 bg-card p-3">

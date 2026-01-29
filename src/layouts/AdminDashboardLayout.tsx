@@ -10,7 +10,7 @@ export default function AdminDashboardLayout() {
 	const [logoutOpen, setLogoutOpen] = useState(false);
 
 	return (
-		<div className="flex w-full min-h-screen bg-gray-50/20 dark:bg-[#0b0b0b] text-black dark:text-white">
+		<div className="flex w-full min-h-screen bg-gray-50/20  text-black dark:text-white">
 			{sidebarOpen && (
 				<div
 					className="fixed inset-0 bg-black/50 bg-opacity-40 z-40 xl:hidden"
@@ -19,7 +19,7 @@ export default function AdminDashboardLayout() {
 				/>
 			)}
 			<aside
-				className={`w-76 bg-gradient-to-b from-[#03B4FA] to-[#9edff8] pt-5 px-4 pb-4 h-screen border-0 dark:border-neutral-800 shadow-2xs fixed left-0 top-0 z-50 transition-transform ${
+				className={`w-76 bg-gradient-to-b dark:from-neutral-950 from-[#03B4FA] to-[#9edff8] dark:to-neutral-700 border-r dark:via-90% dark:border-r-neutral-700/70 pt-5 px-4 pb-4 h-screen border-0 dark:border-neutral-800 shadow-2xs fixed left-0 top-0 z-50 transition-transform ${
 					sidebarOpen ? "translate-x-0" : "-translate-x-full xl:translate-x-0"
 				}`}>
 				<AdminDashboardSidebar onClose={() => setSidebarOpen(false)} onLogoutOpen={() => setLogoutOpen(true)} />

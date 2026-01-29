@@ -16,7 +16,7 @@ export default function Dashboard() {
 				<PageTitles title="Overview" description="Overview of major activities" />
 				<Link
 					to={_router.dashboard.selectCustomerPaymentMethod}
-					className="text-sm flex items-center gap-2 text-white py-2.5 px-4 rounded-sm bg-primary">
+					className="text-sm flex dark:bg-primary items-center gap-2 text-white py-2.5 px-4 rounded-sm bg-primary">
 					<IconWrapper>
 						<PlusIcon />
 					</IconWrapper>
@@ -67,11 +67,9 @@ const PieLegend = () => {
 		<div className="flex flex-wrap justify-center lg:flex-col lg:items-start gap-4">
 			{items.map((it) => (
 				<div key={it.label} className="flex items-start gap-3">
-					<div className="mt-1">
-						<span style={{ background: it.color }} className="inline-block w-3 h-3 rounded-full" />
-					</div>
-					<div>
-						<div className="font-medium">{it.label}</div>
+					<span style={{ background: it.color }} className="inline-block mt-1 w-3 h-3 rounded-full" />
+					<div className="flex flex-col">
+						<div className="font-medium dark:text-gray-300">{it.label}</div>
 						<div className="text-[.89rem] text-gray-400">{formatAmount(it.value)}</div>
 					</div>
 				</div>

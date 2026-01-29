@@ -80,12 +80,12 @@ export default function UploadBox({
 					{uploadedFiles.map((file, index) => (
 						<div
 							key={index}
-							className="flex items-center justify-between px-4 py-2.5 border border-gray-200 rounded-md bg-white hover:bg-gray-50 transition-colors">
+							className="flex items-center justify-between px-4 py-2.5 border border-gray-200 rounded-md dark:bg-primary/50 bg-white hover:bg-gray-50 transition-colors">
 							<div className="flex items-center gap-2 flex-1 min-w-0">
 								<IconWrapper className="text-lg flex-shrink-0">
 									<FileIcon />
 								</IconWrapper>
-								<span className="text-sm text-gray-700 truncate overflow-hidden">{file.name}</span>
+								<span className="text-sm truncate dark:text-white overflow-hidden">{file.name}</span>
 							</div>
 							{file.onRemove && (
 								<button
@@ -94,9 +94,9 @@ export default function UploadBox({
 										e.stopPropagation();
 										file.onRemove?.();
 									}}
-									className="ml-2 p-1 hover:bg-gray-200 rounded transition-colors flex-shrink-0"
+									className="ml-2 p-1 hover:bg-gray-200 dark:text-white rounded transition-colors flex-shrink-0"
 									aria-label="Remove file">
-									<IconWrapper className="text-base text-gray-500 hover:text-red-500">
+									<IconWrapper className="text-base hover:text-red-500">
 										<CloseIcon />
 									</IconWrapper>
 								</button>

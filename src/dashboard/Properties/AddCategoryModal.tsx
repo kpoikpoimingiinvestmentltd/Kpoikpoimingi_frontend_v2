@@ -148,13 +148,13 @@ export default function AddCategoryModal({ open, onOpenChange, mode = "add", ini
 
 				<div className="space-y-4">
 					<div>
-						<label className="block text-sm font-medium text-gray-700 mb-2">Category Type*</label>
+						<label className="block text-sm font-medium mb-2">Category Type*</label>
 						<Select value={category} onValueChange={(v) => setCategory(v)}>
 							<SelectTrigger className={twMerge(inputStyle, "w-full min-h-11")}>
 								<SelectValue placeholder="Enter Category type" className="text-sm" />
 							</SelectTrigger>
 							<SelectContent>
-								<div className="bg-white sticky top-0 z-1 mb-4 px-2">
+								<div className="bg-white dark:bg-neutral-900 sticky top-0 z-1 mb-4 px-2">
 									<CustomInput
 										value={categoryFilter}
 										onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCategoryFilter(e.target.value || "")}

@@ -55,7 +55,7 @@ export default function StatCard({
 				<div className="mt-2">
 					<div className="flex items-center text-black">
 						<sub className="mr-1 text-sm font-normal text-stone-500">{currency}</sub>
-						<h1 className="text-2xl font-semibold">{value}</h1>
+						<h1 className="text-2xl dark:text-gray-200 font-semibold">{value}</h1>
 					</div>
 					{badge ? badge : null}
 				</div>
@@ -85,9 +85,9 @@ export default function StatCard({
 
 	return (
 		<div
-			className={`bg-white w-full dark:bg-neutral-900 border border-gray-100 dark:border-neutral-800 rounded-lg p-4 flex flex-col justify-between min-w-[180px] min-h-32 ${className}`}>
+			className={`bg-white w-full dark:bg-neutral-800 border border-gray-100 dark:border-neutral-700 rounded-lg p-4 flex flex-col justify-between min-w-[180px] min-h-32 ${className}`}>
 			<div className="flex items-center justify-between">
-				<h3 className="text-gray-500 text-[.95rem] mb-1">{title}</h3>
+				<h3 className="text-gray-500 dark:text-gray-300 text-[.95rem] mb-1">{title}</h3>
 			</div>
 			{loading ? (
 				<Skeleton className="w-full bg-gray-100 dark:bg-gray-100/20 h-7 rounded-xs" />
@@ -97,10 +97,10 @@ export default function StatCard({
 						? IncomeStat()
 						: value && (
 								<div className={`flex items-center gap-2 mt-2`}>
-									<div className="text-2xl font-semibold text-black">{value}</div>
+									<div className="text-2xl dark:text-gray-100 font-semibold text-black">{value}</div>
 									{badge ? badge : null}
 								</div>
-						  )}
+							)}
 				</>
 			)}
 			{footer || icon ? (

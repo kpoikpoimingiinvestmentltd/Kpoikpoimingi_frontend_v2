@@ -157,7 +157,7 @@ export default function Payments() {
 		debouncedSearch || undefined,
 		debouncedSearch || undefined,
 		isOverdue,
-		statusId
+		statusId,
 	);
 
 	const paymentsTyped = paymentsData as Record<string, unknown> | undefined;
@@ -353,7 +353,7 @@ export default function Payments() {
 								<div className="overflow-x-auto w-full">
 									<Table>
 										<TableHeader className={tableHeaderRowStyle}>
-											<TableRow className="bg-[#EAF6FF] h-12 overflow-hidden py-4 rounded-lg">
+											<TableRow className="bg-[#EAF6FF] dark:bg-neutral-900/80 h-12 overflow-hidden py-4 rounded-lg">
 												<TableHead>Contract Code</TableHead>
 												<TableHead>Customer Name</TableHead>
 												<TableHead>Email</TableHead>
@@ -374,7 +374,7 @@ export default function Payments() {
 												const statusStr = statusObj?.status as string | undefined;
 
 												return (
-													<TableRow key={(p.id as string) || idx} className="hover:bg-[#F6FBFF]">
+													<TableRow key={(p.id as string) || idx} className="hover:bg-[#F6FBFF] dark:hover:bg-neutral-900/50">
 														<TableCell className="py-4">{p.contractCode as string}</TableCell>
 														<TableCell className="py-4">{p.customerName as string}</TableCell>
 														<TableCell className="py-4">{p.customerEmail as string}</TableCell>

@@ -26,12 +26,12 @@ export default function ReceiptDetails() {
 			<div className="max-w-4xl mx-auto">
 				<div className="flex items-center justify-between flex-wrap gap-4 mb-6">
 					<div className="flex-1">
-						<RectangleSkeleton className="h-8 w-32 bg-gray-200 rounded" />
+						<RectangleSkeleton className="h-8 w-32 bg-gray-200 dark:bg-neutral-700 rounded" />
 					</div>
 					<div className="flex gap-3">
-						<RectangleSkeleton className="h-10 w-24 bg-gray-200 rounded" />
-						<RectangleSkeleton className="h-10 w-24 bg-gray-200 rounded" />
-						<RectangleSkeleton className="h-10 w-24 bg-gray-200 rounded" />
+						<RectangleSkeleton className="h-10 w-24 bg-gray-200 dark:bg-neutral-700 rounded" />
+						<RectangleSkeleton className="h-10 w-24 bg-gray-200 dark:bg-neutral-700 rounded" />
+						<RectangleSkeleton className="h-10 w-24 bg-gray-200 dark:bg-neutral-700 rounded" />
 					</div>
 				</div>
 

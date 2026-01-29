@@ -67,7 +67,7 @@ export default function Debt() {
 			});
 			setSearchParams(params);
 		},
-		[searchParams, setSearchParams]
+		[searchParams, setSearchParams],
 	);
 
 	const { data: debtData = {} as Record<string, unknown>, isLoading } = useGetAllContractDebts(
@@ -75,7 +75,7 @@ export default function Debt() {
 		limit,
 		debouncedSearch || undefined,
 		sortBy,
-		sortOrder
+		sortOrder,
 	);
 
 	const exportMutation = useExportAllContractDebts();
@@ -180,7 +180,7 @@ export default function Debt() {
 				</div>
 			</div>
 
-			<div className="grid grid-cols-5 md:grid-cols-2 bg-white rounded-lg overflow-hidden items-center">
+			<div className="grid grid-cols-5 md:grid-cols-2 bg-white dark:bg-neutral-800 rounded-xl overflow-hidden items-center">
 				<aside className="bg-[#03b5ff] col-span-3 md:col-span-1 h-full text-white rounded-r-full py-6 px-6 flex-1 md:mr-4 flex items-center justify-between">
 					<div className="flex flex-col h-full justify-between">
 						<div className="text-[.9rem] opacity-90">Total Debt</div>
@@ -257,7 +257,7 @@ export default function Debt() {
 							<>
 								<Table>
 									<TableHeader className={tableHeaderRowStyle}>
-										<TableRow className="bg-[#EAF6FF] h-12 overflow-hidden py-4 rounded-lg">
+										<TableRow className="bg-[#EAF6FF] dark:bg-neutral-900/80 h-12 overflow-hidden py-4 rounded-lg">
 											<TableHead>Contract Code</TableHead>
 											<TableHead>Customer Name</TableHead>
 											<TableHead>Property Name</TableHead>
@@ -272,7 +272,7 @@ export default function Debt() {
 										{debtors.map((r: unknown, i: number) => {
 											const row = r as Record<string, unknown>;
 											return (
-												<TableRow key={i}>
+												<TableRow key={i} className="hover:bg-[#F6FBFF] dark:hover:bg-neutral-900/50">
 													<TableCell>{row.contractCode as string}</TableCell>
 													<TableCell>{row.customerName as string}</TableCell>
 													<TableCell>{row.propertyName as string}</TableCell>
@@ -283,7 +283,7 @@ export default function Debt() {
 														<span
 															className={twMerge(
 																"px-3 py-1 rounded-full text-xs font-medium",
-																(row.isOverdue as boolean) ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"
+																(row.isOverdue as boolean) ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700",
 															)}>
 															{(row.isOverdue as boolean) ? "Overdue" : "Current"}
 														</span>
