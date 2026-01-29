@@ -64,7 +64,7 @@ export default function AdminDashboardSidebar({ onClose }: { onClose?: () => voi
 							const active = isLinkActive(link.path);
 							const baseLinkClass = `flex w-full items-center text-start before:right-0 before:h-full before:w-0.5 before:content-[''] before:absolute relative gap-x-4 py-2.5 px-4 rounded-sm rounded-r-none active-scale transition-colors ${
 								active
-									? "bg-white/20 before:bg-white dark:bg-neutral-800/80 dark:hover:bg-neutral-800 dark:before:bg-primary"
+									? "bg-white/20 before:bg-white dark:bg-neutral-700/80 dark:hover:bg-neutral-700/90 dark:before:bg-primary"
 									: "text-black before:bg-transparent hover:bg-white/15 dark:hover:bg-neutral-700/60"
 							}`;
 
@@ -75,7 +75,7 @@ export default function AdminDashboardSidebar({ onClose }: { onClose?: () => voi
 									<li key={link.linkname} className="w-full">
 										<div className={`flex items-center justify-between w-full ${baseLinkClass}`}>
 											<NavLink to={propertiesBase} onClick={() => onClose?.()} className="flex items-center gap-x-4 justify-between">
-												<IconWrapper className="text-[1.35rem] text-primary p-1.5 rounded-full bg-white dark:bg-neutral-800">
+												<IconWrapper className="text-[1.35rem] text-primary p-1.5 rounded-full bg-white dark:bg-neutral-900 border">
 													<link.icon />
 												</IconWrapper>
 												<span className="font-medium text-sm text-white">{link.linkname}</span>
@@ -124,7 +124,7 @@ export default function AdminDashboardSidebar({ onClose }: { onClose?: () => voi
 							return (
 								<li key={link.linkname} className="w-full">
 									<NavLink to={link.path} onClick={() => onClose?.()} className={baseLinkClass}>
-										<IconWrapper className="text-[1.35rem] text-primary dark:bg-neutral-900 p-1.5 rounded-full bg-white">
+										<IconWrapper className="text-[1.35rem] text-primary dark:bg-neutral-900 p-1.5 rounded-full bg-white border">
 											<link.icon />
 										</IconWrapper>
 										<span className="font-medium text-[.925rem] text-white">{link.linkname}</span>
