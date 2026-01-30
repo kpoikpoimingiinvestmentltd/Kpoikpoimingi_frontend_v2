@@ -14,23 +14,7 @@ export default function ClarificationDetailsSection({ form, handleChange, center
 	return (
 		<div className={centeredContainer()}>
 			<h3 className={sectionTitle()}>Clarification Details</h3>
-			<div className="mt-4 flex items-center gap-4">
-				<div className="flex items-center gap-2">
-					<label className="text-sm">Are you a driver?</label>
-					<button
-						type="button"
-						onClick={() => handleChange("isDriver", true)}
-						className={form.isDriver === true ? "bg-primary text-white px-3 py-1 rounded" : "border px-3 py-1 rounded"}>
-						Yes
-					</button>
-					<button
-						type="button"
-						onClick={() => handleChange("isDriver", false)}
-						className={form.isDriver === false ? "bg-primary text-white px-3 py-1 rounded" : "border px-3 py-1 rounded"}>
-						No
-					</button>
-				</div>
-			</div>
+
 			<div className="mt-4 flex items-center gap-4">
 				<div className="flex items-center gap-2">
 					<label className="text-sm">Have you previously entered hire purchase agreement?</label>

@@ -41,6 +41,7 @@ type Props = {
 	}>;
 	submitButtonText?: string;
 	showSignedContract?: boolean;
+	skipEmailVerification?: boolean;
 };
 
 export default function CustomerForm({
@@ -52,6 +53,7 @@ export default function CustomerForm({
 	selectedProperties,
 	submitButtonText,
 	showSignedContract = false,
+	skipEmailVerification = false,
 }: Props) {
 	const baseEachSectionTitle = "text-lg font-normal";
 	const baseCenteredContainer = "mx-auto w-full md:w-2/3 w-full my-12";
@@ -501,7 +503,11 @@ export default function CustomerForm({
 				isEditMode,
 				paymentMethod: currentPaymentMethod,
 			});
-			setShowEmailVerification(true);
+			if (skipEmailVerification) {
+				await handleEmailVerification();
+			} else {
+				setShowEmailVerification(true);
+			}
 		} catch (err: unknown) {
 			console.error("Form validation failed", err);
 			toast.error(`Validation failed: ${extractErrorMessage(err, "Unknown error")}`);

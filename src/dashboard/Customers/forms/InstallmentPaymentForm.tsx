@@ -64,7 +64,7 @@ export default function InstallmentPaymentFormComponent({
 	const disabled = isSubmitting || (missingFields && missingFields.length > 0);
 
 	return (
-		<form ref={formRef} onSubmit={onSubmit} className="space-y-6">
+		<form ref={formRef} onSubmit={onSubmit} className="space-y-6 w-full">
 			{/* Personal details */}
 			<PersonalDetailsSection
 				form={form}

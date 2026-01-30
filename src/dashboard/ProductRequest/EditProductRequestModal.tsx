@@ -49,7 +49,7 @@ export default function EditProductRequest({ open, onOpenChange, initial, onSave
 
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
-			<DialogContent className={modalContentStyle("px-4 md:px-8")}>
+			<DialogContent className={modalContentStyle("flex flex-col items-center gap-y-4")}>
 				<DialogHeader className="justify-center flex-row mt-5">
 					<h2 className="text-lg font-semibold">Edit Product Request</h2>
 				</DialogHeader>
@@ -59,6 +59,7 @@ export default function EditProductRequest({ open, onOpenChange, initial, onSave
 					centeredContainer={() => "mx-auto w-full md:w-3/4"}
 					paymentMethod={forceInstallment ? "installment" : undefined}
 					showSignedContract={true}
+					skipEmailVerification={true}
 					submitButtonText="Update Product Request"
 				/>
 			</DialogContent>
