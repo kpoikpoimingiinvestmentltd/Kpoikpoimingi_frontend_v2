@@ -8,8 +8,8 @@ export default function AuthPageNotFound() {
 			<div className="w-full h-full grid place-content-center">
 				<Image src={media.images._404} className="w-52 h-52 mx-auto" />
 				<div className="text-center max-w-md flex flex-col gap-y-4 mt-4">
-					<h3 className="text-xl font-semibold">Sorry, page not found</h3>
-					<p className="text-sm block leading-6">
+					<h3 className="text-xl font-semibold text-black">Sorry, page not found</h3>
+					<p className="text-sm block leading-6 text-black/70">
 						The page you are trying to get to, unfortunately does not exist. Please check the URL or go back to the previous page.
 					</p>
 					<BackButton title="Go Back" grouped className="bg-primary w-max text-white mx-auto hover:bg-primary text-sm px-3 gap-1 py-2.5" />
