@@ -9,6 +9,7 @@ type Props = {
 	isUploading?: boolean;
 	isUploaded?: boolean;
 	uploadedFiles?: { name: string; onRemove?: () => void }[];
+	multiple?: boolean;
 };
 
 export default function UploadBox({
@@ -18,6 +19,7 @@ export default function UploadBox({
 	isUploading = false,
 	isUploaded = false,
 	uploadedFiles = [],
+	multiple = false,
 }: Props) {
 	const inputRef = React.useRef<HTMLInputElement | null>(null);
 	const [localUploading, setLocalUploading] = React.useState(false);
@@ -44,13 +46,13 @@ export default function UploadBox({
 
 	return (
 		<div>
-			<input ref={inputRef} type="file" className="hidden" onChange={(e) => handleFiles(e.target.files)} />
+			<input ref={inputRef} type="file" className="hidden" multiple={multiple} onChange={(e) => handleFiles(e.target.files)} />
 			<div
 				role="button"
 				tabIndex={0}
 				onClick={() => !isCurrentlyUploading && inputRef.current?.click()}
 				onKeyDown={(e) => (e.key === "Enter" && !isCurrentlyUploading ? inputRef.current?.click() : null)}
-				className="border-dashed border-2 border-gray-200 rounded-md p-8 flex flex-col items-center justify-center cursor-pointer">
+				className="border-dashed border-2 border-gray-200 dark:border-neutral-500 text-black dark:text-gray-300 rounded-md p-8 flex flex-col items-center justify-center cursor-pointer">
 				{isCurrentlyUploading ? (
 					<>
 						<Spinner className="size-6 text-primary" />

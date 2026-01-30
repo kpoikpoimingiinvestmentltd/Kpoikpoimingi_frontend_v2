@@ -228,7 +228,7 @@ export default function GuarantorSection({
 								placeholder={
 									uploadedFiles[`guarantor_${idx}_doc`]?.length
 										? `${uploadedFiles[`guarantor_${idx}_doc`]?.length} document uploaded`
-										: "Upload voters card"
+										: "Upload identity document"
 								}
 								hint={
 									uploadedFiles[`guarantor_${idx}_doc`]?.length

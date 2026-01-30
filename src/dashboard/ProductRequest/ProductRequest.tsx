@@ -286,7 +286,9 @@ export default function ProductRequest() {
 										<TableBody>
 											{items.map((item) => (
 												<TableRow key={item.id} className="hover:bg-[#F6FBFF] dark:hover:bg-neutral-900/50">
-													<TableCell>{item.name}</TableCell>
+													<TableCell>
+														<span className="capitalize">{item.name}</span>
+													</TableCell>
 													<TableCell>{item.propertyType}</TableCell>
 													<TableCell>{item.paymentMethod}</TableCell>
 													<TableCell>{item.totalAmount.toLocaleString()}</TableCell>

@@ -30,6 +30,7 @@ type Props = {
 	centeredContainer: (additionalClasses?: string) => string;
 	sectionTitle: (additionalClasses?: string) => string;
 	setUploadedFiles: React.Dispatch<React.SetStateAction<FileUploadState>>;
+	showSignedContract?: boolean;
 	missingFields?: string[];
 	isPropertyPrefilled?: boolean;
 	submitButtonText?: string;
@@ -53,6 +54,7 @@ export default function InstallmentPaymentFormComponent({
 	centeredContainer,
 	sectionTitle,
 	setUploadedFiles,
+	showSignedContract = false,
 	missingFields = [],
 	isPropertyPrefilled = false,
 	submitButtonText,
@@ -91,6 +93,7 @@ export default function InstallmentPaymentFormComponent({
 				centeredContainer={centeredContainer}
 				sectionTitle={sectionTitle}
 				setUploadedFiles={setUploadedFiles}
+				showSignedContract={showSignedContract}
 			/>
 
 			{/* Next of Kin */}

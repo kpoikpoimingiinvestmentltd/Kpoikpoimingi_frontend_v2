@@ -387,7 +387,7 @@ export default function TabCustomerDetails({ customer }: { customer?: CustomerDe
 							title="Guarantor (1)"
 							children={
 								<>
-									<small className="text-[#131212B2] ">
+									<small className="text-[#131212B2] dark:text-gray-100">
 										As a guarantor, I hereby guaranty to pay all sums due under the Hire Purchase Agreement in the event of default by the Applicant.{" "}
 										<br />
 										<br /> I accept that messages, notices, processes and other correspondences where necessary, sent to my WhatsApp number as shown
@@ -461,7 +461,7 @@ export default function TabCustomerDetails({ customer }: { customer?: CustomerDe
 							title="Guarantor (2)"
 							children={
 								<>
-									<small className="text-[#131212B2]">
+									<small className="text-[#131212B2] dark:text-gray-100">
 										As a guarantor, I hereby guaranty to pay all sums due under the Hire Purchase Agreement in the event of default by the Applicant.{" "}
 										<br />
 										<br /> I accept that messages, notices, processes and other correspondences where necessary, sent to my WhatsApp number as shown

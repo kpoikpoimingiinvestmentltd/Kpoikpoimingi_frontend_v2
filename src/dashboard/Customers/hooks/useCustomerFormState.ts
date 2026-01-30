@@ -16,7 +16,7 @@ export function useCustomerFormState(
 		price: string;
 		quantity: number;
 		media?: string[];
-	}>
+	}>,
 ) {
 	const initializeFormState = (): FormState => {
 		if (initial) {

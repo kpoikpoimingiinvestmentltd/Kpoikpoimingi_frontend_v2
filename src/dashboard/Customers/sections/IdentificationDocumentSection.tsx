@@ -1,4 +1,5 @@
 import React from "react";
+import { toast } from "sonner";
 import UploadBox from "@/components/base/UploadBox";
 import type { InstallmentPaymentForm, FileUploadState } from "@/types/customerRegistration";
 
@@ -11,6 +12,7 @@ type Props = {
 	centeredContainer: (additionalClasses?: string) => string;
 	sectionTitle: (additionalClasses?: string) => string;
 	setUploadedFiles: React.Dispatch<React.SetStateAction<FileUploadState>>;
+	showSignedContract?: boolean;
 };
 
 export default function IdentificationDocumentSection({
@@ -22,6 +24,7 @@ export default function IdentificationDocumentSection({
 	centeredContainer,
 	sectionTitle,
 	setUploadedFiles,
+	showSignedContract = false,
 }: Props) {
 	return (
 		<>
@@ -66,9 +69,16 @@ export default function IdentificationDocumentSection({
 								};
 							}) || []
 						}
+						multiple={true}
 						onChange={async (files) => {
-							if (files[0]) {
-								await handleFileUpload(files[0], "nin");
+							if (!files || files.length === 0) return;
+							if (files.length < 2) {
+								toast.error("Please upload two identification documents");
+								return;
+							}
+							// Upload up to first two selected files
+							for (let i = 0; i < Math.min(2, files.length); i++) {
+								await handleFileUpload(files[i], "nin");
 							}
 						}}
 					/>
@@ -100,32 +110,34 @@ export default function IdentificationDocumentSection({
 							}}
 						/>
 					)}
-					<UploadBox
-						placeholder={uploadedFiles.contract?.length ? `${uploadedFiles.contract.length} contract uploaded` : "Upload signed contract"}
-						isUploaded={uploadedFieldsRef.current.has("contract")}
-						uploadedFiles={
-							uploadedFiles.contract?.map((file) => {
-								const raw = file.includes("/") ? file.split("/").pop() || "Contract" : file;
-								const filename = raw.split("?")[0];
-								const decodedName = decodeURIComponent(filename);
-								return {
-									name: decodedName,
-									onRemove: () => {
-										uploadedFieldsRef.current.delete("contract");
-										setUploadedFiles((prev) => ({
-											...prev,
-											contract: prev.contract?.filter((f) => f !== file),
-										}));
-									},
-								};
-							}) || []
-						}
-						onChange={async (files) => {
-							if (files[0]) {
-								await handleFileUpload(files[0], "contract");
+					{showSignedContract && (
+						<UploadBox
+							placeholder={uploadedFiles.contract?.length ? `${uploadedFiles.contract.length} contract uploaded` : "Upload signed contract"}
+							isUploaded={uploadedFieldsRef.current.has("contract")}
+							uploadedFiles={
+								uploadedFiles.contract?.map((file) => {
+									const raw = file.includes("/") ? file.split("/").pop() || "Contract" : file;
+									const filename = raw.split("?")[0];
+									const decodedName = decodeURIComponent(filename);
+									return {
+										name: decodedName,
+										onRemove: () => {
+											uploadedFieldsRef.current.delete("contract");
+											setUploadedFiles((prev) => ({
+												...prev,
+												contract: prev.contract?.filter((f) => f !== file),
+											}));
+										},
+									};
+								}) || []
 							}
-						}}
-					/>
+							onChange={async (files) => {
+								if (files[0]) {
+									await handleFileUpload(files[0], "contract");
+								}
+							}}
+						/>
+					)}
 				</div>
 			</div>
 			<hr className="my-6" />

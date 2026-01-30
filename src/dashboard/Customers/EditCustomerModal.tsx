@@ -27,7 +27,7 @@ export default function EditCustomerModal({ open, onOpenChange, initial, documen
 
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
-			<DialogContent className={modalContentStyle()}>
+			<DialogContent className={modalContentStyle("px-4 md:px-8")}>
 				<DialogHeader className="justify-center flex-row mt-5">
 					<h2 className="text-lg font-semibold">Edit Customer</h2>
 				</DialogHeader>

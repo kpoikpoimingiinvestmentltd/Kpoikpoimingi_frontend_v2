@@ -40,8 +40,34 @@ const OTPInput = ({ value, onChange, disabled }: { value: string; onChange: (val
 		}
 	};
 
+	const handlePaste = (e: React.ClipboardEvent<HTMLDivElement>) => {
+		e.preventDefault();
+		const pasted = e.clipboardData.getData("text") || "";
+		const digits = pasted.replace(/\D/g, "").slice(0, 6);
+		if (!digits) return;
+
+		// Determine starting index based on focused input
+		const active = document.activeElement as HTMLInputElement | null;
+		let startIndex = inputRefs.current.findIndex((r) => r === active);
+		if (startIndex < 0) startIndex = 0;
+
+		const otpArray = value.split("");
+		while (otpArray.length < 6) otpArray.push("");
+		for (let i = 0; i < digits.length && startIndex + i < 6; i++) {
+			otpArray[startIndex + i] = digits[i];
+		}
+		const newOtp = otpArray.join("").slice(0, 6);
+		onChange(newOtp);
+
+		// Focus the input after the last pasted digit
+		const focusIndex = Math.min(startIndex + digits.length, 5);
+		setTimeout(() => {
+			inputRefs.current[focusIndex]?.focus();
+		}, 0);
+	};
+
 	return (
-		<div className="flex gap-2 justify-center">
+		<div className="flex gap-2 justify-center" onPaste={handlePaste}>
 			{Array(6)
 				.fill(0)
 				.map((_, i) => (

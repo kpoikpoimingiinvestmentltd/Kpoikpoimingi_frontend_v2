@@ -40,6 +40,7 @@ type Props = {
 		media?: string[];
 	}>;
 	submitButtonText?: string;
+	showSignedContract?: boolean;
 };
 
 export default function CustomerForm({
@@ -50,6 +51,7 @@ export default function CustomerForm({
 	paymentMethod: paymentMethodProp,
 	selectedProperties,
 	submitButtonText,
+	showSignedContract = false,
 }: Props) {
 	const baseEachSectionTitle = "text-lg font-normal";
 	const baseCenteredContainer = "mx-auto w-full md:w-2/3 w-full my-12";
@@ -481,12 +483,19 @@ export default function CustomerForm({
 						...(uploadedFiles.indigeneCertificate && { indegeneCertificate: uploadedFiles.indigeneCertificate }),
 						...(uploadedFiles.guarantor_0_doc && { guarantor_0_doc: uploadedFiles.guarantor_0_doc }),
 						...(uploadedFiles.guarantor_1_doc && { guarantor_1_doc: uploadedFiles.guarantor_1_doc }),
-						...(uploadedFiles.contract && { signedContract: uploadedFiles.contract }),
 					},
 				};
 			}
 
 			// Store the submission data and show email verification modal
+			// Enforce identification document two-file requirement for hire purchase
+			if (currentPaymentMethod === "installment") {
+				if (!uploadedFiles.nin || uploadedFiles.nin.length < 2) {
+					toast.error("Identification document requires two files");
+					setIsSubmitting(false);
+					return;
+				}
+			}
 			setPendingSubmission({
 				payload,
 				isEditMode,
@@ -759,6 +768,7 @@ export default function CustomerForm({
 				centeredContainer={centeredContainer}
 				sectionTitle={sectionTitle}
 				setUploadedFiles={setUploadedFiles}
+				showSignedContract={showSignedContract}
 				missingFields={missingFields}
 				isPropertyPrefilled={isPropertyPrefilledRef.current}
 				submitButtonText={submitButtonText}
