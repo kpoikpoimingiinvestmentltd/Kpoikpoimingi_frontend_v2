@@ -485,6 +485,7 @@ export default function CustomerForm({
 						...(uploadedFiles.indigeneCertificate && { indegeneCertificate: uploadedFiles.indigeneCertificate }),
 						...(uploadedFiles.guarantor_0_doc && { guarantor_0_doc: uploadedFiles.guarantor_0_doc }),
 						...(uploadedFiles.guarantor_1_doc && { guarantor_1_doc: uploadedFiles.guarantor_1_doc }),
+						...(uploadedFiles.contract && { signedContract: uploadedFiles.contract }),
 					},
 				};
 			}

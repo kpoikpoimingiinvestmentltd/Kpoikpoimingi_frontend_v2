@@ -47,7 +47,7 @@ export default function ChangePasswordModal({ open, onOpenChange }: { open: bool
 					<DialogTitle className="text-center">Change Password</DialogTitle>
 				</DialogHeader>
 
-				<CustomCard className="border-0 p-0 bg-transparent py-5">
+				<CustomCard className="border-0 p-0 dark:bg-transparent bg-transparent py-5">
 					<div className="grid grid-cols-1 gap-4 my-5">
 						<CustomInput
 							label="Old Password"
