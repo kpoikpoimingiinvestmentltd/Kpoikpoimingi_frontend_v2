@@ -1,6 +1,7 @@
 import { Dialog, DialogContent, DialogHeader } from "@/components/ui/dialog";
 import CustomerForm from "./CustomerForm";
 import { modalContentStyle } from "../../components/common/commonStyles";
+import { toast } from "sonner";
 import React from "react";
 
 type Props = {
@@ -25,6 +26,14 @@ export default function EditCustomerModal({ open, onOpenChange, initial, documen
 		};
 	}, [normalizedInitial, documents]);
 
+	const handleSave = (data: unknown) => {
+		toast.success("Customer details updated successfully!");
+		if (onSave) {
+			onSave(data);
+		}
+		onOpenChange(false);
+	};
+
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
 			<DialogContent className={modalContentStyle("px-4 md:px-8")}>
@@ -34,9 +43,10 @@ export default function EditCustomerModal({ open, onOpenChange, initial, documen
 				<CustomerForm
 					centeredContainer={() => "md:w-4/5 mx-auto"}
 					initial={mergedInitial}
-					onSubmit={onSave}
+					onSubmit={handleSave}
 					onClose={() => onOpenChange(false)}
 					submitButtonText="Update Customer"
+					skipEmailVerification={true}
 				/>
 			</DialogContent>
 		</Dialog>

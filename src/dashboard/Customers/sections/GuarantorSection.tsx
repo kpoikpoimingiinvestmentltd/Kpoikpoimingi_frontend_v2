@@ -166,33 +166,50 @@ export default function GuarantorSection({
 								</Select>
 							</div>
 
-							<CustomInput
-								label="Home address"
-								required
-								labelClassName={labelStyle()}
-								value={g.homeAddress}
-								onChange={(e) => {
-									const next = [...form.guarantors];
-									next[idx] = { ...next[idx], homeAddress: e.target.value };
-									handleChange("guarantors", next);
-								}}
-								className={twMerge(inputStyle)}
-							/>
+							{g.employmentStatus === "1" ? (
+								<CustomInput
+									label="Employer name"
+									required
+									labelClassName={labelStyle()}
+									value={g.employerName || ""}
+									onChange={(e) => {
+										const next = [...form.guarantors];
+										next[idx] = { ...next[idx], employerName: e.target.value };
+										handleChange("guarantors", next);
+									}}
+									className={twMerge(inputStyle)}
+								/>
+							) : (
+								<CustomInput
+									label="Home address"
+									required
+									labelClassName={labelStyle()}
+									value={g.homeAddress}
+									onChange={(e) => {
+										const next = [...form.guarantors];
+										next[idx] = { ...next[idx], homeAddress: e.target.value };
+										handleChange("guarantors", next);
+									}}
+									className={twMerge(inputStyle)}
+								/>
+							)}
 						</div>
 
 						<div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-							<CustomInput
-								label="Business address"
-								required
-								labelClassName={labelStyle()}
-								value={g.businessAddress}
-								onChange={(e) => {
-									const next = [...form.guarantors];
-									next[idx] = { ...next[idx], businessAddress: e.target.value };
-									handleChange("guarantors", next);
-								}}
-								className={twMerge(inputStyle)}
-							/>
+							{g.employmentStatus === "1" && (
+								<CustomInput
+									label="Company address"
+									required
+									labelClassName={labelStyle()}
+									value={g.businessAddress}
+									onChange={(e) => {
+										const next = [...form.guarantors];
+										next[idx] = { ...next[idx], businessAddress: e.target.value };
+										handleChange("guarantors", next);
+									}}
+									className={twMerge(inputStyle)}
+								/>
+							)}
 
 							<div>
 								<label className={labelStyle()}>State of origin*</label>

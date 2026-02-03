@@ -241,6 +241,7 @@ export default function CustomerForm({
 						),
 						homeAddress: srcObj.homeAddress ?? curr.homeAddress,
 						businessAddress: srcObj.businessAddress ?? curr.businessAddress,
+						employerName: String(srcObj.employerName ?? srcObj.employer ?? curr.employerName ?? ""),
 						stateOfOrigin: (srcObj.stateOfOrigin ?? curr.stateOfOrigin ?? "") as string,
 						votersUploaded: curr.votersUploaded ?? 0,
 						hasAgreed: Boolean(srcObj.hasAgreed ?? curr.hasAgreed ?? false),
@@ -447,6 +448,7 @@ export default function CustomerForm({
 						phoneNumber: formatPhoneNumber(g.phone),
 						companyAddress: g.businessAddress,
 						homeAddress: g.homeAddress,
+						employerName: g.employerName || "",
 						email: g.email,
 						guarantorAgreement: "I agree to be a guarantor",
 						guarantorAgreementAt: new Date().toISOString(),
@@ -596,11 +598,10 @@ export default function CustomerForm({
 			// Clear localStorage drafts after successful creation
 			if (!pendingSubmission.isEditMode) {
 				localStorage.removeItem("customer_registration_draft");
+				// Reset form and navigate for new registrations only
+				resetFormCompletely();
+				navigate(_router.dashboard.customers);
 			}
-
-			// Reset form and navigate
-			resetFormCompletely();
-			if (!pendingSubmission.isEditMode) navigate(_router.dashboard.customers);
 
 			// Call parent onSubmit if provided
 			if (onSubmit) {
@@ -727,8 +728,19 @@ export default function CustomerForm({
 				if (!g.employmentStatus || String(g.employmentStatus).trim() === "") {
 					miss.push(`Guarantor ${idx + 1}: Employment status is required`);
 				}
-				if (!g.homeAddress || String(g.homeAddress).trim() === "") {
-					miss.push(`Guarantor ${idx + 1}: Home address is required`);
+				// If guarantor is employed, require company/business address and employer name; otherwise require home address
+				const guarantorEmployed = String(g.employmentStatus) === "1" || Number(g.employmentStatus) === 1;
+				if (guarantorEmployed) {
+					if (!g.businessAddress || String(g.businessAddress).trim() === "") {
+						miss.push(`Guarantor ${idx + 1}: Company / Business address is required`);
+					}
+					if (!g.employerName || String(g.employerName).trim() === "") {
+						miss.push(`Guarantor ${idx + 1}: Employer / Company name is required`);
+					}
+				} else {
+					if (!g.homeAddress || String(g.homeAddress).trim() === "") {
+						miss.push(`Guarantor ${idx + 1}: Home address is required`);
+					}
 				}
 				if (!g.stateOfOrigin || String(g.stateOfOrigin).trim() === "") {
 					miss.push(`Guarantor ${idx + 1}: State of origin is required`);
