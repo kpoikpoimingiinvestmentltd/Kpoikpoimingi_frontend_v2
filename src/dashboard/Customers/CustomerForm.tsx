@@ -598,6 +598,7 @@ export default function CustomerForm({
 			// Clear localStorage drafts after successful creation
 			if (!pendingSubmission.isEditMode) {
 				localStorage.removeItem("customer_registration_draft");
+				localStorage.removeItem("customer_registration_uploaded_files");
 				// Reset form and navigate for new registrations only
 				resetFormCompletely();
 				navigate(_router.dashboard.customers);
