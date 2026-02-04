@@ -33,23 +33,26 @@ export default function TabCustomerDetails({ customer }: { customer?: CustomerDe
 	};
 
 	const getEmploymentStatusLabel = (status?: string | number | null | { status?: string }): string => {
-		if (!status) return "N/A";
-		// Handle numeric ID format (from guarantors)
+		if (status === null || status === undefined) return "N/A";
+
+		// Handle numeric ID format (employmentStatusId from API)
 		if (typeof status === "number") {
-			const byId = employmentStatusOptions.find((opt) => opt.key === String(status));
-			return byId ? byId.value : String(status);
+			const option = employmentStatusOptions.find((opt) => opt.key === String(status));
+			return option ? option.value : String(status);
 		}
-		// Handle string format (could be ID or value)
+
+		// Handle string format (could be ID)
 		if (typeof status === "string") {
-			const byId = employmentStatusOptions.find((opt) => opt.key === status);
-			return byId ? byId.value : status;
+			const option = employmentStatusOptions.find((opt) => opt.key === status);
+			return option ? option.value : status;
 		}
+
 		// Handle object format with status property
-		if (typeof status === "object" && status.status) {
-			const statusStr = status.status;
-			const byId = employmentStatusOptions.find((opt) => opt.key === statusStr);
-			return byId ? byId.value : statusStr;
+		if (typeof status === "object" && status !== null && "status" in status && status.status) {
+			const option = employmentStatusOptions.find((opt) => opt.key === status.status);
+			return option ? option.value : status.status;
 		}
+
 		return "N/A";
 	};
 
@@ -359,7 +362,7 @@ export default function TabCustomerDetails({ customer }: { customer?: CustomerDe
 						<div className="grid grid-cols-1 gap-2">
 							<KeyValueRow
 								label="Employment status"
-								value={getEmploymentStatusLabel(employment.employmentStatus)}
+								value={getEmploymentStatusLabel(employment.employmentStatusId ?? employment.employmentStatus)}
 								leftClassName="text-sm text-muted-foreground"
 								rightClassName="text-right"
 							/>
@@ -446,7 +449,7 @@ export default function TabCustomerDetails({ customer }: { customer?: CustomerDe
 							/>
 							<KeyValueRow
 								label="Employment status"
-								value={getEmploymentStatusLabel(guarantors[0]?.employmentStatus)}
+								value={getEmploymentStatusLabel(guarantors[0]?.employmentStatusId ?? guarantors[0]?.employmentStatus)}
 								leftClassName="text-sm text-muted-foreground"
 								rightClassName="text-right"
 							/>
@@ -538,7 +541,7 @@ export default function TabCustomerDetails({ customer }: { customer?: CustomerDe
 							/>
 							<KeyValueRow
 								label="Employment status"
-								value={getEmploymentStatusLabel(guarantors[1]?.employmentStatus)}
+								value={getEmploymentStatusLabel(guarantors[1]?.employmentStatusId ?? guarantors[1]?.employmentStatus)}
 								leftClassName="text-sm text-muted-foreground"
 								rightClassName="text-right"
 							/>

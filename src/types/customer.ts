@@ -150,12 +150,15 @@ export type Registration = {
 		spouseAddress?: string;
 	};
 	employmentDetails?: {
+		id?: string;
 		employmentStatus?: { status?: string };
+		employmentStatusId?: number | string;
 		employerName?: string;
 		employerAddress?: string;
 		companyName?: string;
 		businessAddress?: string;
 		homeAddress?: string;
+		customerRegistrationId?: string;
 	};
 	propertyInterestRequest?: Array<{
 		propertyName?: string;
@@ -166,15 +169,22 @@ export type Registration = {
 	}>;
 	customPropertyName?: string;
 	guarantors?: Array<{
+		id?: string;
 		fullName?: string;
 		occupation?: string;
 		phoneNumber?: string;
 		email?: string;
 		employmentStatus?: { status?: string };
+		employmentStatusId?: number | string;
 		homeAddress?: string;
 		companyAddress?: string;
 		businessAddress?: string;
 		stateOfOrigin?: string;
+		hasAgreed?: boolean;
+		employerName?: string | null;
+		guarantorAgreement?: string;
+		guarantorAgreementAt?: string;
+		customerRegistrationId?: string;
 	}>;
 	purposeOfProperty?: string;
 	previousHirePurchase?: string;
