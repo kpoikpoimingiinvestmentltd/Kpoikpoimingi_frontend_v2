@@ -17,6 +17,7 @@ import SearchWithFilters from "@/components/common/SearchWithFilters";
 import { useDebounceSearch } from "@/hooks/useDebounceSearch";
 import type { FilterField } from "@/components/common/SearchWithFilters";
 import CompactPagination from "@/components/ui/compact-pagination";
+import KeyValueRow from "@/components/common/KeyValueRow";
 
 interface SelectedProperty {
 	id: string;
@@ -350,33 +351,41 @@ export default function SelectProperties() {
 							)}
 
 							{/* Price and Basic Info */}
-							<div className="bg-gray-50 rounded-lg p-4">
+							<CustomCard className="h-auto rounded-lg p-4">
 								<div className="text-3xl font-bold text-primary mb-3">₦{parseFloat(selectedProperty.price).toLocaleString()}</div>
-								<div className="grid grid-cols-2 gap-4 text-sm">
-									<div>
-										<span className="text-gray-600">Condition</span>
-										<p className="font-semibold">{selectedProperty.condition || "N/A"}</p>
-									</div>
-									<div>
-										<span className="text-gray-600">Status</span>
-										<p className="font-semibold">{selectedProperty.status?.status || "N/A"}</p>
-									</div>
-									<div>
-										<span className="text-gray-600">Available</span>
-										<p className="font-semibold">{selectedProperty.quantityAvailable}</p>
-									</div>
-									<div>
-										<span className="text-gray-600">Assigned</span>
-										<p className="font-semibold">{selectedProperty.quantityAssigned}</p>
-									</div>
+								<div>
+									<KeyValueRow
+										label="Condition"
+										value={selectedProperty.condition || "N/A"}
+										leftClassName="text-sm text-muted-foreground"
+										rightClassName="text-right"
+									/>
+									<KeyValueRow
+										label="Status"
+										value={selectedProperty.status?.status || "N/A"}
+										leftClassName="text-sm text-muted-foreground"
+										rightClassName="text-right"
+									/>
+									<KeyValueRow
+										label="Available"
+										value={String(selectedProperty.quantityAvailable || 0)}
+										leftClassName="text-sm text-muted-foreground"
+										rightClassName="text-right"
+									/>
+									<KeyValueRow
+										label="Assigned"
+										value={String(selectedProperty.quantityAssigned || 0)}
+										leftClassName="text-sm text-muted-foreground"
+										rightClassName="text-right"
+									/>
 								</div>
-							</div>
+							</CustomCard>
 
 							{/* Description */}
 							{selectedProperty.description && (
 								<div>
 									<h3 className="font-semibold text-sm mb-2">Description</h3>
-									<p className="text-gray-700 text-sm leading-relaxed">{selectedProperty.description}</p>
+									<p className="text-sm leading-relaxed">{selectedProperty.description}</p>
 								</div>
 							)}
 
@@ -384,14 +393,14 @@ export default function SelectProperties() {
 							{selectedProperty.category && (
 								<div>
 									<h3 className="font-semibold text-sm mb-2">Category</h3>
-									<p className="text-gray-700 text-sm">
+									<p className="text-sm">
 										{selectedProperty.category.parent?.category} → {selectedProperty.category.category}
 									</p>
 								</div>
 							)}
 
 							{/* Additional Info */}
-							<div className="space-y-2 text-sm text-gray-600">
+							<div className="space-y-2 text-sm">
 								{selectedProperty.propertyCode && (
 									<div>
 										<span className="font-medium">Code:</span> {selectedProperty.propertyCode}

@@ -74,24 +74,22 @@ export default function EmploymentDetailsSection({
 				) : (
 					<>
 						<CustomInput
-							label="Company name"
+							label="Employer name"
 							required
 							labelClassName={labelStyle()}
-							value={form.employment.companyName}
-							onChange={(e) => handleChange("employment", { ...form.employment, companyName: e.target.value })}
+							value={form.employment.employerName}
+							onChange={(e) => handleChange("employment", { ...form.employment, employerName: e.target.value })}
 							className={twMerge(inputStyle)}
 						/>
 
-						<div className="mt-4 col-span-full">
-							<label className={labelStyle()}>
-								Company address <sup className="dark:text-red-500">*</sup>
-							</label>
-							<Textarea
-								value={form.employment.businessAddress}
-								onChange={(e) => handleChange("employment", { ...form.employment, businessAddress: e.target.value })}
-								className={twMerge(inputStyle)}
-							/>
-						</div>
+						<CustomInput
+							label="Company address"
+							required
+							labelClassName={labelStyle()}
+							value={form.employment.businessAddress}
+							onChange={(e) => handleChange("employment", { ...form.employment, businessAddress: e.target.value })}
+							className={twMerge(inputStyle)}
+						/>
 					</>
 				)}
 			</div>

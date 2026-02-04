@@ -209,8 +209,8 @@ export default function EmailVerificationModal({ isOpen, onClose, email, onVerif
 					{/* Step 1: Request OTP */}
 					{step === "request" && (
 						<>
-							<p className="text-sm text-gray-600">
-								We'll send a 6-digit verification code to <strong>{email}</strong>
+							<p className="text-sm text-gray-600 dark:text-gray-100">
+								We'll send a 6-digit verification code to <strong className="font-semibold">{email}</strong>
 							</p>
 
 							<Button type="button" onClick={handleRequestOTP} disabled={requestOtpMutation.isPending} className="w-full">
@@ -229,8 +229,8 @@ export default function EmailVerificationModal({ isOpen, onClose, email, onVerif
 					{/* Step 2: Confirm OTP */}
 					{step === "confirm" && (
 						<>
-							<p className="text-sm text-gray-600">
-								We've sent a 6-digit code to <strong>{email}</strong>
+							<p className="text-sm text-gray-600 dark:text-gray-100">
+								We've sent a 6-digit code to <strong className="font-semibold">{email}</strong>
 							</p>
 
 							<div className="space-y-2">

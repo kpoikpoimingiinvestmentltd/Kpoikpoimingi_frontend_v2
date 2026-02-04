@@ -456,11 +456,11 @@ export default function CustomerForm({
 					})),
 					employmentDetails: {
 						employmentStatusId: Number(installmentForm.employment.status) || 0,
-						employerName: installmentForm.employment.employerName,
-						employerAddress: installmentForm.employment.employerAddress,
-						companyName: installmentForm.employment.companyName,
-						businessAddress: installmentForm.employment.businessAddress,
-						homeAddress: installmentForm.employment.homeAddress,
+						employerName: installmentForm.employment.employerName || installmentForm.employment.companyName || "",
+						employerAddress: installmentForm.employment.employerAddress || installmentForm.employment.businessAddress || "",
+						companyName: installmentForm.employment.companyName || "",
+						businessAddress: installmentForm.employment.businessAddress || "",
+						homeAddress: installmentForm.employment.homeAddress || "",
 					},
 					propertyInterestRequest: [
 						{
