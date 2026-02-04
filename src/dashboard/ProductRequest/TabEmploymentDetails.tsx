@@ -1,8 +1,21 @@
 import CustomCard from "@/components/base/CustomCard";
 import KeyValueRow from "@/components/common/KeyValueRow";
+import React from "react";
+import { useGetReferenceData } from "@/api/reference";
+import { extractEmploymentStatusOptions } from "@/lib/referenceDataHelpers";
 
 export default function TabEmploymentDetails({ data }: { data: Record<string, unknown> }) {
 	const emp = (data?.employmentDetails as Record<string, unknown>) || {};
+
+	const { data: refData } = useGetReferenceData();
+	const employmentStatusOptions = React.useMemo(() => extractEmploymentStatusOptions(refData), [refData]);
+
+	const getEmploymentStatusLabel = (statusId: string | number | undefined): string => {
+		if (!statusId) return "N/A";
+		const idStr = String(statusId);
+		const found = employmentStatusOptions.find((opt) => opt.key === idStr);
+		return found ? found.value : idStr;
+	};
 
 	return (
 		<CustomCard className="mt-4 border-none p-0 bg-white">
@@ -16,7 +29,7 @@ export default function TabEmploymentDetails({ data }: { data: Record<string, un
 					/>
 					<KeyValueRow
 						label="Employment Status"
-						value={(emp?.employmentStatusId as string) || "N/A"}
+						value={getEmploymentStatusLabel(emp?.employmentStatusId as string | number | undefined)}
 						leftClassName="text-sm text-muted-foreground"
 						rightClassName="text-right"
 					/>

@@ -2,7 +2,7 @@ import CustomCard from "@/components/base/CustomCard";
 import SectionTitle from "@/components/common/SectionTitle";
 import KeyValueRow from "@/components/common/KeyValueRow";
 import { useGetReferenceData } from "@/api/reference";
-import { extractStateOptions } from "@/lib/referenceDataHelpers";
+import { extractStateOptions, extractEmploymentStatusOptions } from "@/lib/referenceDataHelpers";
 import React from "react";
 import type { CustomerDetails, MediaFile } from "@/types/customer";
 
@@ -19,6 +19,7 @@ export default function TabCustomerDetails({ customer }: { customer?: CustomerDe
 	// Fetch reference data for state options
 	const { data: refData } = useGetReferenceData();
 	const stateOfOriginOptions = React.useMemo(() => extractStateOptions(refData), [refData]);
+	const employmentStatusOptions = React.useMemo(() => extractEmploymentStatusOptions(refData), [refData]);
 
 	const formatPhoneNumber = (phone?: string) => {
 		if (!phone) return "";
@@ -29,6 +30,27 @@ export default function TabCustomerDetails({ customer }: { customer?: CustomerDe
 		if (!stateId) return "";
 		const state = stateOfOriginOptions.find((o) => o.key === stateId);
 		return state?.value || stateId;
+	};
+
+	const getEmploymentStatusLabel = (status?: string | number | null | { status?: string }): string => {
+		if (!status) return "N/A";
+		// Handle numeric ID format (from guarantors)
+		if (typeof status === "number") {
+			const byId = employmentStatusOptions.find((opt) => opt.key === String(status));
+			return byId ? byId.value : String(status);
+		}
+		// Handle string format (could be ID or value)
+		if (typeof status === "string") {
+			const byId = employmentStatusOptions.find((opt) => opt.key === status);
+			return byId ? byId.value : status;
+		}
+		// Handle object format with status property
+		if (typeof status === "object" && status.status) {
+			const statusStr = status.status;
+			const byId = employmentStatusOptions.find((opt) => opt.key === statusStr);
+			return byId ? byId.value : statusStr;
+		}
+		return "N/A";
 	};
 
 	// Transform media files from API format { fileUrl } to component format { url }
@@ -69,8 +91,9 @@ export default function TabCustomerDetails({ customer }: { customer?: CustomerDe
 	const totalQuantity = allProps.reduce((acc, p) => acc + (Number(p.quantity) || 0), 0) || propertyNames.length || 0;
 
 	const totalAmount = allProps.reduce((acc, p) => {
-		const v = Number(p.customPropertyPrice ?? p.customPrice ?? p.price ?? p.downPayment ?? 0) || 0;
-		return acc + v * (Number(p.quantity) || 1);
+		const nestedProperty = p.property as Record<string, unknown> | undefined;
+		const price = Number(p.customPropertyPrice ?? p.customPrice ?? nestedProperty?.price ?? p.price ?? p.downPayment ?? 0) || 0;
+		return acc + price * (Number(p.quantity) || 1);
 	}, 0);
 
 	const rawPt = customer?.paymentTypeId;
@@ -336,7 +359,7 @@ export default function TabCustomerDetails({ customer }: { customer?: CustomerDe
 						<div className="grid grid-cols-1 gap-2">
 							<KeyValueRow
 								label="Employment status"
-								value={employment.employmentStatus?.status || "N/A"}
+								value={getEmploymentStatusLabel(employment.employmentStatus)}
 								leftClassName="text-sm text-muted-foreground"
 								rightClassName="text-right"
 							/>
@@ -423,7 +446,7 @@ export default function TabCustomerDetails({ customer }: { customer?: CustomerDe
 							/>
 							<KeyValueRow
 								label="Employment status"
-								value={guarantors[0]?.employmentStatus?.status || "N/A"}
+								value={getEmploymentStatusLabel(guarantors[0]?.employmentStatus)}
 								leftClassName="text-sm text-muted-foreground"
 								rightClassName="text-right"
 							/>
@@ -515,7 +538,7 @@ export default function TabCustomerDetails({ customer }: { customer?: CustomerDe
 							/>
 							<KeyValueRow
 								label="Employment status"
-								value={guarantors[1]?.employmentStatus?.status || "N/A"}
+								value={getEmploymentStatusLabel(guarantors[1]?.employmentStatus)}
 								leftClassName="text-sm text-muted-foreground"
 								rightClassName="text-right"
 							/>

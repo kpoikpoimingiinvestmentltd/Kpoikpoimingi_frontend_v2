@@ -6,12 +6,24 @@ import Image from "@/components/base/Image";
 import { FileIcon, IconWrapper } from "@/assets/icons";
 import { modalContentStyle } from "../../components/common/commonStyles";
 import React from "react";
+import { useGetReferenceData } from "@/api/reference";
+import { extractEmploymentStatusOptions } from "@/lib/referenceDataHelpers";
 
 export default function TabGuarantorDetails({ data }: { data: Record<string, unknown> }) {
 	const guarantors = (data?.guarantors as Record<string, unknown>[]) || [];
 	const [previewOpen, setPreviewOpen] = React.useState(false);
 	const [previewImage, setPreviewImage] = React.useState<string | null>(null);
 	const [previewLabel, setPreviewLabel] = React.useState<string | null>(null);
+
+	const { data: refData } = useGetReferenceData();
+	const employmentStatusOptions = React.useMemo(() => extractEmploymentStatusOptions(refData), [refData]);
+
+	const getEmploymentStatusLabel = (statusId: string | number | undefined): string => {
+		if (!statusId) return "N/A";
+		const idStr = String(statusId);
+		const found = employmentStatusOptions.find((opt) => opt.key === idStr);
+		return found ? found.value : idStr;
+	};
 
 	const openPreview = (img: string, label?: string) => {
 		setPreviewImage(img);
@@ -55,7 +67,7 @@ export default function TabGuarantorDetails({ data }: { data: Record<string, unk
 								/>
 								<KeyValueRow
 									label="Employment Status"
-									value={(g.employmentStatusId as string) || "N/A"}
+									value={getEmploymentStatusLabel(g.employmentStatusId)}
 									leftClassName="text-sm text-muted-foreground"
 									rightClassName="text-right"
 								/>
