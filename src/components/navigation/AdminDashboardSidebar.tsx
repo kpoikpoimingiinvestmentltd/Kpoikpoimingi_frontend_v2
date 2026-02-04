@@ -47,7 +47,7 @@ export default function AdminDashboardSidebar({ onClose }: { onClose?: () => voi
 			<header className="relative flex items-center justify-start before:absolute before:content-[''] before:h-68 before:w-72 before:rounded-full before:bg-white before:pointer-events-none before:-bottom-6 before:-left-1/4">
 				<button
 					type="button"
-					className="absolute right-0 bg-white rounded-lg top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-300 hover:text-black dark:hover:text-white p-2 xl:hidden"
+					className="absolute right-0 bg-white dark:bg-neutral-800 dark: hover:bg-neutral-600 rounded-lg top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-300 hover:text-black dark:hover:text-white p-2 xl:hidden"
 					onClick={() => onClose?.()}
 					aria-label="Close sidebar">
 					<IconWrapper>

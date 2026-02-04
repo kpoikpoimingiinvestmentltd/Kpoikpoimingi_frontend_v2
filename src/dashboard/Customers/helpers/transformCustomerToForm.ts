@@ -195,8 +195,9 @@ export function transformCustomerToInstallmentForm(customer: unknown): Installme
 							: gg.employmentStatus) ||
 						"",
 				),
-				homeAddress: (gg.homeAddress || gg.address || "") as string,
+				homeAddress: (gg.homeAddress || "") as string,
 				businessAddress: (gg.companyAddress || gg.businessAddress || "") as string,
+				employerName: (gg.employerName || "") as string,
 				stateOfOrigin: String(gg.stateOfOrigin || ""),
 				votersUploaded: (gg.votersUploaded as number) || 0,
 				hasAgreed: Boolean(gg.hasAgreed ?? false),

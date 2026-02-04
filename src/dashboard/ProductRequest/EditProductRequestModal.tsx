@@ -30,6 +30,7 @@ export default function EditProductRequest({ open, onOpenChange, initial, onSave
 				phone: (src.phoneNumber as string) || (src.phone as string) || "",
 				email: (src.email as string) || "",
 				employmentStatus: (src.employmentStatus as string) || (src.employmentStatusId as string) || "",
+				employerName: (src.employerName as string) || "",
 				homeAddress: (src.homeAddress as string) || (src.address as string) || "",
 				businessAddress: (src.companyAddress as string) || (src.businessAddress as string) || "",
 				stateOfOrigin: (src.stateOfOrigin as string) || "",
