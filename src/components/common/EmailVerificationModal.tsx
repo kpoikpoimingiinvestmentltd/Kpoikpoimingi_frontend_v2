@@ -181,16 +181,6 @@ export default function EmailVerificationModal({ isOpen, onClose, email, onVerif
 		confirmOtpMutation.mutate({ email, otp });
 	};
 
-	// Auto-submit when all 6 digits are entered
-	React.useEffect(() => {
-		if (step === "confirm" && otp.length === 6) {
-			const timer = setTimeout(() => {
-				handleConfirmOTP();
-			}, 500);
-			return () => clearTimeout(timer);
-		}
-	}, [otp, step]);
-
 	const handleClose = () => {
 		setStep("request");
 		setOtp("");
