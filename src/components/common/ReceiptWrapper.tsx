@@ -102,7 +102,7 @@ export default function ReceiptWrapper({
 	return (
 		<>
 			<div id="receipt-container">
-				<CustomCard className="receipt-wrapper-outer border-0 bg-transparent dark:bg-transparent py-4">
+				<CustomCard className="receipt-wrapper-outer border-0 bg-transparent dark:bg-transparent px-0 py-4">
 					<div className="max-w-4xl mx-auto flex flex-col gap-y-6">
 						<header className="receipt-header flex justify-between items-center gap-x-4 gap-y-3 flex-wrap">
 							<h2 className="text-lg font-medium">Receipt</h2>

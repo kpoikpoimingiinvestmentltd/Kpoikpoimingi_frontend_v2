@@ -24,6 +24,7 @@ import type { ContractPayload } from "@/types/contracts";
 export default function CreateContractModal({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
 	const [showSuccess, setShowSuccess] = React.useState(false);
 	const [generatedLink, setGeneratedLink] = React.useState<string>("");
+	const [isPaymentLink, setIsPaymentLink] = React.useState(false);
 	const [selectedCustomerData, setSelectedCustomerData] = React.useState<Registration | null>(null);
 	const [searchQuery, setSearchQuery] = React.useState("");
 
@@ -35,15 +36,15 @@ export default function CreateContractModal({ open, onOpenChange }: { open: bool
 		const list: Registration[] = Array.isArray(registrations)
 			? (registrations as Registration[])
 			: Array.isArray((registrations as { data?: Registration[] }).data)
-			? ((registrations as { data?: Registration[] }).data as Registration[])
-			: [];
+				? ((registrations as { data?: Registration[] }).data as Registration[])
+				: [];
 
 		const currentRegistrations = list.filter((reg) => reg?.isCurrent === true);
 		if (!searchQuery.trim()) return currentRegistrations;
 		return currentRegistrations.filter((reg) =>
 			String(reg.fullName || "")
 				.toLowerCase()
-				.includes(searchQuery.toLowerCase())
+				.includes(searchQuery.toLowerCase()),
 		);
 	}, [registrations, searchQuery]);
 
@@ -262,12 +263,13 @@ export default function CreateContractModal({ open, onOpenChange }: { open: bool
 				typeof r.message === "string"
 					? r.message
 					: typeof (r.data as Record<string, unknown>)?.message === "string"
-					? (r.data as Record<string, unknown>).message
-					: "Contract created successfully";
+						? (r.data as Record<string, unknown>).message
+						: "Contract created successfully";
 			try {
 				toast.success(String(successMsg));
 			} catch {}
 			setGeneratedLink(linkStr);
+			setIsPaymentLink(previewPayload?.isPaymentLink ?? false);
 			setConfirmOpen(false);
 			onOpenChange(false);
 			setSelectedCustomerData(null);
@@ -279,7 +281,7 @@ export default function CreateContractModal({ open, onOpenChange }: { open: bool
 		(err: unknown) => {
 			const msg = extractErrorMessage(err, "Failed to create contract");
 			toast.error(msg);
-		}
+		},
 	);
 
 	return (
@@ -326,7 +328,7 @@ export default function CreateContractModal({ open, onOpenChange }: { open: bool
 														<SelectItem className="cursor-pointer" key={String(reg.id)} value={String(reg.customerId)}>
 															{String(reg.fullName ?? "")}
 														</SelectItem>
-												  ))
+													))
 												: searchQuery && <div className="p-3 text-center text-sm text-gray-500">No customers found</div>}
 										</SelectContent>
 									</Select>
@@ -618,7 +620,7 @@ export default function CreateContractModal({ open, onOpenChange }: { open: bool
 			/>
 
 			<ContractSuccessModal
-				open={showSuccess}
+				open={showSuccess && isPaymentLink}
 				onOpenChange={setShowSuccess}
 				link={generatedLink}
 				onSend={(email) => console.log("send-email", email, generatedLink)}

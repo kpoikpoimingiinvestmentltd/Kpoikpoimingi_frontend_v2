@@ -64,10 +64,10 @@ export default function KeyValueRow({
 								{value}
 							</Link>
 						) : (
-							<div className="text-xs min-[450px]:text-sm text-balance sm:text-nowrap">{value}</div>
+							<div className="text-xs min-[450px]:text-sm text-balance sm:text-nowrap text-gray-800 dark:text-gray-100">{value}</div>
 						)
 					) : variant === "action" ? (
-						<div className="text-xs min-[450px]:text-sm">{value}</div>
+						<div className="text-xs min-[450px]:text-sm text-gray-800 dark:text-gray-100">{value}</div>
 					) : (
 						<div />
 					)}
