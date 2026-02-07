@@ -20,6 +20,8 @@ interface Contract {
 	[key: string]: unknown;
 }
 
+const tableStyle = "border-r border-gray-200 dark:border-r-neutral-700 text-center";
+
 export default function TabPaymentPlan({ contract }: { contract?: Contract }) {
 	const [linkOpen, setLinkOpen] = useState(false);
 	const [generatedLink, setGeneratedLink] = useState<PaymentLinkResponse | null>(null);
@@ -146,11 +148,11 @@ export default function TabPaymentPlan({ contract }: { contract?: Contract }) {
 							<Table>
 								<TableHeader className="[&_tr]:border-0">
 									<TableRow className="bg-[#EAF6FF] dark:bg-neutral-900/80 hover:bg-[#EAF6FF] dark:hover:bg-neutral-900/50 h-12 overflow-hidden py-4 rounded-lg">
-										<TableHead className="border-r border-gray-200 dark:border-r-neutral-800 text-center">Payment #</TableHead>
-										<TableHead className="border-r border-gray-200 dark:border-r-neutral-800 text-center">Due Date</TableHead>
-										<TableHead className="border-r border-gray-200 dark:border-r-neutral-800 text-center">Amount</TableHead>
-										<TableHead className="border-r border-gray-200 dark:border-r-neutral-800 text-center">Late Fees</TableHead>
-										<TableHead className="border-r border-gray-200 dark:border-r-neutral-800 text-center">Total Due</TableHead>
+										<TableHead className={tableStyle}>Payment #</TableHead>
+										<TableHead className={tableStyle}>Due Date</TableHead>
+										<TableHead className={tableStyle}>Amount</TableHead>
+										<TableHead className={tableStyle}>Late Fees</TableHead>
+										<TableHead className={tableStyle}>Total Due</TableHead>
 										<TableHead className="text-center">Status & Payment Link</TableHead>
 									</TableRow>
 								</TableHeader>
@@ -158,12 +160,12 @@ export default function TabPaymentPlan({ contract }: { contract?: Contract }) {
 								<TableBody>
 									{displaySchedules.map((schedule: Record<string, unknown>, i: number) => (
 										<TableRow key={schedule.id as string} className="hover:bg-[#F6FBFF] dark:hover:bg-neutral-900/50">
-											<TableCell className="py-6 border-r border-gray-200 text-center">{i + 1}</TableCell>
-											<TableCell className="py-6 border-r border-gray-200 text-center">{schedule.date as string}</TableCell>
-											<TableCell className="py-6 border-r border-gray-200 text-center">₦{schedule.amount as number}</TableCell>
-											<TableCell className="py-6 border-r border-gray-200 text-center">₦{schedule.lateFees as number}</TableCell>
-											<TableCell className="py-6 border-r border-gray-200 text-center">₦{schedule.totalDue as number}</TableCell>
-											<TableCell className="py-6 text-center">
+											<TableCell className={twMerge(tableStyle, "py-6")}>{i + 1}</TableCell>
+											<TableCell className={twMerge(tableStyle, "py-6")}>{schedule.date as string}</TableCell>
+											<TableCell className={twMerge(tableStyle, "py-6")}>₦{schedule.amount as number}</TableCell>
+											<TableCell className={twMerge(tableStyle, "py-6")}>₦{schedule.lateFees as number}</TableCell>
+											<TableCell className={twMerge(tableStyle, "py-6")}>₦{schedule.totalDue as number}</TableCell>
+											<TableCell className={twMerge(tableStyle, "py-6")}>
 												{(schedule.isPaid as boolean) ? (
 													<div className="flex justify-center items-center gap-2 font-medium">
 														<IconWrapper className="text-2xl text-emerald-600">
@@ -226,12 +228,12 @@ export default function TabPaymentPlan({ contract }: { contract?: Contract }) {
 									))}
 
 									<TableRow>
-										<TableCell className="py-4 border-r border-gray-200"></TableCell>
-										<TableCell className="py-4 border-r border-gray-200"></TableCell>
-										<TableCell className="py-4 text-center font-medium border-r border-gray-200">Total</TableCell>
-										<TableCell className="py-4 text-center border-r border-gray-200"></TableCell>
-										<TableCell className="py-4 text-center font-medium border-r border-gray-200">₦{totalAmount}</TableCell>
-										<TableCell className="py-4" />
+										<TableCell className={twMerge(tableStyle, "py-4")}></TableCell>
+										<TableCell className={twMerge(tableStyle, "py-4")}></TableCell>
+										<TableCell className={twMerge(tableStyle, "py-4 font-medium")}>Total</TableCell>
+										<TableCell className={twMerge(tableStyle, "py-4")}></TableCell>
+										<TableCell className={twMerge(tableStyle, "py-4 font-medium")}>₦{totalAmount}</TableCell>
+										<TableCell className={twMerge(tableStyle, "py-4")} />
 									</TableRow>
 								</TableBody>
 							</Table>

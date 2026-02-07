@@ -52,7 +52,7 @@ export default function TabReceipt({ receipts }: { receipts?: ReceiptDto[] | und
 							const total = grp.propertyPrice ? Number(grp.propertyPrice).toLocaleString() : "-";
 							return (
 								<div key={grp.contractId ?? grp.contractCode ?? title}>
-									<div className="flex items-center justify-between bg-[#F7F7F7] p-3 flex-wrap gap-3 rounded-sm text-sm mb-4">
+									<div className="flex items-center justify-between bg-[#F7F7F7] dark:bg-neutral-700 p-3 flex-wrap gap-3 rounded-sm text-sm mb-4">
 										<div>
 											<div className="font-medium">{title}</div>
 											<div className="text-xs text-muted-foreground">Price: {total}</div>

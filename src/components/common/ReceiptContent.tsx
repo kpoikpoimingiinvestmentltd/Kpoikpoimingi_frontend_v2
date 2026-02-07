@@ -187,11 +187,18 @@ export default function ReceiptContent({ receipt }: ReceiptContentProps) {
 
 				{/* Next Payment Information */}
 				<section className="md:w-11/12 mx-auto mt-4 text-center py-4 px-4">
-					<p className="text-xs font-normal sm:text-[.9rem] dark:text-gray-100 text-gray-700">
-						Next payment is due on the{" "}
-						<span className="font-semibold">{receipt.nextPaymentDate ? new Date(receipt.nextPaymentDate).toLocaleDateString("en-GB") : "-"}</span>.
-						Endeavour to make payment. Failure to make payment attracts an increase in accrued interest
-					</p>
+					{installmentParsed.covered === installmentParsed.total && installmentParsed.total > 0 ? (
+						<p className="text-xs font-normal sm:text-[.9rem] dark:text-gray-100 text-gray-700">
+							Thank you for completing all your installment payments. We appreciate your timely payment and look forward to serving you again in the
+							future.
+						</p>
+					) : (
+						<p className="text-xs font-normal sm:text-[.9rem] dark:text-gray-100 text-gray-700">
+							Next payment is due on the{" "}
+							<span className="font-semibold">{receipt.nextPaymentDate ? new Date(receipt.nextPaymentDate).toLocaleDateString("en-GB") : "-"}</span>.
+							Endeavour to make payment. Failure to make payment attracts an increase in accrued interest
+						</p>
+					)}
 				</section>
 				{/* Footer */}
 				{receiptFooter}

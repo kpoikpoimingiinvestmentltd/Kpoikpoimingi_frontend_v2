@@ -1,6 +1,7 @@
 import * as React from "react";
 import StatusBadge from "@/components/base/StatusBadge";
 import { FileIcon } from "@/assets/icons";
+import { formatDate } from "@/lib/utils";
 
 type Payment = { id: string; status?: "Successful" | "Failed"; date: string };
 
@@ -16,11 +17,21 @@ export default function PaymentCard({
 	icon?: React.ReactNode;
 }) {
 	return (
-		<div className="bg-card py-6 rounded-lg border border-dashed border-gray-200 p-3 flex flex-col items-center gap-y-2 text-center justify-center">
+		<div className="bg-card py-6 rounded-lg border border-dashed border-gray-200 dark:border-gray-600 p-3 flex flex-col items-center gap-y-2 text-center justify-center">
 			{variant === "icon" ? (
 				<>
 					<div className="text-3xl text-primary">{icon ?? <FileIcon />}</div>
-					<div className="text-xs text-muted-foreground mt-2">{p.date}</div>
+					<div className="text-xs text-muted-foreground mt-2">
+						{formatDate(p.date, {
+							year: "numeric",
+							month: "short",
+							day: "2-digit",
+							hour: "2-digit",
+							minute: "2-digit",
+							second: "2-digit",
+							hour12: true,
+						})}
+					</div>
 					<button type="button" onClick={() => onView(p)} className="text-xs text-primary mt-2">
 						View
 					</button>
@@ -28,7 +39,17 @@ export default function PaymentCard({
 			) : (
 				<>
 					<StatusBadge status={p.status ?? "Successful"} />
-					<div className="text-xs text-muted-foreground mt-1">{p.date}</div>
+					<div className="text-xs text-muted-foreground mt-1">
+						{formatDate(p.date, {
+							year: "numeric",
+							month: "short",
+							day: "2-digit",
+							hour: "2-digit",
+							minute: "2-digit",
+							second: "2-digit",
+							hour12: true,
+						})}
+					</div>
 					<button type="button" onClick={() => onView(p)} className="text-xs text-primary mt-2">
 						View
 					</button>

@@ -71,7 +71,7 @@ export default function TabPaymentLinks({ contract }: { contract?: Contract }) {
 				<div className="overflow-x-auto mt-8">
 					<Table>
 						<TableHeader className="[&_tr]:border-0">
-							<TableRow className="bg-[#EAF6FF] dark:bg-neutral-900/80 *:not-last:border-r  *:not-last:border-gray-200 *:text-center hover:bg-[#EAF6FF] dark:hover:bg-neutral-900/50 h-12 rounded-lg">
+							<TableRow className="bg-[#EAF6FF] dark:bg-neutral-900/80 *:not-last:border-r *:not-last:border-gray-200 dark:*:not-last:border-neutral-700 *:text-center hover:bg-[#EAF6FF] dark:hover:bg-neutral-900/50 h-12 rounded-lg">
 								<TableHead>Amount</TableHead>
 								<TableHead>Due Date</TableHead>
 								<TableHead>Created Date</TableHead>
@@ -81,17 +81,19 @@ export default function TabPaymentLinks({ contract }: { contract?: Contract }) {
 						</TableHeader>
 						<TableBody>
 							{paymentLinks.map((link) => (
-								<TableRow key={link.id} className="border-b border-gray-100 hover:bg-gray-50 dark:hover:bg-neutral-900/50 h-16">
-									<TableCell className="border-r border-gray-100 text-center">
+								<TableRow
+									key={link.id}
+									className="border-b border-gray-100 dark:border-b-neutral-700 hover:bg-gray-50 dark:hover:bg-neutral-900/50 h-16">
+									<TableCell className="border-r border-gray-100 dark:border-r-neutral-700 text-center">
 										<span className="font-semibold">{formatCurrency(link.amount)}</span>
 									</TableCell>
-									<TableCell className="border-r border-gray-100 text-center">
+									<TableCell className="border-r border-gray-100 dark:border-r-neutral-700 text-center">
 										<span>{formatDate(link.dueDate)}</span>
 									</TableCell>
-									<TableCell className="border-r border-gray-100 text-center">
+									<TableCell className="border-r border-gray-100 dark:border-r-neutral-700 text-center">
 										<span>{formatDate(link.createdAt)}</span>
 									</TableCell>
-									<TableCell className="border-r border-gray-100 text-center">
+									<TableCell className="border-r border-gray-100 dark:border-r-neutral-700 text-center">
 										<span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(link.status?.status)}`}>
 											{link.status?.status || "UNKNOWN"}
 										</span>
@@ -109,9 +111,6 @@ export default function TabPaymentLinks({ contract }: { contract?: Contract }) {
 														<CopyIcon />
 													</IconWrapper>
 													<span> Copy Link</span>
-												</ActionButton>
-												<ActionButton variant="primary" className="py-1.5" onClick={() => window.open(link.paymentLink, "_blank")}>
-													View
 												</ActionButton>
 											</div>
 										)}
