@@ -149,19 +149,6 @@ export default function AdminDashboardSidebar({ onClose }: { onClose?: () => voi
 							})}
 					</ul>
 				)}
-				{/* <ul className="flex flex-col items-start gap-y-2">
-					<li className="flex w-full items-center text-start gap-x-4 rounded-sm transition-colors justify-between">
-						<button
-							type="button"
-							onClick={() => onLogoutOpen?.()}
-							className="w-full text-red-500 flex items-center gap-x-3 hover:bg-red-100 dark:hover:text-white active-scale py-3 px-4 rounded-sm">
-							<IconWrapper className="text-[1.35rem]">
-								<LogoutIcon />
-							</IconWrapper>
-							<span className="font-medium text-sm">Logout</span>
-						</button>
-					</li>
-				</ul> */}
 			</div>
 		</div>
 	);
