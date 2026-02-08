@@ -26,6 +26,9 @@ export default function EditCustomerModal({ open, onOpenChange, initial, documen
 		};
 	}, [normalizedInitial, documents]);
 
+	// Check if payment type is hire purchase (installment = paymentTypeId 1)
+	const isHirePurchase = (mergedInitial as any)?.paymentTypeId === 1 || (mergedInitial as any)?.paymentType?.id === 1;
+
 	const handleSave = (data: unknown) => {
 		toast.success("Customer details updated successfully!");
 		if (onSave) {
@@ -47,6 +50,7 @@ export default function EditCustomerModal({ open, onOpenChange, initial, documen
 					onClose={() => onOpenChange(false)}
 					submitButtonText="Update Customer"
 					skipEmailVerification={true}
+					showSignedContract={isHirePurchase}
 				/>
 			</DialogContent>
 		</Dialog>

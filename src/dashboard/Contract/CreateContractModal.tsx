@@ -9,7 +9,8 @@ import { Spinner } from "@/components/ui/spinner";
 import { useForm, Controller } from "react-hook-form";
 import { useQueryClient } from "@tanstack/react-query";
 import ConfirmModal from "@/components/common/ConfirmModal";
-import { useCreateContract, useGetAllCustomerRegistrations } from "@/api/contracts";
+import { useCreateContract } from "@/api/contracts";
+import { useGetApprovedRegistrations } from "@/api/customer-registration";
 import ContractSuccessModal from "./ContractSuccessModal";
 import CustomInput from "../../components/base/CustomInput";
 import { CalendarIcon } from "../../assets/icons";
@@ -28,21 +29,23 @@ export default function CreateContractModal({ open, onOpenChange }: { open: bool
 	const [selectedCustomerData, setSelectedCustomerData] = React.useState<Registration | null>(null);
 	const [searchQuery, setSearchQuery] = React.useState("");
 
-	const registrationsQuery = useGetAllCustomerRegistrations(open) as { data?: { data?: Registration[] } | Registration[] };
+	const registrationsQuery = useGetApprovedRegistrations(1, 1000, searchQuery, undefined, undefined, open);
+
+	React.useEffect(() => {
+		if (registrationsQuery.data) {
+			console.log("Approved Registrations Response:", registrationsQuery.data);
+		}
+	}, [registrationsQuery.data]);
+
 	const registrations = registrationsQuery?.data;
 
-	const filteredRegistrations = React.useMemo<Registration[]>(() => {
+	const filteredRegistrations = React.useMemo<any[]>(() => {
 		if (!registrations) return [];
-		const list: Registration[] = Array.isArray(registrations)
-			? (registrations as Registration[])
-			: Array.isArray((registrations as { data?: Registration[] }).data)
-				? ((registrations as { data?: Registration[] }).data as Registration[])
-				: [];
+		const list = (registrations as any)?.data || [];
 
-		const currentRegistrations = list.filter((reg) => reg?.isCurrent === true);
-		if (!searchQuery.trim()) return currentRegistrations;
-		return currentRegistrations.filter((reg) =>
-			String(reg.fullName || "")
+		if (!searchQuery.trim()) return list;
+		return list.filter((registration: any) =>
+			String(registration.customer?.fullName || "")
 				.toLowerCase()
 				.includes(searchQuery.toLowerCase()),
 		);
@@ -83,11 +86,18 @@ export default function CreateContractModal({ open, onOpenChange }: { open: bool
 			};
 		}
 
-		const propertyInterest = selectedCustomerData?.propertyInterestRequest?.[0];
+		const registration = selectedCustomerData as any;
+		const propertyInterest = registration?.propertyInterestRequest?.[0];
+		const customer = registration?.customer;
+
+		console.log("Selected registration:", registration);
+		console.log("Customer:", customer);
+		console.log("Property interest:", propertyInterest);
+
 		return {
-			customerId: selectedCustomerData.customerId,
+			customerId: customer?.id || "",
 			propertyId: propertyInterest?.propertyId || "",
-			paymentTypeId: String(selectedCustomerData.paymentTypeId || 1),
+			paymentTypeId: String(registration?.paymentType?.id || 1),
 			quantity: propertyInterest?.quantity || 1,
 			downPayment: Number(propertyInterest?.downPayment || 0),
 			intervalId: String(propertyInterest?.paymentIntervalId || ""),
@@ -141,12 +151,16 @@ export default function CreateContractModal({ open, onOpenChange }: { open: bool
 	}, [open, setValue]);
 
 	React.useEffect(() => {
-		reset(getDefaultValues());
+		const defaults = getDefaultValues();
+		console.log("Resetting form with defaults:", defaults);
+		reset(defaults);
 	}, [selectedCustomerData, reset]);
 
 	React.useEffect(() => {
 		if (paymentTypeId === "2" && selectedCustomerData) {
-			const propertyInterest = selectedCustomerData?.propertyInterestRequest?.[0] as Record<string, unknown> | undefined;
+			const registration = selectedCustomerData as any;
+			const propertyInterest = registration?.propertyInterestRequest?.[0] as Record<string, unknown> | undefined;
+
 			if (propertyInterest) {
 				let propertyPrice = 0;
 
@@ -307,7 +321,7 @@ export default function CreateContractModal({ open, onOpenChange }: { open: bool
 										onValueChange={(v) => {
 											field.onChange(v);
 											const val = v as string;
-											const selected = filteredRegistrations.find((reg) => reg.customerId === val) ?? null;
+											const selected = filteredRegistrations.find((reg: any) => reg.customer?.id === val) ?? null;
 											setSelectedCustomerData(selected);
 										}}
 										value={String(field.value)}>
@@ -324,9 +338,9 @@ export default function CreateContractModal({ open, onOpenChange }: { open: bool
 												/>
 											</div>
 											{filteredRegistrations && filteredRegistrations.length > 0
-												? filteredRegistrations.map((reg) => (
-														<SelectItem className="cursor-pointer" key={String(reg.id)} value={String(reg.customerId)}>
-															{String(reg.fullName ?? "")}
+												? filteredRegistrations.map((registration: any) => (
+														<SelectItem className="cursor-pointer" key={String(registration.id)} value={String(registration.customer?.id)}>
+															{String(registration.customer?.fullName ?? "")}
 														</SelectItem>
 													))
 												: searchQuery && <div className="p-3 text-center text-sm text-gray-500">No customers found</div>}

@@ -55,10 +55,7 @@ export default function GuarantorSection({
 				))}
 			</div>
 
-			<ValidationErrorDisplay
-				missingFields={missingFields}
-				filter={(field) => ["Guarantor", "Two guarantors"].some((keyword) => field.toLowerCase().includes(keyword.toLowerCase()))}
-			/>
+			<ValidationErrorDisplay missingFields={missingFields} filter={(field) => field.toLowerCase().includes("guarantor")} />
 		</div>
 	);
 }

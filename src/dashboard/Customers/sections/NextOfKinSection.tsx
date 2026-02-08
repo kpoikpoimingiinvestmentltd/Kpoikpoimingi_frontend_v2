@@ -191,7 +191,17 @@ export default function NextOfKinSection({
 
 						<ValidationErrorDisplay
 							missingFields={missingFields}
-							filter={(field) => ["Next of Kin", "Spouse", "relationship"].some((keyword) => field.toLowerCase().includes(keyword.toLowerCase()))}
+							filter={(field) => {
+								// Only show errors specifically for next of kin, exclude guarantor
+								if (field.toLowerCase().includes("guarantor")) {
+									return false;
+								}
+								return (
+									field.toLowerCase().includes("next of kin") ||
+									field.toLowerCase().includes("spouse") ||
+									field.toLowerCase().includes("relationship")
+								);
+							}}
 						/>
 					</>
 				)}

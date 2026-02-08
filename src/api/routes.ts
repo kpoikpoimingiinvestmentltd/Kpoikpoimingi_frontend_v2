@@ -58,6 +58,7 @@ export const API_ROUTES = {
 		createExternalCustomerRegistration: "/customer-registration",
 		getExternalCustomerRegistrations: "/customer-registration/external",
 		getAllCustomerRegistrations: "/customer-registration",
+		getApprovedRegistrations: "/customer-registration/approved",
 		createInternalCustomerRegistration: "/customer-registration/internal",
 		createFullPaymentRegistration: "/customer-registration/full-payment",
 		createInternalFullPaymentRegistration: "/customer-registration/full-payment/internal",
