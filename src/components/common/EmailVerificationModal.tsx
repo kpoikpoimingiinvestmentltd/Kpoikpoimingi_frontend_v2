@@ -134,8 +134,9 @@ export default function EmailVerificationModal({ isOpen, onClose, email, onVerif
 			setTimer(60);
 			setOtp("");
 		},
-		onError: () => {
-			toast.error("Failed to send OTP. Please try again.");
+		onError: (error: unknown) => {
+			const errorMessage = (error as any)?.response?.data?.message || (error as any)?.message || "Failed to send OTP. Please try again.";
+			toast.error(errorMessage);
 		},
 	});
 
@@ -160,8 +161,9 @@ export default function EmailVerificationModal({ isOpen, onClose, email, onVerif
 				toast.error("Verification failed. Please try again.");
 			}
 		},
-		onError: () => {
-			toast.error("Invalid OTP. Please try again.");
+		onError: (error: unknown) => {
+			const errorMessage = (error as any)?.response?.data?.message || (error as any)?.message || "Invalid OTP. Please try again.";
+			toast.error(errorMessage);
 		},
 	});
 
