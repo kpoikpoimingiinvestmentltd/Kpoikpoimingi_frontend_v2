@@ -128,7 +128,7 @@ export default function ReceiptTable() {
 		if (v === undefined || v === null || v === "") return "-";
 		const n = Number(v);
 		if (Number.isNaN(n)) return String(v);
-		return `₦${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+		return `₦${n.toLocaleString()}`;
 	};
 
 	const formatPaymentMethod = (pm?: string | { id?: number; method?: string } | null) => {
@@ -217,8 +217,8 @@ export default function ReceiptTable() {
 											{it.paymentDate
 												? new Date(it.paymentDate).toLocaleDateString()
 												: it.createdAt
-												? new Date(it.createdAt).toLocaleDateString()
-												: "-"}
+													? new Date(it.createdAt).toLocaleDateString()
+													: "-"}
 										</TableCell>
 										<TableCell>
 											<div className="flex items-center justify-center gap-1">

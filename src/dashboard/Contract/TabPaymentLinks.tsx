@@ -30,10 +30,7 @@ export default function TabPaymentLinks({ contract }: { contract?: Contract }) {
 
 	const formatCurrency = (value: string | number) => {
 		const num = typeof value === "string" ? parseFloat(value) : value;
-		return new Intl.NumberFormat("en-NG", {
-			style: "currency",
-			currency: "NGN",
-		}).format(num);
+		return `₦${num.toLocaleString()}`;
 	};
 
 	const getStatusColor = (status: string) => {

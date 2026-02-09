@@ -27,7 +27,7 @@ function ValueRow({ label, value, align = "left" }: ValueRowProps) {
 
 function formatCurrency(amount: number | string) {
 	const n = Number(amount) || 0;
-	return n.toLocaleString(undefined, { maximumFractionDigits: 2 });
+	return n.toLocaleString();
 }
 
 export default function TabReceiptHistory({ contract }: Props) {

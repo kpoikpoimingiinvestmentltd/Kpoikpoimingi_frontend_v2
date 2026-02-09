@@ -12,10 +12,7 @@ interface InterestPenaltiesProps {
 }
 
 function formatCurrency(amount: number): string {
-	return new Intl.NumberFormat("en-NG", {
-		style: "currency",
-		currency: "NGN",
-	}).format(amount);
+	return `₦${amount.toLocaleString()}`;
 }
 
 function formatDate(dateString: string): string {

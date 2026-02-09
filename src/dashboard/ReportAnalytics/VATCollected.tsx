@@ -12,10 +12,7 @@ interface VATCollectedProps {
 
 function formatCurrency(amount: string | number): string {
 	const numAmount = typeof amount === "string" ? parseFloat(amount) : amount;
-	return new Intl.NumberFormat("en-NG", {
-		style: "currency",
-		currency: "NGN",
-	}).format(numAmount);
+	return `₦${numAmount.toLocaleString()}`;
 }
 
 function formatDate(dateString: string): string {
