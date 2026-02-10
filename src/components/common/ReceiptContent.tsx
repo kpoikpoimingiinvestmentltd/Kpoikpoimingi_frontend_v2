@@ -148,13 +148,13 @@ export default function ReceiptContent({ receipt }: ReceiptContentProps) {
 						/>
 						<KeyValueRow
 							label="Total amount"
-							value={receipt.totalAmount ? `₦${Number(receipt.totalAmount).toLocaleString()}` : "-"}
+							value={receipt.contract?.property?.price ? `₦${Number(receipt.contract.property.price).toLocaleString()}` : "-"}
 							leftClassName="text-gray-600"
 							rightClassName="text-right font-medium"
 						/>
 						<KeyValueRow
 							label="Starting amount"
-							value={receipt.contract?.property?.price ? `₦${Number(receipt.contract.property.price).toLocaleString()}` : "-"}
+							value={receipt.contract?.downPayment ? `₦${Number(receipt.contract.downPayment).toLocaleString()}` : "-"}
 							leftClassName="text-gray-600"
 							rightClassName="text-right font-medium"
 						/>
