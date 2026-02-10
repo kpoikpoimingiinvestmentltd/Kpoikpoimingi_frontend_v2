@@ -8,6 +8,7 @@ import { _router } from "../../routes/_router";
 import { IconWrapper, PlusIcon } from "../../assets/icons";
 import { useGetIncomeAnalytics } from "@/api/analytics";
 import type { IncomeAnalytics } from "@/types/analytics";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 export default function Dashboard() {
 	return (
@@ -51,6 +52,9 @@ export default function Dashboard() {
 
 const PieLegend = () => {
 	const { data: incomeData } = useGetIncomeAnalytics();
+	const { data: currentUser } = useCurrentUser();
+
+	const isSuperAdmin = currentUser?.role?.role === "SUPER_ADMIN";
 
 	const items: Array<{ color: string; label: string; value: number }> = [
 		{ color: "#751BE3", label: "Full Payment", value: (incomeData as IncomeAnalytics | undefined)?.fullPayment ?? 0 },
@@ -58,8 +62,11 @@ const PieLegend = () => {
 		{ color: "#F3E9FF", label: "Unpaid debt", value: (incomeData as IncomeAnalytics | undefined)?.unpaidDebt ?? 0 },
 	];
 
-	// Format number with commas
+	// Format number with commas or asterisks based on role
 	const formatAmount = (num: number) => {
+		if (!isSuperAdmin) {
+			return "****";
+		}
 		return num.toLocaleString("en-US");
 	};
 
@@ -70,7 +77,7 @@ const PieLegend = () => {
 					<span style={{ background: it.color }} className="inline-block mt-1 w-3 h-3 rounded-full" />
 					<div className="flex flex-col">
 						<div className="font-medium dark:text-gray-300">{it.label}</div>
-						<div className="text-[.89rem] text-gray-400">{formatAmount(it.value)}</div>
+						<div className={`text-lg text-gray-400 ${!isSuperAdmin ? "blur-[1px] select-none" : "text-[.89rem]"}`}>{formatAmount(it.value)}</div>
 					</div>
 				</div>
 			))}

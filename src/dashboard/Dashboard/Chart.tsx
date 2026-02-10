@@ -66,8 +66,15 @@ export function IndexPieChart() {
 
 	// Format number with commas
 	const formatAmount = (num: number) => {
-		return num.toLocaleString("en-US");
+		if (num >= 1e9) return (num / 1e9).toFixed(1).replace(/\.0$/, "") + "B";
+		if (num >= 1e6) return (num / 1e6).toFixed(1).replace(/\.0$/, "") + "M";
+		if (num >= 1e3) return (num / 1e3).toFixed(1).replace(/\.0$/, "") + "K";
+		return num.toString();
 	};
+
+	const formattedTotal = formatAmount(incomeData?.totalIncome ?? 0);
+	const baseLength = 6;
+	const fontSize = Math.max(50, 150 - (formattedTotal.length - baseLength) * 20);
 
 	return (
 		<div className="relative flex flex-col items-center">
@@ -100,8 +107,8 @@ export function IndexPieChart() {
 					</g>
 				))}
 
-				<text x="0" y="-30" textAnchor="middle" fill={isDark ? "#FFFFFF" : "#1F2937"} style={{ fontSize: "150px", fontWeight: "500" }}>
-					{formatAmount(incomeData?.totalIncome ?? 0)}
+				<text x="0" y="-30" textAnchor="middle" fill={isDark ? "#FFFFFF" : "#1F2937"} style={{ fontSize: `${fontSize}px`, fontWeight: "500" }}>
+					{formattedTotal}
 				</text>
 				<text x="0" y="80" textAnchor="middle" fill={isDark ? "#F3F4F6" : "#6B7280"} style={{ fontSize: "70px", fontWeight: "400" }}>
 					Total income
