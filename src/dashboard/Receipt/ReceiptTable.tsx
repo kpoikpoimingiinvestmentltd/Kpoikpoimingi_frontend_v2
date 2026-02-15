@@ -4,18 +4,21 @@ import { EyeIcon, IconWrapper, ShareIcon } from "@/assets/icons";
 import CompactPagination from "@/components/ui/compact-pagination";
 import React from "react";
 import { Link } from "react-router";
-import { useGetReceipts } from "@/api/receipt";
+import { useGetReceipts, useGetReceiptById } from "@/api/receipt";
 import { tableHeaderRowStyle } from "../../components/common/commonStyles";
 import { _router } from "../../routes/_router";
 import { TableSkeleton } from "@/components/common/Skeleton";
-import type { ReceiptListItem } from "@/types/receipt";
+import type { ReceiptListItem, ReceiptDetail } from "@/types/receipt";
 import SearchWithFilters from "@/components/common/SearchWithFilters";
 import type { FilterField } from "@/components/common/SearchWithFilters";
 import { useDebounceSearch } from "@/hooks/useDebounceSearch";
 import { useSearchParams } from "react-router";
+import ReceiptDisplayModal from "./ReceiptDisplayModal";
 
 export default function ReceiptTable() {
 	const [searchParams, setSearchParams] = useSearchParams();
+	const [shareModalOpen, setShareModalOpen] = React.useState(false);
+	const [selectedReceiptId, setSelectedReceiptId] = React.useState<string | null>(null);
 
 	// Initialize state from URL params
 	const [page, setPage] = React.useState(() => {
@@ -94,6 +97,7 @@ export default function ReceiptTable() {
 	const sortOrder = (filters.sortOrder as string) || "desc";
 
 	const { data, isLoading, isFetching } = useGetReceipts(page, limit, debouncedSearch || undefined, sortBy, sortOrder);
+	const { data: selectedReceipt } = useGetReceiptById(selectedReceiptId ?? undefined, selectedReceiptId !== null);
 
 	const handleSearchChange = (value: string) => {
 		setSearch(value);
@@ -112,6 +116,11 @@ export default function ReceiptTable() {
 		setSearch("");
 		setFilters({});
 		setPage(1);
+	};
+
+	const handleShareClick = (receiptId: string) => {
+		setSelectedReceiptId(receiptId);
+		setShareModalOpen(true);
 	};
 
 	const paginationData = (data?.pagination as Record<string, unknown>) || {};
@@ -227,7 +236,7 @@ export default function ReceiptTable() {
 														<EyeIcon />
 													</IconWrapper>
 												</Link>
-												<button className="p-2 text-primary">
+												<button onClick={() => handleShareClick(it.id)} className="p-2 text-primary hover:text-primary/80 transition-colors">
 													<IconWrapper>
 														<ShareIcon />
 													</IconWrapper>
@@ -243,6 +252,8 @@ export default function ReceiptTable() {
 					</>
 				)}
 			</div>
+
+			<ReceiptDisplayModal open={shareModalOpen} onOpenChange={setShareModalOpen} receipt={(selectedReceipt as ReceiptDetail) ?? null} />
 		</CustomCard>
 	);
 }
