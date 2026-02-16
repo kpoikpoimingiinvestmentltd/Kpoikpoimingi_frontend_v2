@@ -314,7 +314,7 @@ export default function Contract() {
 																status={String(c.statusId) === "7" ? "pending" : undefined}
 															/>
 														</TableCell>
-														<TableCell>₦{parseInt((c.outStandingBalance as string) || "0").toLocaleString()}</TableCell>
+														<TableCell>₦{parseFloat((c.outStandingBalance as string) || "0").toLocaleString()}</TableCell>
 														<TableCell>{new Date(c.createdAt as string).toLocaleDateString()}</TableCell>
 														<TableCell>
 															<div className="flex items-center">

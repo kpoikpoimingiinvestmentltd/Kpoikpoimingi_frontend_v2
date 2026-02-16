@@ -55,6 +55,7 @@ const simpleInterestCalculator = ({
 export default function Calculator() {
 	const [open, setOpen] = React.useState(false);
 	const [principal, setPrincipal] = React.useState(0);
+	const [startingAmount, setStartingAmount] = React.useState(0);
 	const [rate, setRate] = React.useState(0);
 	const [interval, setInterval] = React.useState("daily");
 	const [duration, setDuration] = React.useState(0);
@@ -91,8 +92,9 @@ export default function Calculator() {
 	};
 
 	const calculate = () => {
+		const effectivePrincipal = principal - startingAmount;
 		const result = simpleInterestCalculator({
-			pi: principal,
+			pi: effectivePrincipal,
 			ri: rate,
 			ti: duration,
 			ii: interval,
@@ -161,6 +163,7 @@ export default function Calculator() {
 					if (!isOpen) {
 						// Clear inputs when closing
 						setPrincipal(0);
+						setStartingAmount(0);
 						setRate(0);
 						setInterval("daily");
 						setDuration(0);
@@ -209,6 +212,14 @@ export default function Calculator() {
 									type="number"
 									labelClassName="mb-1"
 									className="h-9 rounded-sm"
+									value={startingAmount}
+									onChange={(e) => setStartingAmount(Number(e.target.value))}
+									label="Starting Amount"
+								/>
+								<CustomInput
+									type="number"
+									labelClassName="mb-1"
+									className="h-9 rounded-sm"
 									value={rate}
 									label="Interest Rate (%)"
 									onChange={(e) => setRate(Number(e.target.value))}
@@ -249,9 +260,9 @@ export default function Calculator() {
 									</Button>
 								</div>
 								{total !== null && (
-									<div className="mt-3 bg-gray-50 p-3 rounded">
-										<div className="text-sm text-muted-foreground">Total Payable</div>
-										<div className="text-lg font-medium">₦{total.toLocaleString()}</div>
+									<div className="mt-3 bg-gray-50 dark:bg-neutral-800 p-3 rounded">
+										<div className="text-sm text-muted-foreground dark:text-gray-300">Total Payable</div>
+										<div className="text-lg font-medium dark:text-white">₦{total.toLocaleString()}</div>
 									</div>
 								)}
 							</div>
