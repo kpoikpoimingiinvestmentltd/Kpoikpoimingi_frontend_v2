@@ -18,7 +18,7 @@ import NotificationsPage from "../dashboard/Notifications/NotificationsPage";
 import AddProperties from "../dashboard/Properties/AddProperties";
 import AuditCompliance from "../dashboard/AuditCompliance/AuditCompliance";
 import Payments from "../dashboard/Payment/Payments";
-import PaymentSuccess from "../dashboard/Payment/PaymentSuccess";
+import PaymentSuccess from "../pages/PaymentSuccess";
 import Receipt from "../dashboard/Receipt/Receipt";
 import Users from "../dashboard/Users/Users";
 import ReceiptDetails from "../dashboard/Receipt/ReceiptDetails";
@@ -53,6 +53,10 @@ export const appRouter = createBrowserRouter([
 				element: <AuthPageNotFound />,
 			},
 		],
+	},
+	{
+		path: _router.paymentSuccess,
+		element: <PaymentSuccess />,
 	},
 	{
 		path: _router.dashboard.index,
@@ -137,10 +141,6 @@ export const appRouter = createBrowserRouter([
 			{
 				path: _router.dashboard.payment,
 				element: <Payments />,
-			},
-			{
-				path: _router.dashboard.paymentSuccess,
-				element: <PaymentSuccess />,
 			},
 			{
 				path: _router.dashboard.users,

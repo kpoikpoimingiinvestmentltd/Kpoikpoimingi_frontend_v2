@@ -1,5 +1,6 @@
 export const _router = {
 	auth: { index: "/", login: "/auth/login", forgotpassword: "/auth/forgot-password", resetpassword: "/auth/reset-password" },
+	paymentSuccess: "/payment/success",
 	dashboard: {
 		index: "/dashboard",
 		notifications: "/dashboard/notifications",
@@ -25,7 +26,6 @@ export const _router = {
 		debt: "/dashboard/debt",
 		debtDetails: "/dashboard/debt/:id",
 		payment: "/dashboard/payment",
-		paymentSuccess: "/dashboard/payment/success",
 		reportAnalytics: "/dashboard/report-analytics",
 		auditAndCompliance: "/dashboard/audit-and-compliance",
 		users: "/dashboard/users",
