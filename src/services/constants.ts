@@ -1,3 +1,3 @@
 export const _constants = {
-	API_URL: "https://kpoikpoimingi-backend-production.up.railway.app/api",
+	API_URL: import.meta.env.VITE_API_URL,
 };
