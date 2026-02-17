@@ -41,7 +41,7 @@ export default function TabReceiptHistory({ contract }: Props) {
 	return (
 		<>
 			<CustomCard className="border-none p-0 bg-white">
-				<SectionTitle title={`Payment History${contract?.contractCode ? ` — ${contract.contractCode}` : ""}`} />
+				<SectionTitle title={`Payment History${payments.length > 0 && contract?.contractCode ? ` — ${contract.contractCode}` : ""}`} />
 
 				<div className="space-y-6 mt-4">
 					{isLoading && <div className="text-sm text-muted-foreground">Loading payments...</div>}
