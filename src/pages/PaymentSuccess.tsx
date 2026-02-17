@@ -35,14 +35,7 @@ export default function PaymentSuccess() {
 						className="w-full py-3 rounded-lg font-medium bg-primary hover:bg-primary/90 dark:bg-blue-600 dark:hover:bg-blue-700 text-white">
 						Return to Home
 					</Button>
-					<Button
-						onClick={() => navigate(_router.dashboard.receipt)}
-						variant="outline"
-						className="w-full py-3 rounded-lg font-medium border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">
-						View Receipts
-					</Button>
 				</div>
-
 				{/* Additional Info */}
 				<div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
 					<p className="text-gray-500 text-xs">If you have any questions about your payment, please contact our support team.</p>
