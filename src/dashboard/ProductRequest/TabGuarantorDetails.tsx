@@ -67,7 +67,7 @@ export default function TabGuarantorDetails({ data }: { data: Record<string, unk
 								/>
 								<KeyValueRow
 									label="Employment Status"
-									value={getEmploymentStatusLabel(g.employmentStatusId)}
+									value={getEmploymentStatusLabel(g.employmentStatusId as string | number | undefined)}
 									leftClassName="text-sm text-muted-foreground"
 									rightClassName="text-right"
 								/>
