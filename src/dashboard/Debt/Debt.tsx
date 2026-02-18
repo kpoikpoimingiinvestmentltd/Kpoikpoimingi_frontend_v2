@@ -205,7 +205,6 @@ export default function Debt() {
 								onSearchChange={(v) => {
 									updateSearchParams({ search: v || null, page: 1 });
 								}}
-								setPage={(newPage) => updateSearchParams({ page: newPage })}
 								placeholder="Search by contract code, customer name, or property name"
 								fields={
 									[

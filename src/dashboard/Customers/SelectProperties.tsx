@@ -33,7 +33,16 @@ export default function SelectProperties() {
 	const [itemsPerPage, setItemsPerPage] = React.useState<number>(10);
 	const [searchQuery, setSearchQuery] = React.useState<string>("");
 	const debouncedSearch = useDebounceSearch(searchQuery, 400);
-	const { data: propertiesData, isLoading: propertiesLoading } = useGetAllProperties(currentPage, itemsPerPage, debouncedSearch || undefined);
+	// Always fetch available properties for selection
+	const { data: propertiesData, isLoading: propertiesLoading } = useGetAllProperties(
+		currentPage,
+		itemsPerPage,
+		debouncedSearch || undefined,
+		undefined,
+		undefined,
+		undefined,
+		"available",
+	);
 
 	const [paymentMethod, setPaymentMethod] = React.useState<"once" | "installment" | null>(null);
 	const [selectedProperties, setSelectedProperties] = React.useState<SelectedProperty[]>([]);
@@ -224,18 +233,23 @@ export default function SelectProperties() {
 											{/* Image Container */}
 											<div className="h-28 flex items-center justify-center overflow-hidden bg-gray-50 dark:bg-neutral-600 rounded mb-3 relative group">
 												<Image src={imgSrc} alt={property.name} className="max-h-full object-contain" />
-												<button
-													type="button"
+												<div
+													role="button"
+													tabIndex={0}
 													onClick={() => handleViewDetails(property)}
+													onKeyDown={(e) => {
+														if (e.key === "Enter" || e.key === " ") {
+															e.preventDefault();
+															handleViewDetails(property);
+														}
+													}}
 													className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/30 transition-colors rounded">
-													<button
-														type="button"
-														className="bg-primary text-white p-2.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+													<div className="bg-primary text-white p-2.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity" aria-hidden>
 														<IconWrapper className="text-lg">
 															<EyeIcon />
 														</IconWrapper>
-													</button>
-												</button>{" "}
+													</div>
+												</div>
 											</div>
 											{/* Content */}
 											<div>

@@ -274,7 +274,7 @@ export default function Contract() {
 						/>
 					</div>
 				</div>
-				<div className="min-h-80 flex">
+				<div className="min-h-80 overflow-x-auto flex">
 					{isLoading || isFetching ? (
 						<TableSkeleton rows={10} cols={8} />
 					) : contracts.length === 0 ? (
@@ -282,56 +282,52 @@ export default function Contract() {
 							<EmptyData text="No Contracts at the moment" />
 						</div>
 					) : (
-						<div className="flex-grow w-full flex flex-col gap-y-8 rounded-lg mt-8">
-							<div className="w-full">
-								<div className="overflow-x-auto w-full">
-									<Table>
-										<TableHeader className="[&_tr]:border-0">
-											<TableRow className="bg-[#EAF6FF] dark:bg-neutral-900/80 h-12 overflow-hidden py-4 rounded-lg">
-												<TableHead>Customer ID</TableHead>
-												<TableHead>Name</TableHead>
-												<TableHead>Property Name</TableHead>
-												<TableHead>Payment Type</TableHead>
-												<TableHead>Status</TableHead>
-												<TableHead>Outstanding Balance</TableHead>
-												<TableHead>Date</TableHead>
-												<TableHead>Action</TableHead>
+						<div className="flex-grow flex flex-col gap-y-8 rounded-lg mt-8">
+							<Table>
+								<TableHeader className="[&_tr]:border-0">
+									<TableRow className="bg-[#EAF6FF] dark:bg-neutral-900/80 h-12 overflow-hidden py-4 rounded-lg">
+										<TableHead>Customer ID</TableHead>
+										<TableHead>Name</TableHead>
+										<TableHead>Property Name</TableHead>
+										<TableHead>Payment Type</TableHead>
+										<TableHead>Status</TableHead>
+										<TableHead>Outstanding Balance</TableHead>
+										<TableHead>Date</TableHead>
+										<TableHead>Action</TableHead>
+									</TableRow>
+								</TableHeader>
+								<TableBody>
+									{contracts.map((contract: unknown, idx: number) => {
+										const c = contract as Record<string, unknown>;
+										return (
+											<TableRow key={idx} className="hover:bg-[#F6FBFF] dark:hover:bg-neutral-900/50">
+												<TableCell>{((c.customer as Record<string, unknown>)?.customerCode as string) || "N/A"}</TableCell>
+												<TableCell>{((c.customer as Record<string, unknown>)?.fullName as string) || "N/A"}</TableCell>
+												<TableCell>{((c.property as Record<string, unknown>)?.name as string) || "N/A"}</TableCell>
+												<TableCell>{((c.paymentType as Record<string, unknown>)?.type as string) || "N/A"}</TableCell>
+												<TableCell>
+													<Badge
+														value={statusMap[String(c.statusId)] || ((c.status as Record<string, unknown>)?.status as string) || "N/A"}
+														size="sm"
+														status={String(c.statusId) === "7" ? "pending" : undefined}
+													/>
+												</TableCell>
+												<TableCell>₦{parseFloat((c.outStandingBalance as string) || "0").toLocaleString()}</TableCell>
+												<TableCell>{new Date(c.createdAt as string).toLocaleDateString()}</TableCell>
+												<TableCell>
+													<div className="flex items-center">
+														<Link to={_router.dashboard.contractDetails.replace(":id", c.id as string)} className=" p-2 flex items-center">
+															<IconWrapper>
+																<EditIcon />
+															</IconWrapper>
+														</Link>
+													</div>
+												</TableCell>
 											</TableRow>
-										</TableHeader>
-										<TableBody>
-											{contracts.map((contract: unknown, idx: number) => {
-												const c = contract as Record<string, unknown>;
-												return (
-													<TableRow key={idx} className="hover:bg-[#F6FBFF] dark:hover:bg-neutral-900/50">
-														<TableCell>{((c.customer as Record<string, unknown>)?.customerCode as string) || "N/A"}</TableCell>
-														<TableCell>{((c.customer as Record<string, unknown>)?.fullName as string) || "N/A"}</TableCell>
-														<TableCell>{((c.property as Record<string, unknown>)?.name as string) || "N/A"}</TableCell>
-														<TableCell>{((c.paymentType as Record<string, unknown>)?.type as string) || "N/A"}</TableCell>
-														<TableCell>
-															<Badge
-																value={statusMap[String(c.statusId)] || ((c.status as Record<string, unknown>)?.status as string) || "N/A"}
-																size="sm"
-																status={String(c.statusId) === "7" ? "pending" : undefined}
-															/>
-														</TableCell>
-														<TableCell>₦{parseFloat((c.outStandingBalance as string) || "0").toLocaleString()}</TableCell>
-														<TableCell>{new Date(c.createdAt as string).toLocaleDateString()}</TableCell>
-														<TableCell>
-															<div className="flex items-center">
-																<Link to={_router.dashboard.contractDetails.replace(":id", c.id as string)} className=" p-2 flex items-center">
-																	<IconWrapper>
-																		<EditIcon />
-																	</IconWrapper>
-																</Link>
-															</div>
-														</TableCell>
-													</TableRow>
-												);
-											})}
-										</TableBody>
-									</Table>
-								</div>
-							</div>
+										);
+									})}
+								</TableBody>
+							</Table>
 
 							<CompactPagination page={page} pages={pages} showRange onPageChange={setPage} />
 						</div>

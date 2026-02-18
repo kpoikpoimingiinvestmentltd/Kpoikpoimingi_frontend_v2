@@ -113,7 +113,6 @@ export default function Categories() {
 
 	const updateMutation = useMutation<unknown, unknown, { id: string; category?: string; subCategories?: string[] }>({
 		mutationFn: (vars: { id: string; category?: string; subCategories?: string[] }) => {
-			console.log("Updating category with vars:", vars);
 			return updateCategory(vars.id, { category: vars.category, description: "", subcategories: vars.subCategories });
 		},
 		onMutate: async ({ id, category, subCategories }: { id: string; category?: string; subCategories?: string[] }) => {
@@ -142,7 +141,6 @@ export default function Categories() {
 
 	React.useEffect(() => {
 		if (!fetchedCategories) return;
-		console.log("fetched categories:", fetchedCategories);
 		const fetchedData = fetchedCategories as { data?: unknown[] };
 		const dataArray = fetchedData?.data || [];
 		const mapped = (

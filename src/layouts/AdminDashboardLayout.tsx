@@ -10,7 +10,7 @@ export default function AdminDashboardLayout() {
 	const [logoutOpen, setLogoutOpen] = useState(false);
 
 	return (
-		<div className="flex w-full min-h-screen bg-gray-50/20  text-black dark:text-white">
+		<div className="flex items-start w-full min-h-screen bg-gray-50/20  text-black dark:text-white">
 			{sidebarOpen && (
 				<div
 					className="fixed inset-0 bg-black/50 bg-opacity-40 z-40 xl:hidden"
