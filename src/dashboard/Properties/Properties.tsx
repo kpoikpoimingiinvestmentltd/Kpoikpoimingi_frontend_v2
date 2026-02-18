@@ -139,7 +139,7 @@ export default function Properties() {
 		sortBy,
 		sortOrder,
 		isPublicFilter || undefined,
-		activeTab === "out" ? "sold" : undefined,
+		activeTab === "available" ? "available" : activeTab === "out" ? "sold" : undefined,
 		activeTab === "low" ? "low_stock" : undefined,
 	);
 
