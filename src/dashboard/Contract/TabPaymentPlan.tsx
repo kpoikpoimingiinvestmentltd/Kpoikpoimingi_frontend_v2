@@ -1,7 +1,7 @@
 import CustomCard from "@/components/base/CustomCard";
 import SectionTitle from "@/components/common/SectionTitle";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { CheckIcon, IconWrapper } from "../../assets/icons";
+import Badge from "@/components/base/Badge";
 import { useState } from "react";
 import ContractSuccessModal from "./ContractSuccessModal";
 import GenerateCustomPaymentLinkModal from "./GenerateCustomPaymentLinkModal";
@@ -18,6 +18,19 @@ interface Contract {
 		name: string;
 	};
 	[key: string]: unknown;
+}
+
+interface DisplaySchedule {
+	id: string;
+	date: string;
+	amount: string;
+	lateFees: string;
+	totalDue: string;
+	isPaid?: boolean;
+	isDefaulted?: boolean;
+	displayStatus?: string;
+	canGenerateLink?: boolean;
+	paymentLink?: string | null;
 }
 
 const tableStyle = "border-r border-gray-200 dark:border-r-neutral-700 text-center";
@@ -58,24 +71,44 @@ export default function TabPaymentPlan({ contract }: { contract?: Contract }) {
 	};
 
 	// Format schedule data for display
-	const displaySchedules = Array.isArray(schedules)
-		? schedules.map((schedule: Record<string, unknown>) => ({
-				id: schedule.id,
+	const displaySchedules: DisplaySchedule[] = Array.isArray(schedules)
+		? schedules.map((schedule: any) => ({
+				id: String(schedule.id),
 				date: new Date(schedule.dueDate as string).toLocaleDateString(),
-				amount: Number(schedule.amount as number).toLocaleString(),
-				lateFees: Number((schedule.lateFees as number) || 0).toLocaleString(),
-				totalDue: Number((schedule.totalDue as number) || 0).toLocaleString(),
-				isPaid: schedule.isPaid,
-				isDefaulted: schedule.isDefaulted,
-				displayStatus: schedule.displayStatus,
-				canGenerateLink: schedule.canGenerateLink,
-				paymentLink: schedule.paymentLink,
+				amount: Number(schedule.amount as any).toLocaleString(),
+				lateFees: Number((schedule.lateFees as any) || 0).toLocaleString(),
+				totalDue: Number((schedule.totalDue as any) || 0).toLocaleString(),
+				isPaid: Boolean(schedule.isPaid),
+				isDefaulted: Boolean(schedule.isDefaulted),
+				displayStatus: schedule.displayStatus as string,
+				canGenerateLink: Boolean(schedule.canGenerateLink),
+				paymentLink: schedule.paymentLink ? String(schedule.paymentLink) : null,
 			}))
 		: [];
 
 	const totalAmount = (Array.isArray(schedules) ? schedules : [])
 		.reduce((sum: number, s: Record<string, unknown>) => sum + Number(s.amount as number), 0)
 		.toLocaleString();
+
+	function mapDisplayStatus(status?: string) {
+		if (!status) return undefined;
+		const s = status.trim().toLowerCase();
+		switch (s) {
+			case "paid":
+				return "success";
+			case "pending":
+				return "pending";
+			case "defaulted":
+			case "overdue":
+				return "banned";
+			case "processing":
+				return "processing";
+			case "completed":
+				return "completed";
+			default:
+				return undefined;
+		}
+	}
 
 	return (
 		<CustomCard className="mt-4 border-none p-0 bg-white">
@@ -158,71 +191,44 @@ export default function TabPaymentPlan({ contract }: { contract?: Contract }) {
 								</TableHeader>
 
 								<TableBody>
-									{displaySchedules.map((schedule: Record<string, unknown>, i: number) => (
-										<TableRow key={schedule.id as string} className="hover:bg-[#F6FBFF] dark:hover:bg-neutral-900/50">
+									{displaySchedules.map((schedule: DisplaySchedule, i: number) => (
+										<TableRow key={schedule.id} className="hover:bg-[#F6FBFF] dark:hover:bg-neutral-900/50">
 											<TableCell className={twMerge(tableStyle, "py-6")}>{i + 1}</TableCell>
-											<TableCell className={twMerge(tableStyle, "py-6")}>{schedule.date as string}</TableCell>
-											<TableCell className={twMerge(tableStyle, "py-6")}>₦{schedule.amount as number}</TableCell>
-											<TableCell className={twMerge(tableStyle, "py-6")}>₦{schedule.lateFees as number}</TableCell>
-											<TableCell className={twMerge(tableStyle, "py-6")}>₦{schedule.totalDue as number}</TableCell>
+											<TableCell className={twMerge(tableStyle, "py-6")}>{schedule.date}</TableCell>
+											<TableCell className={twMerge(tableStyle, "py-6")}>₦{schedule.amount}</TableCell>
+											<TableCell className={twMerge(tableStyle, "py-6")}>₦{schedule.lateFees}</TableCell>
+											<TableCell className={twMerge(tableStyle, "py-6")}>₦{schedule.totalDue}</TableCell>
 											<TableCell className={twMerge(tableStyle, "py-6")}>
-												{(schedule.isPaid as boolean) ? (
-													<div className="flex justify-center items-center gap-2 font-medium">
-														<IconWrapper className="text-2xl text-emerald-600">
-															<CheckIcon />
-														</IconWrapper>
-														<span>Paid</span>
-													</div>
-												) : (schedule.isDefaulted as boolean) ? (
-													<div className="flex justify-center items-center gap-3">
-														<span className="text-red-500 font-medium">Defaulted</span>
-														{(schedule.paymentLinkUrl as string) ? (
-															<>
-																<button
-																	onClick={() => handleGenerateLink(schedule.id as string)}
-																	disabled={loadingScheduleId === (schedule.id as string)}
-																	className="active-scale bg-white text-transparent bg-clip-text bg-gradient-to-r from-[#03B4FA] to-[#026B94] px-6 py-2 rounded-l-none text-sm shadow-xl disabled:opacity-50">
-																	{loadingScheduleId === (schedule.id as string) ? "Generating..." : "Generate Link"}
-																</button>
-															</>
-														) : (
-															(schedule.canGenerateLink as boolean) && (
-																<button
-																	onClick={() => handleGenerateLink(schedule.id as string)}
-																	disabled={loadingScheduleId === (schedule.id as string)}
-																	className="active-scale bg-white text-transparent bg-clip-text bg-gradient-to-r from-[#03B4FA] to-[#026B94] px-6 py-2 rounded-l-none text-sm shadow-xl disabled:opacity-50">
-																	{loadingScheduleId === (schedule.id as string) ? "Generating..." : "Generate Link"}
-																</button>
-															)
-														)}
-													</div>
-												) : (
-													<div>
-														{(schedule.paymentLinkUrl as string) ? (
-															<div className="flex justify-center items-center">
-																<button
-																	onClick={() => handleGenerateLink(schedule.id as string)}
-																	disabled={loadingScheduleId === (schedule.id as string)}
-																	className={twMerge(
-																		"active-scale bg-white text-transparent bg-clip-text bg-gradient-to-r from-[#03B4FA] to-[#026B94] disabled:bg-white disabled:opacity-90 border border-stone-100 px-6 py-2 rounded-full rounded-l-none text-sm shadow-xl",
-																		loadingScheduleId === (schedule.id as string) && "opacity-50 cursor-not-allowed",
-																	)}>
-																	{loadingScheduleId === (schedule.id as string) ? "Generating..." : "Generate Link"}
-																</button>
-															</div>
-														) : (
-															<button
-																onClick={() => handleGenerateLink(schedule.id as string)}
-																disabled={loadingScheduleId === (schedule.id as string)}
+												{/* Use displayStatus for rendering status and canGenerateLink to control button visibility */}
+												<div className="flex flex-col items-center gap-2">
+													<Badge value={(schedule.displayStatus as string) || "-"} size="sm" status={mapDisplayStatus(schedule.displayStatus)} />
+													{schedule.paymentLink ? (
+														<div className="flex justify-center items-center">
+															<a
+																href={schedule.paymentLink!}
+																target="_blank"
+																rel="noreferrer"
 																className={twMerge(
-																	"active-scale bg-white text-transparent bg-clip-text bg-gradient-to-r from-[#03B4FA] to-[#026B94] px-6 py-2 rounded-full rounded-l-none text-sm shadow-xl",
-																	loadingScheduleId === (schedule.id as string) && "opacity-50 cursor-not-allowed",
+																	"active-scale bg-white text-transparent bg-clip-text bg-gradient-to-r from-[#03B4FA] to-[#026B94] disabled:bg-white disabled:opacity-90 border border-stone-100 px-6 py-2 rounded-full text-sm shadow-xl",
+																	loadingScheduleId === schedule.id && "opacity-50 cursor-not-allowed",
 																)}>
-																{loadingScheduleId === (schedule.id as string) ? "Generating..." : "Generate Link"}
+																Open Link
+															</a>
+														</div>
+													) : (
+														schedule.canGenerateLink && (
+															<button
+																onClick={() => handleGenerateLink(schedule.id)}
+																disabled={loadingScheduleId === schedule.id}
+																className={twMerge(
+																	"active-scale bg-white text-transparent bg-clip-text bg-gradient-to-r from-[#03B4FA] to-[#026B94] px-6 py-2 rounded-full text-sm shadow-xl",
+																	loadingScheduleId === schedule.id && "opacity-50 cursor-not-allowed",
+																)}>
+																{loadingScheduleId === schedule.id ? "Generating..." : "Generate Link"}
 															</button>
-														)}
-													</div>
-												)}
+														)
+													)}
+												</div>
 											</TableCell>
 										</TableRow>
 									))}

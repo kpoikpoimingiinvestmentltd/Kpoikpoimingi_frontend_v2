@@ -53,7 +53,11 @@ export default function Properties() {
 		return searchParams.get("isPublic") || "";
 	});
 	const [activeTab, setActiveTab] = React.useState(() => {
-		return searchParams.get("tab") || "available";
+		const statusParam = searchParams.get("status");
+		const stockStatusParam = searchParams.get("stockStatus");
+		if (statusParam === "sold") return "out";
+		if (stockStatusParam === "low_stock") return "low";
+		return "available";
 	});
 
 	const debouncedSearch = useDebounceSearch(searchQuery, 400);
@@ -73,7 +77,12 @@ export default function Properties() {
 		setSortBy(searchParams.get("sortBy") || "createdAt");
 		setSortOrder(searchParams.get("sortOrder") || "desc");
 		setIsPublicFilter(searchParams.get("isPublic") || "");
-		setActiveTab(searchParams.get("tab") || "available");
+		// derive active tab from status / stockStatus params
+		const statusParam = searchParams.get("status");
+		const stockStatusParam = searchParams.get("stockStatus");
+		if (statusParam === "sold") setActiveTab("out");
+		else if (stockStatusParam === "low_stock") setActiveTab("low");
+		else setActiveTab("available");
 	}, [searchParams]);
 
 	// Initialize URL params on mount if not present
@@ -85,14 +94,15 @@ export default function Properties() {
 			searchParams.has("sortBy") ||
 			searchParams.has("sortOrder") ||
 			searchParams.has("isPublic") ||
-			searchParams.has("tab");
+			searchParams.has("status") ||
+			searchParams.has("stockStatus");
 		if (!hasParams) {
 			const params = new URLSearchParams();
 			params.set("page", "1");
 			params.set("limit", "10");
 			params.set("sortBy", "createdAt");
 			params.set("sortOrder", "desc");
-			params.set("tab", "available");
+			// default to available (no status/stockStatus param)
 			setSearchParams(params, { replace: true });
 		}
 		setIsMounted(true);
@@ -107,7 +117,14 @@ export default function Properties() {
 		params.set("sortBy", sortBy);
 		params.set("sortOrder", sortOrder);
 		params.set("isPublic", isPublicFilter);
-		params.set("tab", activeTab);
+		// map activeTab to appropriate url param keys
+		params.delete("status");
+		params.delete("stockStatus");
+		if (activeTab === "out") {
+			params.set("status", "sold");
+		} else if (activeTab === "low") {
+			params.set("stockStatus", "low_stock");
+		}
 		setSearchParams(params, { replace: true });
 	}, [page, limit, searchQuery, sortBy, sortOrder, isPublicFilter, activeTab, setSearchParams]);
 
@@ -122,7 +139,8 @@ export default function Properties() {
 		sortBy,
 		sortOrder,
 		isPublicFilter || undefined,
-		activeTab === "available" ? "available" : activeTab === "low" ? "low_stock" : "sold",
+		activeTab === "out" ? "sold" : undefined,
+		activeTab === "low" ? "low_stock" : undefined,
 	);
 
 	const [selected, setSelected] = React.useState<Record<string, boolean>>({});

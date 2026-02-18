@@ -29,7 +29,8 @@ export async function getAllProperties(
 	sortBy?: string,
 	sortOrder?: string,
 	isPublic?: string,
-	status?: string
+	status?: string,
+	stockStatus?: string,
 ) {
 	const qs = new URLSearchParams();
 	if (typeof page === "number") qs.append("page", String(page));
@@ -39,6 +40,7 @@ export async function getAllProperties(
 	if (sortOrder) qs.append("sortOrder", sortOrder);
 	if (isPublic) qs.append("isPublic", isPublic);
 	if (status) qs.append("status", status);
+	if (stockStatus) qs.append("stockStatus", stockStatus);
 
 	const url = `${API_ROUTES.property.getAllProperties}${qs.toString() ? `?${qs.toString()}` : ""}`;
 	return apiGet(url);
@@ -52,11 +54,12 @@ export function useGetAllProperties(
 	sortOrder?: string,
 	isPublic?: string,
 	status?: string,
-	enabled = true
+	stockStatus?: string,
+	enabled = true,
 ) {
 	return useQuery({
-		queryKey: ["properties", page, limit, search || "", sortBy || "", sortOrder || "", isPublic || "", status || ""],
-		queryFn: async () => getAllProperties(page, limit, search, sortBy, sortOrder, isPublic, status),
+		queryKey: ["properties", page, limit, search || "", sortBy || "", sortOrder || "", isPublic || "", status || "", stockStatus || ""],
+		queryFn: async () => getAllProperties(page, limit, search, sortBy, sortOrder, isPublic, status, stockStatus),
 		enabled,
 		staleTime: 5 * 60 * 1000,
 	});
