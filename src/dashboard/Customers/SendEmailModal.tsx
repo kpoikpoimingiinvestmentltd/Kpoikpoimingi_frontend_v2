@@ -50,7 +50,7 @@ export default function SendEmailModal({ open, onOpenChange, customers = [], onS
 		(err: unknown) => {
 			console.error("Error sending specific email:", err);
 			toast.error(extractErrorMessage(err, "Failed to send email"));
-		}
+		},
 	);
 
 	const sendBroadcastMutation = useSendEmailBroadcast(
@@ -65,18 +65,17 @@ export default function SendEmailModal({ open, onOpenChange, customers = [], onS
 		(err: unknown) => {
 			console.error("Error sending broadcast email:", err);
 			toast.error(extractErrorMessage(err, "Failed to send broadcast email"));
-		}
+		},
 	);
 
 	const handleSelectEmail = (email: string) => {
-		if (!selectedEmails.includes(email)) {
-			setSelectedEmails([...selectedEmails, email]);
-		}
+		setSelectedEmails((prev) => (prev.includes(email) ? prev : [...prev, email]));
 		setShowEmailDropdown(false);
 	};
 
 	const handleRemoveEmail = (email: string) => {
-		setSelectedEmails(selectedEmails.filter((e) => e !== email));
+		setSelectedEmails((prev) => prev.filter((e) => e !== email));
+		setShowEmailDropdown(false);
 	};
 
 	const resetForm = () => {
@@ -170,6 +169,10 @@ export default function SendEmailModal({ open, onOpenChange, customers = [], onS
 																		{email}
 																		<button
 																			type="button"
+																			onPointerDown={(e) => {
+																				e.stopPropagation();
+																				e.preventDefault();
+																			}}
 																			onClick={(e) => {
 																				e.stopPropagation();
 																				handleRemoveEmail(email);

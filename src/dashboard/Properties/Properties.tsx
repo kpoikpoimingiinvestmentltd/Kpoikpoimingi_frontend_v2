@@ -122,7 +122,7 @@ export default function Properties() {
 		sortBy,
 		sortOrder,
 		isPublicFilter || undefined,
-		activeTab === "available" ? "available" : activeTab === "low" ? "low" : "out",
+		activeTab === "available" ? "available" : activeTab === "low" ? "low_stock" : "sold",
 	);
 
 	const [selected, setSelected] = React.useState<Record<string, boolean>>({});
