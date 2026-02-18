@@ -40,6 +40,7 @@ const statusClassMap: Record<string, string> = {
 	canceled: "bg-red-100 text-red-800",
 	expired: "bg-orange-100 text-orange-800",
 	terminated: "bg-red-100 text-red-800",
+	overdue: "bg-red-100 text-red-800",
 	paused: "bg-yellow-100 text-yellow-800",
 	primary: "bg-primary/10 text-primary",
 	completed: "bg-green-800 text-white",
@@ -60,6 +61,7 @@ const statusDotMap: Record<string, string> = {
 	primary: "bg-primary",
 	expired: "bg-orange-500",
 	terminated: "bg-red-500",
+	overdue: "bg-red-500",
 	paused: "bg-amber-400",
 	completed: "bg-white",
 };
