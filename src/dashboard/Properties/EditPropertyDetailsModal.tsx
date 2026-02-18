@@ -218,6 +218,7 @@ export default function EditPropertyDetailsModal({ open, onOpenChange, initial, 
 							mode="upload"
 							uploadButtonPosition="top-right"
 							thumbVariant="dashed"
+							placeholderText="Upload property image(s)"
 							thumbBg="bg-primary/10"
 							onChange={handleImageUpload}
 							isUploading={isUploadingImages}

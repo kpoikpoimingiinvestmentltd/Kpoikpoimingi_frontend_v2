@@ -10,7 +10,7 @@ export default function AdminDashboardLayout() {
 	const [logoutOpen, setLogoutOpen] = useState(false);
 
 	return (
-		<div className="flex items-start w-full min-h-screen bg-gray-50/20  text-black dark:text-white">
+		<div className="flex items-start w-full min-h-screen bg-gray-50/20 text-black dark:text-white">
 			{sidebarOpen && (
 				<div
 					className="fixed inset-0 bg-black/50 bg-opacity-40 z-40 xl:hidden"
@@ -24,7 +24,7 @@ export default function AdminDashboardLayout() {
 				}`}>
 				<AdminDashboardSidebar onClose={() => setSidebarOpen(false)} onLogoutOpen={() => setLogoutOpen(true)} />
 			</aside>
-			<main className="flex-1 flex flex-col min-h-screen w-full xl:ml-76">
+			<main className="flex grow flex-col min-h-screen w-full xl:ml-76">
 				<AdminDashboardHeader onSidebarOpen={() => setSidebarOpen(true)} onLogoutOpen={() => setLogoutOpen(true)} />
 				<div className="p-5 md:p-6 flex-grow bg-card">
 					<Outlet />

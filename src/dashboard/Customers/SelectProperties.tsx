@@ -8,6 +8,7 @@ import PageTitles from "@/components/common/PageTitles";
 import Image from "@/components/base/Image";
 import { IconWrapper, MinusIcon, PlusIcon, EyeIcon } from "@/assets/icons";
 import { _router } from "@/routes/_router";
+import { media } from "@/resources/images";
 import type { PropertyData } from "@/types/property";
 import { RectangleSkeleton } from "@/components/common/Skeleton";
 import ActionButton from "@/components/base/ActionButton";
@@ -72,14 +73,44 @@ export default function SelectProperties() {
 		if (Array.isArray(propertiesData)) props = propertiesData as PropertyData[];
 		else if (Array.isArray(dataObj.data as unknown)) props = dataObj.data as unknown as PropertyData[];
 		else if (Array.isArray(dataObj.items as unknown)) props = dataObj.items as unknown as PropertyData[];
-		const total = (dataObj.totalPages as number) || Math.ceil(((dataObj.total as number) || props.length) / itemsPerPage);
+
+		// The API returns pagination information under `pagination`
+		const pagination = (dataObj.pagination as Record<string, unknown>) || (dataObj.paging as Record<string, unknown>) || null;
+		const totalPagesFromApi = pagination ? (pagination.totalPages as number) : undefined;
+		const totalItemsFromApi = pagination ? (pagination.total as number) : undefined;
+
+		const total =
+			typeof totalPagesFromApi === "number"
+				? totalPagesFromApi
+				: Math.max(1, Math.ceil(((typeof totalItemsFromApi === "number" ? totalItemsFromApi : props.length) as number) / itemsPerPage));
+
 		return { properties: props, totalPages: total };
 	}, [propertiesData, itemsPerPage]);
 
-	// For hire purchase, only allow one selection
+	const formatMoney = (v?: string | number | null) => {
+		if (v === undefined || v === null || v === "") return "0";
+		const n = Number(v);
+		if (Number.isNaN(n)) return String(v);
+		return n.toLocaleString();
+	};
+
+	const totalSelectedAmount = React.useMemo(() => {
+		return selectedProperties.reduce((acc, p) => {
+			const price = typeof p.price === "number" ? p.price : parseFloat(p.price || "0");
+			return acc + (isNaN(price) ? 0 : price) * (p.quantity || 1);
+		}, 0);
+	}, [selectedProperties]);
+
+	// Toggle selection. For hire-purchase (`installment`) only allow a single selection.
 	const handlePropertySelect = (property: PropertyData) => {
+		const isSelected = selectedProperties.find((p) => p.id === property.id);
+		if (isSelected) {
+			setSelectedProperties(selectedProperties.filter((p) => p.id !== property.id));
+			return;
+		}
+
 		if (paymentMethod === "installment") {
-			// Single selection only
+			// single selection only for hire purchase
 			setSelectedProperties([
 				{
 					id: property.id,
@@ -89,25 +120,20 @@ export default function SelectProperties() {
 					media: property.media,
 				},
 			]);
-		} else if (paymentMethod === "once") {
-			// Check if already selected
-			const isSelected = selectedProperties.find((p) => p.id === property.id);
-			if (isSelected) {
-				setSelectedProperties(selectedProperties.filter((p) => p.id !== property.id));
-			} else {
-				// Add to selected
-				setSelectedProperties([
-					...selectedProperties,
-					{
-						id: property.id,
-						name: property.name,
-						price: property.price,
-						quantity: 1,
-						media: property.media,
-					},
-				]);
-			}
+			return;
 		}
+
+		// default: allow multiple selection
+		setSelectedProperties((prev) => [
+			...prev,
+			{
+				id: property.id,
+				name: property.name,
+				price: property.price,
+				quantity: 1,
+				media: property.media,
+			},
+		]);
 	};
 
 	const handleQuantityChange = (propertyId: string, delta: number) => {
@@ -115,7 +141,11 @@ export default function SelectProperties() {
 			const updated = prev
 				.map((p) => {
 					if (p.id === propertyId) {
-						const newQuantity = Math.max(0, p.quantity + delta);
+						let newQuantity = Math.max(0, p.quantity + delta);
+						if (paymentMethod === "installment") {
+							// hire purchase cannot have quantity more than 1
+							newQuantity = Math.min(1, newQuantity);
+						}
 						return { ...p, quantity: newQuantity };
 					}
 					return p;
@@ -220,7 +250,7 @@ export default function SelectProperties() {
 									const isSelected = selectedProperties.some((p) => p.id === property.id);
 									const selectedItem = selectedProperties.find((p) => p.id === property.id);
 									const isDisabled = paymentMethod === "installment" && selectedProperties.length > 0 && !isSelected;
-									const imgSrc = property.media?.[0] || "";
+									const imgSrc = (property.media && property.media.length > 0 && property.media[0]) || media.images._product1;
 
 									return (
 										<div
@@ -254,6 +284,7 @@ export default function SelectProperties() {
 											{/* Content */}
 											<div>
 												<h5 className="text-sm opacity-70 dark:opacity-100 dark:text-gray-300 truncate">{property.name}</h5>
+												<div className="mt-1 text-sm font-semibold text-primary">₦{formatMoney(property.price)}</div>
 												{/* Action Buttons/Controls */}
 												{isSelected ? (
 													<div className="flex items-center gap-1 bg-gray-50 dark:bg-neutral-800 mt-2 rounded p-1">
@@ -298,17 +329,21 @@ export default function SelectProperties() {
 							{selectedProperties.length > 0 && (
 								<div className="border-t pt-6 mt-6">
 									<h3 className="font-semibold mb-4">Selected Properties ({selectedProperties.length})</h3>
-									<CustomCard className="bg-gray-50 p-4 rounded-md mb-6 max-h-48 overflow-y-auto">
-										{selectedProperties.map((prop) => (
-											<div key={prop.id} className="flex justify-between items-center mb-2 pb-2 border-b last:border-b-0">
-												<span className="text-sm">
-													<span className="font-medium">{prop.name}</span>
-													{paymentMethod === "once" && prop.quantity > 1 && <span className="text-gray-600 ml-2">× {prop.quantity}</span>}
-												</span>
-												<span className="font-semibold text-primary">₦{(parseFloat(prop.price) * prop.quantity).toLocaleString()}</span>
-											</div>
-										))}
-									</CustomCard>
+									{paymentMethod === "installment" ? (
+										<div className="text-sm text-muted-foreground">{selectedProperties.length} properties selected</div>
+									) : (
+										<CustomCard className="bg-gray-50 p-4 rounded-md mb-6 max-h-48 overflow-y-auto">
+											{selectedProperties.map((prop) => (
+												<div key={prop.id} className="flex justify-between items-center mb-2 pb-2 border-b last:border-b-0">
+													<span className="text-sm">
+														<span className="font-medium">{prop.name}</span>
+														{paymentMethod === "once" && prop.quantity > 1 && <span className="text-gray-600 ml-2">× {prop.quantity}</span>}
+													</span>
+													<span className="font-semibold text-primary">₦{formatMoney((parseFloat(prop.price) || 0) * prop.quantity)}</span>
+												</div>
+											))}
+										</CustomCard>
+									)}
 								</div>
 							)}
 						</>
@@ -316,6 +351,12 @@ export default function SelectProperties() {
 				</div>
 
 				{/* Action Buttons */}
+				{selectedProperties.length > 0 && (
+					<div className="flex items-center justify-between gap-4 mt-8">
+						<div className="text-lg font-semibold text-primary">Total: ₦{formatMoney(totalSelectedAmount)}</div>
+						<div className="flex gap-4 justify-end"></div>
+					</div>
+				)}
 				<div className="flex gap-4 justify-end mt-8">
 					<ActionButton type="button" onClick={handleBack} variant="outline" className="px-6 py-2.5">
 						Back
@@ -366,7 +407,7 @@ export default function SelectProperties() {
 
 							{/* Price and Basic Info */}
 							<CustomCard className="h-auto rounded-lg p-4">
-								<div className="text-3xl font-bold text-primary mb-3">₦{parseFloat(selectedProperty.price).toLocaleString()}</div>
+								<div className="text-3xl font-bold text-primary mb-3">₦{formatMoney(selectedProperty.price)}</div>
 								<div>
 									<KeyValueRow
 										label="Condition"

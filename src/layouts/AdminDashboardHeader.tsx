@@ -214,7 +214,7 @@ function UserAvatarContent() {
 
 	return (
 		<div className="flex items-center gap-3">
-			<div className="w-9 h-9 rounded-full overflow-hidden relative flex-shrink-0">
+			<div className="w-10 h-10 rounded-full overflow-hidden relative flex-shrink-0">
 				{(() => {
 					const media = (data as Record<string, unknown>).media;
 					let src: string | undefined | null = undefined;

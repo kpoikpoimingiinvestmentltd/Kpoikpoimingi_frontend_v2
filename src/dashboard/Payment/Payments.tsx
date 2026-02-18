@@ -318,29 +318,31 @@ export default function Payments() {
 
 			<CustomCard>
 				<div className="flex items-center justify-end">
-					<SearchWithFilters
-						search={search}
-						onSearchChange={(v) => {
-							setSearch(v);
-							setPage(1);
-						}}
-						setPage={setPage}
-						placeholder="Search by contract code, customer name, or email"
-						showFilter={true}
-						fields={filterFields}
-						initialValues={{
-							dueDateFrom: filters.dueDateFrom || "",
-							dueDateTo: filters.dueDateTo || "",
-							dateFrom: filters.dateFrom || "",
-							dateTo: filters.dateTo || "",
-							isOverdue: filters.isOverdue || "",
-							statusId: filters.statusId || "",
-							sortBy: filters.sortBy || "",
-							sortOrder: filters.sortOrder || "",
-						}}
-						onApply={handleFilterApply}
-						onReset={handleFilterReset}
-					/>
+					{paymentsList.length > 0 && (
+						<SearchWithFilters
+							search={search}
+							onSearchChange={(v) => {
+								setSearch(v);
+								setPage(1);
+							}}
+							setPage={setPage}
+							placeholder="Search by contract code, customer name, or email"
+							showFilter={true}
+							fields={filterFields}
+							initialValues={{
+								dueDateFrom: filters.dueDateFrom || "",
+								dueDateTo: filters.dueDateTo || "",
+								dateFrom: filters.dateFrom || "",
+								dateTo: filters.dateTo || "",
+								isOverdue: filters.isOverdue || "",
+								statusId: filters.statusId || "",
+								sortBy: filters.sortBy || "",
+								sortOrder: filters.sortOrder || "",
+							}}
+							onApply={handleFilterApply}
+							onReset={handleFilterReset}
+						/>
+					)}
 				</div>
 				<div className="min-h-96 flex flex-col">
 					{isLoading || isFetching ? (

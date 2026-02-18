@@ -163,10 +163,18 @@ export default function Properties() {
 		},
 	);
 
-	const selectedCount = Object.keys(selected).length;
+	const selectedCount = Object.values(selected).filter(Boolean).length;
 
 	const toggleSelect = (id: string) => {
-		setSelected((prev) => ({ ...prev, [id]: !prev[id] }));
+		setSelected((prev) => {
+			const isNowSelected = !prev[id];
+			if (isNowSelected) {
+				return { ...prev, [id]: true };
+			}
+			// remove the key when deselecting
+			const { [id]: _removed, ...rest } = prev;
+			return rest;
+		});
 	};
 
 	const handleDelete = async () => {
@@ -196,6 +204,13 @@ export default function Properties() {
 		const raw = Array.isArray(pd.data) ? pd.data : [];
 		return raw.map((item) => item as PropertyData);
 	}, [propertiesData]);
+
+	const formatMoney = (v?: string | number | null) => {
+		if (v === undefined || v === null || v === "") return "0";
+		const n = Number(v);
+		if (Number.isNaN(n)) return String(v);
+		return n.toLocaleString();
+	};
 	const isEmpty = !isLoading && properties.length === 0;
 
 	const filteredItems = React.useMemo(() => {
@@ -382,7 +397,7 @@ export default function Properties() {
 												<div className="mt-3">
 													<h5 className="text-sm font-medium truncate">{prod.name}</h5>
 													<div className="flex items-center justify-between gap-2">
-														<p className="text-sm font-semibold text-primary mt-1">₦{prod.price}</p>
+														<p className="text-sm font-semibold text-primary mt-1">₦{formatMoney(prod.price)}</p>
 														<DropdownMenu>
 															<DropdownMenuTrigger asChild>
 																<button className="text-primary">

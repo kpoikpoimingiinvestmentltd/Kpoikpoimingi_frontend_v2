@@ -5,6 +5,7 @@ import KeyValueRow from "@/components/common/KeyValueRow";
 import DetailField from "@/components/common/DetailField";
 import CustomCard from "@/components/base/CustomCard";
 import Image from "@/components/base/Image";
+import { media } from "@/resources/images";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { tableHeaderRowStyle } from "@/components/common/commonStyles";
 import { CardSkeleton } from "@/components/common/Skeleton";
@@ -49,6 +50,8 @@ export default function DebtDetails() {
 	const nextPayment = debtDetails.nextPayment;
 	const paymentSchedule = debtDetails.paymentSchedule || [];
 
+	const resolveStatus = (p: any) => String(p?.displayStatus ?? p?.status ?? (p?.isPaid ? "Paid" : "Pending"));
+
 	return (
 		<PageWrapper>
 			<div className="flex items-center justify-between flex-wrap gap-4 mb-4">
@@ -59,7 +62,11 @@ export default function DebtDetails() {
 				<div className="flex flex-col md:flex-row gap-6">
 					{/* Property Image */}
 					<div className="flex-shrink-0 flex items-center justify-center">
-						<Image src={contractInfo.propertyImage} alt={contractInfo.propertyName} className="w-40 h-40 object-cover rounded-lg" />
+						<Image
+							src={contractInfo.propertyImage || media.images._product1}
+							alt={contractInfo.propertyName}
+							className="w-40 h-40 object-cover rounded-lg overflow-hidden"
+						/>
 					</div>
 
 					{/* Contract Info */}
@@ -127,11 +134,7 @@ export default function DebtDetails() {
 							leftClassName="text-sm text-gray-600"
 							rightClassName="text-xl font-bold"
 						/>
-						<KeyValueRow
-							label="Status"
-							value={<Badge value={nextPayment.isOverdue ? "Overdue" : "Pending"} size="sm" />}
-							leftClassName="text-sm text-gray-600"
-						/>
+						<KeyValueRow label="Status" value={<Badge value={resolveStatus(nextPayment)} size="sm" />} leftClassName="text-sm text-gray-600" />
 					</div>
 				</CustomCard>
 			)}{" "}
@@ -156,7 +159,7 @@ export default function DebtDetails() {
 									<TableCell className="py-4">₦{payment.amount.toLocaleString()}</TableCell>
 									<TableCell className="py-4">{new Date(payment.dueDate).toLocaleDateString()}</TableCell>
 									<TableCell className="py-4">
-										<Badge value={payment.status} status={payment.isOverdue ? "banned" : "success"} size="sm" />
+										<Badge value={resolveStatus(payment)} size="sm" />
 									</TableCell>
 									<TableCell className="py-4">₦{payment.paidAmount.toLocaleString()}</TableCell>
 								</TableRow>

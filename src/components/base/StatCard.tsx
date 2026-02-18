@@ -95,7 +95,8 @@ export default function StatCard({
 				<>
 					{variant === "income"
 						? IncomeStat()
-						: value && (
+						: value !== undefined &&
+							value !== null && (
 								<div className={`flex items-center gap-2 mt-2`}>
 									<div className="text-2xl dark:text-gray-100 font-semibold text-black">{value}</div>
 									{badge ? badge : null}

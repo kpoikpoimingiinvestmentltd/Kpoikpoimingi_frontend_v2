@@ -76,7 +76,7 @@ export default function AdminLogin() {
 							placeholder="Enter here"
 						/>
 						<button
-							className="absolute top-1/2 right-2 -translate-y-1/2 bg-transparent shadow-none hover:bg-gray-100 flex items-center justify-center p-2 rounded-full"
+							className="absolute top-1/2 right-2 -translate-y-1/2 bg-transparent shadow-none hover:bg-gray-100 text-black dark:text-gray-200 flex items-center justify-center p-2 rounded-full"
 							type="button"
 							aria-pressed={showPassword}
 							aria-label={showPassword ? "Hide password" : "Show password"}
@@ -93,7 +93,7 @@ export default function AdminLogin() {
 							Remember me
 						</Label>
 					</div>
-					<Link to={_router.auth.forgotpassword} className="underline text-sm">
+					<Link to={_router.auth.forgotpassword} className={labelStyle("dark:text-black font-normal cursor-pointer mb-0 underline")}>
 						Forgot password
 					</Link>
 				</div>

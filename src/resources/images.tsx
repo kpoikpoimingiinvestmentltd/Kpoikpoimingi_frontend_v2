@@ -15,7 +15,7 @@ import pngImage from "@/assets/images/others/830f25f9ec6eed85712bfe7d3c24a90b96a
 import noImage from "@/assets/images/others/830f25f9ec6eed85712bfe7d3c24a90b96ab7e0e.png";
 import noDocument from "@/assets/images/others/16976b02c5ab5524c8223459612b6c3df7083bab.png";
 
-import _product1 from "@/assets/images/others/element-no-found-or-available.jpg";
+import _product1 from "@/assets/images/others/element-no-found-or-available.png";
 import _product2 from "@/assets/images/others/588c43cec5c66c5d97aaf7c65231fa7b46580a65.png";
 import _product3 from "@/assets/images/others/749be8d4a43aa88acac27962657eec9b85553c02.png";
 import _product4 from "@/assets/images/others/4190605a079b29b14b7a92a8e421c68d4e8280b3.png";

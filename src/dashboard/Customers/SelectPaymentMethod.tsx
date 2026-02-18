@@ -15,8 +15,8 @@ export default function SelectPaymentMethod() {
 
 	return (
 		<PageWrapper className="md:mx-auto md:max-w-5xl md:w-full">
-			<CustomCard className="p-10 mt-10 min-h-[400px] flex items-center overflow-hidden bg-white rounded-lg relative before:absolute before:w-20 before:h-20 before:bg-primary/10 before:rounded-full before:-bottom-5 before:-left-5 after:absolute after:w-20 after:h-20 after:bg-primary/10 after:rounded-full after:-bottom-5 after:-right-5">
-				<div className="absolute w-20 h-20 top-1/2 -left-5 -translate-y-1/2 bg-primary/10 rounded-full"></div>
+			<CustomCard className="p-10 mt-10 min-h-[400px] flex items-center overflow-hidden bg-white rounded-lg relative before:absolute before:w-20 before:h-20 before:bg-primary/10 dark:before:bg-primary/50 before:rounded-full before:-bottom-5 before:-left-5 after:absolute after:w-20 after:h-20 after:bg-primary/10 dark:after:bg-primary/50 after:rounded-full after:-bottom-5 after:-right-5">
+				<div className="absolute w-20 h-20 top-1/2 -left-5 -translate-y-1/2 bg-primary/10 dark:bg-primary/50 rounded-full"></div>
 				<div className="max-w-3xl mx-auto text-center w-full">
 					{selected === null ? (
 						<>

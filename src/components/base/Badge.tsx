@@ -27,10 +27,13 @@ const defaultNumberMap: Record<number, string> = {
 
 // Map normalized status -> tailwind classes
 const statusClassMap: Record<string, string> = {
+	// accept 'paid' as synonym for success
+	paid: "bg-green-100 text-green-800",
 	success: "bg-green-100 text-green-800",
 	active: "bg-green-100 text-green-800",
 	pending: "bg-yellow-100 text-yellow-800",
 	processing: "bg-yellow-100 text-yellow-800",
+	partially_paid: "bg-yellow-50 text-yellow-900",
 	banned: "bg-red-100 text-red-800",
 	inactive: "bg-gray-100 text-gray-700",
 	cancelled: "bg-red-100 text-red-800",
@@ -44,10 +47,12 @@ const statusClassMap: Record<string, string> = {
 
 // small dot color classes keyed by normalized status
 const statusDotMap: Record<string, string> = {
+	paid: "bg-green-500",
 	success: "bg-green-500",
 	active: "bg-green-500",
 	pending: "bg-amber-400",
 	processing: "bg-amber-400",
+	partially_paid: "bg-yellow-600",
 	banned: "bg-red-500",
 	inactive: "bg-gray-400",
 	cancelled: "bg-red-500",

@@ -277,47 +277,49 @@ export default function Users() {
 
 			<div className="min-h-96 flex">
 				{isLoading || isFetching || users.length > 0 ? (
-					<CustomCard className="bg-white flex-grow w-full rounded-lg p-4 border border-gray-100">
-						<div className="flex items-center justify-between flex-wrap gap-6">
-							<h2 className="font-semibold">All Users</h2>
-							<div className="flex items-center gap-2">
-								<SearchWithFilters
-									search={search}
-									onSearchChange={handleSearchChange}
-									setPage={handlePageChange}
-									placeholder="Search by user full name or email"
-									fields={
-										[
-											{
-												key: "limit",
-												label: "Items per page",
-												type: "select",
-												options: [
-													{ value: "5", label: "5" },
-													{ value: "10", label: "10" },
-													{ value: "20", label: "20" },
-													{ value: "50", label: "50" },
-												],
-											},
-											{
-												key: "sortBy",
-												label: "Sort By",
-												type: "sortBy",
-												options: [
-													{ value: "createdAt", label: "createdAt" },
-													{ value: "fullName", label: "fullName" },
-													{ value: "email", label: "email" },
-												],
-											},
-											{ key: "sortOrder", label: "Sort Order", type: "sortOrder" },
-										] as FilterField[]
-									}
-									initialValues={{ limit: filters.limit || "10", sortBy: filters.sortBy || "", sortOrder: filters.sortOrder || "" }}
-									onApply={handleFiltersApply}
-									onReset={handleFiltersReset}
-								/>
+					<CustomCard className="bg-white grow w-full rounded-lg p-4 border border-gray-100">
+						{users.length > 0 && (
+							<div className="flex items-center justify-between flex-wrap gap-6">
+								<h2 className="font-semibold">All Users</h2>
+								<div className="flex items-center gap-2">
+									<SearchWithFilters
+										search={search}
+										onSearchChange={handleSearchChange}
+										setPage={handlePageChange}
+										placeholder="Search by user full name or email"
+										fields={
+											[
+												{
+													key: "limit",
+													label: "Items per page",
+													type: "select",
+													options: [
+														{ value: "5", label: "5" },
+														{ value: "10", label: "10" },
+														{ value: "20", label: "20" },
+														{ value: "50", label: "50" },
+													],
+												},
+												{
+													key: "sortBy",
+													label: "Sort By",
+													type: "sortBy",
+													options: [
+														{ value: "createdAt", label: "createdAt" },
+														{ value: "fullName", label: "fullName" },
+														{ value: "email", label: "email" },
+													],
+												},
+												{ key: "sortOrder", label: "Sort Order", type: "sortOrder" },
+											] as FilterField[]
+										}
+										initialValues={{ limit: filters.limit || "10", sortBy: filters.sortBy || "", sortOrder: filters.sortOrder || "" }}
+										onApply={handleFiltersApply}
+										onReset={handleFiltersReset}
+									/>
+								</div>
 							</div>
-						</div>
+						)}
 
 						{isLoading || isFetching ? (
 							<TableSkeleton rows={6} cols={6} />
