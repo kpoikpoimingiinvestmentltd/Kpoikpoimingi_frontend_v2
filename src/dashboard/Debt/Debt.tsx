@@ -185,7 +185,7 @@ export default function Debt() {
 					<div className="flex flex-col h-full justify-between">
 						<div className="text-[.9rem] opacity-90">Total Debt</div>
 						<div className="mt-2 text-lg font-medium">
-							NGN <span className="text-3xl">{(summary.totalDebtAmount || 0).toLocaleString()}</span>
+							NGN <span className="text-xl sm:text-3xl">{(summary.totalDebtAmount || 0).toLocaleString()}</span>
 						</div>
 					</div>
 				</aside>
