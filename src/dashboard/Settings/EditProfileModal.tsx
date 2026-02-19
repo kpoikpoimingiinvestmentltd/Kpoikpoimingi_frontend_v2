@@ -109,7 +109,7 @@ export default function EditProfileModal({ open, onOpenChange }: { open: boolean
 				dateOfBirth: ((user as Record<string, unknown>).dateOfBirth as string)?.slice(0, 10) || "",
 				houseAddress: ((user as Record<string, unknown>).houseAddress as string) || "",
 			},
-			{ keepValues: false }
+			{ keepValues: false },
 		);
 
 		// Set preview image if available
@@ -308,7 +308,7 @@ export default function EditProfileModal({ open, onOpenChange }: { open: boolean
 					<DialogTitle className="text-center">Edit User Details</DialogTitle>
 				</DialogHeader>
 
-				<CustomCard className="border-0 p-0 bg-transparent">
+				<CustomCard className="border-0 p-0 dark:bg-transparent bg-transparent">
 					<form onSubmit={handleSave}>
 						<div className="flex flex-col items-center gap-4 py-6">
 							<Avatar

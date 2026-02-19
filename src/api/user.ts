@@ -107,11 +107,14 @@ export async function createUserRequest(payload: unknown) {
 	return apiPost(API_ROUTES.user.createUser, payload);
 }
 
-export function useCreateUser() {
+export function useCreateUser(onSuccess?: (data: unknown) => void) {
 	return useMutation<unknown, unknown, unknown>({
 		mutationFn: async (payload: unknown) => {
 			const data = await createUserRequest(payload);
 			return data;
+		},
+		onSuccess: (data) => {
+			onSuccess?.(data);
 		},
 	});
 }

@@ -54,6 +54,9 @@ export type ReceiptDetail = {
 		property?: { name?: string; price?: string };
 		durationValue?: number;
 		durationUnit?: { duration?: string };
+		downPayment?: string;
+		outStandingBalance?: string;
+		paymentType?: { id?: number; type?: string };
 	};
 	customer?: {
 		id?: string;

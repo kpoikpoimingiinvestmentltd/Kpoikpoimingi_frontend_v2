@@ -4,14 +4,15 @@ import PageWrapper from "@/components/common/PageWrapper";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { tabListStyle, tabStyle } from "@/components/common/commonStyles";
 import ActionButton from "@/components/base/ActionButton";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import ConfirmModal from "@/components/common/ConfirmModal";
 import { useDeleteRegistration, useGetProductRequestById, useApproveRegistration } from "@/api/productRequest";
 import { useSendContractDocument } from "@/api/contractDocument";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { useParams, useNavigate } from "react-router";
+import { useParams, useNavigate, useSearchParams } from "react-router";
 import { _router } from "@/routes/_router";
+import { useCanPerformAction } from "@/hooks/usePermissions";
 import TabProductInformation from "./TabProductInformation";
 import TabCustomerDetails from "./TabCustomerDetails";
 import TabNextOfKin from "./TabNextOfKin";
@@ -27,8 +28,22 @@ export default function ProductRequestDetails() {
 	const params = useParams();
 	const id = params.id;
 	const navigate = useNavigate();
+	const [searchParams, setSearchParams] = useSearchParams();
+	const activeTab = searchParams.get("tab") || "information";
+
+	const handleTabChange = useCallback(
+		(tab: string) => {
+			const params = new URLSearchParams(searchParams);
+			params.set("tab", tab);
+			setSearchParams(params);
+		},
+		[searchParams, setSearchParams],
+	);
 
 	const { data: registrationData, isLoading: registrationLoading } = useGetProductRequestById(id || "");
+
+	const canDecline = useCanPerformAction("productRequestDecline");
+	const canDelete = useCanPerformAction("delete");
 
 	const paymentTypeId = (registrationData as Record<string, unknown>)?.paymentTypeId as number;
 	const isContractSent = (registrationData as Record<string, unknown>)?.isContractSent as boolean;
@@ -133,7 +148,7 @@ export default function ProductRequestDetails() {
 				}
 				copy.mediaFiles = transformMediaFiles(copy.mediaFiles as Record<string, unknown> | undefined);
 				return copy;
-		  })()
+			})()
 		: undefined;
 
 	const anyGuarantorMissingState = (() => {
@@ -198,18 +213,22 @@ export default function ProductRequestDetails() {
 							{sendMutation.isPending ? "Sending..." : "Send Contract"}
 						</ActionButton>
 					)}
-					<ActionButton className="px-6 font-normal rounded-sm" variant="danger" onClick={() => setConfirmOpen(true)}>
-						Decline
-					</ActionButton>
-					<ActionButton
-						className="px-6 font-normal rounded-sm"
-						variant="danger"
-						onClick={() => {
-							setConfirmAction("delete");
-							setConfirmOpen(true);
-						}}>
-						Delete
-					</ActionButton>
+					{canDecline && (
+						<ActionButton className="px-6 font-normal rounded-sm" variant="danger" onClick={() => setConfirmOpen(true)}>
+							Decline
+						</ActionButton>
+					)}
+					{canDelete && (
+						<ActionButton
+							className="px-6 font-normal rounded-sm"
+							variant="danger"
+							onClick={() => {
+								setConfirmAction("delete");
+								setConfirmOpen(true);
+							}}>
+							Delete
+						</ActionButton>
+					)}
 				</div>
 			</div>
 			{anyGuarantorMissingState && (
@@ -222,7 +241,7 @@ export default function ProductRequestDetails() {
 			)}
 			{/* Full Payment Details UI */}
 			{(registrationData as Record<string, unknown>)?.paymentTypeId === 2 ? (
-				<CustomCard className="p-4 sm:p-6 border-0">
+				<CustomCard className="py-0 px-2 border-0">
 					<TabFullPaymentDetails
 						data={displayedData as Record<string, unknown>}
 						loading={registrationLoading}
@@ -232,7 +251,7 @@ export default function ProductRequestDetails() {
 			) : (
 				/* Hire Purchase Details UI */
 				<CustomCard className="p-4 sm:p-6 border-0">
-					<Tabs defaultValue="information">
+					<Tabs value={activeTab} onValueChange={handleTabChange}>
 						<TabsList className={tabListStyle}>
 							<TabsTrigger value="information" className={tabStyle}>
 								Property Details
@@ -297,8 +316,8 @@ export default function ProductRequestDetails() {
 									? "Approving..."
 									: "Approve"
 								: deleteMutation.isPending
-								? "Deleting..."
-								: "Delete",
+									? "Deleting..."
+									: "Delete",
 						onClick: async () => {
 							if (!id) return false;
 							try {

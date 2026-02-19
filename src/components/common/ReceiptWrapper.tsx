@@ -102,7 +102,7 @@ export default function ReceiptWrapper({
 	return (
 		<>
 			<div id="receipt-container">
-				<CustomCard className="receipt-wrapper-outer py-4">
+				<CustomCard className="receipt-wrapper-outer border-0 bg-transparent dark:bg-transparent px-0 py-4">
 					<div className="max-w-4xl mx-auto flex flex-col gap-y-6">
 						<header className="receipt-header flex justify-between items-center gap-x-4 gap-y-3 flex-wrap">
 							<h2 className="text-lg font-medium">Receipt</h2>
@@ -119,8 +119,8 @@ export default function ReceiptWrapper({
 						</header>
 						<main className="receipt-main flex">
 							<CustomCard ref={printRef} className="receipt-content relative flex-grow shadow-lg isolate py-6 px-4 md:px-8">
-								<Image src={media.images.verticalCuts} className="w-11/12 mx-auto absolute right-0 left-0 top-0" />
-								<Image src={media.images.verticalCuts} className="w-11/12 mx-auto absolute right-0 left-0 bottom-0 -rotate-x-180" />
+								<Image src={media.images.verticalCuts} className="w-11/12 mx-auto absolute right-0 left-0 top-0 dark:opacity-10" />
+								<Image src={media.images.verticalCuts} className="w-11/12 mx-auto absolute right-0 left-0 bottom-0 -rotate-x-180 dark:opacity-10" />
 								<div ref={contentRef}>{children}</div>
 							</CustomCard>
 						</main>

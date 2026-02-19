@@ -54,10 +54,10 @@ export default function TabFullPaymentDetails({
 	};
 
 	return (
-		<CustomCard className="mt-4 border-none p-0 bg-white">
+		<CustomCard className="mt-4 border-none bg-white">
 			<div className="flex flex-col gap-y-6">
 				{/* Registration Overview */}
-				<CustomCard className="bg-card border-0">
+				<CustomCard className="bg-card border-0 p-0">
 					<SectionTitle title="Registration Details" />
 					<div className="grid grid-cols-1 gap-y-0.5 mt-4 text-sm">
 						<KeyValueRow
@@ -113,7 +113,7 @@ export default function TabFullPaymentDetails({
 				</CustomCard>
 
 				{/* Customer Details */}
-				<CustomCard className="bg-card border-0">
+				<CustomCard className="bg-card border-0 p-0">
 					<SectionTitle title="Customer Details" />
 					<div className="grid grid-cols-1 gap-y-0.5 mt-4 text-sm">
 						<KeyValueRow
@@ -225,7 +225,7 @@ export default function TabFullPaymentDetails({
 														(property.customPropertyPrice ||
 															(property.property as Record<string, unknown>)?.price ||
 															property.totalAmount ||
-															0) as string
+															0) as string,
 													) || 0
 												}`}
 												leftClassName="text-sm text-muted-foreground"

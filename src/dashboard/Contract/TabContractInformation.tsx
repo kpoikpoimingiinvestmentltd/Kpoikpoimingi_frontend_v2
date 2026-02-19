@@ -23,7 +23,7 @@ export default function TabContractInformation({ contract }: { contract: Record<
 		(err) => {
 			toast.error("Failed to create payment link");
 			console.error(err);
-		}
+		},
 	);
 
 	const handleCreatePaymentLink = async () => {
@@ -56,11 +56,11 @@ export default function TabContractInformation({ contract }: { contract: Record<
 		status: ((contract?.status as Record<string, unknown>)?.status as string) || "N/A",
 		propertyName: ((contract?.property as Record<string, unknown>)?.name as string) || "N/A",
 		paymentType: ((contract?.paymentType as Record<string, unknown>)?.type as string) || "N/A",
-		downPayment: `₦${parseInt((contract?.downPayment as string) || "0").toLocaleString()}` || "N/A",
+		downPayment: `₦${parseFloat((contract?.downPayment as string) || "0").toLocaleString()}` || "N/A",
 		paymentDuration:
 			`${(contract?.durationValue as number) || 0} ${((contract?.durationUnit as Record<string, unknown>)?.duration as string) || ""}` || "N/A",
-		totalPayable: `₦${parseInt((contract?.outStandingBalance as string) || "0").toLocaleString()}` || "N/A",
-		totalProductAmount: `₦${parseInt(((contract?.property as Record<string, unknown>)?.price as string) || "0").toLocaleString()}` || "N/A",
+		totalPayable: `₦${parseFloat((contract?.outStandingBalance as string) || "0").toLocaleString()}` || "N/A",
+		totalProductAmount: `₦${parseFloat(((contract?.property as Record<string, unknown>)?.price as string) || "0").toLocaleString()}` || "N/A",
 		contractRange:
 			(contract?.startDate as string) && (contract?.endDate as string)
 				? `${new Date(contract.startDate as string).toLocaleDateString()} to ${new Date(contract.endDate as string).toLocaleDateString()}`

@@ -24,22 +24,124 @@ import ActionButton from "../../components/base/ActionButton";
 import { RectangleSkeleton } from "@/components/common/Skeleton";
 import { toast } from "sonner";
 import { extractErrorMessage } from "@/lib/utils";
+import { useSearchParams } from "react-router";
+import { useCanPerformAction } from "@/hooks/usePermissions";
 
 export default function Properties() {
-	const [page, setPage] = React.useState(1);
-	const [limit, setLimit] = React.useState<number>(10);
-	const [searchQuery, setSearchQuery] = React.useState<string>("");
+	const [searchParams, setSearchParams] = useSearchParams();
+	const canDelete = useCanPerformAction("delete");
+
+	// Initialize state from URL params
+	const [page, setPage] = React.useState(() => {
+		const pageParam = searchParams.get("page");
+		return pageParam ? parseInt(pageParam, 10) : 1;
+	});
+	const [limit, setLimit] = React.useState(() => {
+		const limitParam = searchParams.get("limit");
+		return limitParam ? parseInt(limitParam, 10) : 10;
+	});
+	const [searchQuery, setSearchQuery] = React.useState(() => {
+		return searchParams.get("search") || "";
+	});
+	const [sortBy, setSortBy] = React.useState(() => {
+		return searchParams.get("sortBy") || "createdAt";
+	});
+	const [sortOrder, setSortOrder] = React.useState(() => {
+		return searchParams.get("sortOrder") || "desc";
+	});
+	const [isPublicFilter, setIsPublicFilter] = React.useState(() => {
+		return searchParams.get("isPublic") || "";
+	});
+	const [activeTab, setActiveTab] = React.useState(() => {
+		const statusParam = searchParams.get("status");
+		const stockStatusParam = searchParams.get("stockStatus");
+		if (statusParam === "sold") return "out";
+		if (stockStatusParam === "low_stock") return "low";
+		return "available";
+	});
+
 	const debouncedSearch = useDebounceSearch(searchQuery, 400);
-	const [sortBy, setSortBy] = React.useState<string>("createdAt");
-	const [sortOrder, setSortOrder] = React.useState<string>("desc");
-	const [isPublicFilter, setIsPublicFilter] = React.useState<string>("");
-	const [activeTab, setActiveTab] = React.useState("available");
+	const [, setIsMounted] = React.useState(false);
+
+	// Sync state when URL params change (e.g., browser back/forward, refresh)
+	React.useEffect(() => {
+		const pageParam = searchParams.get("page");
+		const newPage = pageParam ? parseInt(pageParam, 10) : 1;
+		setPage(newPage);
+
+		const limitParam = searchParams.get("limit");
+		const newLimit = limitParam ? parseInt(limitParam, 10) : 10;
+		setLimit(newLimit);
+
+		setSearchQuery(searchParams.get("search") || "");
+		setSortBy(searchParams.get("sortBy") || "createdAt");
+		setSortOrder(searchParams.get("sortOrder") || "desc");
+		setIsPublicFilter(searchParams.get("isPublic") || "");
+		// derive active tab from status / stockStatus params
+		const statusParam = searchParams.get("status");
+		const stockStatusParam = searchParams.get("stockStatus");
+		if (statusParam === "sold") setActiveTab("out");
+		else if (stockStatusParam === "low_stock") setActiveTab("low");
+		else setActiveTab("available");
+	}, [searchParams]);
+
+	// Initialize URL params on mount if not present
+	React.useEffect(() => {
+		const hasParams =
+			searchParams.has("page") ||
+			searchParams.has("limit") ||
+			searchParams.has("search") ||
+			searchParams.has("sortBy") ||
+			searchParams.has("sortOrder") ||
+			searchParams.has("isPublic") ||
+			searchParams.has("status") ||
+			searchParams.has("stockStatus");
+		if (!hasParams) {
+			const params = new URLSearchParams();
+			params.set("page", "1");
+			params.set("limit", "10");
+			params.set("sortBy", "createdAt");
+			params.set("sortOrder", "desc");
+			// default to available (no status/stockStatus param)
+			setSearchParams(params, { replace: true });
+		}
+		setIsMounted(true);
+	}, []);
+
+	// Update URL when state changes
+	React.useEffect(() => {
+		const params = new URLSearchParams(searchParams);
+		params.set("page", page.toString());
+		params.set("limit", limit.toString());
+		params.set("search", searchQuery);
+		params.set("sortBy", sortBy);
+		params.set("sortOrder", sortOrder);
+		params.set("isPublic", isPublicFilter);
+		// map activeTab to appropriate url param keys
+		params.delete("status");
+		params.delete("stockStatus");
+		if (activeTab === "out") {
+			params.set("status", "sold");
+		} else if (activeTab === "low") {
+			params.set("stockStatus", "low_stock");
+		}
+		setSearchParams(params, { replace: true });
+	}, [page, limit, searchQuery, sortBy, sortOrder, isPublicFilter, activeTab, setSearchParams]);
 
 	const {
 		data: propertiesData,
 		isLoading,
 		refetch,
-	} = useGetAllProperties(page, limit, debouncedSearch || undefined, sortBy, sortOrder, isPublicFilter || undefined);
+	} = useGetAllProperties(
+		page,
+		limit,
+		debouncedSearch || undefined,
+		sortBy,
+		sortOrder,
+		isPublicFilter || undefined,
+		activeTab === "available" ? "available" : activeTab === "out" ? "sold" : undefined,
+		activeTab === "low" ? "low_stock" : undefined,
+	);
 
 	const [selected, setSelected] = React.useState<Record<string, boolean>>({});
 	const [confirmOpen, setConfirmOpen] = React.useState(false);
@@ -58,13 +160,21 @@ export default function Properties() {
 		(err) => {
 			console.error("Error updating property:", err);
 			toast.error(extractErrorMessage(err, "Failed to update property"));
-		}
+		},
 	);
 
-	const selectedCount = Object.keys(selected).length;
+	const selectedCount = Object.values(selected).filter(Boolean).length;
 
 	const toggleSelect = (id: string) => {
-		setSelected((prev) => ({ ...prev, [id]: !prev[id] }));
+		setSelected((prev) => {
+			const isNowSelected = !prev[id];
+			if (isNowSelected) {
+				return { ...prev, [id]: true };
+			}
+			// remove the key when deselecting
+			const { [id]: _removed, ...rest } = prev;
+			return rest;
+		});
 	};
 
 	const handleDelete = async () => {
@@ -94,6 +204,13 @@ export default function Properties() {
 		const raw = Array.isArray(pd.data) ? pd.data : [];
 		return raw.map((item) => item as PropertyData);
 	}, [propertiesData]);
+
+	const formatMoney = (v?: string | number | null) => {
+		if (v === undefined || v === null || v === "") return "0";
+		const n = Number(v);
+		if (Number.isNaN(n)) return String(v);
+		return n.toLocaleString();
+	};
 	const isEmpty = !isLoading && properties.length === 0;
 
 	const filteredItems = React.useMemo(() => {
@@ -112,12 +229,19 @@ export default function Properties() {
 	}, [properties, activeTab]);
 
 	const paginatedItems = React.useMemo(() => {
-		const start = (page - 1) * limit;
-		const end = start + limit;
-		return filteredItems.slice(start, end);
-	}, [filteredItems, page, limit]);
+		return filteredItems;
+	}, [filteredItems]);
 
 	const pages = Math.ceil(filteredItems.length / limit);
+
+	React.useEffect(() => {
+		if (propertiesData) {
+			const totalPages = (propertiesData as any)?.pagination?.totalPages ?? 1;
+			if (page > totalPages) {
+				setPage(1);
+			}
+		}
+	}, [propertiesData, page]);
 
 	return (
 		<div className="flex flex-col gap-y-6">
@@ -125,7 +249,12 @@ export default function Properties() {
 				<CustomCard className="bg-white flex-grow w-full rounded-lg p-4 border border-gray-100">
 					<div className="flex items-center justify-between flex-wrap gap-6">
 						<div className="flex items-center gap-4">
-							<Tabs value={activeTab} onValueChange={setActiveTab}>
+							<Tabs
+								value={activeTab}
+								onValueChange={(value) => {
+									setActiveTab(value);
+									setPage(1);
+								}}>
 								<TabsList className={tabListStyle}>
 									<TabsTrigger className={tabStyle} value="available">
 										Available
@@ -209,7 +338,7 @@ export default function Properties() {
 						{isLoading ? (
 							<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
 								{Array.from({ length: 10 }).map((_, i) => (
-									<div key={i} className="bg-white rounded-md p-4">
+									<div key={i} className="bg-white dark:bg-neutral-700 rounded-md p-4">
 										<RectangleSkeleton className="h-32 w-full mb-3" />
 										<RectangleSkeleton className="h-4 w-3/4 mb-2" />
 										<RectangleSkeleton className="h-4 w-1/2" />
@@ -268,7 +397,7 @@ export default function Properties() {
 												<div className="mt-3">
 													<h5 className="text-sm font-medium truncate">{prod.name}</h5>
 													<div className="flex items-center justify-between gap-2">
-														<p className="text-sm font-semibold text-primary mt-1">₦{prod.price}</p>
+														<p className="text-sm font-semibold text-primary mt-1">₦{formatMoney(prod.price)}</p>
 														<DropdownMenu>
 															<DropdownMenuTrigger asChild>
 																<button className="text-primary">
@@ -300,18 +429,20 @@ export default function Properties() {
 																		<span>Edit details</span>
 																	</button>
 																</DropdownMenuItem>
-																<DropdownMenuItem
-																	onClick={() => {
-																		setDeleteType("single");
-																		setPropertyToDelete(prod);
-																		setConfirmOpen(true);
-																	}}
-																	className="flex items-center gap-2 text-red-600 cursor-pointer">
-																	<IconWrapper className="text-base">
-																		<TrashIcon />
-																	</IconWrapper>
-																	<span>Delete</span>
-																</DropdownMenuItem>
+																{canDelete && (
+																	<DropdownMenuItem
+																		onClick={() => {
+																			setDeleteType("single");
+																			setPropertyToDelete(prod);
+																			setConfirmOpen(true);
+																		}}
+																		className="flex items-center gap-2 text-red-600 cursor-pointer">
+																		<IconWrapper className="text-base">
+																			<TrashIcon />
+																		</IconWrapper>
+																		<span>Delete</span>
+																	</DropdownMenuItem>
+																)}
 															</DropdownMenuContent>
 														</DropdownMenu>
 													</div>
@@ -329,7 +460,14 @@ export default function Properties() {
 							</>
 						)}
 					</div>
-					<CompactPagination page={page} pages={pages} onPageChange={setPage} showRange />
+					<CompactPagination
+						page={page}
+						pages={(propertiesData as any)?.pagination?.totalPages ?? pages}
+						onPageChange={setPage}
+						showRange
+						total={(propertiesData as any)?.pagination?.total ?? filteredItems.length}
+						perPage={limit}
+					/>
 
 					{/* Success dialog moved to AddProperties.tsx */}
 
@@ -373,7 +511,7 @@ export default function Properties() {
 										id: propertyToEdit.id,
 										name: propertyToEdit.name,
 										price: propertyToEdit.price,
-										quantityTotal: propertyToEdit.quantityTotal ?? 0,
+										quantityTotal: propertyToEdit.quantityAvailable ?? propertyToEdit.quantityTotal ?? 0,
 										quantityAssigned: propertyToEdit.quantityAssigned ?? 0,
 										status: propertyToEdit.status?.status ?? "",
 										condition: propertyToEdit.condition ?? "",
@@ -393,7 +531,7 @@ export default function Properties() {
 										vehicleChassisNumber: propertyToEdit.vehicleChassisNumber ?? "",
 										vehicleType: propertyToEdit.vehicleType ?? "",
 										vehicleRegistrationNumber: propertyToEdit.vehicleRegistrationNumber ?? "",
-								  }
+									}
 								: {
 										id: "",
 										name: "",
@@ -414,7 +552,7 @@ export default function Properties() {
 										vehicleChassisNumber: "",
 										vehicleType: "",
 										vehicleRegistrationNumber: "",
-								  }
+									}
 						}
 						onSave={(formData: unknown) => {
 							if (propertyToEdit?.id) {

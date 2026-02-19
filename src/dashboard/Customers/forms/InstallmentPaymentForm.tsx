@@ -30,8 +30,10 @@ type Props = {
 	centeredContainer: (additionalClasses?: string) => string;
 	sectionTitle: (additionalClasses?: string) => string;
 	setUploadedFiles: React.Dispatch<React.SetStateAction<FileUploadState>>;
+	showSignedContract?: boolean;
 	missingFields?: string[];
 	isPropertyPrefilled?: boolean;
+	submitButtonText?: string;
 };
 
 export default function InstallmentPaymentFormComponent({
@@ -52,15 +54,17 @@ export default function InstallmentPaymentFormComponent({
 	centeredContainer,
 	sectionTitle,
 	setUploadedFiles,
+	showSignedContract = false,
 	missingFields = [],
 	isPropertyPrefilled = false,
+	submitButtonText,
 }: Props) {
 	const formRef = React.useRef<HTMLFormElement | null>(null);
 
 	const disabled = isSubmitting || (missingFields && missingFields.length > 0);
 
 	return (
-		<form ref={formRef} onSubmit={onSubmit} className="space-y-6">
+		<form ref={formRef} onSubmit={onSubmit} className="space-y-6 w-full">
 			{/* Personal details */}
 			<PersonalDetailsSection
 				form={form}
@@ -89,6 +93,7 @@ export default function InstallmentPaymentFormComponent({
 				centeredContainer={centeredContainer}
 				sectionTitle={sectionTitle}
 				setUploadedFiles={setUploadedFiles}
+				showSignedContract={showSignedContract}
 			/>
 
 			{/* Next of Kin */}
@@ -158,9 +163,10 @@ export default function InstallmentPaymentFormComponent({
 					checked={((form as unknown as Record<string, unknown>).hasRequestAgreement as boolean) ?? false}
 					onCheckedChange={(checked) => handleChange("hasRequestAgreement", checked)}
 					label={
-						<span className="text-sm">
-							I hereby authorise <span className="font-medium">Kpoi Kpoi Mingi Investments Ltd</span> to retrieve the electrical appliance from me, or
-							any other person at my or any other place it may be found in the event of my default in paying the Hire Purchase sum as agreed.
+						<span className="text-[#131212B2] dark:text-white">
+							I hereby authorise <b className="font-medium dark:text-primary text-black">Kpoi Kpoi Mingi Investments Ltd</b> to retrieve the
+							electrical appliance from me, or any other person at my or any other place it may be found in the event of my default in paying the Hire
+							Purchase sum as agreed.
 						</span>
 					}
 					labelPosition="right"
@@ -175,7 +181,7 @@ export default function InstallmentPaymentFormComponent({
 							<span>Processing...</span>
 						</>
 					) : (
-						"Save Changes"
+						submitButtonText || "Save Changes"
 					)}
 				</ActionButton>
 			</div>

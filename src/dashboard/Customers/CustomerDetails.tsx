@@ -7,8 +7,8 @@ import TabReceipt from "./TabReceipt";
 import TabDocument from "./TabDocument";
 import TabContractInfo from "./TabContractInfo";
 import PageWrapper from "../../components/common/PageWrapper";
-import { useParams } from "react-router";
-import { useState } from "react";
+import { useParams, useSearchParams } from "react-router";
+import { useState, useCallback } from "react";
 import {
 	useGetCustomer,
 	useGetCustomerContracts,
@@ -19,9 +19,12 @@ import {
 } from "@/api/customer";
 import { EditIcon, IconWrapper } from "@/assets/icons";
 import EditCustomerModal from "./EditCustomerModal";
+import ActionButton from "../../components/base/ActionButton";
 
 export default function CustomerDetails() {
 	const { id } = useParams();
+	const [searchParams, setSearchParams] = useSearchParams();
+	const activeTab = searchParams.get("tab") || "details";
 	const { data: customer } = useGetCustomer(id, true);
 	const { data: approvedRegistrations } = useGetCustomerApprovedRegistrations(id, true);
 	const { data: contracts, isLoading: isLoadingContracts } = useGetCustomerContracts(id, true);
@@ -29,6 +32,15 @@ export default function CustomerDetails() {
 	const { data: documents } = useGetCustomerDocuments(id, true);
 	const { data: receipts } = useGetCustomerReceipts(id, true);
 	const [isEditOpen, setIsEditOpen] = useState(false);
+
+	const handleTabChange = useCallback(
+		(tab: string) => {
+			const params = new URLSearchParams(searchParams);
+			params.set("tab", tab);
+			setSearchParams(params);
+		},
+		[searchParams, setSearchParams],
+	);
 
 	const hasFullName = (obj: unknown): obj is { fullName?: string } => typeof obj === "object" && obj !== null && "fullName" in obj;
 
@@ -58,18 +70,23 @@ export default function CustomerDetails() {
 	const displayName = customer
 		? hasFullName(customer) && customer.fullName
 			? customer.fullName
-			: getStringField(Array.isArray(approvedRegistrations) ? approvedRegistrations[0] : approvedRegistrations, "fullName") ?? ""
+			: (getStringField(Array.isArray(approvedRegistrations) ? approvedRegistrations[0] : approvedRegistrations, "fullName") ?? "")
 		: "";
-
-	const registrationForEdit = Array.isArray(approvedRegistrations) ? approvedRegistrations[0] : approvedRegistrations || customer;
 
 	const registrationsFromCustomer = getArrayField(customer, "registrations");
 	const registrationsToPass =
 		registrationsFromCustomer && registrationsFromCustomer.length > 0
 			? registrationsFromCustomer
 			: Array.isArray(approvedRegistrations) && approvedRegistrations.length > 0
-			? approvedRegistrations
-			: undefined;
+				? approvedRegistrations
+				: undefined;
+
+	const registrationForEdit =
+		registrationsFromCustomer && registrationsFromCustomer.length > 0
+			? registrationsFromCustomer[0]
+			: Array.isArray(approvedRegistrations)
+				? approvedRegistrations[0]
+				: approvedRegistrations || customer;
 
 	const resolveIsFullPayment = (): boolean => {
 		// check top-level customer
@@ -105,19 +122,20 @@ export default function CustomerDetails() {
 					<p className="text-sm text-muted-foreground mt-1">{String(displayName)}</p>
 				</div>
 				<div className="flex items-center gap-3">
-					<button
+					<ActionButton
+						type="button"
 						onClick={() => setIsEditOpen(true)}
-						className="flex items-center gap-0.5 px-4 py-2 text-sm text-black underline hover:bg-slate-50 rounded-md transition">
+						className="flex items-center gap-0.5 px-4 py-2 text-sm hover:text-black dark:bg-primary dark:text-white rounded-md transition">
 						<IconWrapper className="text-xl">
 							<EditIcon />
 						</IconWrapper>
 						<span>Edit</span>
-					</button>
+					</ActionButton>
 				</div>
 			</div>
 
 			<CustomCard className="p-4 sm:p-6 border-0">
-				<Tabs defaultValue="details">
+				<Tabs value={activeTab} onValueChange={handleTabChange}>
 					<TabsList className={tabListStyle}>
 						<TabsTrigger value="details" className={tabStyle}>
 							Customer details
@@ -161,8 +179,8 @@ export default function CustomerDetails() {
 													getStringField(customer, "phoneNumber") ??
 													getStringField(customer, "phone") ??
 													(Array.isArray(approvedRegistrations)
-														? getStringField(approvedRegistrations[0], "phoneNumber") ?? getStringField(approvedRegistrations[0], "phone")
-														: getStringField(approvedRegistrations, "phoneNumber") ?? getStringField(approvedRegistrations, "phone")),
+														? (getStringField(approvedRegistrations[0], "phoneNumber") ?? getStringField(approvedRegistrations[0], "phone"))
+														: (getStringField(approvedRegistrations, "phoneNumber") ?? getStringField(approvedRegistrations, "phone"))),
 												customerCode:
 													getStringField(customer, "customerCode") ??
 													(customer && typeof customer === "object" ? String((customer as Record<string, unknown>).id) : undefined),
@@ -173,7 +191,7 @@ export default function CustomerDetails() {
 													(Array.isArray(approvedRegistrations)
 														? getNumberField(approvedRegistrations[0], "paymentTypeId")
 														: getNumberField(approvedRegistrations, "paymentTypeId")),
-										  }
+											}
 										: null
 								}
 							/>
@@ -194,7 +212,7 @@ export default function CustomerDetails() {
 				</Tabs>
 			</CustomCard>
 
-			<EditCustomerModal open={isEditOpen} onOpenChange={setIsEditOpen} initial={registrationForEdit} />
+			<EditCustomerModal open={isEditOpen} onOpenChange={setIsEditOpen} initial={registrationForEdit} documents={documents} />
 		</PageWrapper>
 	);
 }

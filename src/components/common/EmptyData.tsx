@@ -7,7 +7,7 @@ export default function EmptyData({ text = "Empty data", className = "" }: { tex
 		<div className={twMerge(`flex-grow flex items-center justify-center`, className)}>
 			<div className="flex flex-col items-center justify-center text-center gap-y-3">
 				<Image src={media.images.empty} className="w-28" />
-				{text && <p className="text-center text-black mt-2">{text}</p>}
+				{text && <p className="text-center mt-2">{text}</p>}
 			</div>
 		</div>
 	);

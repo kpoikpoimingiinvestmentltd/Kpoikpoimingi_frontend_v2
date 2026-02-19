@@ -68,9 +68,15 @@ export default function PersonalDetailsSection({ form, handleChange, centeredCon
 
 			<ValidationErrorDisplay
 				missingFields={missingFields}
-				filter={(field) =>
-					["Full name", "Email", "WhatsApp", "Date of birth", "Home address"].some((keyword) => field.toLowerCase().includes(keyword.toLowerCase()))
-				}
+				filter={(field) => {
+					// Exclude errors for guarantor or next of kin
+					if (field.toLowerCase().includes("guarantor") || field.toLowerCase().includes("next of kin")) {
+						return false;
+					}
+					return ["Full name", "Email", "WhatsApp", "Date of birth", "Home address"].some((keyword) =>
+						field.toLowerCase().includes(keyword.toLowerCase()),
+					);
+				}}
 			/>
 		</div>
 	);

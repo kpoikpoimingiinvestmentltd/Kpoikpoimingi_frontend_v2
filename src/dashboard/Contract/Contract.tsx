@@ -17,24 +17,93 @@ import ExportConfirmModal from "@/components/common/ExportConfirmModal";
 import ActionButton from "@/components/base/ActionButton";
 import { toast } from "sonner";
 import { extractErrorMessage } from "@/lib/utils";
+import { useSearchParams } from "react-router";
+import { useCanPerformAction } from "@/hooks/usePermissions";
 
 export default function Contract() {
+	const [searchParams, setSearchParams] = useSearchParams();
+	const canExport = useCanPerformAction("export");
+
+	// Initialize state from URL params
+	const [page, setPage] = React.useState(() => {
+		const pageParam = searchParams.get("page");
+		return pageParam ? parseInt(pageParam, 10) : 1;
+	});
+	const [search, setSearch] = React.useState(() => {
+		return searchParams.get("search") || "";
+	});
+	const [filters, setFilters] = React.useState<Record<string, string>>(() => {
+		const urlFilters: Record<string, string> = {};
+		const sortBy = searchParams.get("sortBy");
+		const sortOrder = searchParams.get("sortOrder");
+		const statusId = searchParams.get("statusId");
+		if (sortBy) urlFilters.sortBy = sortBy;
+		if (sortOrder) urlFilters.sortOrder = sortOrder;
+		if (statusId) urlFilters.statusId = statusId;
+		return urlFilters;
+	});
+
 	const [createOpen, setCreateOpen] = React.useState(false);
 	const [exportConfirmOpen, setExportConfirmOpen] = React.useState(false);
-	const [page, setPage] = React.useState(1);
-	const [search, setSearch] = React.useState("");
+
 	const debouncedSearch = useDebounceSearch(search);
+	const [, setIsMounted] = React.useState(false);
 
-	const [filters, setFilters] = React.useState<Record<string, string>>({});
-
+	// Sync state with URL params on mount and when URL changes (back/forward navigation)
 	React.useEffect(() => {
-		setPage(1);
-	}, [debouncedSearch]);
+		const pageParam = searchParams.get("page");
+		const newPage = pageParam ? parseInt(pageParam, 10) : 1;
+		setPage(newPage);
+
+		const searchParam = searchParams.get("search") || "";
+		setSearch(searchParam);
+
+		const urlFilters: Record<string, string> = {};
+		const sortBy = searchParams.get("sortBy");
+		const sortOrder = searchParams.get("sortOrder");
+		const statusId = searchParams.get("statusId");
+		if (sortBy) urlFilters.sortBy = sortBy;
+		if (sortOrder) urlFilters.sortOrder = sortOrder;
+		if (statusId) urlFilters.statusId = statusId;
+		setFilters(urlFilters);
+	}, [searchParams]);
+
+	// Initialize URL params on mount if not present
+	React.useEffect(() => {
+		const hasParams =
+			searchParams.has("page") ||
+			searchParams.has("search") ||
+			searchParams.has("sortBy") ||
+			searchParams.has("sortOrder") ||
+			searchParams.has("statusId");
+		if (!hasParams) {
+			const params = new URLSearchParams();
+			params.set("page", "1");
+			params.set("sortBy", "createdAt");
+			params.set("sortOrder", "desc");
+			setSearchParams(params, { replace: true });
+		}
+		setIsMounted(true);
+	}, []);
+
+	// Update URL when state changes
+	React.useEffect(() => {
+		const params = new URLSearchParams(searchParams);
+		params.set("page", page.toString());
+		params.set("search", search);
+		if (filters.sortBy) params.set("sortBy", filters.sortBy);
+		else params.delete("sortBy");
+		if (filters.sortOrder) params.set("sortOrder", filters.sortOrder);
+		else params.delete("sortOrder");
+		if (filters.statusId) params.set("statusId", filters.statusId);
+		else params.delete("statusId");
+		setSearchParams(params, { replace: true });
+	}, [page, search, filters, setSearchParams]);
 
 	const sortBy = (filters.sortBy as string) || "createdAt";
 	const sortOrder = (filters.sortOrder as string) || "desc";
 
-	const { data = {}, isLoading } = useGetAllContracts(page, 10, debouncedSearch, sortBy, sortOrder, filters);
+	const { data = {}, isLoading, isFetching } = useGetAllContracts(page, 10, debouncedSearch, sortBy, sortOrder, filters);
 	const dataTyped = data as Record<string, unknown>;
 	const contracts = Array.isArray(dataTyped?.data) ? (dataTyped?.data as unknown[]) : [];
 	const paginationData = dataTyped?.pagination as Record<string, unknown> | undefined;
@@ -135,13 +204,15 @@ export default function Contract() {
 			<div className="flex items-center justify-between flex-wrap gap-4 mb-4">
 				<PageTitles title="Contract" description="The contracts transaction between Kpo kpoi mingi investment and it customers" />
 				<div className="flex items-center gap-3">
-					<ActionButton
-						type="button"
-						className="bg-primary/10 text-primary hover:bg-primary/20"
-						onClick={handleExportClick}
-						disabled={exportMutation.isPending}>
-						<span className="text-sm">{exportMutation.isPending ? "Exporting..." : "Export CSV"}</span>
-					</ActionButton>
+					{canExport && (
+						<ActionButton
+							type="button"
+							className="bg-primary/10 text-primary hover:bg-primary/20"
+							onClick={handleExportClick}
+							disabled={exportMutation.isPending}>
+							<span className="text-sm">{exportMutation.isPending ? "Exporting..." : "Export CSV"}</span>
+						</ActionButton>
+					)}
 					<button
 						type="button"
 						onClick={() => setCreateOpen(true)}
@@ -155,7 +226,7 @@ export default function Contract() {
 			</div>
 			<CustomCard className="bg-white flex-grow w-full rounded-lg p-4 border border-gray-100">
 				<div className="flex items-center justify-between flex-wrap gap-6">
-					<h2 className="font-semibold">All Contracts </h2>
+					<h2 className="font-medium dark:text-gray-300">All Contracts </h2>
 					<div className="flex items-center gap-2">
 						<SearchWithFilters
 							search={search}
@@ -195,12 +266,16 @@ export default function Contract() {
 								setFilters(f);
 								setPage(1);
 							}}
-							onReset={() => setSearch("")}
+							onReset={() => {
+								setSearch("");
+								setFilters({});
+								setPage(1);
+							}}
 						/>
 					</div>
 				</div>
 				<div className="min-h-80 flex">
-					{isLoading ? (
+					{isLoading || isFetching ? (
 						<TableSkeleton rows={10} cols={8} />
 					) : contracts.length === 0 ? (
 						<div className="flex-grow flex items-center justify-center">
@@ -212,7 +287,7 @@ export default function Contract() {
 								<div className="overflow-x-auto w-full">
 									<Table>
 										<TableHeader className="[&_tr]:border-0">
-											<TableRow className="bg-[#EAF6FF] h-12 overflow-hidden py-4 rounded-lg">
+											<TableRow className="bg-[#EAF6FF] dark:bg-neutral-900/80 h-12 overflow-hidden py-4 rounded-lg">
 												<TableHead>Customer ID</TableHead>
 												<TableHead>Name</TableHead>
 												<TableHead>Property Name</TableHead>
@@ -227,15 +302,19 @@ export default function Contract() {
 											{contracts.map((contract: unknown, idx: number) => {
 												const c = contract as Record<string, unknown>;
 												return (
-													<TableRow key={idx} className="hover:bg-[#F6FBFF]">
+													<TableRow key={idx} className="hover:bg-[#F6FBFF] dark:hover:bg-neutral-900/50">
 														<TableCell>{((c.customer as Record<string, unknown>)?.customerCode as string) || "N/A"}</TableCell>
 														<TableCell>{((c.customer as Record<string, unknown>)?.fullName as string) || "N/A"}</TableCell>
 														<TableCell>{((c.property as Record<string, unknown>)?.name as string) || "N/A"}</TableCell>
 														<TableCell>{((c.paymentType as Record<string, unknown>)?.type as string) || "N/A"}</TableCell>
 														<TableCell>
-															<Badge value={((c.status as Record<string, unknown>)?.status as string) || "N/A"} size="sm" />
+															<Badge
+																value={statusMap[String(c.statusId)] || ((c.status as Record<string, unknown>)?.status as string) || "N/A"}
+																size="sm"
+																status={String(c.statusId) === "7" ? "pending" : undefined}
+															/>
 														</TableCell>
-														<TableCell>₦{parseInt((c.outStandingBalance as string) || "0").toLocaleString()}</TableCell>
+														<TableCell>₦{parseFloat((c.outStandingBalance as string) || "0").toLocaleString()}</TableCell>
 														<TableCell>{new Date(c.createdAt as string).toLocaleDateString()}</TableCell>
 														<TableCell>
 															<div className="flex items-center">

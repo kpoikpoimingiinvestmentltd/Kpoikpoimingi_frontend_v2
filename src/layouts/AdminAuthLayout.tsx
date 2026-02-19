@@ -5,7 +5,7 @@ import Image from "../components/base/Image";
 export default function AdminAuthLayout() {
 	return (
 		<div
-			className="min-h-screen flex px-4"
+			className="min-h-screen flex px-4 dark:bg-neutral-950"
 			style={{ backgroundImage: `url(${media.images.authBackgroundImage})`, backgroundSize: "cover", backgroundPosition: "center" }}>
 			<main className="max-w-lg w-full flex justify-center mx-auto">
 				<div className="w-full h-max relative">

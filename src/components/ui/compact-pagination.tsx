@@ -35,7 +35,7 @@ export default function CompactPagination({ page, pages, onPageChange, className
 					<PaginationLink isActive={page === 1} onClick={() => onPageChange(1)}>
 						1
 					</PaginationLink>
-				</PaginationItem>
+				</PaginationItem>,
 			);
 		}
 
@@ -44,7 +44,7 @@ export default function CompactPagination({ page, pages, onPageChange, className
 			nodes.push(
 				<PaginationItem key="e1">
 					<PaginationEllipsis />
-				</PaginationItem>
+				</PaginationItem>,
 			);
 		}
 
@@ -55,7 +55,7 @@ export default function CompactPagination({ page, pages, onPageChange, className
 					<PaginationLink isActive={page === i} onClick={() => onPageChange(i)}>
 						{i}
 					</PaginationLink>
-				</PaginationItem>
+				</PaginationItem>,
 			);
 		}
 
@@ -64,7 +64,7 @@ export default function CompactPagination({ page, pages, onPageChange, className
 			nodes.push(
 				<PaginationItem key="e2">
 					<PaginationEllipsis />
-				</PaginationItem>
+				</PaginationItem>,
 			);
 		}
 
@@ -75,7 +75,7 @@ export default function CompactPagination({ page, pages, onPageChange, className
 					<PaginationLink isActive={page === pages} onClick={() => onPageChange(pages)}>
 						{pages}
 					</PaginationLink>
-				</PaginationItem>
+				</PaginationItem>,
 			);
 		}
 
@@ -86,7 +86,7 @@ export default function CompactPagination({ page, pages, onPageChange, className
 	const end = Math.min(page * perPage, total ?? pages * perPage);
 
 	return (
-		<div className={twMerge("mt-8 flex gap-4 flex-col min-[500px]:flex-row text-center justify-between items-center md:justify-between", className)}>
+		<div className={twMerge("mt-8 flex gap-4 flex-col min-[650px]:flex-row text-center justify-between items-center md:justify-between", className)}>
 			{showRange && (
 				<div className="mr-4 flex items-center text-sm text-muted-foreground">
 					Showing{" "}

@@ -8,6 +8,7 @@ import PageTitles from "@/components/common/PageTitles";
 import Image from "@/components/base/Image";
 import { IconWrapper, MinusIcon, PlusIcon, EyeIcon } from "@/assets/icons";
 import { _router } from "@/routes/_router";
+import { media } from "@/resources/images";
 import type { PropertyData } from "@/types/property";
 import { RectangleSkeleton } from "@/components/common/Skeleton";
 import ActionButton from "@/components/base/ActionButton";
@@ -17,6 +18,7 @@ import SearchWithFilters from "@/components/common/SearchWithFilters";
 import { useDebounceSearch } from "@/hooks/useDebounceSearch";
 import type { FilterField } from "@/components/common/SearchWithFilters";
 import CompactPagination from "@/components/ui/compact-pagination";
+import KeyValueRow from "@/components/common/KeyValueRow";
 
 interface SelectedProperty {
 	id: string;
@@ -32,7 +34,16 @@ export default function SelectProperties() {
 	const [itemsPerPage, setItemsPerPage] = React.useState<number>(10);
 	const [searchQuery, setSearchQuery] = React.useState<string>("");
 	const debouncedSearch = useDebounceSearch(searchQuery, 400);
-	const { data: propertiesData, isLoading: propertiesLoading } = useGetAllProperties(currentPage, itemsPerPage, debouncedSearch || undefined);
+	// Always fetch available properties for selection
+	const { data: propertiesData, isLoading: propertiesLoading } = useGetAllProperties(
+		currentPage,
+		itemsPerPage,
+		debouncedSearch || undefined,
+		undefined,
+		undefined,
+		undefined,
+		"available",
+	);
 
 	const [paymentMethod, setPaymentMethod] = React.useState<"once" | "installment" | null>(null);
 	const [selectedProperties, setSelectedProperties] = React.useState<SelectedProperty[]>([]);
@@ -62,14 +73,44 @@ export default function SelectProperties() {
 		if (Array.isArray(propertiesData)) props = propertiesData as PropertyData[];
 		else if (Array.isArray(dataObj.data as unknown)) props = dataObj.data as unknown as PropertyData[];
 		else if (Array.isArray(dataObj.items as unknown)) props = dataObj.items as unknown as PropertyData[];
-		const total = (dataObj.totalPages as number) || Math.ceil(((dataObj.total as number) || props.length) / itemsPerPage);
+
+		// The API returns pagination information under `pagination`
+		const pagination = (dataObj.pagination as Record<string, unknown>) || (dataObj.paging as Record<string, unknown>) || null;
+		const totalPagesFromApi = pagination ? (pagination.totalPages as number) : undefined;
+		const totalItemsFromApi = pagination ? (pagination.total as number) : undefined;
+
+		const total =
+			typeof totalPagesFromApi === "number"
+				? totalPagesFromApi
+				: Math.max(1, Math.ceil(((typeof totalItemsFromApi === "number" ? totalItemsFromApi : props.length) as number) / itemsPerPage));
+
 		return { properties: props, totalPages: total };
 	}, [propertiesData, itemsPerPage]);
 
-	// For hire purchase, only allow one selection
+	const formatMoney = (v?: string | number | null) => {
+		if (v === undefined || v === null || v === "") return "0";
+		const n = Number(v);
+		if (Number.isNaN(n)) return String(v);
+		return n.toLocaleString();
+	};
+
+	const totalSelectedAmount = React.useMemo(() => {
+		return selectedProperties.reduce((acc, p) => {
+			const price = typeof p.price === "number" ? p.price : parseFloat(p.price || "0");
+			return acc + (isNaN(price) ? 0 : price) * (p.quantity || 1);
+		}, 0);
+	}, [selectedProperties]);
+
+	// Toggle selection. For hire-purchase (`installment`) only allow a single selection.
 	const handlePropertySelect = (property: PropertyData) => {
+		const isSelected = selectedProperties.find((p) => p.id === property.id);
+		if (isSelected) {
+			setSelectedProperties(selectedProperties.filter((p) => p.id !== property.id));
+			return;
+		}
+
 		if (paymentMethod === "installment") {
-			// Single selection only
+			// single selection only for hire purchase
 			setSelectedProperties([
 				{
 					id: property.id,
@@ -79,25 +120,20 @@ export default function SelectProperties() {
 					media: property.media,
 				},
 			]);
-		} else if (paymentMethod === "once") {
-			// Check if already selected
-			const isSelected = selectedProperties.find((p) => p.id === property.id);
-			if (isSelected) {
-				setSelectedProperties(selectedProperties.filter((p) => p.id !== property.id));
-			} else {
-				// Add to selected
-				setSelectedProperties([
-					...selectedProperties,
-					{
-						id: property.id,
-						name: property.name,
-						price: property.price,
-						quantity: 1,
-						media: property.media,
-					},
-				]);
-			}
+			return;
 		}
+
+		// default: allow multiple selection
+		setSelectedProperties((prev) => [
+			...prev,
+			{
+				id: property.id,
+				name: property.name,
+				price: property.price,
+				quantity: 1,
+				media: property.media,
+			},
+		]);
 	};
 
 	const handleQuantityChange = (propertyId: string, delta: number) => {
@@ -105,7 +141,11 @@ export default function SelectProperties() {
 			const updated = prev
 				.map((p) => {
 					if (p.id === propertyId) {
-						const newQuantity = Math.max(0, p.quantity + delta);
+						let newQuantity = Math.max(0, p.quantity + delta);
+						if (paymentMethod === "installment") {
+							// hire purchase cannot have quantity more than 1
+							newQuantity = Math.min(1, newQuantity);
+						}
 						return { ...p, quantity: newQuantity };
 					}
 					return p;
@@ -191,7 +231,7 @@ export default function SelectProperties() {
 					{propertiesLoading ? (
 						<div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
 							{Array.from({ length: 10 }).map((_, i) => (
-								<div key={i} className="bg-white rounded-md p-4 border border-gray-100">
+								<div key={i} className="bg-white dark:bg-neutral-700 rounded-md p-4 border border-gray-100 dark:border-gray-600">
 									<RectangleSkeleton className="h-32 w-full mb-3" />
 									<RectangleSkeleton className="h-4 w-3/4 mb-2" />
 									<RectangleSkeleton className="h-4 w-1/2 mb-3" />
@@ -210,40 +250,44 @@ export default function SelectProperties() {
 									const isSelected = selectedProperties.some((p) => p.id === property.id);
 									const selectedItem = selectedProperties.find((p) => p.id === property.id);
 									const isDisabled = paymentMethod === "installment" && selectedProperties.length > 0 && !isSelected;
-									const imgSrc = property.media?.[0] || "";
+									const imgSrc = (property.media && property.media.length > 0 && property.media[0]) || media.images._product1;
 
 									return (
 										<div
 											key={property.id}
 											className={twMerge(
-												"bg-white rounded-md p-4 border border-gray-100 transition-all",
-												isSelected && "border-primary bg-primary/5 shadow-md",
-												isDisabled && "opacity-50 cursor-not-allowed"
+												"bg-white dark:bg-neutral-700 rounded-md p-4 border border-gray-100 dark:border-gray-600 transition-all",
+												isSelected && "border-primary bg-primary/5 dark:bg-primary/20 shadow-md dark:shadow-primary/20",
+												isDisabled && "opacity-50 cursor-not-allowed",
 											)}>
 											{/* Image Container */}
-											<div className="h-32 flex items-center justify-center overflow-hidden bg-gray-50 rounded mb-3 relative group">
+											<div className="h-28 flex items-center justify-center overflow-hidden bg-gray-50 dark:bg-neutral-600 rounded mb-3 relative group">
 												<Image src={imgSrc} alt={property.name} className="max-h-full object-contain" />
-												<button
-													type="button"
+												<div
+													role="button"
+													tabIndex={0}
 													onClick={() => handleViewDetails(property)}
+													onKeyDown={(e) => {
+														if (e.key === "Enter" || e.key === " ") {
+															e.preventDefault();
+															handleViewDetails(property);
+														}
+													}}
 													className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/30 transition-colors rounded">
-													<button
-														type="button"
-														className="bg-primary text-white p-2.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+													<div className="bg-primary text-white p-2.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity" aria-hidden>
 														<IconWrapper className="text-lg">
 															<EyeIcon />
 														</IconWrapper>
-													</button>
-												</button>{" "}
+													</div>
+												</div>
 											</div>
 											{/* Content */}
 											<div>
-												<h5 className="text-sm opacity-70 truncate">{property.name}</h5>
-												<p className="text-primary font-semibold text-base mb-3">₦{parseFloat(property.price).toLocaleString()}</p>
-
+												<h5 className="text-sm opacity-70 dark:opacity-100 dark:text-gray-300 truncate">{property.name}</h5>
+												<div className="mt-1 text-sm font-semibold text-primary">₦{formatMoney(property.price)}</div>
 												{/* Action Buttons/Controls */}
 												{isSelected ? (
-													<div className="flex items-center gap-1 bg-gray-50 rounded p-1">
+													<div className="flex items-center gap-1 bg-gray-50 dark:bg-neutral-800 mt-2 rounded p-1">
 														<button
 															type="button"
 															onClick={() => handleQuantityChange(property.id, -1)}
@@ -269,7 +313,7 @@ export default function SelectProperties() {
 														type="button"
 														onClick={() => handlePropertySelect(property)}
 														disabled={isDisabled}
-														className="w-full bg-primary active-scale text-white text-sm py-2 hover:bg-primary/90">
+														className="w-full bg-primary mt-2 active-scale text-white text-sm py-2 hover:bg-primary/90">
 														Select
 													</ActionButton>
 												)}
@@ -285,17 +329,21 @@ export default function SelectProperties() {
 							{selectedProperties.length > 0 && (
 								<div className="border-t pt-6 mt-6">
 									<h3 className="font-semibold mb-4">Selected Properties ({selectedProperties.length})</h3>
-									<div className="bg-gray-50 p-4 rounded-md mb-6 max-h-48 overflow-y-auto">
-										{selectedProperties.map((prop) => (
-											<div key={prop.id} className="flex justify-between items-center mb-2 pb-2 border-b last:border-b-0">
-												<span className="text-sm">
-													<span className="font-medium">{prop.name}</span>
-													{paymentMethod === "once" && prop.quantity > 1 && <span className="text-gray-600 ml-2">× {prop.quantity}</span>}
-												</span>
-												<span className="font-semibold text-primary">₦{(parseFloat(prop.price) * prop.quantity).toLocaleString()}</span>
-											</div>
-										))}
-									</div>
+									{paymentMethod === "installment" ? (
+										<div className="text-sm text-muted-foreground">{selectedProperties.length} properties selected</div>
+									) : (
+										<CustomCard className="bg-gray-50 p-4 rounded-md mb-6 max-h-48 overflow-y-auto">
+											{selectedProperties.map((prop) => (
+												<div key={prop.id} className="flex justify-between items-center mb-2 pb-2 border-b last:border-b-0">
+													<span className="text-sm">
+														<span className="font-medium">{prop.name}</span>
+														{paymentMethod === "once" && prop.quantity > 1 && <span className="text-gray-600 ml-2">× {prop.quantity}</span>}
+													</span>
+													<span className="font-semibold text-primary">₦{formatMoney((parseFloat(prop.price) || 0) * prop.quantity)}</span>
+												</div>
+											))}
+										</CustomCard>
+									)}
 								</div>
 							)}
 						</>
@@ -303,6 +351,12 @@ export default function SelectProperties() {
 				</div>
 
 				{/* Action Buttons */}
+				{selectedProperties.length > 0 && (
+					<div className="flex items-center justify-between gap-4 mt-8">
+						<div className="text-lg font-semibold text-primary">Total: ₦{formatMoney(totalSelectedAmount)}</div>
+						<div className="flex gap-4 justify-end"></div>
+					</div>
+				)}
 				<div className="flex gap-4 justify-end mt-8">
 					<ActionButton type="button" onClick={handleBack} variant="outline" className="px-6 py-2.5">
 						Back
@@ -341,7 +395,7 @@ export default function SelectProperties() {
 													onClick={() => setImageIndex(idx)}
 													className={twMerge(
 														"w-16 h-16 flex-shrink-0 rounded border-2 overflow-hidden bg-gray-50 transition-colors",
-														idx === imageIndex ? "border-primary" : "border-gray-200 hover:border-gray-300"
+														idx === imageIndex ? "border-primary" : "border-gray-200 hover:border-gray-300",
 													)}>
 													<Image src={img} alt="Thumbnail" className="w-full h-full object-contain" />
 												</button>
@@ -352,33 +406,41 @@ export default function SelectProperties() {
 							)}
 
 							{/* Price and Basic Info */}
-							<div className="bg-gray-50 rounded-lg p-4">
-								<div className="text-3xl font-bold text-primary mb-3">₦{parseFloat(selectedProperty.price).toLocaleString()}</div>
-								<div className="grid grid-cols-2 gap-4 text-sm">
-									<div>
-										<span className="text-gray-600">Condition</span>
-										<p className="font-semibold">{selectedProperty.condition || "N/A"}</p>
-									</div>
-									<div>
-										<span className="text-gray-600">Status</span>
-										<p className="font-semibold">{selectedProperty.status?.status || "N/A"}</p>
-									</div>
-									<div>
-										<span className="text-gray-600">Available</span>
-										<p className="font-semibold">{selectedProperty.quantityAvailable}</p>
-									</div>
-									<div>
-										<span className="text-gray-600">Assigned</span>
-										<p className="font-semibold">{selectedProperty.quantityAssigned}</p>
-									</div>
+							<CustomCard className="h-auto rounded-lg p-4">
+								<div className="text-3xl font-bold text-primary mb-3">₦{formatMoney(selectedProperty.price)}</div>
+								<div>
+									<KeyValueRow
+										label="Condition"
+										value={selectedProperty.condition || "N/A"}
+										leftClassName="text-sm text-muted-foreground"
+										rightClassName="text-right"
+									/>
+									<KeyValueRow
+										label="Status"
+										value={selectedProperty.status?.status || "N/A"}
+										leftClassName="text-sm text-muted-foreground"
+										rightClassName="text-right"
+									/>
+									<KeyValueRow
+										label="Available"
+										value={String(selectedProperty.quantityAvailable || 0)}
+										leftClassName="text-sm text-muted-foreground"
+										rightClassName="text-right"
+									/>
+									<KeyValueRow
+										label="Assigned"
+										value={String(selectedProperty.quantityAssigned || 0)}
+										leftClassName="text-sm text-muted-foreground"
+										rightClassName="text-right"
+									/>
 								</div>
-							</div>
+							</CustomCard>
 
 							{/* Description */}
 							{selectedProperty.description && (
 								<div>
 									<h3 className="font-semibold text-sm mb-2">Description</h3>
-									<p className="text-gray-700 text-sm leading-relaxed">{selectedProperty.description}</p>
+									<p className="text-sm leading-relaxed">{selectedProperty.description}</p>
 								</div>
 							)}
 
@@ -386,14 +448,14 @@ export default function SelectProperties() {
 							{selectedProperty.category && (
 								<div>
 									<h3 className="font-semibold text-sm mb-2">Category</h3>
-									<p className="text-gray-700 text-sm">
+									<p className="text-sm">
 										{selectedProperty.category.parent?.category} → {selectedProperty.category.category}
 									</p>
 								</div>
 							)}
 
 							{/* Additional Info */}
-							<div className="space-y-2 text-sm text-gray-600">
+							<div className="space-y-2 text-sm">
 								{selectedProperty.propertyCode && (
 									<div>
 										<span className="font-medium">Code:</span> {selectedProperty.propertyCode}

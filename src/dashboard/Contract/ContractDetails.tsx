@@ -5,10 +5,11 @@ import { selectTriggerStyle, tabListStyle, tabStyle } from "@/components/common/
 import ActionButton from "@/components/base/ActionButton";
 import TabContractInformation from "./TabContractInformation";
 import TabPaymentPlan from "./TabPaymentPlan";
+import TabPaymentLinks from "./TabPaymentLinks";
 import TabReceiptHistory from "./TabReceiptHistory";
 import PageWrapper from "../../components/common/PageWrapper";
 // import { EditIcon, IconWrapper } from "../../assets/icons";
-import { useState } from "react";
+import React, { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import CustomInput from "@/components/base/CustomInput";
@@ -19,16 +20,35 @@ import { extractErrorMessage } from "@/lib/utils";
 import { Skeleton } from "@/components/common/Skeleton";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+import { useSearchParams } from "react-router";
+import { useCanPerformAction } from "@/hooks/usePermissions";
+import { EditIcon, IconWrapper } from "../../assets/icons";
+import EditContractModal from "@/components/common/EditContractModal";
 
 export default function ContractDetails() {
 	const { id } = useParams();
+	const [searchParams, setSearchParams] = useSearchParams();
 	const { data: contract, isLoading } = useGetContractById(id || "", !!id);
 	const queryClient = useQueryClient();
+	const canTerminateContract = useCanPerformAction("contractTerminate");
 
+	const [editOpen, setEditOpen] = useState(false);
 	const [pauseOpen, setPauseOpen] = useState(false);
 	const [terminateOpen, setTerminateOpen] = useState(false);
 	const [pauseReason, setPauseReason] = useState("Health Crises");
 	const [otherPauseReason, setOtherPauseReason] = useState("");
+
+	// Initialize active tab from URL params
+	const [activeTab, setActiveTab] = useState(() => {
+		return searchParams.get("tab") || "information";
+	});
+
+	// Update URL when active tab changes
+	React.useEffect(() => {
+		const params = new URLSearchParams(searchParams);
+		params.set("tab", activeTab);
+		setSearchParams(params, { replace: true });
+	}, [activeTab, setSearchParams]);
 
 	const pauseMutation = usePauseContract(
 		(response) => {
@@ -125,16 +145,17 @@ export default function ContractDetails() {
 				<PageTitles title="Contract" description="The contracts transaction between Kpo kpoi mingi investment and it customers" />
 
 				<div className="flex items-center gap-3">
-					{/* <ActionButton
+					<ActionButton
 						variant="ghost"
 						className="underline px-1"
 						leftIcon={
 							<IconWrapper className="text-xl">
 								<EditIcon />
 							</IconWrapper>
-						}>
+						}
+						onClick={() => setEditOpen(true)}>
 						Edit
-					</ActionButton> */}
+					</ActionButton>
 					{!contract?.isPaused ? (
 						<ActionButton className="px-6 font-normal rounded-sm" variant="danger" onClick={() => setPauseOpen(true)}>
 							Pause
@@ -148,9 +169,11 @@ export default function ContractDetails() {
 							{resumeMutation.status === "pending" ? "Resuming..." : "Resume"}
 						</ActionButton>
 					)}
-					<ActionButton className="px-6 font-normal rounded-sm" variant="danger" onClick={() => setTerminateOpen(true)}>
-						Terminate
-					</ActionButton>{" "}
+					{canTerminateContract && (
+						<ActionButton className="px-6 font-normal rounded-sm" variant="danger" onClick={() => setTerminateOpen(true)}>
+							Terminate
+						</ActionButton>
+					)}{" "}
 					{/* Pause dialog */}
 					<Dialog open={pauseOpen} onOpenChange={setPauseOpen}>
 						<DialogContent>
@@ -223,13 +246,16 @@ export default function ContractDetails() {
 			</div>
 
 			<CustomCard className="p-4 sm:p-6 border-0">
-				<Tabs defaultValue="information">
+				<Tabs value={activeTab} onValueChange={setActiveTab}>
 					<TabsList className={tabListStyle}>
 						<TabsTrigger value="information" className={tabStyle}>
 							Contract information
 						</TabsTrigger>
 						<TabsTrigger value="plan" className={tabStyle}>
 							Payment Plan & Schedule
+						</TabsTrigger>
+						<TabsTrigger value="payment-links" className={tabStyle}>
+							Payment Links
 						</TabsTrigger>
 						<TabsTrigger value="receipt" className={tabStyle}>
 							Receipt & Payment History
@@ -248,6 +274,10 @@ export default function ContractDetails() {
 							<TabPaymentPlan contract={contract} />
 						</TabsContent>
 
+						<TabsContent value="payment-links">
+							<TabPaymentLinks contract={contract} />
+						</TabsContent>
+
 						<TabsContent value="receipt">
 							<TabReceiptHistory contract={contract} />
 						</TabsContent>
@@ -258,6 +288,9 @@ export default function ContractDetails() {
 					</div>
 				</Tabs>
 			</CustomCard>
+
+			{/* Edit Contract Modal */}
+			<EditContractModal isOpen={editOpen} onClose={() => setEditOpen(false)} contract={contract} />
 		</PageWrapper>
 	);
 }

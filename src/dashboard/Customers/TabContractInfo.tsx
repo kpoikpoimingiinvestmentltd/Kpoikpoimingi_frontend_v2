@@ -54,7 +54,7 @@ export default function TabContractInfo({ contracts, isLoading = false }: TabCon
 				<div className="flex items-center gap-2">
 					<DropdownMenu>
 						<DropdownMenuTrigger asChild>
-							<button type="button" className="flex gap-1 items-center rounded-md px-4 py-2 bg-blue-50 text-primary">
+							<button type="button" className="flex gap-1 items-center rounded-md px-4 py-2 bg-blue-50 dark:bg-neutral-700 text-primary">
 								<span className="text-sm capitalize">{displayLabel}</span>
 								<IconWrapper className="text-xl">
 									<ChevronDownIcon />
@@ -74,7 +74,9 @@ export default function TabContractInfo({ contracts, isLoading = false }: TabCon
 					</DropdownMenu>
 
 					{filter !== "All Contracts" && (
-						<button onClick={handleClearFilter} className="text-xs px-3 py-2 rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200 transition">
+						<button
+							onClick={handleClearFilter}
+							className="text-xs px-3 py-2 rounded-md bg-gray-100 text-gray-700 dark:bg-neutral-700 dark:hover:bg-neutral-700/70 dark:text-white hover:bg-gray-200 transition">
 							Clear
 						</button>
 					)}
@@ -86,7 +88,7 @@ export default function TabContractInfo({ contracts, isLoading = false }: TabCon
 					// Skeleton loaders
 					<>
 						{[...Array(3)].map((_, i) => (
-							<div key={i} className="flex items-center gap-8 justify-between bg-[#f8fafc] rounded px-4 py-3">
+							<div key={i} className="flex items-center gap-8 justify-between bg-[#f8fafc] dark:bg-neutral-600 rounded px-4 py-3">
 								<Skeleton className="h-6 w-2/3" />
 								<Skeleton className="h-6 w-24" />
 							</div>
@@ -143,7 +145,7 @@ export default function TabContractInfo({ contracts, isLoading = false }: TabCon
 												value={String(
 													(firstActive.interval as Record<string, unknown> | null)?.intervals ??
 														(firstActive.durationUnit as Record<string, unknown> | null)?.duration ??
-														"-"
+														"-",
 												)}
 											/>
 
@@ -175,11 +177,11 @@ export default function TabContractInfo({ contracts, isLoading = false }: TabCon
 
 								<div className="space-y-2">
 									{rest.map((contract) => (
-										<div key={contract.id} className="flex items-center gap-8 justify-between bg-[#f8fafc] rounded px-4 py-3">
+										<div key={contract.id} className="flex items-center gap-8 justify-between bg-[#f8fafc] dark:bg-neutral-700 rounded px-4 py-3">
 											<div className="flex-1">
 												<p className="text-sm font-medium">{contract.contractCode}</p>
-												<p className="text-xs text-gray-600 mt-1">{contract.property?.name}</p>
-												<p className="text-xs text-gray-500 mt-0.5">Outstanding: ₦{Number(contract.outStandingBalance).toLocaleString()}</p>
+												<p className="text-xs opacity-60 mt-1">{contract.property?.name}</p>
+												<p className="text-xs opacity-70 mt-0.5">Outstanding: ₦{Number(contract.outStandingBalance).toLocaleString()}</p>
 											</div>
 											<button onClick={() => handleView(contract.id)} className="text-sm text-primary flex items-center gap-2 whitespace-nowrap">
 												<IconWrapper>
@@ -196,11 +198,11 @@ export default function TabContractInfo({ contracts, isLoading = false }: TabCon
 				) : (
 					// For non-ACTIVE statuses just list compact items with view button
 					filteredContracts.map((contract: CustomerContract) => (
-						<div key={contract.id} className="flex items-center gap-8 justify-between bg-[#f8fafc] rounded px-4 py-3">
+						<div key={contract.id} className="flex items-center gap-8 justify-between bg-[#f8fafc] dark:bg-neutral-700 rounded px-4 py-3">
 							<div className="flex-1">
 								<p className="text-sm font-medium">{contract.contractCode}</p>
-								<p className="text-xs text-gray-600 mt-1">{contract.property?.name}</p>
-								<p className="text-xs text-gray-500 mt-0.5">Outstanding: ₦{Number(contract.outStandingBalance).toLocaleString()}</p>
+								<p className="text-xs opacity-50 mt-1">{contract.property?.name}</p>
+								<p className="text-xs opacity-70 mt-0.5">Outstanding: ₦{Number(contract.outStandingBalance).toLocaleString()}</p>
 							</div>
 							<button onClick={() => handleView(contract.id)} className="text-sm text-primary flex items-center gap-2 whitespace-nowrap">
 								<IconWrapper>

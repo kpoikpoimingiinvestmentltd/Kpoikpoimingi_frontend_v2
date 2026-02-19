@@ -7,6 +7,7 @@ import { CardSkeleton, RectangleSkeleton } from "@/components/common/Skeleton";
 import type { ReceiptDetail } from "@/types/receipt";
 import { useRef } from "react";
 import { handleDownloadPDF as downloadPDF, handleSharePDF as sharePDF } from "@/utils/pdfUtils";
+import { useCanPerformAction } from "@/hooks/usePermissions";
 
 export default function ReceiptDetails() {
 	const params = useParams();
@@ -17,18 +18,20 @@ export default function ReceiptDetails() {
 	const { data, isLoading } = useGetReceiptById(id);
 	const receipt: ReceiptDetail | null = data ?? null;
 	const receiptRef = useRef<HTMLDivElement>(null);
+	const canDownloadReceipt = useCanPerformAction("receiptDownload");
+	const canSendEmails = useCanPerformAction("notificationsSendEmails");
 
 	if (isLoading) {
 		return (
 			<div className="max-w-4xl mx-auto">
 				<div className="flex items-center justify-between flex-wrap gap-4 mb-6">
 					<div className="flex-1">
-						<RectangleSkeleton className="h-8 w-32 bg-gray-200 rounded" />
+						<RectangleSkeleton className="h-8 w-32 bg-gray-200 dark:bg-neutral-700 rounded" />
 					</div>
 					<div className="flex gap-3">
-						<RectangleSkeleton className="h-10 w-24 bg-gray-200 rounded" />
-						<RectangleSkeleton className="h-10 w-24 bg-gray-200 rounded" />
-						<RectangleSkeleton className="h-10 w-24 bg-gray-200 rounded" />
+						<RectangleSkeleton className="h-10 w-24 bg-gray-200 dark:bg-neutral-700 rounded" />
+						<RectangleSkeleton className="h-10 w-24 bg-gray-200 dark:bg-neutral-700 rounded" />
+						<RectangleSkeleton className="h-10 w-24 bg-gray-200 dark:bg-neutral-700 rounded" />
 					</div>
 				</div>
 
@@ -56,16 +59,16 @@ export default function ReceiptDetails() {
 	};
 
 	return (
-		<div>
-			<ReceiptWrapper
-				contentRef={receiptRef}
-				emailSubject="Receipt from Kpoikpoimingi"
-				emailBody="Please find attached the receipt."
-				onDownload={handleDownloadPDF}
-				onShare={handleSharePDF}
-				receiptId={id}>
-				<ReceiptContent receipt={receipt} />
-			</ReceiptWrapper>
-		</div>
+		<ReceiptWrapper
+			contentRef={receiptRef}
+			emailSubject="Receipt from Kpoikpoimingi"
+			emailBody="Please find attached the receipt."
+			onDownload={handleDownloadPDF}
+			onShare={handleSharePDF}
+			shouldDownload={canDownloadReceipt}
+			shouldShare={canSendEmails}
+			receiptId={id}>
+			<ReceiptContent receipt={receipt} />
+		</ReceiptWrapper>
 	);
 }

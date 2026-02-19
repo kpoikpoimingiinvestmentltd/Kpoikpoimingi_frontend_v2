@@ -30,6 +30,7 @@ export default function EditProductRequest({ open, onOpenChange, initial, onSave
 				phone: (src.phoneNumber as string) || (src.phone as string) || "",
 				email: (src.email as string) || "",
 				employmentStatus: (src.employmentStatus as string) || (src.employmentStatusId as string) || "",
+				employerName: (src.employerName as string) || "",
 				homeAddress: (src.homeAddress as string) || (src.address as string) || "",
 				businessAddress: (src.companyAddress as string) || (src.businessAddress as string) || "",
 				stateOfOrigin: (src.stateOfOrigin as string) || "",
@@ -49,7 +50,7 @@ export default function EditProductRequest({ open, onOpenChange, initial, onSave
 
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
-			<DialogContent className={modalContentStyle("px-4 md:px-8")}>
+			<DialogContent className={modalContentStyle("flex flex-col items-center gap-y-4")}>
 				<DialogHeader className="justify-center flex-row mt-5">
 					<h2 className="text-lg font-semibold">Edit Product Request</h2>
 				</DialogHeader>
@@ -58,6 +59,9 @@ export default function EditProductRequest({ open, onOpenChange, initial, onSave
 					onSubmit={onSave}
 					centeredContainer={() => "mx-auto w-full md:w-3/4"}
 					paymentMethod={forceInstallment ? "installment" : undefined}
+					showSignedContract={true}
+					skipEmailVerification={true}
+					submitButtonText="Update Product Request"
 				/>
 			</DialogContent>
 		</Dialog>

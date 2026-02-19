@@ -103,7 +103,7 @@ export default function TabProductInformation({
 									/>
 									<KeyValueRow
 										label="Amount"
-										value={`₦${(propertyData?.price as string) || 0}`}
+										value={propertyData?.price ? `₦${Number(propertyData.price).toLocaleString()}` : "N/A"}
 										leftClassName="text-sm text-muted-foreground"
 										rightClassName="text-right md:text-left"
 									/>
@@ -113,8 +113,8 @@ export default function TabProductInformation({
 											(property.paymentIntervalId as number) === 1
 												? "One-time"
 												: (property.paymentIntervalId as number) === 2
-												? "Hire Purchase"
-												: "N/A"
+													? "Hire Purchase"
+													: "N/A"
 										}
 										leftClassName="text-sm text-muted-foreground"
 										rightClassName="text-right md:text-left"

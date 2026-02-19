@@ -14,14 +14,14 @@ export default function TableForIndex() {
 		<CustomCard className="bg-white w-full rounded-lg p-4 border border-gray-100">
 			<div className="flex items-center justify-between mb-2">
 				<h2 className="font-semibold">Recent Customers</h2>
-				<Link to="#" className="text-primary text-sm font-medium hover:underline">
+				<Link to={_router.dashboard.customers} className="text-primary text-sm font-medium hover:underline">
 					View all
 				</Link>
 			</div>
 			<div className="overflow-x-auto w-full mt-4">
 				<Table>
 					<TableHeader className="[&_tr]:border-0">
-						<TableRow className="bg-[#EAF6FF] h-12 overflow-hidden py-4 rounded-lg">
+						<TableRow className="bg-[#EAF6FF] dark:bg-neutral-900/80 h-12 overflow-hidden py-4 rounded-lg">
 							<TableHead>Customer ID</TableHead>
 							<TableHead>Name</TableHead>
 							<TableHead>Email</TableHead>
@@ -45,7 +45,9 @@ export default function TableForIndex() {
 								const cust = customer as Record<string, unknown>;
 								return (
 									<TableRow key={idx} className="hover:bg-[#F6FBFF]">
-										<TableCell>{String(cust.id)}</TableCell>
+										<TableCell title={String(cust.customerCode || cust.id)}>
+											<span className="max-w-40 block truncate">{String(cust.customerCode || cust.id)}</span>
+										</TableCell>
 										<TableCell>{String(cust.fullName)}</TableCell>
 										<TableCell>{String(cust.email || "-")}</TableCell>
 										<TableCell>{String(cust.phoneNumber || "-")}</TableCell>

@@ -18,9 +18,19 @@ type Props = {
 	centeredContainer: (additionalClasses?: string) => string;
 	sectionTitle: (additionalClasses?: string) => string;
 	isValid: boolean;
+	submitButtonText?: string;
 };
 
-export default function OncePaymentFormComponent({ form, handleChange, isSubmitting, onSubmit, centeredContainer, sectionTitle, isValid }: Props) {
+export default function OncePaymentFormComponent({
+	form,
+	handleChange,
+	isSubmitting,
+	onSubmit,
+	centeredContainer,
+	sectionTitle,
+	isValid,
+	submitButtonText,
+}: Props) {
 	const { data: propertiesData, isLoading: propertiesLoading } = useGetAllProperties(1, 100);
 	const properties: PropertyData[] = React.useMemo(() => {
 		if (!propertiesData || typeof propertiesData !== "object") return [];
@@ -280,7 +290,7 @@ export default function OncePaymentFormComponent({ form, handleChange, isSubmitt
 							<span>Processing...</span>
 						</>
 					) : (
-						"Send Request"
+						submitButtonText || "Send Request"
 					)}
 				</ActionButton>
 			</div>

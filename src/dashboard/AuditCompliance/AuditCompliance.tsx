@@ -1,4 +1,5 @@
 import { useState } from "react";
+import React from "react";
 import CompactPagination from "@/components/ui/compact-pagination";
 import EmptyData from "@/components/common/EmptyData";
 import CustomCard from "@/components/base/CustomCard";
@@ -13,17 +14,46 @@ import ActionButton from "@/components/base/ActionButton";
 import { toast } from "sonner";
 import { extractErrorMessage } from "@/lib/utils";
 import { ExportFileIcon, IconWrapper } from "../../assets/icons";
+import { useSearchParams } from "react-router";
 
 export default function AuditCompliance() {
-	const [page, setPage] = useState(1);
+	const [searchParams, setSearchParams] = useSearchParams();
+
+	const page = Number(searchParams.get("page")) || 1;
 	const pageSize = 10;
-	const [searchQuery, setSearchQuery] = useState<string>("");
-	const [filters, setFilters] = useState<Record<string, string>>({});
+	const search = searchParams.get("search") || "";
+	const sortBy = searchParams.get("sortBy") || "createdAt";
+	const sortOrder = searchParams.get("sortOrder") || "desc";
+
+	// Initialize URL params on mount if not present
+	React.useEffect(() => {
+		const hasParams = searchParams.has("page") || searchParams.has("search") || searchParams.has("sortBy") || searchParams.has("sortOrder");
+		if (!hasParams) {
+			const params = new URLSearchParams();
+			params.set("page", "1");
+			params.set("sortBy", "createdAt");
+			params.set("sortOrder", "desc");
+			setSearchParams(params);
+		}
+	}, []);
+
+	const debouncedSearch = useDebounceSearch(search, 400);
 	const [showExportModal, setShowExportModal] = useState(false);
 
-	const debouncedSearch = useDebounceSearch(searchQuery, 400);
-	const sortBy = filters.sortBy || "createdAt";
-	const sortOrder = filters.sortOrder || "desc";
+	const updateSearchParams = React.useCallback(
+		(updates: Record<string, string | number | null>) => {
+			const params = new URLSearchParams(searchParams);
+			Object.entries(updates).forEach(([key, value]) => {
+				if (value === null) {
+					params.delete(key);
+				} else {
+					params.set(key, String(value));
+				}
+			});
+			setSearchParams(params);
+		},
+		[searchParams, setSearchParams],
+	);
 
 	const { data: auditData, isLoading } = useGetAuditLogsGrouped(page, pageSize, debouncedSearch || undefined, sortBy, sortOrder);
 
@@ -51,8 +81,19 @@ export default function AuditCompliance() {
 	];
 
 	const handleFilterApply = (newFilters: Record<string, string>) => {
-		setFilters(newFilters);
-		setPage(1);
+		updateSearchParams({
+			sortBy: newFilters.sortBy || null,
+			sortOrder: newFilters.sortOrder || null,
+			page: 1,
+		});
+	};
+
+	const handleSearchChange = (value: string) => {
+		updateSearchParams({ search: value || null, page: 1 });
+	};
+
+	const handlePageChange = (newPage: number) => {
+		updateSearchParams({ page: newPage });
 	};
 
 	const hasActiveFilters = !!(debouncedSearch || sortBy !== "createdAt" || sortOrder !== "desc");
@@ -128,18 +169,17 @@ export default function AuditCompliance() {
 
 			<div className="flex items-center gap-2">
 				<SearchWithFilters
-					search={searchQuery}
-					onSearchChange={setSearchQuery}
-					setPage={setPage}
+					search={search}
+					onSearchChange={handleSearchChange}
+					setPage={handlePageChange}
 					placeholder="Search by staff name, email, or action"
 					showFilter={true}
 					fields={filterFields}
-					initialValues={filters}
+					initialValues={{ sortBy: sortBy || "", sortOrder: sortOrder || "" }}
 					onApply={handleFilterApply}
 					onReset={() => {
-						setSearchQuery("");
-						setFilters({});
-						setPage(1);
+						handleSearchChange("");
+						updateSearchParams({ sortBy: null, sortOrder: null, page: 1 });
 					}}
 				/>
 			</div>
@@ -156,7 +196,7 @@ export default function AuditCompliance() {
 
 			<div className="min-h-96 flex">
 				{isLoading ? (
-					<CustomCard className="bg-transparent p-0 border-0 w-full">
+					<CustomCard className="bg-transparent dark:bg-transparent p-0 border-0 w-full">
 						<div className="flex flex-col gap-y-4">
 							<CardSkeleton lines={3} />
 							<CardSkeleton lines={3} />
@@ -166,13 +206,13 @@ export default function AuditCompliance() {
 				) : isEmpty ? (
 					<EmptyData text="No Audit Records at the moment" />
 				) : (
-					<CustomCard className="bg-transparent p-0 border-0 w-full">
+					<CustomCard className="bg-transparent p-0 dark:bg-transparent border-0 w-full">
 						<div className="flex flex-col gap-y-6">
 							{groups.map((group: unknown) => {
 								const g = group as Record<string, unknown>;
 								return (
 									<section key={g.title as string}>
-										<h3 className="text-sm font-medium mb-2 text-[#111827]">{g.title as string}</h3>
+										<h3 className="text-sm font-medium mb-2">{g.title as string}</h3>
 										<div className="flex flex-col gap-y-4">
 											{Array.isArray(g.logs) &&
 												g.logs.map((log: unknown) => {
@@ -194,7 +234,7 @@ export default function AuditCompliance() {
 						</div>
 						<div className="mt-10">
 							<div className="ml-auto">
-								<CompactPagination page={page} pages={pagination.totalPages} onPageChange={setPage} />
+								<CompactPagination page={page} pages={pagination.totalPages} onPageChange={handlePageChange} />
 							</div>
 						</div>
 					</CustomCard>
@@ -243,7 +283,7 @@ function RowItem({ action, staffName, date, time }: { action: string; staffName:
 	const time12 = formatTime(time);
 
 	return (
-		<div className="rounded-lg bg-white p-5 gap-6 border border-gray-100 flex items-start justify-between">
+		<CustomCard className="p-5 gap-6 border border-gray-100 flex items-start justify-between">
 			<div>
 				<h4 className="font-medium">{action}</h4>
 				<p className="text-sm text-muted-foreground mt-2">Staff Name: {staffName || "N/A"}</p>
@@ -253,6 +293,6 @@ function RowItem({ action, staffName, date, time }: { action: string; staffName:
 				<div className="hidden md:block">{longFormat}</div>
 				<div>{time12}</div>
 			</div>
-		</div>
+		</CustomCard>
 	);
 }

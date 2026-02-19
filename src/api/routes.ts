@@ -58,6 +58,7 @@ export const API_ROUTES = {
 		createExternalCustomerRegistration: "/customer-registration",
 		getExternalCustomerRegistrations: "/customer-registration/external",
 		getAllCustomerRegistrations: "/customer-registration",
+		getApprovedRegistrations: "/customer-registration/approved",
 		createInternalCustomerRegistration: "/customer-registration/internal",
 		createFullPaymentRegistration: "/customer-registration/full-payment",
 		createInternalFullPaymentRegistration: "/customer-registration/full-payment/internal",
@@ -66,6 +67,8 @@ export const API_ROUTES = {
 		updateCustomerRegistration: (id: string) => `/customer-registration/${id}`,
 		declineCustomerRegistration: (id: string) => `/customer-registration/${id}/decline`,
 		exportCustomerRegistrations: "/customer-registration/export/csv",
+		requestEmailVerification: "/customer-registration/email/verify/request",
+		confirmEmailVerification: "/customer-registration/email/verify/confirm",
 	},
 	contractDocument: {
 		send: "/contract-document/send",
@@ -77,6 +80,7 @@ export const API_ROUTES = {
 	},
 	contracts: {
 		createContract: "/contracts/create",
+		editContract: (id: string) => `/contracts/${id}`,
 		getContractPayments: (id: string) => `/contracts/${id}/payments`,
 		getSignedContract: (id: string) => `/contracts/${id}/signed-contract`,
 		getAllContracts: "/contracts",
@@ -96,6 +100,7 @@ export const API_ROUTES = {
 	},
 	paymentLink: {
 		create: "/payment-link/create",
+		getByContract: (contractId: string) => `/payment-link/contract/${contractId}`,
 	},
 	payment: {
 		getPendingPayments: "/payment/pending",
@@ -108,6 +113,7 @@ export const API_ROUTES = {
 		getReceiptsById: (id: string) => `/receipt/${id}`,
 		generateReceipt: "/generate-receipt",
 		sendToEmail: (id: string) => `/receipt/${id}/email`,
+		trackDownload: (id: string) => `/receipt/${id}/track-download`,
 	},
 	analytics: {
 		getAnalyticsOverview: "/analytics",

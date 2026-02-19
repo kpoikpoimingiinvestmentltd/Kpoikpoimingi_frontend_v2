@@ -4,12 +4,13 @@ import UserForm from "./UserForm";
 import React from "react";
 import SuccessModal from "@/components/common/SuccessModal";
 import { useState } from "react";
-import PageWrapper from "../../components/common/PageWrapper";
+import { useQueryClient } from "@tanstack/react-query";
 import { useCreateUser } from "@/api/user";
 import { toast } from "sonner";
 import { useNavigate } from "react-router";
 import { _router } from "../../routes/_router";
 import { formatPhoneNumber } from "@/lib/utils";
+import PageWrapper from "../../components/common/PageWrapper";
 
 type FormShape = {
 	fullName?: string;
@@ -47,6 +48,7 @@ export default function AddNewUser() {
 	const [mediaKey, setMediaKey] = useState<string | undefined>();
 	const [userAddedOpen, setUserAddedOpen] = useState(false);
 	const [generatedPassword, setGeneratedPassword] = useState("");
+	const queryClient = useQueryClient();
 
 	function update(key: keyof FormShape, value: unknown) {
 		setForm((s) => ({ ...s, [key]: value }));
@@ -166,6 +168,9 @@ export default function AddNewUser() {
 										console.error("Failed to copy password", err);
 										toast.error("Failed to copy password");
 									}
+									// Refetch users list after password is copied
+									queryClient.invalidateQueries({ queryKey: ["users"] });
+									setUserAddedOpen(false);
 									setTimeout(() => navigate(_router.dashboard.users), 300);
 								},
 								variant: "primary",

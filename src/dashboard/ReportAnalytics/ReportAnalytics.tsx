@@ -1,5 +1,7 @@
 import { useDispatch, useSelector } from "react-redux";
 import { useState } from "react";
+import React from "react";
+import { useSearchParams } from "react-router";
 import type { RootState } from "@/store";
 import {
 	setTab,
@@ -43,6 +45,8 @@ import { TableSkeleton } from "@/components/common/Skeleton";
 
 export default function ReportAnalytics() {
 	const dispatch = useDispatch();
+	const [searchParams, setSearchParams] = useSearchParams();
+
 	const {
 		tab,
 		vatPage,
@@ -62,6 +66,126 @@ export default function ReportAnalytics() {
 		penaltySortOrder,
 	} = useSelector((state: RootState) => state.reportAnalytics);
 
+	// Initialize URL params on mount and restore Redux state from URL
+	React.useEffect(() => {
+		const hasParams = searchParams.has("tab") || searchParams.has("vatPage") || searchParams.has("penaltyPage");
+
+		// Get values from URL or use defaults
+		const urlTabRaw = searchParams.get("tab") || "vat";
+		const urlTab = urlTabRaw === "vat" || urlTabRaw === "interest" ? urlTabRaw : "vat";
+		const urlVatPage = parseInt(searchParams.get("vatPage") || "1", 10);
+		const urlPenaltyPage = parseInt(searchParams.get("penaltyPage") || "1", 10);
+		const urlIncomePeriod = searchParams.get("incomePeriod") || "daily";
+		const urlVatPeriod = searchParams.get("vatPeriod") || "daily";
+		const urlPenaltyPeriod = searchParams.get("penaltyPeriod") || "daily";
+		const urlVatLimit = parseInt(searchParams.get("vatLimit") || "10", 10);
+		const urlVatSortBy = searchParams.get("vatSortBy") || "createdAt";
+		const urlVatSortOrder = searchParams.get("vatSortOrder") || "desc";
+		const urlVatFromDate = searchParams.get("vatFromDate") || null;
+		const urlVatToDate = searchParams.get("vatToDate") || null;
+		const urlIsFilterApplied = searchParams.has("vatFromDate") || searchParams.has("vatToDate");
+		const urlPenaltyLimit = parseInt(searchParams.get("penaltyLimit") || "10", 10);
+		const urlPenaltySortBy = searchParams.get("penaltySortBy") || "createdAt";
+		const urlPenaltySortOrder = searchParams.get("penaltySortOrder") || "desc";
+		const urlPenaltySearch = searchParams.get("penaltySearch") || "";
+
+		// Dispatch to Redux to restore state
+		dispatch(setTab(urlTab as "vat" | "interest"));
+		dispatch(setVatPage(urlVatPage));
+		dispatch(setPenaltyPage(urlPenaltyPage));
+		dispatch(setIncomePeriod(urlIncomePeriod));
+		dispatch(setVatPeriod(urlVatPeriod));
+		dispatch(setPenaltyPeriod(urlPenaltyPeriod));
+		dispatch(setVatLimit(urlVatLimit));
+		dispatch(setVatSortBy(urlVatSortBy));
+		dispatch(setVatSortOrder(urlVatSortOrder as "asc" | "desc"));
+		dispatch(setVatFromDate(urlVatFromDate));
+		dispatch(setVatToDate(urlVatToDate));
+		dispatch(setIsFilterApplied(urlIsFilterApplied));
+		dispatch(setPenaltyLimit(urlPenaltyLimit));
+		dispatch(setPenaltySortBy(urlPenaltySortBy));
+		dispatch(setPenaltySortOrder(urlPenaltySortOrder as "asc" | "desc"));
+		dispatch(setPenaltySearch(urlPenaltySearch));
+
+		// If no params exist, set defaults in URL
+		if (!hasParams) {
+			const params = new URLSearchParams();
+			params.set("tab", urlTab);
+			params.set("vatPage", String(urlVatPage));
+			params.set("penaltyPage", String(urlPenaltyPage));
+			params.set("incomePeriod", urlIncomePeriod);
+			params.set("vatPeriod", urlVatPeriod);
+			params.set("penaltyPeriod", urlPenaltyPeriod);
+			params.set("vatLimit", String(urlVatLimit));
+			params.set("vatSortBy", urlVatSortBy);
+			params.set("vatSortOrder", urlVatSortOrder);
+			params.set("penaltyLimit", String(urlPenaltyLimit));
+			params.set("penaltySortBy", urlPenaltySortBy);
+			params.set("penaltySortOrder", urlPenaltySortOrder);
+			setSearchParams(params);
+		}
+	}, []);
+
+	// Sync tab with URL
+	const urlTab = searchParams.get("tab") || "vat";
+	React.useEffect(() => {
+		if (urlTab !== tab) {
+			const params = new URLSearchParams(searchParams);
+			params.set("tab", tab);
+			setSearchParams(params);
+		}
+	}, [tab]);
+
+	// Sync pagination with URL
+	React.useEffect(() => {
+		const params = new URLSearchParams(searchParams);
+		params.set("vatPage", String(vatPage));
+		params.set("penaltyPage", String(penaltyPage));
+		setSearchParams(params);
+	}, [vatPage, penaltyPage]);
+
+	// Sync periods with URL
+	React.useEffect(() => {
+		const params = new URLSearchParams(searchParams);
+		params.set("incomePeriod", incomePeriod);
+		params.set("vatPeriod", vatPeriod);
+		params.set("penaltyPeriod", penaltyPeriod);
+		setSearchParams(params);
+	}, [incomePeriod, vatPeriod, penaltyPeriod]);
+
+	// Sync VAT filters with URL
+	React.useEffect(() => {
+		const params = new URLSearchParams(searchParams);
+		params.set("vatLimit", String(vatLimit));
+		params.set("vatSortBy", vatSortBy);
+		params.set("vatSortOrder", vatSortOrder);
+		if (vatFromDate) {
+			params.set("vatFromDate", vatFromDate);
+		} else {
+			params.delete("vatFromDate");
+		}
+		if (vatToDate) {
+			params.set("vatToDate", vatToDate);
+		} else {
+			params.delete("vatToDate");
+		}
+		setSearchParams(params);
+	}, [vatLimit, vatSortBy, vatSortOrder, vatFromDate, vatToDate]);
+
+	// Sync Penalty filters with URL
+	React.useEffect(() => {
+		const params = new URLSearchParams(searchParams);
+		params.set("penaltyLimit", String(penaltyLimit));
+		params.set("penaltySortBy", penaltySortBy);
+		params.set("penaltySortOrder", penaltySortOrder);
+		if (penaltySearch) {
+			params.set("penaltySearch", penaltySearch);
+		} else {
+			params.delete("penaltySearch");
+		}
+		setSearchParams(params);
+	}, [penaltyLimit, penaltySortBy, penaltySortOrder, penaltySearch]);
+
 	const isEmpty = false;
 	const [vatExportOpen, setVatExportOpen] = useState(false);
 	const [penaltyExportOpen, setPenaltyExportOpen] = useState(false);
@@ -79,7 +203,7 @@ export default function ReportAnalytics() {
 		isFilterApplied ? vatToDate || undefined : undefined,
 		vatSortBy,
 		vatSortOrder,
-		tab === "vat"
+		tab === "vat",
 	);
 
 	const vatRows: VATRecord[] = vatData?.data || [];
@@ -91,7 +215,7 @@ export default function ReportAnalytics() {
 		penaltySearch || undefined,
 		penaltySortBy,
 		penaltySortOrder,
-		tab === "interest"
+		tab === "interest",
 	);
 
 	const penaltyRows: PenaltyRecord[] = penaltiesData?.data || [];
@@ -318,32 +442,47 @@ export default function ReportAnalytics() {
 		{
 			id: "income",
 			title: "Total Income Earned",
-			value: (incomeData?.totalIncomeEarned || 0).toFixed(2),
+			value: (incomeData?.totalIncomeEarned || 0).toString(),
 			currency: "NGN",
 			variant: "income" as const,
 			loading: isIncomeLoading,
 			period: incomePeriod,
-			setPeriod: (period: string) => dispatch(setIncomePeriod(period)),
+			setPeriod: (period: string) => {
+				dispatch(setIncomePeriod(period));
+				const params = new URLSearchParams(searchParams);
+				params.set("incomePeriod", period);
+				setSearchParams(params);
+			},
 		},
 		{
 			id: "vat",
 			title: "Total VAT Collected",
-			value: (vatCollectedData?.totalVatCollected || 0).toFixed(2),
+			value: (vatCollectedData?.totalVatCollected || 0).toString(),
 			currency: "NGN",
 			variant: "income" as const,
 			loading: isVatCollectedLoading,
 			period: vatPeriod,
-			setPeriod: (period: string) => dispatch(setVatPeriod(period)),
+			setPeriod: (period: string) => {
+				dispatch(setVatPeriod(period));
+				const params = new URLSearchParams(searchParams);
+				params.set("vatPeriod", period);
+				setSearchParams(params);
+			},
 		},
 		{
 			id: "interest",
 			title: "Total Interest Penalties",
-			value: (interestPenaltiesData?.totalInterestPenalties || 0).toFixed(2),
+			value: (interestPenaltiesData?.totalInterestPenalties || 0).toString(),
 			currency: "NGN",
 			variant: "income" as const,
 			loading: isInterestPenaltiesLoading,
 			period: penaltyPeriod,
-			setPeriod: (period: string) => dispatch(setPenaltyPeriod(period)),
+			setPeriod: (period: string) => {
+				dispatch(setPenaltyPeriod(period));
+				const params = new URLSearchParams(searchParams);
+				params.set("penaltyPeriod", period);
+				setSearchParams(params);
+			},
 		},
 	];
 
@@ -382,8 +521,8 @@ export default function ReportAnalytics() {
 			<CustomCard className="flex min-h-96 flex-col gap-y-6 md:p-8">
 				{!isEmpty ? (
 					<div className="flex flex-col gap-y-6">
-						<CustomCard className="p-4 border-0 bg-card">
-							<div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+						<CustomCard className="p-0 border-0 bg-card">
+							<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 								{stats.map((s) => (
 									<StatCard
 										key={s.id}
@@ -402,7 +541,7 @@ export default function ReportAnalytics() {
 							<div className="w-full">
 								<div className="flex items-center justify-between flex-wrap gap-6">
 									<div className="flex items-center gap-4">
-										<Tabs defaultValue={tab} onValueChange={(v) => dispatch(setTab(v as "vat" | "interest"))}>
+										<Tabs value={tab} onValueChange={(v) => dispatch(setTab(v as "vat" | "interest"))}>
 											<TabsList className={tabListStyle}>
 												<TabsTrigger className={tabStyle} value="vat">
 													VAT Collected
@@ -434,12 +573,12 @@ export default function ReportAnalytics() {
 															vatSortOrder: vatSortOrder,
 															vatFromDate: vatFromDate || "",
 															vatToDate: vatToDate || "",
-													  }
+														}
 													: {
 															penaltyLimit: String(penaltyLimit),
 															penaltySortBy: penaltySortBy,
 															penaltySortOrder: penaltySortOrder,
-													  }
+														}
 											}
 											onApply={tab === "vat" ? handleVATFilterApply : handlePenaltyFilterApply}
 											onReset={tab === "vat" ? handleVATFilterReset : handlePenaltyFilterReset}
@@ -447,19 +586,21 @@ export default function ReportAnalytics() {
 									</div>
 								</div>
 
-								{/* <div className="mt-6 rounded-md bg-[#F3FBFF] p-4"> */}
-								{/* <div className="flex flex-col justify-between">
-										<div className="text-sm flex gap-3 items-center flex-wrap text-gray-500">
-											<span>{tab === "vat" ? "Total VAT Amount" : "Total Penalties Amount"}</span>
-											{tab === "vat" && isFilterApplied && vatFromDate && vatToDate && (
-												<span className="text-xs">
-													From {vatFromDate} To {vatToDate}
-												</span>
-											)}
+								{tab === "vat" && (
+									<CustomCard className="mt-6 rounded-md dark:bg-neutral-800 bg-[#F3FBFF] p-4">
+										<div className="flex flex-col justify-between">
+											<div className="text-sm flex gap-3 items-center flex-wrap">
+												<span className=" text-gray-500 dark:text-gray-200">Total VAT Amount</span>
+												{isFilterApplied && vatFromDate && vatToDate && (
+													<span className="text-xs">
+														From {vatFromDate} To {vatToDate}
+													</span>
+												)}
+											</div>
+											<div className="mt-3 text-2xl font-medium">NGN {(vatData?.totals?.totalVatAmount || 0).toLocaleString()}</div>
 										</div>
-										<div className="mt-3 text-2xl font-medium">NGN 50,000,000</div>
-									</div> */}
-								{/* </div> */}
+									</CustomCard>
+								)}
 
 								<CustomCard className="mt-4 bg-card p-3">
 									{tab === "vat" ? (

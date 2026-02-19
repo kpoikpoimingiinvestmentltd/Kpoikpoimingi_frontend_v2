@@ -12,10 +12,7 @@ interface VATCollectedProps {
 
 function formatCurrency(amount: string | number): string {
 	const numAmount = typeof amount === "string" ? parseFloat(amount) : amount;
-	return new Intl.NumberFormat("en-NG", {
-		style: "currency",
-		currency: "NGN",
-	}).format(numAmount);
+	return `₦${numAmount.toLocaleString()}`;
 }
 
 function formatDate(dateString: string): string {
@@ -57,13 +54,13 @@ export default function VATCollected({ rows, page, pages, onPageChange }: VATCol
 					</TableHeader>
 					<TableBody>
 						{rows.map((row: VATRecord) => (
-							<TableRow key={row.id} className="hover:bg-[#F6FBFF]">
-								<TableCell className="text-[#13121266] py-4">{row.contract.contractCode}</TableCell>
-								<TableCell className="text-[#13121266] py-4">{row.customer.fullName}</TableCell>
-								<TableCell className="text-[#13121266] py-4">{formatCurrency(row.amount)}</TableCell>
-								<TableCell className="text-[#13121266] py-4">{formatCurrency(row.vatAmount)}</TableCell>
-								<TableCell className="text-[#13121266] py-4">{formatPercentage(row.vatRate)}</TableCell>
-								<TableCell className="text-[#13121266] py-4">{formatDate(row.createdAt)}</TableCell>
+							<TableRow key={row.id} className="hover:bg-[#F6FBFF] dark:hover:bg-neutral-900/50">
+								<TableCell className="py-4">{row.contract.contractCode}</TableCell>
+								<TableCell className="py-4">{row.customer.fullName}</TableCell>
+								<TableCell className="py-4">{formatCurrency(row.amount)}</TableCell>
+								<TableCell className="py-4">{formatCurrency(row.vatAmount)}</TableCell>
+								<TableCell className="py-4">{formatPercentage(row.vatRate)}</TableCell>
+								<TableCell className="py-4">{formatDate(row.createdAt)}</TableCell>
 							</TableRow>
 						))}
 					</TableBody>

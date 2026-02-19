@@ -45,6 +45,7 @@ export default function AddCustomer() {
 					<CustomerForm
 						paymentMethod={paymentMethod === "once" || paymentMethod === "installment" ? (paymentMethod as "once" | "installment") : undefined}
 						selectedProperties={selectedProperties}
+						showSignedContract={paymentMethod === "installment"}
 					/>
 				</div>
 			</CustomCard>

@@ -19,6 +19,7 @@ export interface GuarantorData {
 	phoneNumber: string;
 	companyAddress: string;
 	homeAddress: string;
+	employerName?: string;
 	email: string;
 	guarantorAgreement: string;
 	guarantorAgreementAt: string;
@@ -168,6 +169,7 @@ export interface InstallmentPaymentForm {
 		email: string;
 		employmentStatus: string;
 		homeAddress: string;
+		employerName?: string;
 		businessAddress: string;
 		stateOfOrigin: string;
 		votersUploaded: number;

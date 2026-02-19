@@ -16,7 +16,7 @@ export function useCustomerFormState(
 		price: string;
 		quantity: number;
 		media?: string[];
-	}>
+	}>,
 ) {
 	const initializeFormState = (): FormState => {
 		if (initial) {
@@ -105,6 +105,7 @@ export function useCustomerFormState(
 					email: "",
 					employmentStatus: "",
 					homeAddress: "",
+					employerName: "",
 					businessAddress: "",
 					stateOfOrigin: "",
 					votersUploaded: 0,
@@ -117,6 +118,7 @@ export function useCustomerFormState(
 					email: "",
 					employmentStatus: "",
 					homeAddress: "",
+					employerName: "",
 					businessAddress: "",
 					stateOfOrigin: "",
 					votersUploaded: 0,
@@ -262,6 +264,7 @@ export function useCustomerFormState(
 						email: "",
 						employmentStatus: "",
 						homeAddress: "",
+						employerName: "",
 						businessAddress: "",
 						stateOfOrigin: "",
 						votersUploaded: 0,
@@ -274,6 +277,7 @@ export function useCustomerFormState(
 						email: "",
 						employmentStatus: "",
 						homeAddress: "",
+						employerName: "",
 						businessAddress: "",
 						stateOfOrigin: "",
 						votersUploaded: 0,

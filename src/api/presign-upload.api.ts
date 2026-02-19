@@ -2,8 +2,7 @@ import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { store } from "@/store";
 import type { PresignUploadRequest, PresignUploadResponse } from "@/types/media";
 
-// Placeholder baseUrl - adjust as needed
-const baseUrl = "/api";
+const baseUrl = (import.meta as any).env?.VITE_API_URL ?? "/api";
 
 export const presignUploadApi = createApi({
 	reducerPath: "presignUploadApi",

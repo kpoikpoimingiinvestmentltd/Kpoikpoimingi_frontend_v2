@@ -7,7 +7,7 @@ import ActionButton from "@/components/base/ActionButton";
 import ImageGallery from "@/components/base/ImageGallery";
 import { Textarea } from "@/components/ui/textarea";
 import { media } from "@/resources/images";
-import { inputStyle, modalContentStyle, radioStyle } from "../../components/common/commonStyles";
+import { inputStyle, labelStyle, modalContentStyle, radioStyle } from "../../components/common/commonStyles";
 import { useGetAllCategories } from "@/api/categories";
 import { usePresignUploadMutation } from "@/api/presign-upload.api";
 import { uploadFileToPresignedUrl } from "@/utils/media-upload";
@@ -218,6 +218,7 @@ export default function EditPropertyDetailsModal({ open, onOpenChange, initial, 
 							mode="upload"
 							uploadButtonPosition="top-right"
 							thumbVariant="dashed"
+							placeholderText="Upload property image(s)"
 							thumbBg="bg-primary/10"
 							onChange={handleImageUpload}
 							isUploading={isUploadingImages}
@@ -236,7 +237,7 @@ export default function EditPropertyDetailsModal({ open, onOpenChange, initial, 
 
 						{/* Property Type - Public or Private */}
 						<div>
-							<label className="block text-sm font-medium text-gray-700 mb-4">Property Type*</label>
+							<label className={labelStyle()}>Property Type*</label>
 							<RadioGroup
 								value={form.isPublic ? "true" : "false"}
 								onValueChange={(val) => handleChange("isPublic")(val === "true")}
@@ -259,7 +260,7 @@ export default function EditPropertyDetailsModal({ open, onOpenChange, initial, 
 						{/* Category and Sub Category */}
 						<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 							<div>
-								<label className="block text-sm font-medium text-gray-700 mb-2">Property Category*</label>
+								<label className={labelStyle()}>Property Category*</label>
 								<Select
 									value={selectedParentCategory?.id || ""}
 									onValueChange={(value) => {
@@ -286,7 +287,7 @@ export default function EditPropertyDetailsModal({ open, onOpenChange, initial, 
 							</div>
 
 							<div>
-								<label className="block text-sm font-medium text-gray-700 mb-2">Sub Category*</label>
+								<label className={labelStyle()}>Sub Category*</label>
 								<Select
 									value={form.categoryId}
 									onValueChange={(value) => {
@@ -451,7 +452,7 @@ export default function EditPropertyDetailsModal({ open, onOpenChange, initial, 
 
 						{/* Description */}
 						<div>
-							<label className="block text-sm font-medium text-gray-700 mb-2">Description*</label>
+							<label className={labelStyle()}>Description*</label>
 							<Textarea
 								value={form.description}
 								onChange={(e) => handleChange("description")(e.target.value)}

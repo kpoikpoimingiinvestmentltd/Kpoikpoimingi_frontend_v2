@@ -10,11 +10,23 @@ import VatInterest from "./VatInterest";
 import { tabListStyle, tabStyle } from "../../components/common/commonStyles";
 import LogoutModal from "../../components/common/LogoutModal";
 import PageWrapper from "../../components/common/PageWrapper";
+import { useSearchParams } from "react-router";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 export default function Setting() {
+	const [searchParams, setSearchParams] = useSearchParams();
 	const [editOpen, setEditOpen] = useState(false);
 	const [changePassOpen, setChangePassOpen] = useState(false);
 	const [logoutOpen, setLogoutOpen] = useState(false);
+	const { data: user } = useCurrentUser();
+
+	const activeTab = user?.role?.role !== "SUPER_ADMIN" && searchParams.get("tab") === "vat" ? "profile" : searchParams.get("tab") || "profile";
+
+	const handleTabChange = (value: string) => {
+		const params = new URLSearchParams(searchParams);
+		params.set("tab", value);
+		setSearchParams(params);
+	};
 
 	return (
 		<PageWrapper>
@@ -43,14 +55,16 @@ export default function Setting() {
 			</div>
 
 			<CustomCard className="p-5 sm:p-6 mt-8 border-0">
-				<Tabs defaultValue="profile">
+				<Tabs value={activeTab} onValueChange={handleTabChange}>
 					<TabsList className={tabListStyle}>
 						<TabsTrigger value="profile" className={tabStyle}>
 							Profile
 						</TabsTrigger>
-						<TabsTrigger value="vat" className={tabStyle}>
-							VAT & Interest
-						</TabsTrigger>
+						{user?.role?.role === "SUPER_ADMIN" && (
+							<TabsTrigger value="vat" className={tabStyle}>
+								VAT & Interest
+							</TabsTrigger>
+						)}
 						{/* <TabsTrigger value="terms" className={tabStyle}>
 							Terms & Conditions
 						</TabsTrigger> */}
@@ -60,9 +74,11 @@ export default function Setting() {
 						<Profile />
 					</TabsContent>
 
-					<TabsContent value="vat">
-						<VatInterest />
-					</TabsContent>
+					{user?.role?.role === "SUPER_ADMIN" && (
+						<TabsContent value="vat">
+							<VatInterest />
+						</TabsContent>
+					)}
 
 					{/* <TabsContent value="terms">
 						<TermsAndConditions />

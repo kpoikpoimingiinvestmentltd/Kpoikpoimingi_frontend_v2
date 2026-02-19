@@ -50,7 +50,7 @@ export default function SendEmailModal({ open, onOpenChange, customers = [], onS
 		(err: unknown) => {
 			console.error("Error sending specific email:", err);
 			toast.error(extractErrorMessage(err, "Failed to send email"));
-		}
+		},
 	);
 
 	const sendBroadcastMutation = useSendEmailBroadcast(
@@ -65,18 +65,17 @@ export default function SendEmailModal({ open, onOpenChange, customers = [], onS
 		(err: unknown) => {
 			console.error("Error sending broadcast email:", err);
 			toast.error(extractErrorMessage(err, "Failed to send broadcast email"));
-		}
+		},
 	);
 
 	const handleSelectEmail = (email: string) => {
-		if (!selectedEmails.includes(email)) {
-			setSelectedEmails([...selectedEmails, email]);
-		}
+		setSelectedEmails((prev) => (prev.includes(email) ? prev : [...prev, email]));
 		setShowEmailDropdown(false);
 	};
 
 	const handleRemoveEmail = (email: string) => {
-		setSelectedEmails(selectedEmails.filter((e) => e !== email));
+		setSelectedEmails((prev) => prev.filter((e) => e !== email));
+		setShowEmailDropdown(false);
 	};
 
 	const resetForm = () => {
@@ -156,8 +155,23 @@ export default function SendEmailModal({ open, onOpenChange, customers = [], onS
 								<div className="mt-6">
 									{/* Specific Customers Tab */}
 									<TabsContent value="specific" className="space-y-4">
-										<div>
+										<div className="relative">
 											<label className={labelStyle()}>User Email Addresses*</label>
+											{selectedEmails.length > 0 && (
+												<button
+													type="button"
+													onPointerDown={(e) => {
+														e.stopPropagation();
+														e.preventDefault();
+													}}
+													onClick={() => {
+														setSelectedEmails([]);
+														setShowEmailDropdown(false);
+													}}
+													className="absolute right-2 top-1 text-sm text-rose-600 hover:text-rose-700">
+													Remove all
+												</button>
+											)}
 											<div className="relative">
 												<DropdownMenu open={showEmailDropdown} onOpenChange={setShowEmailDropdown}>
 													<DropdownMenuTrigger asChild>
@@ -165,20 +179,29 @@ export default function SendEmailModal({ open, onOpenChange, customers = [], onS
 															{selectedEmails.length === 0 ? (
 																<span className="text-stone-400 text-sm">Select email addresses</span>
 															) : (
-																selectedEmails.map((email) => (
-																	<div key={email} className="bg-primary/20 text-primary px-2 py-1 rounded text-xs flex items-center gap-2">
-																		{email}
-																		<button
-																			type="button"
-																			onClick={(e) => {
-																				e.stopPropagation();
-																				handleRemoveEmail(email);
-																			}}
-																			className="text-primary hover:text-primary/80">
-																			×
-																		</button>
+																<>
+																	<div className="flex flex-wrap items-center gap-2">
+																		{selectedEmails.map((email) => (
+																			<div key={email} className="bg-primary/20 text-primary px-2 py-1 rounded text-xs flex items-center gap-2">
+																				{email}
+																				<button
+																					type="button"
+																					onPointerDown={(e) => {
+																						e.stopPropagation();
+																						e.preventDefault();
+																					}}
+																					onClick={(e) => {
+																						e.stopPropagation();
+																						handleRemoveEmail(email);
+																					}}
+																					className="text-primary hover:text-primary/80">
+																					×
+																				</button>
+																			</div>
+																		))}
 																	</div>
-																))
+																	{/** Remove all button moved outside the trigger to keep it always visible */}
+																</>
 															)}
 														</div>
 													</DropdownMenuTrigger>

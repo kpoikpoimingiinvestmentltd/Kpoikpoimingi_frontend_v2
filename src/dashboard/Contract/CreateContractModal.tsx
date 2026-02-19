@@ -9,7 +9,8 @@ import { Spinner } from "@/components/ui/spinner";
 import { useForm, Controller } from "react-hook-form";
 import { useQueryClient } from "@tanstack/react-query";
 import ConfirmModal from "@/components/common/ConfirmModal";
-import { useCreateContract, useGetAllCustomerRegistrations } from "@/api/contracts";
+import { useCreateContract } from "@/api/contracts";
+import { useGetApprovedRegistrations } from "@/api/customer-registration";
 import ContractSuccessModal from "./ContractSuccessModal";
 import CustomInput from "../../components/base/CustomInput";
 import { CalendarIcon } from "../../assets/icons";
@@ -24,26 +25,29 @@ import type { ContractPayload } from "@/types/contracts";
 export default function CreateContractModal({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
 	const [showSuccess, setShowSuccess] = React.useState(false);
 	const [generatedLink, setGeneratedLink] = React.useState<string>("");
+	const [isPaymentLink, setIsPaymentLink] = React.useState(false);
 	const [selectedCustomerData, setSelectedCustomerData] = React.useState<Registration | null>(null);
 	const [searchQuery, setSearchQuery] = React.useState("");
 
-	const registrationsQuery = useGetAllCustomerRegistrations(open) as { data?: { data?: Registration[] } | Registration[] };
+	const registrationsQuery = useGetApprovedRegistrations(1, 1000, searchQuery, undefined, undefined, open);
+
+	React.useEffect(() => {
+		if (registrationsQuery.data) {
+			console.log("Approved Registrations Response:", registrationsQuery.data);
+		}
+	}, [registrationsQuery.data]);
+
 	const registrations = registrationsQuery?.data;
 
-	const filteredRegistrations = React.useMemo<Registration[]>(() => {
+	const filteredRegistrations = React.useMemo<any[]>(() => {
 		if (!registrations) return [];
-		const list: Registration[] = Array.isArray(registrations)
-			? (registrations as Registration[])
-			: Array.isArray((registrations as { data?: Registration[] }).data)
-			? ((registrations as { data?: Registration[] }).data as Registration[])
-			: [];
+		const list = (registrations as any)?.data || [];
 
-		const currentRegistrations = list.filter((reg) => reg?.isCurrent === true);
-		if (!searchQuery.trim()) return currentRegistrations;
-		return currentRegistrations.filter((reg) =>
-			String(reg.fullName || "")
+		if (!searchQuery.trim()) return list;
+		return list.filter((registration: any) =>
+			String(registration.customer?.fullName || "")
 				.toLowerCase()
-				.includes(searchQuery.toLowerCase())
+				.includes(searchQuery.toLowerCase()),
 		);
 	}, [registrations, searchQuery]);
 
@@ -82,11 +86,18 @@ export default function CreateContractModal({ open, onOpenChange }: { open: bool
 			};
 		}
 
-		const propertyInterest = selectedCustomerData?.propertyInterestRequest?.[0];
+		const registration = selectedCustomerData as any;
+		const propertyInterest = registration?.propertyInterestRequest?.[0];
+		const customer = registration?.customer;
+
+		console.log("Selected registration:", registration);
+		console.log("Customer:", customer);
+		console.log("Property interest:", propertyInterest);
+
 		return {
-			customerId: selectedCustomerData.customerId,
+			customerId: customer?.id || "",
 			propertyId: propertyInterest?.propertyId || "",
-			paymentTypeId: String(selectedCustomerData.paymentTypeId || 1),
+			paymentTypeId: String(registration?.paymentType?.id || 1),
 			quantity: propertyInterest?.quantity || 1,
 			downPayment: Number(propertyInterest?.downPayment || 0),
 			intervalId: String(propertyInterest?.paymentIntervalId || ""),
@@ -140,12 +151,16 @@ export default function CreateContractModal({ open, onOpenChange }: { open: bool
 	}, [open, setValue]);
 
 	React.useEffect(() => {
-		reset(getDefaultValues());
+		const defaults = getDefaultValues();
+		console.log("Resetting form with defaults:", defaults);
+		reset(defaults);
 	}, [selectedCustomerData, reset]);
 
 	React.useEffect(() => {
 		if (paymentTypeId === "2" && selectedCustomerData) {
-			const propertyInterest = selectedCustomerData?.propertyInterestRequest?.[0] as Record<string, unknown> | undefined;
+			const registration = selectedCustomerData as any;
+			const propertyInterest = registration?.propertyInterestRequest?.[0] as Record<string, unknown> | undefined;
+
 			if (propertyInterest) {
 				let propertyPrice = 0;
 
@@ -262,12 +277,13 @@ export default function CreateContractModal({ open, onOpenChange }: { open: bool
 				typeof r.message === "string"
 					? r.message
 					: typeof (r.data as Record<string, unknown>)?.message === "string"
-					? (r.data as Record<string, unknown>).message
-					: "Contract created successfully";
+						? (r.data as Record<string, unknown>).message
+						: "Contract created successfully";
 			try {
 				toast.success(String(successMsg));
 			} catch {}
 			setGeneratedLink(linkStr);
+			setIsPaymentLink(previewPayload?.isPaymentLink ?? false);
 			setConfirmOpen(false);
 			onOpenChange(false);
 			setSelectedCustomerData(null);
@@ -279,7 +295,7 @@ export default function CreateContractModal({ open, onOpenChange }: { open: bool
 		(err: unknown) => {
 			const msg = extractErrorMessage(err, "Failed to create contract");
 			toast.error(msg);
-		}
+		},
 	);
 
 	return (
@@ -291,302 +307,302 @@ export default function CreateContractModal({ open, onOpenChange }: { open: bool
 						<DialogClose />
 					</DialogHeader>
 
-					<form
-						onSubmit={rhfHandleSubmit(onFormSubmit)}
-						className="grid max-w-2xl mx-auto grid-cols-1 md:grid-cols-2 gap-4 md:gap-x-8 md:gap-y-5 py-4">
-						{/* Customer Selection */}
-						<div className="w-full">
-							<Label className={labelStyle()}>Full name*</Label>
+					<form onSubmit={rhfHandleSubmit(onFormSubmit)} className="w-full block">
+						<div className="w-full grid grid-cols-[1fr_1fr] gap-4 md:gap-x-8 md:gap-y-5 py-4">
+							{/* Customer Selection */}
+							<div className="w-full">
+								<Label className={labelStyle()}>Full name*</Label>
+								<Controller
+									control={control}
+									name="customerId"
+									render={({ field }) => (
+										<Select
+											onValueChange={(v) => {
+												field.onChange(v);
+												const val = v as string;
+												const selected = filteredRegistrations.find((reg: any) => reg.customer?.id === val) ?? null;
+												setSelectedCustomerData(selected);
+											}}
+											value={String(field.value)}>
+											<SelectTrigger className={selectTriggerStyle("text-sm w-full min-w-0")}>
+												<SelectValue placeholder="Search customer" />
+											</SelectTrigger>
+											<SelectContent>
+												<div className="p-1.5">
+													<CustomInput
+														placeholder="Search by name"
+														className={inputStyle}
+														value={searchQuery}
+														onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
+													/>
+												</div>
+												{filteredRegistrations && filteredRegistrations.length > 0
+													? filteredRegistrations.map((registration: any) => (
+															<SelectItem className="cursor-pointer" key={String(registration.id)} value={String(registration.customer?.id)}>
+																{String(registration.customer?.fullName ?? "")}
+															</SelectItem>
+														))
+													: searchQuery && <div className="p-3 text-center text-sm text-gray-500">No customers found</div>}
+											</SelectContent>
+										</Select>
+									)}
+								/>
+							</div>
+
+							{/* Payment Type */}
+							<div className="w-full">
+								<Label className={labelStyle()}>Payment Type*</Label>
+								<Controller
+									control={control}
+									name="paymentTypeId"
+									render={({ field }) => (
+										<Select onValueChange={field.onChange} value={field.value}>
+											<SelectTrigger className={selectTriggerStyle("w-full")}>
+												<SelectValue placeholder="Select payment type" />
+											</SelectTrigger>
+											<SelectContent>
+												<SelectItem value="1">Hire Purchase</SelectItem>
+												<SelectItem value="2">Full Payment</SelectItem>
+											</SelectContent>
+										</Select>
+									)}
+								/>
+							</div>
+
+							{/* Hire Purchase Fields */}
+							{paymentTypeId === "1" && (
+								<>
+									{/* Quantity */}
+									<Controller
+										control={control}
+										name="quantity"
+										render={({ field }) => (
+											<CustomInput
+												label="Quantity"
+												type="number"
+												min="1"
+												value={String(field.value)}
+												onChange={(e) => field.onChange(Number(e.target.value))}
+											/>
+										)}
+									/>
+
+									{/* Payment Interval */}
+									<div className="w-full">
+										<Label className={labelStyle()}>Payment Interval*</Label>
+										<Controller
+											control={control}
+											name="intervalId"
+											render={({ field }) => (
+												<Select onValueChange={field.onChange} value={field.value}>
+													<SelectTrigger className={selectTriggerStyle()}>
+														<SelectValue placeholder="Select interval" />
+													</SelectTrigger>
+													<SelectContent>
+														{refLoading ? (
+															<div className="p-3 text-center">
+																<Spinner className="size-4" />
+															</div>
+														) : intervalCandidates.length === 0 ? (
+															<>
+																<SelectItem value="2">Monthly</SelectItem>
+																<SelectItem value="1">Weekly</SelectItem>
+															</>
+														) : (
+															intervalCandidates.map((it) => (
+																<SelectItem key={it.key} value={it.key}>
+																	{it.value}
+																</SelectItem>
+															))
+														)}
+													</SelectContent>
+												</Select>
+											)}
+										/>
+									</div>
+
+									{/* Duration Unit */}
+									<div className="w-full">
+										<Label className={labelStyle()}>Duration Unit*</Label>
+										<Controller
+											control={control}
+											name="durationUnitId"
+											render={({ field }) => (
+												<Select onValueChange={field.onChange} value={field.value}>
+													<SelectTrigger className={selectTriggerStyle()}>
+														<SelectValue placeholder="Select unit" />
+													</SelectTrigger>
+													<SelectContent>
+														{refLoading ? (
+															<div className="p-3 text-center">
+																<Spinner className="size-4" />
+															</div>
+														) : durationCandidates.length === 0 ? (
+															<SelectItem value="3">Months</SelectItem>
+														) : (
+															durationCandidates.map((it) => (
+																<SelectItem key={it.key} value={it.key}>
+																	{it.value}
+																</SelectItem>
+															))
+														)}
+													</SelectContent>
+												</Select>
+											)}
+										/>
+									</div>
+
+									{/* Duration Value */}
+									<div className="w-full">
+										<Label className={labelStyle()}>
+											{(() => {
+												const sel = intervalCandidates.find((it) => String(it.key) === String(watchedIntervalId));
+												const weekly = Boolean(sel && String(sel.value).toUpperCase().includes("WEEK"));
+												return weekly ? "For How Many Weeks*" : "For How Many Months*";
+											})()}
+										</Label>
+										<Controller
+											control={control}
+											name="durationValue"
+											render={({ field }) => (
+												<Select onValueChange={(v) => field.onChange(Number(v))} value={field.value != null ? String(field.value) : ""}>
+													<SelectTrigger className={selectTriggerStyle()}>
+														<SelectValue placeholder="Select duration" />
+													</SelectTrigger>
+													<SelectContent>
+														{(() => {
+															const sel = intervalCandidates.find((it) => String(it.key) === String(watchedIntervalId));
+															const weekly = Boolean(sel && String(sel.value).toUpperCase().includes("WEEK"));
+															const opts = weekly ? Array.from({ length: 52 }, (_, i) => i + 1) : Array.from({ length: 12 }, (_, i) => i + 1);
+															return opts.map((n) => (
+																<SelectItem key={n} value={String(n)}>
+																	{n} {weekly ? (n !== 1 ? "weeks" : "week") : `month${n !== 1 ? "s" : ""}`}
+																</SelectItem>
+															));
+														})()}
+													</SelectContent>
+												</Select>
+											)}
+										/>
+									</div>
+
+									{/* Down Payment */}
+									<Controller
+										control={control}
+										name="downPayment"
+										render={({ field }) => (
+											<CustomInput
+												label="Amount available for down payment"
+												type="number"
+												min="0"
+												value={String(field.value)}
+												onChange={(e) => field.onChange(Number(e.target.value))}
+											/>
+										)}
+									/>
+
+									{/* Payment Method */}
+									<div className="col-span-2">
+										<Label className={labelStyle()}>Payment Method*</Label>
+										<Controller
+											control={control}
+											name="paymentMethod"
+											render={({ field }) => (
+												<RadioGroup value={field.value} onValueChange={field.onChange} className="flex items-center gap-6 mt-2">
+													<div className="flex items-center space-x-2">
+														<RadioGroupItem value="link" id="link" className={radioStyle} />
+														<Label htmlFor="link" className="text-sm cursor-pointer">
+															Generate Payment Link
+														</Label>
+													</div>
+													<div className="flex items-center space-x-2">
+														<RadioGroupItem value="cash" id="cash" className={radioStyle} />
+														<Label htmlFor="cash" className="text-sm cursor-pointer">
+															Cash Payment
+														</Label>
+													</div>
+												</RadioGroup>
+											)}
+										/>
+									</div>
+								</>
+							)}
+
+							{/* Full Payment Fields */}
+							{paymentTypeId === "2" && (
+								<>
+									{/* Down Payment for Full Payment */}
+									<Controller
+										control={control}
+										name="downPayment"
+										render={({ field }) => (
+											<CustomInput
+												label="Amount Paid"
+												type="number"
+												value={String(field.value)}
+												onChange={(e) => field.onChange(Number(e.target.value))}
+											/>
+										)}
+									/>
+
+									{/* Payment Method */}
+									<div className="col-span-2">
+										<Label className={labelStyle()}>Payment Method*</Label>
+										<Controller
+											control={control}
+											name="paymentMethod"
+											render={({ field }) => (
+												<RadioGroup value={field.value} onValueChange={field.onChange} className="flex items-center gap-6 mt-2">
+													<div className="flex items-center space-x-2">
+														<RadioGroupItem value="link" id="link-full" className={radioStyle} />
+														<Label htmlFor="link-full" className="text-sm cursor-pointer">
+															Generate Payment Link
+														</Label>
+													</div>
+													<div className="flex items-center space-x-2">
+														<RadioGroupItem value="cash" id="cash-full" className={radioStyle} />
+														<Label htmlFor="cash-full" className="text-sm cursor-pointer">
+															Cash Payment
+														</Label>
+													</div>
+												</RadioGroup>
+											)}
+										/>
+									</div>
+								</>
+							)}
+
+							{/* Start Date - Common to both */}
 							<Controller
 								control={control}
-								name="customerId"
+								name="startDate"
 								render={({ field }) => (
-									<Select
-										onValueChange={(v) => {
-											field.onChange(v);
-											const val = v as string;
-											const selected = filteredRegistrations.find((reg) => reg.customerId === val) ?? null;
-											setSelectedCustomerData(selected);
-										}}
-										value={String(field.value)}>
-										<SelectTrigger className={`${selectTriggerStyle()} text-sm`}>
-											<SelectValue placeholder="Search customer" />
-										</SelectTrigger>
-										<SelectContent>
-											<div className="p-1.5">
-												<CustomInput
-													placeholder="Search by name"
-													className={inputStyle}
-													value={searchQuery}
-													onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
-												/>
-											</div>
-											{filteredRegistrations && filteredRegistrations.length > 0
-												? filteredRegistrations.map((reg) => (
-														<SelectItem className="cursor-pointer" key={String(reg.id)} value={String(reg.customerId)}>
-															{String(reg.fullName ?? "")}
-														</SelectItem>
-												  ))
-												: searchQuery && <div className="p-3 text-center text-sm text-gray-500">No customers found</div>}
-										</SelectContent>
-									</Select>
+									<CustomInput
+										type="date"
+										iconRight={<CalendarIcon />}
+										label="Start Date"
+										value={field.value}
+										onChange={field.onChange}
+										disabled={true}
+									/>
+								)}
+							/>
+
+							{/* Remarks */}
+							<Controller
+								control={control}
+								name="remarks"
+								render={({ field }) => (
+									<CustomInput
+										label="Remarks (Optional)"
+										placeholder="Enter any additional remarks"
+										value={field.value}
+										onChange={field.onChange}
+										className="col-span-2"
+									/>
 								)}
 							/>
 						</div>
-
-						{/* Payment Type */}
-						<div className="w-full">
-							<Label className={labelStyle()}>Payment Type*</Label>
-							<Controller
-								control={control}
-								name="paymentTypeId"
-								render={({ field }) => (
-									<Select onValueChange={field.onChange} value={field.value}>
-										<SelectTrigger className={selectTriggerStyle()}>
-											<SelectValue placeholder="Select payment type" />
-										</SelectTrigger>
-										<SelectContent>
-											<SelectItem value="1">Hire Purchase</SelectItem>
-											<SelectItem value="2">Full Payment</SelectItem>
-										</SelectContent>
-									</Select>
-								)}
-							/>
-						</div>
-
-						{/* Hire Purchase Fields */}
-						{paymentTypeId === "1" && (
-							<>
-								{/* Quantity */}
-								<Controller
-									control={control}
-									name="quantity"
-									render={({ field }) => (
-										<CustomInput
-											label="Quantity"
-											type="number"
-											min="1"
-											value={String(field.value)}
-											onChange={(e) => field.onChange(Number(e.target.value))}
-										/>
-									)}
-								/>
-
-								{/* Payment Interval */}
-								<div className="w-full">
-									<Label className={labelStyle()}>Payment Interval*</Label>
-									<Controller
-										control={control}
-										name="intervalId"
-										render={({ field }) => (
-											<Select onValueChange={field.onChange} value={field.value}>
-												<SelectTrigger className={selectTriggerStyle()}>
-													<SelectValue placeholder="Select interval" />
-												</SelectTrigger>
-												<SelectContent>
-													{refLoading ? (
-														<div className="p-3 text-center">
-															<Spinner className="size-4" />
-														</div>
-													) : intervalCandidates.length === 0 ? (
-														<>
-															<SelectItem value="2">Monthly</SelectItem>
-															<SelectItem value="1">Weekly</SelectItem>
-														</>
-													) : (
-														intervalCandidates.map((it) => (
-															<SelectItem key={it.key} value={it.key}>
-																{it.value}
-															</SelectItem>
-														))
-													)}
-												</SelectContent>
-											</Select>
-										)}
-									/>
-								</div>
-
-								{/* Duration Unit */}
-								<div className="w-full">
-									<Label className={labelStyle()}>Duration Unit*</Label>
-									<Controller
-										control={control}
-										name="durationUnitId"
-										render={({ field }) => (
-											<Select onValueChange={field.onChange} value={field.value}>
-												<SelectTrigger className={selectTriggerStyle()}>
-													<SelectValue placeholder="Select unit" />
-												</SelectTrigger>
-												<SelectContent>
-													{refLoading ? (
-														<div className="p-3 text-center">
-															<Spinner className="size-4" />
-														</div>
-													) : durationCandidates.length === 0 ? (
-														<SelectItem value="3">Months</SelectItem>
-													) : (
-														durationCandidates.map((it) => (
-															<SelectItem key={it.key} value={it.key}>
-																{it.value}
-															</SelectItem>
-														))
-													)}
-												</SelectContent>
-											</Select>
-										)}
-									/>
-								</div>
-
-								{/* Duration Value */}
-								<div className="w-full">
-									<Label className={labelStyle()}>
-										{(() => {
-											const sel = intervalCandidates.find((it) => String(it.key) === String(watchedIntervalId));
-											const weekly = Boolean(sel && String(sel.value).toUpperCase().includes("WEEK"));
-											return weekly ? "For How Many Weeks*" : "For How Many Months*";
-										})()}
-									</Label>
-									<Controller
-										control={control}
-										name="durationValue"
-										render={({ field }) => (
-											<Select onValueChange={(v) => field.onChange(Number(v))} value={field.value != null ? String(field.value) : ""}>
-												<SelectTrigger className={selectTriggerStyle()}>
-													<SelectValue placeholder="Select duration" />
-												</SelectTrigger>
-												<SelectContent>
-													{(() => {
-														const sel = intervalCandidates.find((it) => String(it.key) === String(watchedIntervalId));
-														const weekly = Boolean(sel && String(sel.value).toUpperCase().includes("WEEK"));
-														const opts = weekly ? Array.from({ length: 52 }, (_, i) => i + 1) : Array.from({ length: 12 }, (_, i) => i + 1);
-														return opts.map((n) => (
-															<SelectItem key={n} value={String(n)}>
-																{n} {weekly ? (n !== 1 ? "weeks" : "week") : `month${n !== 1 ? "s" : ""}`}
-															</SelectItem>
-														));
-													})()}
-												</SelectContent>
-											</Select>
-										)}
-									/>
-								</div>
-
-								{/* Down Payment */}
-								<Controller
-									control={control}
-									name="downPayment"
-									render={({ field }) => (
-										<CustomInput
-											label="Amount available for down payment"
-											type="number"
-											min="0"
-											value={String(field.value)}
-											onChange={(e) => field.onChange(Number(e.target.value))}
-										/>
-									)}
-								/>
-
-								{/* Payment Method */}
-								<div className="col-span-2">
-									<Label className={labelStyle()}>Payment Method*</Label>
-									<Controller
-										control={control}
-										name="paymentMethod"
-										render={({ field }) => (
-											<RadioGroup value={field.value} onValueChange={field.onChange} className="flex items-center gap-6 mt-2">
-												<div className="flex items-center space-x-2">
-													<RadioGroupItem value="link" id="link" className={radioStyle} />
-													<Label htmlFor="link" className="text-sm cursor-pointer">
-														Generate Payment Link
-													</Label>
-												</div>
-												<div className="flex items-center space-x-2">
-													<RadioGroupItem value="cash" id="cash" className={radioStyle} />
-													<Label htmlFor="cash" className="text-sm cursor-pointer">
-														Cash Payment
-													</Label>
-												</div>
-											</RadioGroup>
-										)}
-									/>
-								</div>
-							</>
-						)}
-
-						{/* Full Payment Fields */}
-						{paymentTypeId === "2" && (
-							<>
-								{/* Down Payment for Full Payment */}
-								<Controller
-									control={control}
-									name="downPayment"
-									render={({ field }) => (
-										<CustomInput
-											label="Amount Paid"
-											type="number"
-											value={String(field.value)}
-											onChange={(e) => field.onChange(Number(e.target.value))}
-										/>
-									)}
-								/>
-
-								{/* Payment Method */}
-								<div className="col-span-2">
-									<Label className={labelStyle()}>Payment Method*</Label>
-									<Controller
-										control={control}
-										name="paymentMethod"
-										render={({ field }) => (
-											<RadioGroup value={field.value} onValueChange={field.onChange} className="flex items-center gap-6 mt-2">
-												<div className="flex items-center space-x-2">
-													<RadioGroupItem value="link" id="link-full" className={radioStyle} />
-													<Label htmlFor="link-full" className="text-sm cursor-pointer">
-														Generate Payment Link
-													</Label>
-												</div>
-												<div className="flex items-center space-x-2">
-													<RadioGroupItem value="cash" id="cash-full" className={radioStyle} />
-													<Label htmlFor="cash-full" className="text-sm cursor-pointer">
-														Cash Payment
-													</Label>
-												</div>
-											</RadioGroup>
-										)}
-									/>
-								</div>
-							</>
-						)}
-
-						{/* Start Date - Common to both */}
-						<Controller
-							control={control}
-							name="startDate"
-							render={({ field }) => (
-								<CustomInput
-									type="date"
-									iconRight={<CalendarIcon />}
-									label="Start Date"
-									value={field.value}
-									onChange={field.onChange}
-									disabled={true}
-								/>
-							)}
-						/>
-
-						{/* Remarks */}
-						<Controller
-							control={control}
-							name="remarks"
-							render={({ field }) => (
-								<CustomInput
-									label="Remarks (Optional)"
-									placeholder="Enter any additional remarks"
-									value={field.value}
-									onChange={field.onChange}
-									className="col-span-2"
-								/>
-							)}
-						/>
 
 						<DialogFooter className="col-span-2 mt-5">
 							<ActionButton fullWidth type="submit" disabled={!canCreate}>
@@ -618,7 +634,7 @@ export default function CreateContractModal({ open, onOpenChange }: { open: bool
 			/>
 
 			<ContractSuccessModal
-				open={showSuccess}
+				open={showSuccess && isPaymentLink}
 				onOpenChange={setShowSuccess}
 				link={generatedLink}
 				onSend={(email) => console.log("send-email", email, generatedLink)}

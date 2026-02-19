@@ -1,7 +1,6 @@
 import PageTitles from "@/components/common/PageTitles";
 import CustomInput from "@/components/base/CustomInput";
 import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { inputStyle, radioStyle } from "@/components/common/commonStyles";
@@ -18,6 +17,8 @@ import { useForm, Controller } from "react-hook-form";
 import { useCreateProperty, type PropertyFormData } from "@/api/property";
 import { useGetAllCategories } from "@/api/categories";
 import { useSearchParams } from "react-router";
+import CustomCard from "../../components/base/CustomCard";
+import ActionButton from "../../components/base/ActionButton";
 
 export default function AddProperties({ propertyRequestId, onComplete }: { propertyRequestId?: string | null; onComplete?: () => void }) {
 	const [searchParams] = useSearchParams();
@@ -71,9 +72,6 @@ export default function AddProperties({ propertyRequestId, onComplete }: { prope
 
 	const createPropertyMutation = useCreateProperty(
 		() => {
-			// If parent supplied an onComplete handler (used when AddProperties is
-			// opened as a modal from a registration), call it so the parent can
-			// close the modal. Otherwise show the local success dialog.
 			const successMsg = "Property created successfully!";
 			toast.success(successMsg);
 			// Clear form state and uploaded images/keys
@@ -100,7 +98,7 @@ export default function AddProperties({ propertyRequestId, onComplete }: { prope
 			const err = error as { message?: string };
 			const errorMsg = err?.message || "Failed to create property";
 			toast.error(errorMsg);
-		}
+		},
 	);
 
 	// Upload a single property image and return mediaKey
@@ -172,10 +170,13 @@ export default function AddProperties({ propertyRequestId, onComplete }: { prope
 		}
 
 		// Convert mediaKeys array to object with image keys
-		const mediaKeysObject = uploadedMediaKeys.reduce((acc, key, idx) => {
-			acc[`image${idx + 1}`] = key;
-			return acc;
-		}, {} as Record<string, string>);
+		const mediaKeysObject = uploadedMediaKeys.reduce(
+			(acc, key, idx) => {
+				acc[`image${idx + 1}`] = key;
+				return acc;
+			},
+			{} as Record<string, string>,
+		);
 
 		// Build the complete property payload
 		const propertyPayload = {
@@ -205,12 +206,12 @@ export default function AddProperties({ propertyRequestId, onComplete }: { prope
 	return (
 		<div className="max-w-6xl flex flex-col gap-y-5">
 			<PageTitles title="Add Property" description="Fill in the details to add property for sales" />
-			<div className="bg-white max-w-5xl px-4 py-6 lg:py-12 rounded-lg">
+			<CustomCard className="bg-white max-w-5xl px-4 py-6 lg:py-12 rounded-lg">
 				<div className="w-full lg:w-10/12 mx-auto">
 					<form className="space-y-5" onSubmit={handleHookFormSubmit(onSubmit)}>
 						{/* Property Type - Public or Private */}
 						<div className="mb-8">
-							<label className="block text-sm font-medium text-gray-700 mb-4">Property Type*</label>
+							<label className="block text-sm dark:text-gray-300 mb-4">Property Type*</label>
 							<Controller
 								name="isPublic"
 								control={control}
@@ -234,7 +235,7 @@ export default function AddProperties({ propertyRequestId, onComplete }: { prope
 						</div>{" "}
 						{/* Image Gallery */}
 						<div>
-							<label className="block text-sm font-medium text-gray-700 mb-2">Upload Images*</label>
+							<label className="block text-sm dark:text-gray-300 mb-2">Upload Images*</label>
 							<ImageGallery
 								mode="upload"
 								placeholderText="Upload Property Image"
@@ -273,7 +274,7 @@ export default function AddProperties({ propertyRequestId, onComplete }: { prope
 										<CustomInput
 											{...field}
 											label="Property Name*"
-											labelClassName="block text-sm font-medium text-gray-700 mb-2"
+											labelClassName="block text-sm dark:text-gray-300 mb-2"
 											type="text"
 											className={twMerge(inputStyle)}
 										/>
@@ -285,7 +286,7 @@ export default function AddProperties({ propertyRequestId, onComplete }: { prope
 						{/* Category and Sub Category */}
 						<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 							<div>
-								<label className="block text-sm font-medium text-gray-700 mb-2">Property Category*</label>
+								<label className="block text-sm dark:text-gray-300 mb-2">Property Category*</label>
 								<Select
 									value={selectedParentCategoryId}
 									onValueChange={(value) => {
@@ -314,7 +315,7 @@ export default function AddProperties({ propertyRequestId, onComplete }: { prope
 									control={control}
 									render={({ field }) => (
 										<div>
-											<label className="block text-sm font-medium text-gray-700 mb-2">Sub Category*</label>
+											<label className="block text-sm dark:text-gray-300 mb-2">Sub Category*</label>
 											<Select value={field.value} onValueChange={field.onChange} disabled={!selectedParentCategoryId || subcategories.length === 0}>
 												<SelectTrigger className={twMerge(inputStyle, "w-full min-h-11 capitalize text-sm")}>
 													<SelectValue
@@ -322,8 +323,8 @@ export default function AddProperties({ propertyRequestId, onComplete }: { prope
 															!selectedParentCategoryId
 																? "Select category first"
 																: subcategories.length === 0
-																? "No subcategories available"
-																: "Choose Sub Category"
+																	? "No subcategories available"
+																	: "Choose Sub Category"
 														}
 													/>
 												</SelectTrigger>
@@ -352,7 +353,7 @@ export default function AddProperties({ propertyRequestId, onComplete }: { prope
 											<CustomInput
 												{...field}
 												label="Price*"
-												labelClassName="block text-sm font-medium text-gray-700 mb-2"
+												labelClassName="block text-sm dark:text-gray-300 mb-2"
 												type="number"
 												className={twMerge(inputStyle)}
 												onWheel={handleNumberInputWheel}
@@ -372,7 +373,7 @@ export default function AddProperties({ propertyRequestId, onComplete }: { prope
 											<CustomInput
 												{...field}
 												label="Quantity*"
-												labelClassName="block text-sm font-medium text-gray-700 mb-2"
+												labelClassName="block text-sm dark:text-gray-300 mb-2"
 												type="number"
 												min="1"
 												className={twMerge(inputStyle)}
@@ -402,7 +403,7 @@ export default function AddProperties({ propertyRequestId, onComplete }: { prope
 													<CustomInput
 														{...field}
 														label="Vehicle Make*"
-														labelClassName="block text-sm font-medium text-gray-700 mb-2"
+														labelClassName="block text-sm dark:text-gray-300 mb-2"
 														className={twMerge(inputStyle)}
 													/>
 													{errors.vehicleMake && <p className="text-red-500 text-sm mt-1">{errors.vehicleMake.message}</p>}
@@ -420,7 +421,7 @@ export default function AddProperties({ propertyRequestId, onComplete }: { prope
 													<CustomInput
 														{...field}
 														label="Vehicle Model*"
-														labelClassName="block text-sm font-medium text-gray-700 mb-2"
+														labelClassName="block text-sm dark:text-gray-300 mb-2"
 														className={twMerge(inputStyle)}
 													/>
 													{errors.vehicleModel && <p className="text-red-500 text-sm mt-1">{errors.vehicleModel.message}</p>}
@@ -441,7 +442,7 @@ export default function AddProperties({ propertyRequestId, onComplete }: { prope
 													<CustomInput
 														{...field}
 														label="Vehicle Year*"
-														labelClassName="block text-sm font-medium text-gray-700 mb-2"
+														labelClassName="block text-sm dark:text-gray-300 mb-2"
 														type="number"
 														className={twMerge(inputStyle)}
 													/>
@@ -460,7 +461,7 @@ export default function AddProperties({ propertyRequestId, onComplete }: { prope
 													<CustomInput
 														{...field}
 														label="Vehicle Color*"
-														labelClassName="block text-sm font-medium text-gray-700 mb-2"
+														labelClassName="block text-sm dark:text-gray-300 mb-2"
 														className={twMerge(inputStyle)}
 													/>
 													{errors.vehicleColor && <p className="text-red-500 text-sm mt-1">{errors.vehicleColor.message}</p>}
@@ -481,7 +482,7 @@ export default function AddProperties({ propertyRequestId, onComplete }: { prope
 													<CustomInput
 														{...field}
 														label="Chassis Number*"
-														labelClassName="block text-sm font-medium text-gray-700 mb-2"
+														labelClassName="block text-sm dark:text-gray-300 mb-2"
 														className={twMerge(inputStyle)}
 													/>
 													{errors.vehicleChassisNumber && <p className="text-red-500 text-sm mt-1">{errors.vehicleChassisNumber.message}</p>}
@@ -499,7 +500,7 @@ export default function AddProperties({ propertyRequestId, onComplete }: { prope
 													<CustomInput
 														{...field}
 														label="Vehicle Type*"
-														labelClassName="block text-sm font-medium text-gray-700 mb-2"
+														labelClassName="block text-sm dark:text-gray-300 mb-2"
 														className={twMerge(inputStyle)}
 													/>
 													{errors.vehicleType && <p className="text-red-500 text-sm mt-1">{errors.vehicleType.message}</p>}
@@ -520,7 +521,7 @@ export default function AddProperties({ propertyRequestId, onComplete }: { prope
 													<CustomInput
 														{...field}
 														label="Registration Number*"
-														labelClassName="block text-sm font-medium text-gray-700 mb-2"
+														labelClassName="block text-sm dark:text-gray-300 mb-2"
 														className={twMerge(inputStyle)}
 													/>
 													{errors.vehicleRegistrationNumber && (
@@ -541,7 +542,7 @@ export default function AddProperties({ propertyRequestId, onComplete }: { prope
 								rules={{ required: "Product description is required" }}
 								render={({ field }) => (
 									<div>
-										<label className="block text-sm font-medium text-gray-700 mb-2">Product Description*</label>
+										<label className="block text-sm dark:text-gray-300 mb-2">Product Description*</label>
 										<Textarea {...field} className={twMerge(inputStyle, "h-auto min-h-24")} rows={8} />
 										{errors.description && <p className="text-red-500 text-sm mt-1">{errors.description.message}</p>}
 									</div>
@@ -560,7 +561,7 @@ export default function AddProperties({ propertyRequestId, onComplete }: { prope
 											<CustomInput
 												{...field}
 												label="Condition*"
-												labelClassName="block text-sm font-medium text-gray-700 mb-2"
+												labelClassName="block text-sm dark:text-gray-300 mb-2"
 												type="text"
 												className={twMerge(inputStyle)}
 											/>
@@ -571,7 +572,7 @@ export default function AddProperties({ propertyRequestId, onComplete }: { prope
 							</div>
 						</div>
 						<div className="flex justify-center mt-16">
-							<Button
+							<ActionButton
 								type="submit"
 								disabled={createPropertyMutation.isPending || !isValid || uploadedMediaKeys.length === 0}
 								className="w-max mx-auto rounded-md py-3 h-auto text-base active-scale disabled:opacity-60">
@@ -587,7 +588,7 @@ export default function AddProperties({ propertyRequestId, onComplete }: { prope
 								) : (
 									"Add Property"
 								)}
-							</Button>
+							</ActionButton>
 						</div>
 					</form>
 
@@ -616,7 +617,7 @@ export default function AddProperties({ propertyRequestId, onComplete }: { prope
 						</DialogContent>
 					</Dialog>
 				</div>
-			</div>
+			</CustomCard>
 		</div>
 	);
 }

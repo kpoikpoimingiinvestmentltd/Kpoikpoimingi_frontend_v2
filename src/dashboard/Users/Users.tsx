@@ -12,34 +12,102 @@ import { modalContentStyle } from "@/components/common/commonStyles";
 import { formatPhoneNumber } from "@/lib/utils";
 import { useGetAllUsers, useResetPassword, useSuspendUser, useUpdateUser, useUploadUserProfile } from "@/api/user";
 import { TableSkeleton } from "@/components/common/Skeleton";
-import { useDispatch, useSelector } from "react-redux";
-import type { RootState } from "@/store";
-import { setUsers } from "@/store/usersSlice";
 import ConfirmModal from "@/components/common/ConfirmModal";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { deleteUserRequest } from "@/api/user";
 import type { ResetPasswordResponse, SuspendUserResponse, User } from "@/types/user";
 import EmptyData from "@/components/common/EmptyData";
-import { Link, useNavigate } from "react-router";
+import { Link, useNavigate, useSearchParams } from "react-router";
 import { _router } from "../../routes/_router";
 import SearchWithFilters from "@/components/common/SearchWithFilters";
 import type { FilterField } from "@/components/common/SearchWithFilters";
-import { useDebounceSearch } from "@/hooks/useDebounceSearch";
 import { media } from "@/resources/images";
+import { useDebounceSearch } from "@/hooks/useDebounceSearch";
 import SuccessModal from "../../components/common/SuccessModal";
+import { useCanPerformAction } from "@/hooks/usePermissions";
 
 export default function Users() {
-	const [isEmpty] = React.useState(false);
-	const [page, setPage] = React.useState(1);
-	const [limit, setLimit] = React.useState<number>(10);
-	const [searchQuery, setSearchQuery] = React.useState<string>("");
-	const debouncedSearch = useDebounceSearch(searchQuery, 400);
-	const [sortBy, setSortBy] = React.useState<string>("createdAt");
-	const [sortOrder, setSortOrder] = React.useState<string>("desc");
+	const [searchParams, setSearchParams] = useSearchParams();
 	const navigate = useNavigate();
-	const dispatch = useDispatch();
-	const storedUsers = useSelector((s: RootState) => s.users.list ?? []);
+	const canDelete = useCanPerformAction("delete");
+
+	// Initialize state from URL params
+	const [page, setPage] = React.useState(() => {
+		const pageParam = searchParams.get("page");
+		return pageParam ? parseInt(pageParam, 10) : 1;
+	});
+	const [search, setSearch] = React.useState(() => {
+		return searchParams.get("search") || "";
+	});
+	const [filters, setFilters] = React.useState<Record<string, string>>(() => {
+		const urlFilters: Record<string, string> = {};
+		const limit = searchParams.get("limit");
+		const sortBy = searchParams.get("sortBy");
+		const sortOrder = searchParams.get("sortOrder");
+		if (limit) urlFilters.limit = limit;
+		if (sortBy) urlFilters.sortBy = sortBy;
+		if (sortOrder) urlFilters.sortOrder = sortOrder;
+		return urlFilters;
+	});
+
+	const debouncedSearch = useDebounceSearch(search);
+	const [, setIsMounted] = React.useState(false);
+
+	// Sync state with URL params on mount and when URL changes (back/forward navigation)
+	React.useEffect(() => {
+		const pageParam = searchParams.get("page");
+		const newPage = pageParam ? parseInt(pageParam, 10) : 1;
+		setPage(newPage);
+
+		const searchParam = searchParams.get("search") || "";
+		setSearch(searchParam);
+
+		const urlFilters: Record<string, string> = {};
+		const limit = searchParams.get("limit");
+		const sortBy = searchParams.get("sortBy");
+		const sortOrder = searchParams.get("sortOrder");
+		if (limit) urlFilters.limit = limit;
+		if (sortBy) urlFilters.sortBy = sortBy;
+		if (sortOrder) urlFilters.sortOrder = sortOrder;
+		setFilters(urlFilters);
+	}, [searchParams]);
+
+	// Initialize URL params on mount if not present
+	React.useEffect(() => {
+		const hasParams =
+			searchParams.has("page") ||
+			searchParams.has("limit") ||
+			searchParams.has("search") ||
+			searchParams.has("sortBy") ||
+			searchParams.has("sortOrder");
+		if (!hasParams) {
+			const params = new URLSearchParams();
+			params.set("page", "1");
+			params.set("sortBy", "createdAt");
+			params.set("sortOrder", "desc");
+			setSearchParams(params, { replace: true });
+		}
+		setIsMounted(true);
+	}, []);
+
+	// Update URL when state changes
+	React.useEffect(() => {
+		const params = new URLSearchParams(searchParams);
+		params.set("page", page.toString());
+		params.set("search", search);
+		if (filters.limit) params.set("limit", filters.limit);
+		else params.delete("limit");
+		if (filters.sortBy) params.set("sortBy", filters.sortBy);
+		else params.delete("sortBy");
+		if (filters.sortOrder) params.set("sortOrder", filters.sortOrder);
+		else params.delete("sortOrder");
+		setSearchParams(params, { replace: true });
+	}, [page, search, filters, setSearchParams]);
+
+	const limit = Number((filters.limit as string) || "10");
+	const sortBy = (filters.sortBy as string) || "createdAt";
+	const sortOrder = (filters.sortOrder as string) || "desc";
 
 	// delete confirmation state
 	const [toDelete, setToDelete] = React.useState<{ id?: string; title?: string } | null>(null);
@@ -65,20 +133,7 @@ export default function Users() {
 
 	const deleteMutation = useMutation<any, unknown, string>({
 		mutationFn: (id: string) => deleteUserRequest(id),
-		onMutate: async (id: string) => {
-			await queryClient.cancelQueries({ queryKey: ["users"] });
-			const prev = storedUsers;
-			setTimeout(() => {
-				// optimistic UI: remove user from local store immediately
-				const next = (storedUsers || []).filter((u: unknown) => (u as { id: string }).id !== id);
-				dispatch(setUsers(next));
-			}, 0);
-			return { prev };
-		},
-		onError: (_err: unknown, _id: unknown, context: unknown) => {
-			if ((context as { prev?: typeof storedUsers })?.prev) {
-				dispatch(setUsers((context as { prev?: typeof storedUsers }).prev!));
-			}
+		onError: (_err: unknown, _id: unknown, _context: unknown) => {
 			toast.error("Failed to delete user");
 		},
 		onSuccess: () => {
@@ -94,7 +149,26 @@ export default function Users() {
 	const updateMutation = useUpdateUser();
 	const uploadProfileMutation = useUploadUserProfile();
 
-	const { data: usersData, isLoading } = useGetAllUsers(page, limit, debouncedSearch || undefined, sortBy, sortOrder);
+	const { data: usersData, isLoading, isFetching } = useGetAllUsers(page, limit, debouncedSearch || undefined, sortBy, sortOrder);
+
+	const handleSearchChange = (value: string) => {
+		setSearch(value);
+	};
+
+	const handlePageChange = (newPage: number) => {
+		setPage(newPage);
+	};
+
+	const handleFiltersApply = (newFilters: Record<string, string>) => {
+		setFilters(newFilters);
+		setPage(1);
+	};
+
+	const handleFiltersReset = () => {
+		setSearch("");
+		setFilters({});
+		setPage(1);
+	};
 
 	const users = React.useMemo((): User[] => {
 		if (!usersData || typeof usersData !== "object") return [];
@@ -177,12 +251,12 @@ export default function Users() {
 		return !!(obj.fullName || obj.email || obj.username || obj.id);
 	};
 
-	const getName = (r: unknown) => (isUser(r) ? r.fullName ?? r.username ?? r.email ?? r.id : (r as Record<string, unknown>).name ?? "-");
-	const getPhone = (r: unknown) => (isUser(r) ? r.phoneNumber ?? "-" : (r as Record<string, unknown>).phone ?? "-");
+	const getName = (r: unknown) => (isUser(r) ? (r.fullName ?? r.username ?? r.email ?? r.id) : ((r as Record<string, unknown>).name ?? "-"));
+	const getPhone = (r: unknown) => (isUser(r) ? (r.phoneNumber ?? "-") : ((r as Record<string, unknown>).phone ?? "-"));
 	const getRole = (r: unknown) =>
-		isUser(r) ? (typeof r.role === "string" ? r.role : r.role?.role ?? "-") : (r as Record<string, unknown>).role ?? "-";
+		isUser(r) ? (typeof r.role === "string" ? r.role : (r.role?.role ?? "-")) : ((r as Record<string, unknown>).role ?? "-");
 	const getAssigned = (r: unknown) =>
-		isUser(r) ? r.numberOfAssignedCustomers ?? "-" : (r as Record<string, unknown>).numberOfAssignedCustomers ?? "-";
+		isUser(r) ? (r.numberOfAssignedCustomers ?? "-") : ((r as Record<string, unknown>).numberOfAssignedCustomers ?? "-");
 	const getSalary = (r: unknown) => (r as Record<string, unknown>).salaryAmount ?? "-";
 
 	return (
@@ -202,64 +276,52 @@ export default function Users() {
 			</div>
 
 			<div className="min-h-96 flex">
-				{!isEmpty ? (
-					<CustomCard className="bg-white flex-grow w-full rounded-lg p-4 border border-gray-100">
-						<div className="flex items-center justify-between flex-wrap gap-6">
-							<h2 className="font-semibold">All Users</h2>
-							<div className="flex items-center gap-2">
-								<SearchWithFilters
-									search={searchQuery}
-									onSearchChange={(v) => {
-										setSearchQuery(v);
-										setPage(1);
-									}}
-									setPage={setPage}
-									placeholder="Search by user full name or email"
-									fields={
-										[
-											{
-												key: "limit",
-												label: "Items per page",
-												type: "select",
-												options: [
-													{ value: "5", label: "5" },
-													{ value: "10", label: "10" },
-													{ value: "20", label: "20" },
-													{ value: "50", label: "50" },
-												],
-											},
-											{
-												key: "sortBy",
-												label: "Sort By",
-												type: "sortBy",
-												options: [
-													{ value: "createdAt", label: "createdAt" },
-													{ value: "fullName", label: "fullName" },
-													{ value: "email", label: "email" },
-												],
-											},
-											{ key: "sortOrder", label: "Sort Order", type: "sortOrder" },
-										] as FilterField[]
-									}
-									initialValues={{ limit: String(limit), sortBy: sortBy || "", sortOrder: sortOrder || "" }}
-									onApply={(filters) => {
-										setLimit(filters.limit ? Number(filters.limit) : 10);
-										setSortBy(filters.sortBy || "createdAt");
-										setSortOrder(filters.sortOrder || "desc");
-										setPage(1);
-									}}
-									onReset={() => {
-										setSearchQuery("");
-										setLimit(10);
-										setSortBy("createdAt");
-										setSortOrder("desc");
-										setPage(1);
-									}}
-								/>
+				{isLoading || isFetching || users.length > 0 ? (
+					<CustomCard className="bg-white grow w-full rounded-lg p-4 border border-gray-100">
+						{users.length > 0 && (
+							<div className="flex items-center justify-between flex-wrap gap-6">
+								<h2 className="font-semibold">All Users</h2>
+								<div className="flex items-center gap-2">
+									<SearchWithFilters
+										search={search}
+										onSearchChange={handleSearchChange}
+										setPage={handlePageChange}
+										placeholder="Search by user full name or email"
+										fields={
+											[
+												{
+													key: "limit",
+													label: "Items per page",
+													type: "select",
+													options: [
+														{ value: "5", label: "5" },
+														{ value: "10", label: "10" },
+														{ value: "20", label: "20" },
+														{ value: "50", label: "50" },
+													],
+												},
+												{
+													key: "sortBy",
+													label: "Sort By",
+													type: "sortBy",
+													options: [
+														{ value: "createdAt", label: "createdAt" },
+														{ value: "fullName", label: "fullName" },
+														{ value: "email", label: "email" },
+													],
+												},
+												{ key: "sortOrder", label: "Sort Order", type: "sortOrder" },
+											] as FilterField[]
+										}
+										initialValues={{ limit: filters.limit || "10", sortBy: filters.sortBy || "", sortOrder: filters.sortOrder || "" }}
+										onApply={handleFiltersApply}
+										onReset={handleFiltersReset}
+									/>
+								</div>
 							</div>
-						</div>
+						)}
 
-						{isLoading ? (
+						{isLoading || isFetching ? (
 							<TableSkeleton rows={6} cols={6} />
 						) : users.length === 0 ? (
 							<EmptyData text="No Users at the moment" />
@@ -268,7 +330,7 @@ export default function Users() {
 								<div className="overflow-x-auto w-full mt-8">
 									<Table>
 										<TableHeader className={tableHeaderRowStyle}>
-											<TableRow className="bg-[#EAF6FF] h-12 overflow-hidden py-4 rounded-lg">
+											<TableRow className="bg-[#EAF6FF] dark:bg-neutral-900/80 h-12 overflow-hidden py-4 rounded-lg">
 												<TableHead>Name</TableHead>
 												<TableHead>Phone Number</TableHead>
 												<TableHead>User Role</TableHead>
@@ -279,12 +341,12 @@ export default function Users() {
 										</TableHeader>
 										<TableBody>
 											{users.map((row: unknown, idx: number) => (
-												<TableRow key={idx} className="hover:bg-[#F6FBFF]">
-													<TableCell className="text-[#13121266]">{renderField(getName(row))}</TableCell>
-													<TableCell className="text-[#13121266]">{renderField(getPhone(row))}</TableCell>
-													<TableCell className="text-[#13121266]">{renderField(getRole(row))}</TableCell>
-													<TableCell className="text-[#13121266]">{renderField(getAssigned(row))}</TableCell>
-													<TableCell className="text-[#13121266]">{renderField(getSalary(row))}</TableCell>
+												<TableRow key={idx} className="hover:bg-[#F6FBFF] dark:hover:bg-neutral-900/50">
+													<TableCell>{renderField(getName(row))}</TableCell>
+													<TableCell>{renderField(getPhone(row))}</TableCell>
+													<TableCell>{renderField(getRole(row))}</TableCell>
+													<TableCell>{renderField(getAssigned(row))}</TableCell>
+													<TableCell>{renderField(getSalary(row))}</TableCell>
 													<TableCell className="flex items-center gap-1">
 														<DropdownMenu>
 															<DropdownMenuTrigger asChild>
@@ -329,15 +391,19 @@ export default function Users() {
 																			setResetPasswordConfirmOpen(true);
 																		},
 																	},
-																	{
-																		key: "delete",
-																		label: "Delete",
-																		danger: true,
-																		action: () => {
-																			setToDelete({ id: (row as Record<string, unknown>).id as string, title: String(getName(row)) });
-																			setConfirmOpen(true);
-																		},
-																	},
+																	...(canDelete
+																		? [
+																				{
+																					key: "delete",
+																					label: "Delete",
+																					danger: true,
+																					action: () => {
+																						setToDelete({ id: (row as Record<string, unknown>).id as string, title: String(getName(row)) });
+																						setConfirmOpen(true);
+																					},
+																				},
+																			]
+																		: []),
 																].map((it) => (
 																	<DropdownMenuItem
 																		key={it.key}
@@ -357,7 +423,7 @@ export default function Users() {
 									</Table>
 								</div>
 
-								<CompactPagination page={page} pages={pages} showRange onPageChange={setPage} />
+								<CompactPagination page={page} pages={pages} showRange onPageChange={handlePageChange} />
 							</>
 						)}
 					</CustomCard>
@@ -534,7 +600,7 @@ export default function Users() {
 									value: <span className="text-primary font-medium">{generatedPassword}</span>,
 									variant: "inline",
 								},
-						  ]
+							]
 						: []
 				}
 				actions={[

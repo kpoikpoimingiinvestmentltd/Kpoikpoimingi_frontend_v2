@@ -55,6 +55,7 @@ const simpleInterestCalculator = ({
 export default function Calculator() {
 	const [open, setOpen] = React.useState(false);
 	const [principal, setPrincipal] = React.useState(0);
+	const [startingAmount, setStartingAmount] = React.useState(0);
 	const [rate, setRate] = React.useState(0);
 	const [interval, setInterval] = React.useState("daily");
 	const [duration, setDuration] = React.useState(0);
@@ -91,8 +92,9 @@ export default function Calculator() {
 	};
 
 	const calculate = () => {
+		const effectivePrincipal = principal - startingAmount;
 		const result = simpleInterestCalculator({
-			pi: principal,
+			pi: effectivePrincipal,
 			ri: rate,
 			ti: duration,
 			ii: interval,
@@ -119,7 +121,7 @@ export default function Calculator() {
 				y: e.clientY - dragOffset.y,
 			});
 		},
-		[isDragging, dragOffset]
+		[isDragging, dragOffset],
 	);
 
 	const handleMouseUp = () => {
@@ -154,7 +156,20 @@ export default function Calculator() {
 
 	return (
 		<div>
-			<Popover open={open} onOpenChange={setOpen}>
+			<Popover
+				open={open}
+				onOpenChange={(isOpen) => {
+					setOpen(isOpen);
+					if (!isOpen) {
+						// Clear inputs when closing
+						setPrincipal(0);
+						setStartingAmount(0);
+						setRate(0);
+						setInterval("daily");
+						setDuration(0);
+						setTotal(null);
+					}
+				}}>
 				<div
 					className={`fixed z-50 right-6 bottom-6 before:content-[''] before:inset-0 before:fixed ${
 						open ? "before:z-[29] before:bg-black/50 before:pointer-events-auto" : "before:pointer-events-none"
@@ -183,7 +198,7 @@ export default function Calculator() {
 							<div className="text-lg font-medium mb-3">Simple Interest Calculator</div>
 						</header>
 						<div className="relative">
-							<div className="absolute -bottom-5 -right-10 w-0 h-0 border-t-[6px] border-t-transparent border-r-[55px] border-r-white border-b-[71px] border-b-transparent [transform:rotate(-5deg)translate(-44px,26px)] sm:[transform:rotate(-23deg)translate(-32px,20px)]"></div>
+							<div className="absolute -bottom-5 -right-10 w-0 h-0 border-t-[6px] border-t-transparent border-r-[55px] dark:border-r-neutral-900 border-r-white border-b-[71px] border-b-transparent [transform:rotate(-5deg)translate(-44px,26px)] sm:[transform:rotate(-23deg)translate(-32px,20px)]"></div>
 							<div className="flex flex-col gap-y-2.5 relative">
 								<CustomInput
 									type="number"
@@ -192,6 +207,14 @@ export default function Calculator() {
 									value={principal}
 									onChange={(e) => setPrincipal(Number(e.target.value))}
 									label="Principal Amount"
+								/>
+								<CustomInput
+									type="number"
+									labelClassName="mb-1"
+									className="h-9 rounded-sm"
+									value={startingAmount}
+									onChange={(e) => setStartingAmount(Number(e.target.value))}
+									label="Starting Amount"
 								/>
 								<CustomInput
 									type="number"
@@ -237,9 +260,9 @@ export default function Calculator() {
 									</Button>
 								</div>
 								{total !== null && (
-									<div className="mt-3 bg-gray-50 p-3 rounded">
-										<div className="text-sm text-muted-foreground">Total Payable</div>
-										<div className="text-lg font-medium">₦{total.toLocaleString()}</div>
+									<div className="mt-3 bg-gray-50 dark:bg-neutral-800 p-3 rounded">
+										<div className="text-sm text-muted-foreground dark:text-gray-300">Total Payable</div>
+										<div className="text-lg font-medium dark:text-white">₦{total.toLocaleString()}</div>
 									</div>
 								)}
 							</div>

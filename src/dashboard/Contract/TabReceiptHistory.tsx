@@ -27,7 +27,7 @@ function ValueRow({ label, value, align = "left" }: ValueRowProps) {
 
 function formatCurrency(amount: number | string) {
 	const n = Number(amount) || 0;
-	return n.toLocaleString(undefined, { maximumFractionDigits: 2 });
+	return n.toLocaleString();
 }
 
 export default function TabReceiptHistory({ contract }: Props) {
@@ -41,7 +41,7 @@ export default function TabReceiptHistory({ contract }: Props) {
 	return (
 		<>
 			<CustomCard className="border-none p-0 bg-white">
-				<SectionTitle title={`Payment History${contract?.contractCode ? ` — ${contract.contractCode}` : ""}`} />
+				<SectionTitle title={`Payment History${payments.length > 0 && contract?.contractCode ? ` — ${contract.contractCode}` : ""}`} />
 
 				<div className="space-y-6 mt-4">
 					{isLoading && <div className="text-sm text-muted-foreground">Loading payments...</div>}
@@ -87,7 +87,7 @@ export default function TabReceiptHistory({ contract }: Props) {
 								<div className="mt-4">
 									<button
 										onClick={() => navigate(_router.dashboard.receiptDetails.replace(":id", p.receiptId))}
-										className="w-full bg-[#E6F7FF] flex items-center gap-2 justify-center text-sm text-primary py-3 rounded-md">
+										className="w-full bg-[#E6F7FF] dark:bg-primary dark:text-white flex items-center gap-2 justify-center text-sm text-primary py-3 rounded-md">
 										<span>View Receipt</span>
 										<IconWrapper>
 											<EyeIcon />

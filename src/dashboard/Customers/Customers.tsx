@@ -7,10 +7,9 @@ import PageTitles from "@/components/common/PageTitles";
 import { tableHeaderRowStyle } from "@/components/common/commonStyles";
 import SearchWithFilters from "@/components/common/SearchWithFilters";
 import type { FilterField } from "@/components/common/SearchWithFilters";
-import { Link } from "react-router";
+import { Link, useSearchParams } from "react-router";
 import CompactPagination from "@/components/ui/compact-pagination";
 import React from "react";
-import { useDebounceSearch } from "@/hooks/useDebounceSearch";
 import type { CustomerRow } from "@/types/customer";
 import DeleteModal from "@/dashboard/Customers/DeleteModal";
 import SendEmailModal from "@/dashboard/Customers/SendEmailModal";
@@ -20,17 +19,95 @@ import { useGetAllCustomers, useDeleteCustomer, useExportCustomersAsCSV } from "
 import { TableSkeleton } from "@/components/common/Skeleton";
 import { toast } from "sonner";
 import { extractErrorMessage } from "@/lib/utils";
+import { useDebounceSearch } from "@/hooks/useDebounceSearch";
 import ExportConfirmModal from "@/components/common/ExportConfirmModal";
+import { useCanPerformAction } from "@/hooks/usePermissions";
 
 export default function Customers() {
-	const [page, setPage] = React.useState(1);
-	const [limit, setLimit] = React.useState<number>(10);
-	const [search, setSearch] = React.useState<string>("");
-	const debouncedSearch = useDebounceSearch(search, 400);
-	const [sortBy, setSortBy] = React.useState<string>("createdAt");
-	const [sortOrder, setSortOrder] = React.useState<string>("desc");
+	const [searchParams, setSearchParams] = useSearchParams();
+	const canSendEmails = useCanPerformAction("notificationsSendEmails");
+	const canDelete = useCanPerformAction("delete");
+	const canExport = useCanPerformAction("export");
 
-	const { data: customersData, isLoading, refetch } = useGetAllCustomers(page, limit, debouncedSearch || undefined, sortBy, sortOrder);
+	// Initialize state from URL params
+	const [page, setPage] = React.useState(() => {
+		const pageParam = searchParams.get("page");
+		return pageParam ? parseInt(pageParam, 10) : 1;
+	});
+	const [search, setSearch] = React.useState(() => {
+		return searchParams.get("search") || "";
+	});
+	const [filters, setFilters] = React.useState<Record<string, string>>(() => {
+		const urlFilters: Record<string, string> = {};
+		const limit = searchParams.get("limit");
+		const sortBy = searchParams.get("sortBy");
+		const sortOrder = searchParams.get("sortOrder");
+		if (limit) urlFilters.limit = limit;
+		if (sortBy) urlFilters.sortBy = sortBy;
+		if (sortOrder) urlFilters.sortOrder = sortOrder;
+		return urlFilters;
+	});
+
+	const debouncedSearch = useDebounceSearch(search);
+	const [, setIsMounted] = React.useState(false);
+
+	// Sync state with URL params on mount and when URL changes (back/forward navigation)
+	React.useEffect(() => {
+		const pageParam = searchParams.get("page");
+		const newPage = pageParam ? parseInt(pageParam, 10) : 1;
+		setPage(newPage);
+
+		const searchParam = searchParams.get("search") || "";
+		setSearch(searchParam);
+
+		const urlFilters: Record<string, string> = {};
+		const limit = searchParams.get("limit");
+		const sortBy = searchParams.get("sortBy");
+		const sortOrder = searchParams.get("sortOrder");
+		if (limit) urlFilters.limit = limit;
+		if (sortBy) urlFilters.sortBy = sortBy;
+		if (sortOrder) urlFilters.sortOrder = sortOrder;
+		setFilters(urlFilters);
+	}, [searchParams]);
+
+	// Initialize URL params on mount if not present
+	React.useEffect(() => {
+		const hasParams =
+			searchParams.has("page") ||
+			searchParams.has("limit") ||
+			searchParams.has("search") ||
+			searchParams.has("sortBy") ||
+			searchParams.has("sortOrder");
+		if (!hasParams) {
+			const params = new URLSearchParams();
+			params.set("page", "1");
+			params.set("limit", "10");
+			params.set("sortBy", "createdAt");
+			params.set("sortOrder", "desc");
+			setSearchParams(params, { replace: true });
+		}
+		setIsMounted(true);
+	}, []);
+
+	// Update URL when state changes
+	React.useEffect(() => {
+		const params = new URLSearchParams(searchParams);
+		params.set("page", page.toString());
+		params.set("search", search);
+		if (filters.limit) params.set("limit", filters.limit);
+		else params.delete("limit");
+		if (filters.sortBy) params.set("sortBy", filters.sortBy);
+		else params.delete("sortBy");
+		if (filters.sortOrder) params.set("sortOrder", filters.sortOrder);
+		else params.delete("sortOrder");
+		setSearchParams(params, { replace: true });
+	}, [page, search, filters, setSearchParams]);
+
+	const limit = Number((filters.limit as string) || "10");
+	const sortBy = (filters.sortBy as string) || "createdAt";
+	const sortOrder = (filters.sortOrder as string) || "desc";
+
+	const { data: customersData, isLoading, isFetching, refetch } = useGetAllCustomers(page, limit, debouncedSearch || undefined, sortBy, sortOrder);
 	const [deleteOpen, setDeleteOpen] = React.useState(false);
 	const [isSendEmailOpen, setIsSendEmailOpen] = React.useState(false);
 	const [selectedCustomerId, setSelectedCustomerId] = React.useState<string | null>(null);
@@ -48,8 +125,27 @@ export default function Customers() {
 		(err: unknown) => {
 			console.error("Error deleting customer:", err);
 			toast.error(extractErrorMessage(err, "Failed to delete customer"));
-		}
+		},
 	);
+
+	const handleSearchChange = (value: string) => {
+		setSearch(value);
+	};
+
+	const handlePageChange = (newPage: number) => {
+		setPage(newPage);
+	};
+
+	const handleFiltersApply = (newFilters: Record<string, string>) => {
+		setFilters(newFilters);
+		setPage(1);
+	};
+
+	const handleFiltersReset = () => {
+		setSearch("");
+		setFilters({});
+		setPage(1);
+	};
 
 	const handleExportClick = async () => {
 		if (!debouncedSearch) {
@@ -121,6 +217,7 @@ export default function Customers() {
 				const it = item as Record<string, unknown>;
 				return {
 					id: String(it.id ?? `cust-${idx}`),
+					customerCode: String(it.customerCode ?? ""),
 					fullName: String(it.fullName ?? it.name ?? ""),
 					email: String(it.email ?? ""),
 					phoneNumber: it.phoneNumber ? String(it.phoneNumber) : undefined,
@@ -129,7 +226,7 @@ export default function Customers() {
 					registrations: it.registrations as CustomerRow["registrations"],
 				} as CustomerRow;
 			}
-			return { id: `cust-${idx}`, fullName: "", email: "" } as CustomerRow;
+			return { id: `cust-${idx}`, customerCode: "", fullName: "", email: "" } as CustomerRow;
 		});
 	}, [customersData]);
 
@@ -145,19 +242,23 @@ export default function Customers() {
 			<div className="flex items-center justify-between flex-wrap gap-4 mb-4">
 				<PageTitles title="Customers" description="List of people who patronize Kpo kpoi mingi investment" />
 				<div className="flex items-center gap-3">
-					<ActionButton
-						type="button"
-						className="bg-primary/10 text-primary gap-2 hover:bg-primary/20"
-						onClick={handleExportClick}
-						disabled={exportMutation.isPending}>
-						<span className="text-sm">{exportMutation.isPending ? "Exporting..." : "Export CSV"}</span>
-					</ActionButton>
-					<ActionButton type="button" className="bg-primary/10 text-primary gap-2 hover:bg-primary/20" onClick={() => setIsSendEmailOpen(true)}>
-						<span className="text-sm">Send Email</span>
-						<IconWrapper className="opacity-50">
-							<SendEmailIcon />
-						</IconWrapper>
-					</ActionButton>
+					{canExport && (
+						<ActionButton
+							type="button"
+							className="bg-primary/10 text-primary gap-2 hover:bg-primary/20"
+							onClick={handleExportClick}
+							disabled={exportMutation.isPending}>
+							<span className="text-sm">{exportMutation.isPending ? "Exporting..." : "Export CSV"}</span>
+						</ActionButton>
+					)}
+					{canSendEmails && (
+						<ActionButton type="button" className="bg-primary/10 text-primary gap-2 hover:bg-primary/20" onClick={() => setIsSendEmailOpen(true)}>
+							<span className="text-sm">Send Email</span>
+							<IconWrapper className="opacity-50">
+								<SendEmailIcon />
+							</IconWrapper>
+						</ActionButton>
+					)}
 					<Link
 						to={_router.dashboard.selectCustomerPaymentMethod}
 						className="flex items-center gap-2 bg-primary rounded-sm px-4 py-2.5 active-scale transition text-white">
@@ -174,11 +275,8 @@ export default function Customers() {
 					<div className="flex items-center gap-2">
 						<SearchWithFilters
 							search={search}
-							onSearchChange={(v) => {
-								setSearch(v);
-								setPage(1);
-							}}
-							setPage={setPage}
+							onSearchChange={handleSearchChange}
+							setPage={handlePageChange}
 							placeholder="Search by name or email"
 							fields={
 								[
@@ -207,19 +305,14 @@ export default function Customers() {
 									{ key: "sortOrder", label: "Sort Order", type: "sortOrder" },
 								] as FilterField[]
 							}
-							initialValues={{ limit: String(limit), sortBy: sortBy || "", sortOrder: sortOrder || "" }}
-							onApply={(filters) => {
-								setLimit(filters.limit ? Number(filters.limit) : 10);
-								setSortBy(filters.sortBy || "createdAt");
-								setSortOrder(filters.sortOrder || "desc");
-								setPage(1);
-							}}
-							onReset={() => setSearch("")}
+							initialValues={{ limit: filters.limit || "10", sortBy: filters.sortBy || "", sortOrder: filters.sortOrder || "" }}
+							onApply={handleFiltersApply}
+							onReset={handleFiltersReset}
 						/>
 					</div>
 				</div>
 				<div className="min-h-96 flex">
-					{isLoading ? (
+					{isLoading || isFetching ? (
 						<TableSkeleton rows={10} cols={7} />
 					) : customersList.length === 0 ? (
 						<div className="flex-grow flex items-center justify-center">
@@ -231,7 +324,7 @@ export default function Customers() {
 								<div className="overflow-x-auto w-full">
 									<Table>
 										<TableHeader className={tableHeaderRowStyle}>
-											<TableRow className="bg-[#EAF6FF] h-12 overflow-hidden py-4 rounded-lg">
+											<TableRow className="bg-[#EAF6FF] dark:bg-neutral-900/80 h-12 overflow-hidden py-4 rounded-lg">
 												<TableHead>Customer ID</TableHead>
 												<TableHead>Name</TableHead>
 												<TableHead>Email</TableHead>
@@ -244,18 +337,18 @@ export default function Customers() {
 										</TableHeader>
 										<TableBody>
 											{customersList.map((row, idx: number) => (
-												<TableRow key={row.id || idx} className="hover:bg-[#F6FBFF]">
-													<TableCell className="text-[#13121266]" title={row.id}>
-														<span className="max-w-40 block truncate">{row.id}</span>
+												<TableRow key={row.id || idx} className="hover:bg-[#F6FBFF] dark:hover:bg-neutral-900/50">
+													<TableCell title={row.customerCode}>
+														<span className="max-w-40 block truncate">{row.customerCode}</span>
 													</TableCell>
-													<TableCell className="text-[#13121266]">{row.fullName}</TableCell>
-													<TableCell className="text-[#13121266]">{row.email}</TableCell>
-													<TableCell className="text-[#13121266]">{row.phoneNumber ?? "-"}</TableCell>
-													<TableCell className="text-[#13121266]">
+													<TableCell>{row.fullName}</TableCell>
+													<TableCell>{row.email}</TableCell>
+													<TableCell>{row.phoneNumber ?? "-"}</TableCell>
+													<TableCell>
 														<Badge value={row.status || "Active"} size="sm" />
 													</TableCell>
-													<TableCell className="text-[#13121266]">{row.createdAt ? new Date(row.createdAt).toLocaleDateString() : "-"}</TableCell>
-													<TableCell className="text-[#13121266]">
+													<TableCell>{row.createdAt ? new Date(row.createdAt).toLocaleDateString() : "-"}</TableCell>
+													<TableCell>
 														<Badge
 															value={row.registrations?.some((reg) => reg.isCurrent) ? "Current" : "Not Current"}
 															size="sm"
@@ -264,23 +357,25 @@ export default function Customers() {
 													</TableCell>
 													<TableCell className="flex items-center gap-1">
 														{row.registrations?.some((reg) => reg.isCurrent) && (
-															<Link to={_router.dashboard.customerDetails.replace(":id", row.id)} className="p-2 flex items-center">
+															<Link to={`${_router.dashboard.customerDetails.replace(":id", row.id)}?tab=details`} className="p-2 flex items-center">
 																<IconWrapper className="text-xl">
 																	<EditIcon />
 																</IconWrapper>
 															</Link>
 														)}
-														<button
-															type="button"
-															className="text-red-500"
-															onClick={() => {
-																setSelectedCustomerId(row.id);
-																setDeleteOpen(true);
-															}}>
-															<IconWrapper className="text-xl py-1.5">
-																<TrashIcon />
-															</IconWrapper>
-														</button>
+														{canDelete && (
+															<button
+																type="button"
+																className="text-red-500"
+																onClick={() => {
+																	setSelectedCustomerId(row.id);
+																	setDeleteOpen(true);
+																}}>
+																<IconWrapper className="text-xl py-1.5">
+																	<TrashIcon />
+																</IconWrapper>
+															</button>
+														)}
 													</TableCell>
 												</TableRow>
 											))}
@@ -289,7 +384,7 @@ export default function Customers() {
 								</div>
 							</div>
 
-							<CompactPagination page={page} pages={pages} showRange onPageChange={setPage} />
+							<CompactPagination page={page} pages={pages} showRange onPageChange={handlePageChange} />
 						</div>
 					)}
 				</div>

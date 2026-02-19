@@ -1,5 +1,5 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { apiPost, apiGet } from "@/services/apiClient";
+import { apiPost, apiGet, apiPatch } from "@/services/apiClient";
 import { apiGetFile } from "@/services/apiClient";
 import { API_ROUTES } from "./routes";
 import type { InternalFullPaymentRegistrationPayload, FullPaymentRegistrationResponse } from "@/types/customerRegistration";
@@ -252,6 +252,32 @@ export function useResumeContract(onSuccess?: (data: unknown) => void, onError?:
 	});
 }
 
+export type UpdateContractPayload = {
+	remarks?: string;
+	downPayment?: number | string;
+	intervalId?: number | string;
+	durationValue?: number | string;
+	durationUnitId?: number | string;
+	startDate?: string;
+	endDate?: string;
+	isCash?: boolean;
+	contractDocument?: string;
+};
+
+export async function updateContract(id: string, payload: UpdateContractPayload) {
+	return apiPatch(API_ROUTES.contracts.editContract(id), payload);
+}
+
+export function useUpdateContract(onSuccess?: (data: unknown) => void, onError?: (err: unknown) => void) {
+	return useMutation<unknown, unknown, { id: string; payload: UpdateContractPayload }>({
+		mutationFn: async ({ id, payload }) => {
+			return updateContract(id, payload);
+		},
+		onSuccess: (data) => onSuccess?.(data),
+		onError: (err) => onError?.(err),
+	});
+}
+
 export async function getPaymentSchedules(contractId: string) {
 	return apiGet(API_ROUTES.paymentSchedule.getPaymentSchedules(contractId)) as Promise<Record<string, unknown>[]>;
 }
@@ -442,5 +468,52 @@ export function useCreatePaymentLink(onSuccess?: (data: { paymentLink: string; r
 		mutationFn: (payload) => createPaymentLink(payload),
 		onSuccess: (data) => onSuccess?.(data),
 		onError: (err) => onError?.(err),
+	});
+}
+
+export type PaymentLinkItem = {
+	id: string;
+	contractId: string;
+	customerId: string;
+	paymentMethodId: number;
+	amount: string;
+	dueDate: string;
+	createdById: string;
+	remarks: string | null;
+	method: string | null;
+	statusId: number;
+	createdAt: string;
+	updatedAt: string;
+	paymentLink: string;
+	expiresAt: string | null;
+	isExpired: boolean;
+	reference: string;
+	status: {
+		id: number;
+		status: string;
+	};
+	paymentMethod: {
+		id: number;
+		method: string;
+	};
+	contract: {
+		id: string;
+		contractCode: string;
+		status: {
+			id: number;
+			status: string;
+		};
+	};
+};
+
+export async function getContractPaymentLinks(contractId: string) {
+	return apiGet(API_ROUTES.paymentLink.getByContract(contractId)) as Promise<PaymentLinkItem[]>;
+}
+
+export function useGetContractPaymentLinks(contractId: string, enabled = true) {
+	return useQuery<PaymentLinkItem[], unknown>({
+		queryKey: ["payment-links", contractId],
+		queryFn: () => getContractPaymentLinks(contractId),
+		enabled: !!contractId && enabled,
 	});
 }

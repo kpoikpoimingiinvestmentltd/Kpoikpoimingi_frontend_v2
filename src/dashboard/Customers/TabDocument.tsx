@@ -21,16 +21,16 @@ export default function TabDocument({ documents }: { documents?: Record<string, 
 			return (
 				<div className="max-w-xs flex flex-col gap-3">
 					<h6 className="text-sm">{title}</h6>
-					<div className="border-dashed border-2 min-h-40 border-gray-200 rounded-md p-8 flex flex-col items-center justify-center">
+					<div className="rounded-md flex flex-col items-start justify-center">
 						<Image src={media.images.noImage} alt="No Document" className="w-16" />
-						<p className="text-sm text-muted-foreground mt-4">No documents uploaded</p>
+						<p className="text-xs text-muted-foreground mt-4">No documents uploaded</p>
 					</div>
 				</div>
 			);
 		}
 
 		return (
-			<div className="max-w-xs flex flex-col gap-3">
+			<div className="max-w-xs flex flex-col justify-center gap-3">
 				<h6 className="text-sm">{title}</h6>
 				<div className="flex items-center gap-6 flex-wrap pb-3">
 					{arr.map((it: unknown, i: number) => {
@@ -65,7 +65,7 @@ export default function TabDocument({ documents }: { documents?: Record<string, 
 		<CustomCard className="border-none p-0 bg-white">
 			<SectionTitle title="Document Uploaded" />
 
-			<div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+			<div className="mt-6 grid grid-cols-1 md:grid-cols-4 gap-6">
 				{renderSection("Identification Documents", Array.isArray(docs.identificationDocument) ? (docs.identificationDocument as unknown[]) : [])}
 				{renderSection("Driver's License", Array.isArray(docs.driverLicense) ? (docs.driverLicense as unknown[]) : [])}
 				{renderSection("Indigene Certificate", Array.isArray(docs.indegeneCertificate) ? (docs.indegeneCertificate as unknown[]) : [])}

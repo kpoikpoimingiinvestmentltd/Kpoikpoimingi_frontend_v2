@@ -94,7 +94,7 @@ export function transformCustomerToInstallmentForm(customer: unknown): Installme
 		whatsapp: toLocalPhone((c.phoneNumber || c.phone || "") as string),
 		dob: toDateInput(c.dateOfBirth ?? c.dob),
 		address: (c.homeAddress || (c.employmentDetails && (c.employmentDetails as Record<string, unknown>).homeAddress) || c.address || "") as string,
-		isDriver: c.isDriver === "Yes" || c.isDriver === true ? true : c.isDriver === "No" || c.isDriver === false ? false : undefined,
+		isDriver: c.isDriver === "Yes" || c.isDriver === true ? true : false,
 		nextOfKin: (() => {
 			const nk = (c.nextOfKin as Record<string, unknown>) || {};
 			const rel = (nk.relationship as string) || "";
@@ -121,38 +121,60 @@ export function transformCustomerToInstallmentForm(customer: unknown): Installme
 		paymentFrequency: String((firstInterest && firstInterest.paymentIntervalId) || ""),
 		paymentDuration: String((firstInterest && firstInterest.durationValue) || ""),
 		paymentDurationUnit: String((firstInterest && firstInterest.durationUnitId) || ""),
-		downPayment: String((firstInterest && firstInterest.downPayment) || (c.downPayment as string) || ""),
-		amountAvailable: firstInterest && firstInterest.downPayment ? String(firstInterest.downPayment) : "",
+		downPayment: String(firstInterest && firstInterest.downPayment != null ? firstInterest.downPayment : c.downPayment != null ? c.downPayment : ""),
+		amountAvailable: firstInterest && firstInterest.downPayment != null ? String(firstInterest.downPayment) : "",
 		clarification: {
 			previousAgreement:
 				typeof c.previousHirePurchase === "string"
 					? (c.previousHirePurchase as string).toLowerCase().startsWith("y")
 						? true
 						: (c.previousHirePurchase as string).toLowerCase().startsWith("n")
-						? false
-						: null
+							? false
+							: null
 					: typeof c.previousHirePurchase === "boolean"
-					? (c.previousHirePurchase as boolean)
-					: null,
+						? (c.previousHirePurchase as boolean)
+						: null,
 			completedAgreement:
 				typeof c.wasPreviousCompleted === "string"
 					? (c.wasPreviousCompleted as string).toLowerCase().startsWith("y")
 						? true
 						: (c.wasPreviousCompleted as string).toLowerCase().startsWith("n")
-						? false
-						: null
+							? false
+							: null
 					: typeof c.wasPreviousCompleted === "boolean"
-					? (c.wasPreviousCompleted as boolean)
-					: null,
+						? (c.wasPreviousCompleted as boolean)
+						: null,
 			prevCompany: (c.previousCompany || "") as string,
 			reason: (c.purposeOfProperty || "") as string,
 		},
 		employment: {
-			status: String((c.employmentDetails && (c.employmentDetails as Record<string, unknown>).employmentStatusId) || ""),
+			status: String(
+				(c.employmentDetails && (c.employmentDetails as Record<string, unknown>).employmentStatusId) ||
+					(c.employmentDetails &&
+					(c.employmentDetails as Record<string, unknown>).employmentStatus &&
+					typeof (c.employmentDetails as Record<string, unknown>).employmentStatus === "object" &&
+					"status" in ((c.employmentDetails as Record<string, unknown>).employmentStatus as Record<string, unknown>)
+						? ((c.employmentDetails as Record<string, unknown>).employmentStatus as { status: string }).status === "EMPLOYED"
+							? "1"
+							: ((c.employmentDetails as Record<string, unknown>).employmentStatus as { status: string }).status === "SELF EMPLOYED"
+								? "2"
+								: ""
+						: (c.employmentDetails as Record<string, unknown>).employmentStatus) ||
+					"",
+			),
 			employerName: String((c.employmentDetails && (c.employmentDetails as Record<string, unknown>).employerName) || ""),
 			employerAddress: String((c.employmentDetails && (c.employmentDetails as Record<string, unknown>).employerAddress) || ""),
-			companyName: String((c.employmentDetails && (c.employmentDetails as Record<string, unknown>).companyName) || ""),
-			businessAddress: String((c.employmentDetails && (c.employmentDetails as Record<string, unknown>).businessAddress) || ""),
+			// Map employer fields into company fields when company fields are absent
+			companyName: String(
+				(c.employmentDetails && (c.employmentDetails as Record<string, unknown>).companyName) ||
+					(c.employmentDetails && (c.employmentDetails as Record<string, unknown>).employerName) ||
+					"",
+			),
+			businessAddress: String(
+				(c.employmentDetails && (c.employmentDetails as Record<string, unknown>).businessAddress) ||
+					(c.employmentDetails && (c.employmentDetails as Record<string, unknown>).employerAddress) ||
+					"",
+			),
 			homeAddress: String((c.employmentDetails && (c.employmentDetails as Record<string, unknown>).homeAddress) || ""),
 		},
 		guarantors: guarantorsArray.map((g) => {
@@ -162,11 +184,23 @@ export function transformCustomerToInstallmentForm(customer: unknown): Installme
 				occupation: (gg.occupation || "") as string,
 				phone: toLocalPhone((gg.phoneNumber || gg.phone || "") as string),
 				email: (gg.email || "") as string,
-				employmentStatus: String(gg.employmentStatusId || gg.employmentStatus || ""),
-				homeAddress: (gg.homeAddress || gg.address || "") as string,
+				employmentStatus: String(
+					gg.employmentStatusId ||
+						(typeof gg.employmentStatus === "object" && gg.employmentStatus && "status" in gg.employmentStatus
+							? (gg.employmentStatus as { status: string }).status === "EMPLOYED"
+								? "1"
+								: (gg.employmentStatus as { status: string }).status === "SELF EMPLOYED"
+									? "2"
+									: ""
+							: gg.employmentStatus) ||
+						"",
+				),
+				homeAddress: (gg.homeAddress || "") as string,
 				businessAddress: (gg.companyAddress || gg.businessAddress || "") as string,
+				employerName: (gg.employerName || "") as string,
 				stateOfOrigin: String(gg.stateOfOrigin || ""),
 				votersUploaded: (gg.votersUploaded as number) || 0,
+				hasAgreed: Boolean(gg.hasAgreed ?? false),
 			};
 		}),
 		hasRequestAgreement: Boolean(c.hasRequestAgreement),
@@ -194,6 +228,10 @@ export function transformCustomerToOnceForm(customer: unknown): OncePaymentForm 
 			return {
 				propertyName: (p.customPropertyName || nestedProperty.name || "") as string,
 				quantity: (p.quantity as number) || 1,
+				propertyId: (p.propertyId as string) || "",
+				isCustomProperty: Boolean(p.isCustomProperty),
+				customPropertyPrice: (p.customPropertyPrice as number) || undefined,
+				isPrefilled: true,
 			};
 		}),
 	};

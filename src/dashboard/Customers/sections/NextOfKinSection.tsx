@@ -96,6 +96,8 @@ export default function NextOfKinSection({
 												<SelectItem value="Daughter">Daughter</SelectItem>
 												<SelectItem value="Brother">Brother</SelectItem>
 												<SelectItem value="Sister">Sister</SelectItem>
+												<SelectItem value="Niece">Niece</SelectItem>
+												<SelectItem value="Nephew">Nephew</SelectItem>
 												<SelectItem value="Grandfather">Grandfather</SelectItem>
 												<SelectItem value="Grandmother">Grandmother</SelectItem>
 												<SelectItem value="Uncle">Uncle</SelectItem>
@@ -166,6 +168,8 @@ export default function NextOfKinSection({
 												<SelectItem value="Daughter">Daughter</SelectItem>
 												<SelectItem value="Brother">Brother</SelectItem>
 												<SelectItem value="Sister">Sister</SelectItem>
+												<SelectItem value="Niece">Niece</SelectItem>
+												<SelectItem value="Nephew">Nephew</SelectItem>
 												<SelectItem value="Grandfather">Grandfather</SelectItem>
 												<SelectItem value="Grandmother">Grandmother</SelectItem>
 												<SelectItem value="Uncle">Uncle</SelectItem>
@@ -187,7 +191,17 @@ export default function NextOfKinSection({
 
 						<ValidationErrorDisplay
 							missingFields={missingFields}
-							filter={(field) => ["Next of Kin", "Spouse", "relationship"].some((keyword) => field.toLowerCase().includes(keyword.toLowerCase()))}
+							filter={(field) => {
+								// Only show errors specifically for next of kin, exclude guarantor
+								if (field.toLowerCase().includes("guarantor")) {
+									return false;
+								}
+								return (
+									field.toLowerCase().includes("next of kin") ||
+									field.toLowerCase().includes("spouse") ||
+									field.toLowerCase().includes("relationship")
+								);
+							}}
 						/>
 					</>
 				)}

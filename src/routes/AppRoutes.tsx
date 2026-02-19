@@ -8,6 +8,7 @@ import Dashboard from "../dashboard/Dashboard/Dashboard";
 import Customers from "../dashboard/Customers/Customers";
 import CustomerDetails from "../dashboard/Customers/CustomerDetails";
 import CustomerReceipt from "../dashboard/Customers/CustomerReceipt";
+import ProtectedRoute from "../components/common/ProtectedRoute";
 import AddCustomer from "../dashboard/Customers/AddCustomer";
 import SelectProperties from "../dashboard/Customers/SelectProperties";
 import DashboardPageNotFound from "../error/DashboardPageNotFound";
@@ -17,7 +18,7 @@ import NotificationsPage from "../dashboard/Notifications/NotificationsPage";
 import AddProperties from "../dashboard/Properties/AddProperties";
 import AuditCompliance from "../dashboard/AuditCompliance/AuditCompliance";
 import Payments from "../dashboard/Payment/Payments";
-import PaymentSuccess from "../dashboard/Payment/PaymentSuccess";
+import PaymentSuccess from "../pages/PaymentSuccess";
 import Receipt from "../dashboard/Receipt/Receipt";
 import Users from "../dashboard/Users/Users";
 import ReceiptDetails from "../dashboard/Receipt/ReceiptDetails";
@@ -33,6 +34,7 @@ import ContractDetails from "../dashboard/Contract/ContractDetails";
 import ProductRequestDetails from "../dashboard/ProductRequest/ProductRequestDetails";
 import SelectPaymentMethod from "../dashboard/Customers/SelectPaymentMethod";
 import DebtDetails from "../dashboard/Debt/DebtDetails";
+import { ROLE_BASED_ACCESS } from "@/config/roleBasedAccess";
 
 export const appRouter = createBrowserRouter([
 	{
@@ -53,6 +55,10 @@ export const appRouter = createBrowserRouter([
 		],
 	},
 	{
+		path: _router.paymentSuccess,
+		element: <PaymentSuccess />,
+	},
+	{
 		path: _router.dashboard.index,
 		element: <AdminDashboardLayout />,
 		children: [
@@ -62,7 +68,11 @@ export const appRouter = createBrowserRouter([
 			},
 			{
 				path: _router.dashboard.notifications,
-				element: <NotificationsPage />,
+				element: (
+					<ProtectedRoute allowedRoles={ROLE_BASED_ACCESS.notifications}>
+						<NotificationsPage />
+					</ProtectedRoute>
+				),
 			},
 			{
 				path: _router.dashboard.customers,
@@ -90,11 +100,19 @@ export const appRouter = createBrowserRouter([
 			},
 			{
 				path: _router.dashboard.contract,
-				element: <Contract />,
+				element: (
+					<ProtectedRoute allowedRoles={ROLE_BASED_ACCESS.contract}>
+						<Contract />
+					</ProtectedRoute>
+				),
 			},
 			{
 				path: _router.dashboard.productRequest,
-				element: <ProductRequest />,
+				element: (
+					<ProtectedRoute allowedRoles={ROLE_BASED_ACCESS.productRequest}>
+						<ProductRequest />
+					</ProtectedRoute>
+				),
 			},
 			{
 				path: _router.dashboard.productRequestDetails,
@@ -125,20 +143,28 @@ export const appRouter = createBrowserRouter([
 				element: <Payments />,
 			},
 			{
-				path: _router.dashboard.paymentSuccess,
-				element: <PaymentSuccess />,
-			},
-			{
 				path: _router.dashboard.users,
-				element: <Users />,
+				element: (
+					<ProtectedRoute allowedRoles={ROLE_BASED_ACCESS.users}>
+						<Users />
+					</ProtectedRoute>
+				),
 			},
 			{
 				path: _router.dashboard.userDetailsPath,
-				element: <UserDetails />,
+				element: (
+					<ProtectedRoute allowedRoles={ROLE_BASED_ACCESS.users}>
+						<UserDetails />
+					</ProtectedRoute>
+				),
 			},
 			{
 				path: _router.dashboard.addUser,
-				element: <AddNewUser />,
+				element: (
+					<ProtectedRoute allowedRoles={ROLE_BASED_ACCESS.users}>
+						<AddNewUser />
+					</ProtectedRoute>
+				),
 			},
 			{
 				path: _router.dashboard.receipt,
@@ -162,11 +188,19 @@ export const appRouter = createBrowserRouter([
 			},
 			{
 				path: _router.dashboard.reportAnalytics,
-				element: <ReportAnalytics />,
+				element: (
+					<ProtectedRoute allowedRoles={ROLE_BASED_ACCESS.reportAnalytics}>
+						<ReportAnalytics />
+					</ProtectedRoute>
+				),
 			},
 			{
 				path: _router.dashboard.auditAndCompliance,
-				element: <AuditCompliance />,
+				element: (
+					<ProtectedRoute allowedRoles={ROLE_BASED_ACCESS.auditAndCompliance}>
+						<AuditCompliance />
+					</ProtectedRoute>
+				),
 			},
 			{
 				path: _router.dashboard.settings,

@@ -11,26 +11,140 @@ import { useGetAllDuePayments, useExportDuePayments } from "@/api/duePayment";
 import { useDebounceSearch } from "@/hooks/useDebounceSearch";
 import { TableSkeleton } from "@/components/common/Skeleton";
 import { ExportFileIcon, IconWrapper } from "@/assets/icons";
-import { useDispatch, useSelector } from "react-redux";
-import type { RootState } from "@/store";
-import { setPage, setSearch, applyFilters, resetFilters } from "@/store/duePaymentSlice";
 import { useState } from "react";
 import ActionButton from "@/components/base/ActionButton";
 import { toast } from "sonner";
 import { extractErrorMessage } from "@/lib/utils";
 import ExportConfirmModal from "@/components/common/ExportConfirmModal";
+import { useSearchParams } from "react-router";
+import React from "react";
+import { useCanExport } from "@/hooks/usePermissions";
 
 export default function Payments() {
-	const dispatch = useDispatch();
-	const { page, search, sortBy, sortOrder, dueDateFrom, dueDateTo, dateFrom, dateTo, isOverdue, statusId } = useSelector(
-		(state: RootState) => state.duePayment
-	);
+	const [searchParams, setSearchParams] = useSearchParams();
+
+	// Initialize state from URL params
+	const [page, setPage] = React.useState(() => {
+		const pageParam = searchParams.get("page");
+		return pageParam ? parseInt(pageParam, 10) : 1;
+	});
+	const [search, setSearch] = React.useState(() => {
+		return searchParams.get("search") || "";
+	});
+	const [filters, setFilters] = React.useState<Record<string, string>>(() => {
+		const urlFilters: Record<string, string> = {};
+		const sortBy = searchParams.get("sortBy");
+		const sortOrder = searchParams.get("sortOrder");
+		const dueDateFrom = searchParams.get("dueDateFrom");
+		const dueDateTo = searchParams.get("dueDateTo");
+		const dateFrom = searchParams.get("dateFrom");
+		const dateTo = searchParams.get("dateTo");
+		const isOverdue = searchParams.get("isOverdue");
+		const statusId = searchParams.get("statusId");
+		if (sortBy) urlFilters.sortBy = sortBy;
+		if (sortOrder) urlFilters.sortOrder = sortOrder;
+		if (dueDateFrom) urlFilters.dueDateFrom = dueDateFrom;
+		if (dueDateTo) urlFilters.dueDateTo = dueDateTo;
+		if (dateFrom) urlFilters.dateFrom = dateFrom;
+		if (dateTo) urlFilters.dateTo = dateTo;
+		if (isOverdue) urlFilters.isOverdue = isOverdue;
+		if (statusId) urlFilters.statusId = statusId;
+		return urlFilters;
+	});
 
 	const [exportOpen, setExportOpen] = useState(false);
 
-	const debouncedSearch = useDebounceSearch(search, 400);
+	const debouncedSearch = useDebounceSearch(search);
+	const [, setIsMounted] = React.useState(false);
+	const canExport = useCanExport();
 
-	const { data: paymentsData = {}, isLoading } = useGetAllDuePayments(
+	// Sync state when URL params change (e.g., browser back/forward, refresh)
+	React.useEffect(() => {
+		const pageParam = searchParams.get("page");
+		const newPage = pageParam ? parseInt(pageParam, 10) : 1;
+		setPage(newPage);
+		setSearch(searchParams.get("search") || "");
+		const urlFilters: Record<string, string> = {};
+		const sortBy = searchParams.get("sortBy");
+		const sortOrder = searchParams.get("sortOrder");
+		const dueDateFrom = searchParams.get("dueDateFrom");
+		const dueDateTo = searchParams.get("dueDateTo");
+		const dateFrom = searchParams.get("dateFrom");
+		const dateTo = searchParams.get("dateTo");
+		const isOverdue = searchParams.get("isOverdue");
+		const statusId = searchParams.get("statusId");
+		if (sortBy) urlFilters.sortBy = sortBy;
+		if (sortOrder) urlFilters.sortOrder = sortOrder;
+		if (dueDateFrom) urlFilters.dueDateFrom = dueDateFrom;
+		if (dueDateTo) urlFilters.dueDateTo = dueDateTo;
+		if (dateFrom) urlFilters.dateFrom = dateFrom;
+		if (dateTo) urlFilters.dateTo = dateTo;
+		if (isOverdue) urlFilters.isOverdue = isOverdue;
+		if (statusId) urlFilters.statusId = statusId;
+		setFilters(urlFilters);
+	}, [searchParams]);
+
+	// Initialize URL params on mount if not present
+	React.useEffect(() => {
+		const hasParams =
+			searchParams.has("page") ||
+			searchParams.has("search") ||
+			searchParams.has("sortBy") ||
+			searchParams.has("sortOrder") ||
+			searchParams.has("dueDateFrom") ||
+			searchParams.has("dueDateTo") ||
+			searchParams.has("dateFrom") ||
+			searchParams.has("dateTo") ||
+			searchParams.has("isOverdue") ||
+			searchParams.has("statusId");
+		if (!hasParams) {
+			const params = new URLSearchParams();
+			params.set("page", "1");
+			params.set("sortBy", "dueDate");
+			params.set("sortOrder", "asc");
+			setSearchParams(params, { replace: true });
+		}
+		setIsMounted(true);
+	}, []);
+
+	// Update URL when state changes
+	React.useEffect(() => {
+		const params = new URLSearchParams(searchParams);
+		params.set("page", page.toString());
+		params.set("search", search);
+		if (filters.sortBy) params.set("sortBy", filters.sortBy);
+		else params.delete("sortBy");
+		if (filters.sortOrder) params.set("sortOrder", filters.sortOrder);
+		else params.delete("sortOrder");
+		if (filters.dueDateFrom) params.set("dueDateFrom", filters.dueDateFrom);
+		else params.delete("dueDateFrom");
+		if (filters.dueDateTo) params.set("dueDateTo", filters.dueDateTo);
+		else params.delete("dueDateTo");
+		if (filters.dateFrom) params.set("dateFrom", filters.dateFrom);
+		else params.delete("dateFrom");
+		if (filters.dateTo) params.set("dateTo", filters.dateTo);
+		else params.delete("dateTo");
+		if (filters.isOverdue) params.set("isOverdue", filters.isOverdue);
+		else params.delete("isOverdue");
+		if (filters.statusId) params.set("statusId", filters.statusId);
+		else params.delete("statusId");
+		setSearchParams(params, { replace: true });
+	}, [page, search, filters, setSearchParams]);
+
+	const sortBy = filters.sortBy || "dueDate";
+	const sortOrder = filters.sortOrder || "asc";
+	const dueDateFrom = filters.dueDateFrom || undefined;
+	const dueDateTo = filters.dueDateTo || undefined;
+	const dateFrom = filters.dateFrom || undefined;
+	const dateTo = filters.dateTo || undefined;
+	const isOverdue = filters.isOverdue ? filters.isOverdue === "true" : undefined;
+	const statusId = filters.statusId ? Number(filters.statusId) : undefined;
+
+	const {
+		data: paymentsData = {},
+		isLoading,
+		isFetching,
+	} = useGetAllDuePayments(
 		page,
 		10,
 		sortBy,
@@ -43,14 +157,14 @@ export default function Payments() {
 		debouncedSearch || undefined,
 		debouncedSearch || undefined,
 		isOverdue,
-		statusId
+		statusId,
 	);
 
 	const paymentsTyped = paymentsData as Record<string, unknown> | undefined;
 	const paymentsList = Array.isArray(paymentsTyped?.data) ? (paymentsTyped?.data as unknown[]) : [];
 	const paginationData = paymentsTyped?.pagination as Record<string, unknown> | undefined;
 	const pages = Math.max(1, (paginationData?.totalPages as number) ?? 1);
-	const isEmpty = !isLoading && paymentsList.length === 0;
+	const isEmpty = !isLoading && !isFetching && paymentsList.length === 0;
 	const exportMutation = useExportDuePayments();
 
 	const filterFields: FilterField[] = [
@@ -104,23 +218,14 @@ export default function Payments() {
 		{ key: "sortOrder", label: "Sort Order", type: "sortOrder" },
 	];
 
-	const handleFilterApply = (filters: Record<string, string>) => {
-		dispatch(
-			applyFilters({
-				dueDateFrom: filters.dueDateFrom || "",
-				dueDateTo: filters.dueDateTo || "",
-				dateFrom: filters.dateFrom || "",
-				dateTo: filters.dateTo || "",
-				isOverdue: filters.isOverdue ? filters.isOverdue === "true" : undefined,
-				statusId: filters.statusId ? Number(filters.statusId) : undefined,
-				sortBy: filters.sortBy || "dueDate",
-				sortOrder: filters.sortOrder || "asc",
-			})
-		);
+	const handleFilterApply = (newFilters: Record<string, string>) => {
+		setFilters(newFilters);
+		setPage(1);
 	};
 
 	const handleFilterReset = () => {
-		dispatch(resetFilters());
+		setFilters({});
+		setPage(1);
 	};
 
 	// Smart Export Handlers
@@ -196,47 +301,51 @@ export default function Payments() {
 			<div className="flex items-center justify-between flex-wrap gap-4 mb-4">
 				<PageTitles title="Due Payments" description="The list of all paid debt and pending payment" />
 				<div className="flex items-center gap-3">
-					<ActionButton
-						type="button"
-						className="bg-primary/10 text-primary hover:bg-primary/20 flex items-center gap-2"
-						onClick={handleExportClick}
-						disabled={exportMutation.isPending}>
-						<IconWrapper className="text-base">
-							<ExportFileIcon />
-						</IconWrapper>
-						<span className="text-sm">{exportMutation.isPending ? "Exporting..." : "Export"}</span>
-					</ActionButton>
+					{canExport && (
+						<ActionButton
+							type="button"
+							className="bg-primary/10 text-primary hover:bg-primary/20 flex items-center gap-2"
+							onClick={handleExportClick}
+							disabled={exportMutation.isPending}>
+							<IconWrapper className="text-base">
+								<ExportFileIcon />
+							</IconWrapper>
+							<span className="text-sm">{exportMutation.isPending ? "Exporting..." : "Export"}</span>
+						</ActionButton>
+					)}
 				</div>
 			</div>
 
 			<CustomCard>
 				<div className="flex items-center justify-end">
-					<SearchWithFilters
-						search={search}
-						onSearchChange={(v) => {
-							dispatch(setSearch(v));
-							dispatch(setPage(1));
-						}}
-						setPage={(newPage) => dispatch(setPage(newPage))}
-						placeholder="Search by contract code, customer name, or email"
-						showFilter={true}
-						fields={filterFields}
-						initialValues={{
-							dueDateFrom,
-							dueDateTo,
-							dateFrom,
-							dateTo,
-							isOverdue: isOverdue !== undefined ? String(isOverdue) : "",
-							statusId: statusId !== undefined ? String(statusId) : "",
-							sortBy: sortBy || "",
-							sortOrder: sortOrder || "",
-						}}
-						onApply={handleFilterApply}
-						onReset={handleFilterReset}
-					/>
+					{paymentsList.length > 0 && (
+						<SearchWithFilters
+							search={search}
+							onSearchChange={(v) => {
+								setSearch(v);
+								setPage(1);
+							}}
+							setPage={setPage}
+							placeholder="Search by contract code, customer name, or email"
+							showFilter={true}
+							fields={filterFields}
+							initialValues={{
+								dueDateFrom: filters.dueDateFrom || "",
+								dueDateTo: filters.dueDateTo || "",
+								dateFrom: filters.dateFrom || "",
+								dateTo: filters.dateTo || "",
+								isOverdue: filters.isOverdue || "",
+								statusId: filters.statusId || "",
+								sortBy: filters.sortBy || "",
+								sortOrder: filters.sortOrder || "",
+							}}
+							onApply={handleFilterApply}
+							onReset={handleFilterReset}
+						/>
+					)}
 				</div>
 				<div className="min-h-96 flex flex-col">
-					{isLoading ? (
+					{isLoading || isFetching ? (
 						<TableSkeleton rows={10} cols={9} />
 					) : isEmpty ? (
 						<EmptyData text="No due payments at the moment" />
@@ -246,7 +355,7 @@ export default function Payments() {
 								<div className="overflow-x-auto w-full">
 									<Table>
 										<TableHeader className={tableHeaderRowStyle}>
-											<TableRow className="bg-[#EAF6FF] h-12 overflow-hidden py-4 rounded-lg">
+											<TableRow className="bg-[#EAF6FF] dark:bg-neutral-900/80 h-12 overflow-hidden py-4 rounded-lg">
 												<TableHead>Contract Code</TableHead>
 												<TableHead>Customer Name</TableHead>
 												<TableHead>Email</TableHead>
@@ -267,16 +376,16 @@ export default function Payments() {
 												const statusStr = statusObj?.status as string | undefined;
 
 												return (
-													<TableRow key={(p.id as string) || idx} className="hover:bg-[#F6FBFF]">
-														<TableCell className="text-[#13121266] py-4">{p.contractCode as string}</TableCell>
-														<TableCell className="text-[#13121266] py-4">{p.customerName as string}</TableCell>
-														<TableCell className="text-[#13121266] py-4">{p.customerEmail as string}</TableCell>
-														<TableCell className="text-[#13121266] py-4">{p.propertyName as string}</TableCell>
-														<TableCell className="text-[#13121266] py-4">₦{p.amount as string}</TableCell>
-														<TableCell className="text-[#13121266] py-4">₦{p.lateFees as string}</TableCell>
-														<TableCell className="text-[#13121266] py-4 font-medium">₦{p.totalDue as string}</TableCell>
-														<TableCell className="text-[#13121266] py-4">{dueDate}</TableCell>
-														<TableCell className="text-[#13121266] py-4">
+													<TableRow key={(p.id as string) || idx} className="hover:bg-[#F6FBFF] dark:hover:bg-neutral-900/50">
+														<TableCell className="py-4">{p.contractCode as string}</TableCell>
+														<TableCell className="py-4">{p.customerName as string}</TableCell>
+														<TableCell className="py-4">{p.customerEmail as string}</TableCell>
+														<TableCell className="py-4">{p.propertyName as string}</TableCell>
+														<TableCell className="py-4">₦{p.amount as string}</TableCell>
+														<TableCell className="py-4">₦{p.lateFees as string}</TableCell>
+														<TableCell className="py-4 font-medium">₦{p.totalDue as string}</TableCell>
+														<TableCell className="py-4">{dueDate}</TableCell>
+														<TableCell className="py-4">
 															<Badge
 																value={isOverdueStatus ? "Overdue" : statusStr || "Unknown"}
 																status={isOverdueStatus ? "banned" : undefined}
@@ -298,7 +407,7 @@ export default function Payments() {
 									<span className="font-medium">{(paginationData?.totalCount as number) || 0}</span> results
 								</span>
 								<div className="ml-auto">
-									<CompactPagination page={page} pages={pages} onPageChange={(newPage) => dispatch(setPage(newPage))} />
+									<CompactPagination page={page} pages={pages} onPageChange={setPage} />
 								</div>
 							</div>
 						</CustomCard>

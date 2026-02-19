@@ -14,6 +14,7 @@ export default function ClarificationDetailsSection({ form, handleChange, center
 	return (
 		<div className={centeredContainer()}>
 			<h3 className={sectionTitle()}>Clarification Details</h3>
+
 			<div className="mt-4 flex items-center gap-4">
 				<div className="flex items-center gap-2">
 					<label className="text-sm">Have you previously entered hire purchase agreement?</label>

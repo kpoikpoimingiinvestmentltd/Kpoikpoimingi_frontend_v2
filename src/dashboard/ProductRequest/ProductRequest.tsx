@@ -8,7 +8,7 @@ import CompactPagination from "@/components/ui/compact-pagination";
 import SearchWithFilters from "@/components/common/SearchWithFilters";
 import type { FilterField } from "@/components/common/SearchWithFilters";
 import { _router } from "@/routes/_router";
-import { Link } from "react-router";
+import { Link, useSearchParams } from "react-router";
 import { useGetProductRequests, useDeleteRegistration, useExportProductRequests } from "@/api/productRequest";
 import type { ProductRequestItem, ProductRequestResponse } from "@/types/productRequest";
 import ConfirmModal from "@/components/common/ConfirmModal";
@@ -19,15 +19,89 @@ import EmptyData from "@/components/common/EmptyData";
 import ExportConfirmModal from "@/components/common/ExportConfirmModal";
 import ActionButton from "@/components/base/ActionButton";
 import { extractErrorMessage } from "@/lib/utils";
+import { useCanDelete, useCanExport } from "@/hooks/usePermissions";
 
 export default function ProductRequest() {
-	const [page, setPage] = React.useState(1);
-	const [limit, setLimit] = React.useState(10);
-	const [search, setSearch] = React.useState("");
-	const [exportConfirmOpen, setExportConfirmOpen] = React.useState(false);
+	const [searchParams, setSearchParams] = useSearchParams();
+
+	// Initialize state from URL params
+	const [page, setPage] = React.useState(() => {
+		const pageParam = searchParams.get("page");
+		return pageParam ? parseInt(pageParam, 10) : 1;
+	});
+	const [search, setSearch] = React.useState(() => {
+		return searchParams.get("search") || "";
+	});
+	const [filters, setFilters] = React.useState<Record<string, string>>(() => {
+		const urlFilters: Record<string, string> = {};
+		const limit = searchParams.get("limit");
+		const sortBy = searchParams.get("sortBy");
+		const sortOrder = searchParams.get("sortOrder");
+		if (limit) urlFilters.limit = limit;
+		if (sortBy) urlFilters.sortBy = sortBy;
+		if (sortOrder) urlFilters.sortOrder = sortOrder;
+		return urlFilters;
+	});
+
 	const debouncedSearch = useDebounceSearch(search, 400);
-	const [sortBy, setSortBy] = React.useState<string | undefined>(undefined);
-	const [sortOrder, setSortOrder] = React.useState<string | undefined>(undefined);
+	const [, setIsMounted] = React.useState(false);
+
+	React.useEffect(() => {
+		const pageParam = searchParams.get("page");
+		const newPage = pageParam ? parseInt(pageParam, 10) : 1;
+		setPage(newPage);
+
+		const searchParam = searchParams.get("search") || "";
+		setSearch(searchParam);
+
+		const urlFilters: Record<string, string> = {};
+		const limit = searchParams.get("limit");
+		const sortBy = searchParams.get("sortBy");
+		const sortOrder = searchParams.get("sortOrder");
+		if (limit) urlFilters.limit = limit;
+		if (sortBy) urlFilters.sortBy = sortBy;
+		if (sortOrder) urlFilters.sortOrder = sortOrder;
+		setFilters(urlFilters);
+	}, [searchParams]);
+
+	// Initialize URL params on mount if not present
+	React.useEffect(() => {
+		const hasParams =
+			searchParams.has("page") ||
+			searchParams.has("limit") ||
+			searchParams.has("search") ||
+			searchParams.has("sortBy") ||
+			searchParams.has("sortOrder");
+		if (!hasParams) {
+			const params = new URLSearchParams();
+			params.set("page", "1");
+			params.set("limit", "10");
+			params.set("sortBy", "createdAt");
+			params.set("sortOrder", "desc");
+			setSearchParams(params, { replace: true });
+		}
+		setIsMounted(true);
+	}, []);
+
+	// Update URL when state changes
+	React.useEffect(() => {
+		const params = new URLSearchParams(searchParams);
+		params.set("page", page.toString());
+		params.set("search", search);
+		if (filters.limit) params.set("limit", filters.limit);
+		else params.delete("limit");
+		if (filters.sortBy) params.set("sortBy", filters.sortBy);
+		else params.delete("sortBy");
+		if (filters.sortOrder) params.set("sortOrder", filters.sortOrder);
+		else params.delete("sortOrder");
+		setSearchParams(params, { replace: true });
+	}, [page, search, filters, setSearchParams]);
+
+	const limit = Number((filters.limit as string) || "10");
+	const sortBy = (filters.sortBy as string) || "createdAt";
+	const sortOrder = (filters.sortOrder as string) || "desc";
+
+	const [exportConfirmOpen, setExportConfirmOpen] = React.useState(false);
 
 	const query = useGetProductRequests(page, limit, debouncedSearch || "", sortBy, sortOrder);
 	const isLoading = query.isLoading || query.isFetching;
@@ -38,8 +112,30 @@ export default function ProductRequest() {
 	const deleteMutation = useDeleteRegistration();
 	const exportMutation = useExportProductRequests();
 
+	const canDelete = useCanDelete();
+	const canExport = useCanExport();
+
 	const [toDelete, setToDelete] = React.useState<{ id?: string; title?: string } | null>(null);
 	const [confirmOpen, setConfirmOpen] = React.useState(false);
+
+	const handleSearchChange = (value: string) => {
+		setSearch(value);
+	};
+
+	const handlePageChange = (newPage: number) => {
+		setPage(newPage);
+	};
+
+	const handleFiltersApply = (newFilters: Record<string, string>) => {
+		setFilters(newFilters);
+		setPage(1);
+	};
+
+	const handleFiltersReset = () => {
+		setSearch("");
+		setFilters({});
+		setPage(1);
+	};
 
 	const handleExportClick = async () => {
 		if (!debouncedSearch) {
@@ -106,16 +202,18 @@ export default function ProductRequest() {
 			<div className="flex items-center justify-between flex-wrap gap-4 mb-4">
 				<PageTitles title="Product Request" description="This is all the product request from customers" />
 				<div className="flex items-center gap-3">
-					<ActionButton
-						type="button"
-						className="flex items-center gap-2 bg-primary/10 text-primary hover:bg-primary/20"
-						onClick={handleExportClick}
-						disabled={exportMutation.isPending}>
-						<IconWrapper>
-							<ExportFileIcon />
-						</IconWrapper>
-						<span>{exportMutation.isPending ? "Exporting..." : "Export"}</span>
-					</ActionButton>
+					{canExport && (
+						<ActionButton
+							type="button"
+							className="flex items-center gap-2 bg-primary/10 text-primary hover:bg-primary/20"
+							onClick={handleExportClick}
+							disabled={exportMutation.isPending}>
+							<IconWrapper>
+								<ExportFileIcon />
+							</IconWrapper>
+							<span>{exportMutation.isPending ? "Exporting..." : "Export"}</span>
+						</ActionButton>
+					)}
 				</div>
 			</div>
 
@@ -125,11 +223,8 @@ export default function ProductRequest() {
 					<div className="flex items-center gap-2">
 						<SearchWithFilters
 							search={search}
-							onSearchChange={(v) => {
-								setSearch(v);
-								setPage(1);
-							}}
-							setPage={setPage}
+							onSearchChange={handleSearchChange}
+							setPage={handlePageChange}
 							placeholder="Search here"
 							fields={
 								[
@@ -158,14 +253,9 @@ export default function ProductRequest() {
 									{ key: "sortOrder", label: "Sort Order", type: "sortOrder" },
 								] as FilterField[]
 							}
-							initialValues={{ limit: String(limit), sortBy: sortBy || "", sortOrder: sortOrder || "" }}
-							onApply={(filters) => {
-								setLimit(filters.limit ? Number(filters.limit) : 10);
-								setSortBy(filters.sortBy || "createdAt");
-								setSortOrder(filters.sortOrder || "desc");
-								setPage(1);
-							}}
-							onReset={() => setSearch("")}
+							initialValues={{ limit: filters.limit || "10", sortBy: filters.sortBy || "", sortOrder: filters.sortOrder || "" }}
+							onApply={handleFiltersApply}
+							onReset={handleFiltersReset}
 						/>
 					</div>
 				</div>
@@ -183,7 +273,7 @@ export default function ProductRequest() {
 								<div className="overflow-x-auto w-full">
 									<Table>
 										<TableHeader className="[&_tr]:border-0">
-											<TableRow className="bg-[#EAF6FF] h-12 overflow-hidden py-4 rounded-lg">
+											<TableRow className="bg-[#EAF6FF] dark:bg-neutral-900/80 h-12 overflow-hidden py-4 rounded-lg">
 												<TableHead>Request From</TableHead>
 												<TableHead>Property Type</TableHead>
 												<TableHead>Payment Method</TableHead>
@@ -195,8 +285,10 @@ export default function ProductRequest() {
 										</TableHeader>
 										<TableBody>
 											{items.map((item) => (
-												<TableRow key={item.id} className="hover:bg-[#F6FBFF]">
-													<TableCell>{item.name}</TableCell>
+												<TableRow key={item.id} className="hover:bg-[#F6FBFF] dark:hover:bg-neutral-900/50">
+													<TableCell>
+														<span className="capitalize">{item.name}</span>
+													</TableCell>
 													<TableCell>{item.propertyType}</TableCell>
 													<TableCell>{item.paymentMethod}</TableCell>
 													<TableCell>{item.totalAmount.toLocaleString()}</TableCell>
@@ -206,23 +298,27 @@ export default function ProductRequest() {
 													<TableCell>{new Date(item.dateCreated).toLocaleDateString()}</TableCell>
 													<TableCell>
 														<div className="flex items-center gap-2">
-															<Link to={_router.dashboard.productRequestDetails.replace(":id", item.id)} className="p-2 flex items-center">
+															<Link
+																to={`${_router.dashboard.productRequestDetails.replace(":id", item.id)}?tab=information`}
+																className="p-2 flex items-center">
 																<IconWrapper className="text-xl">
 																	<EditIcon />
 																</IconWrapper>
 															</Link>
-															<button
-																type="button"
-																title="Delete"
-																onClick={() => {
-																	setToDelete({ id: item.id, title: item.name });
-																	setConfirmOpen(true);
-																}}
-																className="text-red-500 p-2">
-																<IconWrapper className="text-xl">
-																	<TrashIcon />
-																</IconWrapper>
-															</button>
+															{canDelete && (
+																<button
+																	type="button"
+																	title="Delete"
+																	onClick={() => {
+																		setToDelete({ id: item.id, title: item.name });
+																		setConfirmOpen(true);
+																	}}
+																	className="text-red-500 p-2">
+																	<IconWrapper className="text-xl">
+																		<TrashIcon />
+																	</IconWrapper>
+																</button>
+															)}
 														</div>
 													</TableCell>
 												</TableRow>
@@ -238,7 +334,7 @@ export default function ProductRequest() {
 									<span className="font-medium">{pagination?.total ?? 0}</span> results
 								</span>
 								<div className="ml-auto">
-									<CompactPagination page={page} pages={pagination?.totalPages ?? 1} onPageChange={setPage} />
+									<CompactPagination page={page} pages={pagination?.totalPages ?? 1} onPageChange={handlePageChange} />
 								</div>
 							</div>
 						</div>

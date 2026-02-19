@@ -63,7 +63,7 @@ export default function TabPaymentHistory({ payments, customerId }: { payments?:
 							const title = `${grp.contractCode ?? grp.contractId ?? "Contract"} — ${grp.propertyName ?? ""}`;
 							return (
 								<div key={grp.contractId ?? grp.contractCode ?? title}>
-									<div className="bg-[#F7F7F7] p-3 rounded-sm text-sm mb-4">{title}</div>
+									<div className="bg-[#F7F7F7] dark:bg-neutral-700 p-3 rounded-sm text-sm mb-4">{title}</div>
 									<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-5 gap-4">
 										{Array.isArray(grp.payments) && grp.payments.length > 0 ? (
 											grp.payments.map((p) => (

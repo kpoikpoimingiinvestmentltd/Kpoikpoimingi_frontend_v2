@@ -18,19 +18,71 @@ import { TableSkeleton } from "@/components/common/Skeleton";
 import { twMerge } from "tailwind-merge";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { _router } from "../../routes/_router";
+import { useSearchParams } from "react-router";
+import { useCanPerformAction } from "@/hooks/usePermissions";
 
 // (moved into component state)
 
 export default function Categories() {
+	const [searchParams, setSearchParams] = useSearchParams();
+	const canDelete = useCanPerformAction("delete");
+
+	// Initialize state from URL params
 	const [categories, setCategories] = React.useState<any[]>([]);
-	const [query, setQuery] = React.useState("");
-	const [categoryFilter, setCategoryFilter] = React.useState<string | null>(null);
+	const [query, setQuery] = React.useState(() => {
+		return searchParams.get("search") || "";
+	});
+	const [categoryFilter, setCategoryFilter] = React.useState<string | null>(() => {
+		return searchParams.get("filter") || null;
+	});
 	const dispatch = useDispatch();
-	const [page, setPage] = React.useState(1);
-	const [limit] = React.useState(10);
+	const [page, setPage] = React.useState(() => {
+		const pageParam = searchParams.get("page");
+		return pageParam ? parseInt(pageParam, 10) : 1;
+	});
+	const [limit] = React.useState(() => {
+		const limitParam = searchParams.get("limit");
+		return limitParam ? parseInt(limitParam, 10) : 10;
+	});
 	const { data: fetchedCategories, isLoading } = useGetAllCategories(page, limit, true);
 	const queryClient = useQueryClient();
 	const isEmpty = categories.length === 0 && !isLoading;
+	const [, setIsMounted] = React.useState(false);
+
+	// Sync state when URL params change (e.g., browser back/forward, refresh)
+	React.useEffect(() => {
+		const pageParam = searchParams.get("page");
+		const newPage = pageParam ? parseInt(pageParam, 10) : 1;
+		setPage(newPage);
+		setQuery(searchParams.get("search") || "");
+		setCategoryFilter(searchParams.get("filter") || null);
+	}, [searchParams]);
+
+	// Initialize URL params on mount if not present
+	React.useEffect(() => {
+		const hasParams = searchParams.has("page") || searchParams.has("search") || searchParams.has("filter");
+		if (!hasParams) {
+			const params = new URLSearchParams();
+			params.set("page", "1");
+			params.set("limit", "10");
+			setSearchParams(params, { replace: true });
+		}
+		setIsMounted(true);
+	}, []);
+
+	// Update URL when state changes
+	React.useEffect(() => {
+		const params = new URLSearchParams(searchParams);
+		params.set("page", page.toString());
+		params.set("limit", limit.toString());
+		params.set("search", query);
+		if (categoryFilter) {
+			params.set("filter", categoryFilter);
+		} else {
+			params.delete("filter");
+		}
+		setSearchParams(params, { replace: true });
+	}, [page, limit, query, categoryFilter, setSearchParams]);
 
 	const createMutation = useMutation<unknown, unknown, { category?: string; subCategories?: string[] }>({
 		mutationFn: (vars: { category?: string; subCategories?: string[] }) =>
@@ -61,7 +113,6 @@ export default function Categories() {
 
 	const updateMutation = useMutation<unknown, unknown, { id: string; category?: string; subCategories?: string[] }>({
 		mutationFn: (vars: { id: string; category?: string; subCategories?: string[] }) => {
-			console.log("Updating category with vars:", vars);
 			return updateCategory(vars.id, { category: vars.category, description: "", subcategories: vars.subCategories });
 		},
 		onMutate: async ({ id, category, subCategories }: { id: string; category?: string; subCategories?: string[] }) => {
@@ -69,7 +120,7 @@ export default function Categories() {
 			const prev = categories;
 			setCategories((prevState) => {
 				const next = prevState.map((c) =>
-					c.id === id ? { ...c, title: category ?? c.title, subs: (subCategories ?? c.subs).filter((s: string) => s.trim()) } : c
+					c.id === id ? { ...c, title: category ?? c.title, subs: (subCategories ?? c.subs).filter((s: string) => s.trim()) } : c,
 				);
 				dispatch(setCategoriesAction(next));
 				return next;
@@ -90,7 +141,6 @@ export default function Categories() {
 
 	React.useEffect(() => {
 		if (!fetchedCategories) return;
-		console.log("fetched categories:", fetchedCategories);
 		const fetchedData = fetchedCategories as { data?: unknown[] };
 		const dataArray = fetchedData?.data || [];
 		const mapped = (
@@ -187,7 +237,10 @@ export default function Categories() {
 											className={twMerge(inputStyle, `max-w-[320px] h-10 pl-9`)}
 											iconLeft={<SearchIcon />}
 											value={query}
-											onChange={(e) => setQuery(e.target.value)}
+											onChange={(e) => {
+												setQuery(e.target.value);
+												setPage(1);
+											}}
 										/>
 
 										{/* Confirm delete modal */}
@@ -258,8 +311,8 @@ export default function Categories() {
 								) : (
 									<Table>
 										<TableHeader className="[&_tr]:border-0">
-											<TableRow className="bg-[#EAF6FF] h-12 overflow-hidden py-4 rounded-lg">
-												<TableHead>Product Categories</TableHead>
+											<TableRow className="bg-[#EAF6FF] dark:bg-neutral-900/80 h-12 overflow-hidden py-4 rounded-lg">
+												<TableHead>Main Categories</TableHead>
 												<TableHead>Sub Categories</TableHead>
 												<TableHead>Number Of Products</TableHead>
 												<TableHead>Action</TableHead>
@@ -281,7 +334,7 @@ export default function Categories() {
 													return false;
 												});
 												return filtered.map((row) => (
-													<TableRow key={row.id} className="hover:bg-[#F6FBFF]">
+													<TableRow key={row.id} className="hover:bg-[#F6FBFF] dark:hover:bg-neutral-900/50">
 														<TableCell className="text-[#13121280] align-top capitalize">{row.title}</TableCell>
 														<TableCell className="text-[#13121280] align-top">
 															<div className="text-balance w-80">{row.subs.join(", ")}</div>
@@ -290,7 +343,7 @@ export default function Categories() {
 														<TableCell className="flex items-center gap-1">
 															<button
 																type="button"
-																className="p-2 flex items-center text-slate-600"
+																className="p-2 flex items-center"
 																onClick={() => {
 																	setEditing({ id: row.id, title: row.title, subs: row.subs });
 																	setModalMode("edit");
@@ -300,17 +353,19 @@ export default function Categories() {
 																	<EditIcon />
 																</IconWrapper>
 															</button>
-															<button
-																type="button"
-																className="text-red-500 bg-transparent p-2 flex items-center"
-																onClick={() => {
-																	setToDelete({ id: row.id, title: row.title });
-																	setConfirmOpen(true);
-																}}>
-																<IconWrapper>
-																	<TrashIcon />
-																</IconWrapper>
-															</button>
+															{canDelete && (
+																<button
+																	type="button"
+																	className="text-red-500 bg-transparent p-2 flex items-center"
+																	onClick={() => {
+																		setToDelete({ id: row.id, title: row.title });
+																		setConfirmOpen(true);
+																	}}>
+																	<IconWrapper>
+																		<TrashIcon />
+																	</IconWrapper>
+																</button>
+															)}
 														</TableCell>
 													</TableRow>
 												));

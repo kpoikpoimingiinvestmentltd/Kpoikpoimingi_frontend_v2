@@ -1,5 +1,5 @@
 import CustomInput from "@/components/base/CustomInput";
-import { checkboxStyle, inputStyle } from "@/components/common/commonStyles";
+import { checkboxStyle, inputStyle, labelStyle } from "@/components/common/commonStyles";
 import { twMerge } from "tailwind-merge";
 import { Button } from "@/components/ui/button";
 import { IconWrapper } from "@/assets/icons";
@@ -57,25 +57,26 @@ export default function AdminLogin() {
 			<form onSubmit={handleSubmit((v) => mutation.mutate(v))} className="flex flex-col gap-y-6">
 				<CustomInput
 					label="Email address"
-					className={`${twMerge(inputStyle, "h-11 rounded-sm bg-card")} w-full`}
+					className={`${twMerge(inputStyle, "h-11 rounded-sm text-black")} w-full`}
+					labelClassName="dark:text-black"
 					{...register("email")}
 					type="email"
 					placeholder="Enter here"
 				/>
 
 				<div className="relative">
-					<Label htmlFor="password" className="mb-2 block font-normal">
+					<Label htmlFor="password" className={labelStyle("dark:text-black")}>
 						Password
 					</Label>
 					<div className="relative">
 						<CustomInput
 							{...register("password")}
-							className={`${twMerge(inputStyle, "h-11 rounded-sm bg-card")} w-full`}
+							className={`${twMerge(inputStyle, "h-11 rounded-sm text-black")} w-full`}
 							type={showPassword ? "text" : "password"}
 							placeholder="Enter here"
 						/>
 						<button
-							className="absolute top-1/2 right-2 -translate-y-1/2 bg-transparent shadow-none hover:bg-gray-100 flex items-center justify-center p-2 rounded-full"
+							className="absolute top-1/2 right-2 -translate-y-1/2 bg-transparent shadow-none hover:bg-gray-100 text-black dark:text-gray-200 flex items-center justify-center p-2 rounded-full"
 							type="button"
 							aria-pressed={showPassword}
 							aria-label={showPassword ? "Hide password" : "Show password"}
@@ -88,11 +89,11 @@ export default function AdminLogin() {
 				<div className="flex items-center justify-between gap-5">
 					<div className="flex items-center gap-2">
 						<Checkbox className={`${checkboxStyle} [&_*_svg]:text-black`} id="remember" />
-						<Label htmlFor="remember" className="font-normal cursor-pointer">
+						<Label htmlFor="remember" className={labelStyle("dark:text-black font-normal cursor-pointer mb-0")}>
 							Remember me
 						</Label>
 					</div>
-					<Link to={_router.auth.forgotpassword} className="underline text-sm">
+					<Link to={_router.auth.forgotpassword} className={labelStyle("dark:text-black font-normal cursor-pointer mb-0 underline")}>
 						Forgot password
 					</Link>
 				</div>

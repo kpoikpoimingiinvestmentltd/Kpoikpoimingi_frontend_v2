@@ -12,7 +12,7 @@ import { useCustomerFormState } from "./hooks/useCustomerFormState";
 import OncePaymentForm from "./forms/OncePaymentForm";
 import InstallmentPaymentForm from "./forms/InstallmentPaymentForm";
 import { getCustomerPaymentMethod } from "./helpers/transformCustomerToForm";
-import type { CustomerRegistrationPayload } from "@/types/customerRegistration";
+import type { CustomerRegistrationPayload, InternalFullPaymentRegistrationPayload } from "@/types/customerRegistration";
 import type { OncePaymentForm as OncePaymentFormType, InstallmentPaymentForm as InstallmentPaymentFormType } from "@/types/customerRegistration";
 import {
 	extractRelationshipOptions,
@@ -23,6 +23,7 @@ import {
 } from "@/lib/referenceDataHelpers";
 import { useNavigate } from "react-router";
 import { _router } from "@/routes/_router";
+import EmailVerificationModal from "@/components/common/EmailVerificationModal";
 
 type Props = {
 	onSubmit?: (data: unknown) => void;
@@ -38,16 +39,21 @@ type Props = {
 		quantity: number;
 		media?: string[];
 	}>;
+	submitButtonText?: string;
+	showSignedContract?: boolean;
+	skipEmailVerification?: boolean;
 };
 
 export default function CustomerForm({
 	onSubmit,
-	onClose,
 	initial,
 	sectionTitle: sectionTitleProp,
 	centeredContainer: centeredContainerProp,
 	paymentMethod: paymentMethodProp,
 	selectedProperties,
+	submitButtonText,
+	showSignedContract = false,
+	skipEmailVerification = false,
 }: Props) {
 	const baseEachSectionTitle = "text-lg font-normal";
 	const baseCenteredContainer = "mx-auto w-full md:w-2/3 w-full my-12";
@@ -64,7 +70,7 @@ export default function CustomerForm({
 	const { form, handleChange, uploadedFiles, setUploadedFiles, uploadedFieldsRef, resetFormCompletely } = useCustomerFormState(
 		paymentMethod,
 		initial,
-		selectedProperties
+		selectedProperties,
 	);
 
 	// Navigation helper
@@ -73,6 +79,12 @@ export default function CustomerForm({
 	// API hooks
 	const [presignUpload] = usePresignUploadMutation();
 	const [isSubmitting, setIsSubmitting] = React.useState(false);
+	const [showEmailVerification, setShowEmailVerification] = React.useState(false);
+	const [pendingSubmission, setPendingSubmission] = React.useState<{
+		payload: CustomerRegistrationPayload | InternalFullPaymentRegistrationPayload;
+		isEditMode: boolean;
+		paymentMethod: "once" | "installment";
+	} | null>(null);
 
 	// Full payment registration mutation
 	const fullPaymentMutation = useCreateInternalFullPaymentRegistration(() => {
@@ -85,6 +97,13 @@ export default function CustomerForm({
 
 	// Reference data for dropdowns
 	const { data: refData, isLoading: refLoading } = useGetReferenceData();
+
+	// Reference-derived select options (declare early to avoid TDZ when effects use them)
+	const relationshipOptions = React.useMemo(() => extractRelationshipOptions(refData), [refData]);
+	const paymentFrequencyOptions = React.useMemo(() => extractPaymentFrequencyOptions(refData), [refData]);
+	const durationUnitOptions = React.useMemo(() => extractDurationUnitOptions(refData), [refData]);
+	const employmentStatusOptions = React.useMemo(() => extractEmploymentStatusOptions(refData), [refData]);
+	const stateOfOriginOptions = React.useMemo(() => extractStateOptions(refData), [refData]);
 
 	const didPrefillRef = React.useRef(false);
 	const nextPrefilledRef = React.useRef(false);
@@ -208,10 +227,22 @@ export default function CustomerForm({
 						occupation: srcObj.occupation ?? curr.occupation,
 						phone: toLocalPhone(String(srcObj.phoneNumber ?? srcObj.phone ?? curr.phone ?? "")),
 						email: srcObj.email ?? curr.email,
-						employmentStatus: String(srcObj.employmentStatus ?? curr.employmentStatus ?? ""),
+						employmentStatus: String(
+							srcObj.employmentStatusId ||
+								(typeof srcObj.employmentStatus === "object" && srcObj.employmentStatus && "status" in srcObj.employmentStatus
+									? (srcObj.employmentStatus as { status: string }).status === "EMPLOYED"
+										? "1"
+										: (srcObj.employmentStatus as { status: string }).status === "SELF EMPLOYED"
+											? "2"
+											: ""
+									: srcObj.employmentStatus) ||
+								curr.employmentStatus ||
+								"",
+						),
 						homeAddress: srcObj.homeAddress ?? curr.homeAddress,
 						businessAddress: srcObj.businessAddress ?? curr.businessAddress,
-						stateOfOrigin: srcObj.stateOfOrigin ?? curr.stateOfOrigin,
+						employerName: String(srcObj.employerName ?? srcObj.employer ?? curr.employerName ?? ""),
+						stateOfOrigin: (srcObj.stateOfOrigin ?? curr.stateOfOrigin ?? "") as string,
 						votersUploaded: curr.votersUploaded ?? 0,
 						hasAgreed: Boolean(srcObj.hasAgreed ?? curr.hasAgreed ?? false),
 					};
@@ -225,21 +256,27 @@ export default function CustomerForm({
 		didPrefillRef.current = true;
 	}, [initial, paymentMethod, handleChange]);
 
-	const relationshipOptions = React.useMemo(() => extractRelationshipOptions(refData), [refData]);
-	const paymentFrequencyOptions = React.useMemo(() => extractPaymentFrequencyOptions(refData), [refData]);
-	const durationUnitOptions = React.useMemo(() => extractDurationUnitOptions(refData), [refData]);
-	const employmentStatusOptions = React.useMemo(() => extractEmploymentStatusOptions(refData), [refData]);
-	const stateOfOriginOptions = React.useMemo(() => extractStateOptions(refData), [refData]);
-
 	React.useEffect(() => {
 		if (refLoading) return;
 		try {
+			const initGArr = Array.isArray((initial as { guarantors?: unknown[] })?.guarantors)
+				? ((initial as { guarantors?: unknown[] })?.guarantors as unknown[])
+				: [];
 			const gArr = (form as InstallmentPaymentFormType).guarantors || [];
-			const mapped = gArr.map((g) => {
-				if (!g || !g.stateOfOrigin) return g;
+			const mapped = gArr.map((g, idx) => {
+				if (!g) return g;
+				// If already a valid key, keep it
 				if (stateOfOriginOptions.find((o) => o.key === g.stateOfOrigin)) return g;
-				const found = stateOfOriginOptions.find((o) => o.value.toLowerCase() === String(g.stateOfOrigin).toLowerCase());
-				if (found) return { ...g, stateOfOrigin: found.value };
+				// Try current raw value first
+				let raw = g.stateOfOrigin ?? "";
+				// Fallback to initial data's stateOfOrigin if current is empty
+				if (!raw && initGArr[idx] && typeof initGArr[idx] === "object") {
+					const src = initGArr[idx] as Record<string, unknown>;
+					raw = String(src.stateOfOrigin ?? src.stateOfOrigin ?? "");
+				}
+				if (!raw) return g;
+				const found = stateOfOriginOptions.find((o) => o.value.toLowerCase() === String(raw).toLowerCase());
+				if (found) return { ...g, stateOfOrigin: found.key };
 				return g;
 			});
 			const prev = JSON.stringify(gArr || []);
@@ -248,7 +285,7 @@ export default function CustomerForm({
 		} catch {
 			// ignore
 		}
-	}, [refLoading, stateOfOriginOptions, handleChange]);
+	}, [refLoading, stateOfOriginOptions, handleChange, (form as InstallmentPaymentFormType).guarantors]);
 
 	// Normalize guarantor phone numbers to local editable format (e.g., +234... -> 0...)
 	React.useEffect(() => {
@@ -343,6 +380,15 @@ export default function CustomerForm({
 		setIsSubmitting(true);
 
 		try {
+			let payload: CustomerRegistrationPayload | InternalFullPaymentRegistrationPayload;
+			let currentPaymentMethod = paymentMethod;
+
+			if (!currentPaymentMethod) {
+				toast.error("Please select a payment method");
+				setIsSubmitting(false);
+				return;
+			}
+
 			if (paymentMethod === "once") {
 				// For full payment - create internal full payment registration
 				const onceForm = form as OncePaymentFormType;
@@ -360,34 +406,13 @@ export default function CustomerForm({
 					})),
 				};
 
-				// Submit or update full payment registration
-				if (isEditMode) {
-					const initObj = initial && typeof initial === "object" ? (initial as Record<string, unknown>) : undefined;
-					const initId = initObj && typeof initObj.id === "string" ? initObj.id : "";
-					await updateMutation.mutateAsync({
-						id: initId,
-						payload: fullPaymentPayload as unknown as CustomerRegistrationPayload,
-					});
-				} else {
-					await fullPaymentMutation.mutateAsync(fullPaymentPayload);
-				}
-
-				// Reset form completely (localStorage + state)
-				resetFormCompletely();
-
-				// After successful creation, navigate back to customers list (non-edit)
-				if (!isEditMode) navigate(_router.dashboard.customers);
-
-				// Call parent onSubmit if provided
-				if (onSubmit) {
-					onSubmit({ ...fullPaymentPayload, message: "Registration saved successfully" });
-				}
+				payload = fullPaymentPayload;
 			} else {
 				// For installment - create internal registration
 				const installmentForm = form as InstallmentPaymentFormType;
 
 				// Build the customer registration payload
-				const payload: CustomerRegistrationPayload = {
+				payload = {
 					fullName: installmentForm.fullName,
 					email: installmentForm.email,
 					homeAddress: installmentForm.address,
@@ -423,6 +448,7 @@ export default function CustomerForm({
 						phoneNumber: formatPhoneNumber(g.phone),
 						companyAddress: g.businessAddress,
 						homeAddress: g.homeAddress,
+						employerName: g.employerName || "",
 						email: g.email,
 						guarantorAgreement: "I agree to be a guarantor",
 						guarantorAgreementAt: new Date().toISOString(),
@@ -430,11 +456,11 @@ export default function CustomerForm({
 					})),
 					employmentDetails: {
 						employmentStatusId: Number(installmentForm.employment.status) || 0,
-						employerName: installmentForm.employment.employerName,
-						employerAddress: installmentForm.employment.employerAddress,
-						companyName: installmentForm.employment.companyName,
-						businessAddress: installmentForm.employment.businessAddress,
-						homeAddress: installmentForm.employment.homeAddress,
+						employerName: installmentForm.employment.employerName || installmentForm.employment.companyName || "",
+						employerAddress: installmentForm.employment.employerAddress || installmentForm.employment.businessAddress || "",
+						companyName: installmentForm.employment.companyName || "",
+						businessAddress: installmentForm.employment.businessAddress || "",
+						homeAddress: installmentForm.employment.homeAddress || "",
 					},
 					propertyInterestRequest: [
 						{
@@ -443,11 +469,11 @@ export default function CustomerForm({
 										customPropertyName: installmentForm.propertyName,
 										customPropertyPrice: Number(installmentForm.customPropertyPrice) || 0,
 										isCustomProperty: true,
-								  }
+									}
 								: {
 										propertyId: installmentForm.propertyId,
 										isCustomProperty: false,
-								  }),
+									}),
 							paymentIntervalId: Number(installmentForm.paymentFrequency) || 0,
 							durationValue: Number(installmentForm.paymentDuration) || 0,
 							durationUnitId: Number(installmentForm.paymentDurationUnit) || 2,
@@ -464,84 +490,133 @@ export default function CustomerForm({
 						...(uploadedFiles.contract && { signedContract: uploadedFiles.contract }),
 					},
 				};
+			}
 
-				// Submit or update registration
-				if (isEditMode) {
-					// Enforce two guarantors for installment/edit when required
-					if (paymentMethod === "installment") {
+			// Store the submission data and show email verification modal
+			// Enforce identification document two-file requirement for hire purchase
+			if (currentPaymentMethod === "installment") {
+				if (!uploadedFiles.nin || uploadedFiles.nin.length < 2) {
+					toast.error("Identification document requires two files");
+					setIsSubmitting(false);
+					return;
+				}
+			}
+			setPendingSubmission({
+				payload,
+				isEditMode,
+				paymentMethod: currentPaymentMethod,
+			});
+			if (skipEmailVerification) {
+				await handleEmailVerification();
+			} else {
+				setShowEmailVerification(true);
+			}
+		} catch (err: unknown) {
+			console.error("Form validation failed", err);
+			toast.error(`Validation failed: ${extractErrorMessage(err, "Unknown error")}`);
+		} finally {
+			setIsSubmitting(false);
+		}
+	};
+	const handleEmailVerification = async () => {
+		if (!pendingSubmission) return;
+
+		try {
+			setIsSubmitting(true);
+
+			// Email verification is already done in the modal, proceed with submission
+
+			// Proceed with the actual submission
+			if (pendingSubmission.paymentMethod === "once") {
+				// For full payment
+				const fullPaymentPayload = pendingSubmission.payload as InternalFullPaymentRegistrationPayload;
+				if (pendingSubmission.isEditMode) {
+					const initObj = initial && typeof initial === "object" ? (initial as Record<string, unknown>) : undefined;
+					const initId = initObj && typeof initObj.id === "string" ? initObj.id : "";
+					await updateMutation.mutateAsync({
+						id: initId,
+						payload: fullPaymentPayload as unknown as CustomerRegistrationPayload,
+					});
+				} else {
+					await fullPaymentMutation.mutateAsync(fullPaymentPayload);
+				}
+			} else {
+				// For installment
+				const installmentPayload = pendingSubmission.payload as CustomerRegistrationPayload;
+				if (pendingSubmission.isEditMode) {
+					if (!initial || !initial.id) {
+						throw new Error("Initial data is required for edit mode");
+					}
+					// Enforce validation for installment/edit
+					if (pendingSubmission.paymentMethod === "installment") {
 						const gCount = Array.isArray((form as InstallmentPaymentFormType).guarantors)
 							? (form as InstallmentPaymentFormType).guarantors.length
 							: 0;
 						if (gCount < 2) {
-							toast.error("Please provide two guarantors before saving");
-							setIsSubmitting(false);
-							return;
+							throw new Error("Please provide two guarantors before saving");
 						}
-						// Require duration value before saving
 						const dur = Number((form as InstallmentPaymentFormType).paymentDuration || 0);
 						if (!dur || dur <= 0) {
-							toast.error("Duration value is required for hire purchase");
-							setIsSubmitting(false);
-							return;
+							throw new Error("Duration value is required for hire purchase");
 						}
-						// Require stateOfOrigin for guarantors
-						{
-							const missingIdx = ((form as InstallmentPaymentFormType).guarantors || []).findIndex(
-								(g) => !g || !g.stateOfOrigin || String(g.stateOfOrigin).trim() === ""
-							);
-							if (missingIdx >= 0) {
-								toast.error(`Guarantor ${missingIdx + 1}: State of origin is required`);
-								setIsSubmitting(false);
-								return;
-							}
+						const missingIdx = ((form as InstallmentPaymentFormType).guarantors || []).findIndex(
+							(g) => !g || !g.stateOfOrigin || String(g.stateOfOrigin).trim() === "",
+						);
+						if (missingIdx >= 0) {
+							throw new Error(`Guarantor ${missingIdx + 1}: State of origin is required`);
 						}
 					}
 					await updateMutation.mutateAsync({
 						id: initial.id as string,
-						payload,
+						payload: installmentPayload,
 					});
-
-					onClose?.();
-					if (onSubmit) onSubmit({ message: "Registration updated successfully" });
 				} else {
-					// For new registrations still enforce guarantor count for installment
-					if (paymentMethod === "installment") {
+					// Enforce validation for new installment registrations
+					if (pendingSubmission.paymentMethod === "installment") {
 						const gCount = Array.isArray((form as InstallmentPaymentFormType).guarantors)
 							? (form as InstallmentPaymentFormType).guarantors.length
 							: 0;
 						if (gCount < 2) {
-							toast.error("Please provide two guarantors before saving");
-							setIsSubmitting(false);
-							return;
+							throw new Error("Please provide two guarantors before saving");
 						}
 						const dur = Number((form as InstallmentPaymentFormType).paymentDuration || 0);
 						if (!dur || dur <= 0) {
-							toast.error("Duration value is required for hire purchase");
-							setIsSubmitting(false);
-							return;
+							throw new Error("Duration value is required for hire purchase");
 						}
-						// Require stateOfOrigin for guarantors
-						{
-							const missingIdx = ((form as InstallmentPaymentFormType).guarantors || []).findIndex(
-								(g) => !g || !g.stateOfOrigin || String(g.stateOfOrigin).trim() === ""
-							);
-							if (missingIdx >= 0) {
-								toast.error(`Guarantor ${missingIdx + 1}: State of origin is required`);
-								setIsSubmitting(false);
-								return;
-							}
+						const missingIdx = ((form as InstallmentPaymentFormType).guarantors || []).findIndex(
+							(g) => !g || !g.stateOfOrigin || String(g.stateOfOrigin).trim() === "",
+						);
+						if (missingIdx >= 0) {
+							throw new Error(`Guarantor ${missingIdx + 1}: State of origin is required`);
 						}
 					}
-					const response = await createInternalCustomerRegistration(payload);
+					const response = await createInternalCustomerRegistration(installmentPayload);
 					toast.success(`Registration created successfully! Code: ${response.registrationCode}`);
 				}
-
-				resetFormCompletely();
-				if (!isEditMode) navigate(_router.dashboard.customers);
 			}
+
+			// Clear localStorage drafts after successful creation
+			if (!pendingSubmission.isEditMode) {
+				localStorage.removeItem("customer_registration_draft");
+				localStorage.removeItem("customer_registration_uploaded_files");
+				// Reset form and navigate for new registrations only
+				resetFormCompletely();
+				navigate(_router.dashboard.customers);
+			}
+
+			// Call parent onSubmit if provided
+			if (onSubmit) {
+				onSubmit({
+					message: pendingSubmission.isEditMode ? "Registration updated successfully" : "Registration saved successfully",
+				});
+			}
+
+			// Clear pending submission
+			setPendingSubmission(null);
 		} catch (err: unknown) {
-			console.error("Submission failed", err);
-			toast.error(`Submission failed: ${extractErrorMessage(err, "Unknown error")}`);
+			console.error("Email verification or submission failed", err);
+			toast.error(`Verification failed: ${extractErrorMessage(err, "Unknown error")}`);
+			throw err; // Re-throw to let the modal handle the error
 		} finally {
 			setIsSubmitting(false);
 		}
@@ -575,15 +650,27 @@ export default function CustomerForm({
 	// Render Once Payment Form
 	if (paymentMethod === "once") {
 		return (
-			<OncePaymentForm
-				form={form as OncePaymentFormType}
-				handleChange={handleChange}
-				isSubmitting={isSubmitting}
-				onSubmit={handleSubmit}
-				centeredContainer={centeredContainer}
-				sectionTitle={sectionTitle}
-				isValid={onceValid}
-			/>
+			<>
+				<OncePaymentForm
+					form={form as OncePaymentFormType}
+					handleChange={handleChange}
+					isSubmitting={isSubmitting}
+					onSubmit={handleSubmit}
+					centeredContainer={centeredContainer}
+					sectionTitle={sectionTitle}
+					isValid={onceValid}
+					submitButtonText={submitButtonText}
+				/>
+				<EmailVerificationModal
+					isOpen={showEmailVerification}
+					onClose={() => {
+						setShowEmailVerification(false);
+						setPendingSubmission(null);
+					}}
+					email={pendingSubmission?.payload.email || ""}
+					onVerify={handleEmailVerification}
+				/>
+			</>
 		);
 	}
 
@@ -642,8 +729,19 @@ export default function CustomerForm({
 				if (!g.employmentStatus || String(g.employmentStatus).trim() === "") {
 					miss.push(`Guarantor ${idx + 1}: Employment status is required`);
 				}
-				if (!g.homeAddress || String(g.homeAddress).trim() === "") {
-					miss.push(`Guarantor ${idx + 1}: Home address is required`);
+				// If guarantor is employed, require company/business address and employer name; otherwise require home address
+				const guarantorEmployed = String(g.employmentStatus) === "1" || Number(g.employmentStatus) === 1;
+				if (guarantorEmployed) {
+					if (!g.businessAddress || String(g.businessAddress).trim() === "") {
+						miss.push(`Guarantor ${idx + 1}: Company / Business address is required`);
+					}
+					if (!g.employerName || String(g.employerName).trim() === "") {
+						miss.push(`Guarantor ${idx + 1}: Employer / Company name is required`);
+					}
+				} else {
+					if (!g.homeAddress || String(g.homeAddress).trim() === "") {
+						miss.push(`Guarantor ${idx + 1}: Home address is required`);
+					}
 				}
 				if (!g.stateOfOrigin || String(g.stateOfOrigin).trim() === "") {
 					miss.push(`Guarantor ${idx + 1}: State of origin is required`);
@@ -671,26 +769,39 @@ export default function CustomerForm({
 	}, [form, paymentMethod]);
 
 	return (
-		<InstallmentPaymentForm
-			form={form as InstallmentPaymentFormType}
-			handleChange={handleChange}
-			isSubmitting={isSubmitting}
-			onSubmit={handleSubmit}
-			uploadedFiles={uploadedFiles}
-			uploadedFieldsRef={uploadedFieldsRef}
-			handleFileUpload={handleFileUpload}
-			relationshipOptions={relationshipOptions}
-			paymentFrequencyOptions={paymentFrequencyOptions}
-			durationUnitOptions={durationUnitOptions}
-			employmentStatusOptions={employmentStatusOptions}
-			stateOfOriginOptions={stateOfOriginOptions}
-			refLoading={refLoading}
-			paymentMethod={paymentMethod}
-			centeredContainer={centeredContainer}
-			sectionTitle={sectionTitle}
-			setUploadedFiles={setUploadedFiles}
-			missingFields={missingFields}
-			isPropertyPrefilled={isPropertyPrefilledRef.current}
-		/>
+		<>
+			<InstallmentPaymentForm
+				form={form as InstallmentPaymentFormType}
+				handleChange={handleChange}
+				isSubmitting={isSubmitting}
+				onSubmit={handleSubmit}
+				uploadedFiles={uploadedFiles}
+				uploadedFieldsRef={uploadedFieldsRef}
+				handleFileUpload={handleFileUpload}
+				relationshipOptions={relationshipOptions}
+				paymentFrequencyOptions={paymentFrequencyOptions}
+				durationUnitOptions={durationUnitOptions}
+				employmentStatusOptions={employmentStatusOptions}
+				stateOfOriginOptions={stateOfOriginOptions}
+				refLoading={refLoading}
+				paymentMethod={paymentMethod}
+				centeredContainer={centeredContainer}
+				sectionTitle={sectionTitle}
+				setUploadedFiles={setUploadedFiles}
+				showSignedContract={showSignedContract}
+				missingFields={missingFields}
+				isPropertyPrefilled={isPropertyPrefilledRef.current}
+				submitButtonText={submitButtonText}
+			/>
+			<EmailVerificationModal
+				isOpen={showEmailVerification}
+				onClose={() => {
+					setShowEmailVerification(false);
+					setPendingSubmission(null);
+				}}
+				email={pendingSubmission?.payload.email || ""}
+				onVerify={handleEmailVerification}
+			/>
+		</>
 	);
 }

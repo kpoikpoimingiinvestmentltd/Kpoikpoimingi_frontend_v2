@@ -18,13 +18,14 @@ export default function ReceiptContent({ receipt }: ReceiptContentProps) {
 	};
 
 	const installmentParsed = parseInstallmentProgress(receipt.installmentProgress);
-	const remainingBalance = receipt.totalAmount && receipt.amountPaid ? Number(receipt.totalAmount) - Number(receipt.amountPaid) : 0;
+	const remainingBalanceRaw =
+		receipt.contract && (receipt.contract as any).outStandingBalance != null ? (receipt.contract as any).outStandingBalance : null;
 
 	const receiptFooter = (
-		<footer className="border-t-2 border-dashed pb-4 pt-6 text-center">
+		<footer className="border-t-2 border-dashed dark:border-t-neutral-700 pb-4 pt-6 text-center">
 			{receipt.issuedBy?.fullName && (
-				<p className="text-gray-700 text-xs sm:text-[.9rem]">
-					Receipt granted by: <span className="font-medium text-black">{receipt.issuedBy.fullName}</span>
+				<p className="text-gray-700 dark:text-gray-50 font-normal text-xs sm:text-[.9rem]">
+					Receipt granted by: <span className="font-medium dark:text-gray-300 text-black">{receipt.issuedBy.fullName}</span>
 				</p>
 			)}
 		</footer>
@@ -47,19 +48,19 @@ export default function ReceiptContent({ receipt }: ReceiptContentProps) {
 								receipt.paymentDate
 									? new Date(receipt.paymentDate).toLocaleDateString("en-GB")
 									: receipt.createdAt
-									? new Date(receipt.createdAt).toLocaleDateString("en-GB")
-									: "-"
+										? new Date(receipt.createdAt).toLocaleDateString("en-GB")
+										: "-"
 							}
 						/>
 					</section>
 
 					{/* Payment Breakdown Section */}
 					<section className="mt-4 flex flex-col gap-y-4">
-						<header className="flex items-center justify-between bg-primary/10 px-4 md:px-6 py-2.5 rounded-md">
-							<h5 className="text-start font-medium">Payment Breakdown</h5>
-							<span className="text-sm text-end font-medium">Payment duration (One time)</span>
+						<header className="flex items-center justify-between gap-1 text-gray-800 dark:text-gray-100 bg-primary/10 dark:bg-primary/50 px-4 md:px-6 py-2.5 rounded-md">
+							<h5 className="font-medium">Payment Breakdown</h5>
+							<span className="text-sm font-medium text-center">Payment duration (One time)</span>
 						</header>
-						<CustomCard className="grid grid-cols-1 gap-y-1 px-4 py-5 bg-card border-0">
+						<CustomCard className="grid grid-cols-1 gap-y-1 px-4 py-5 bg-card border-0 dark:border">
 							<KeyValueRow
 								label="Property Name"
 								value={receipt.contract?.property?.name ?? receipt.propertyName ?? "-"}
@@ -95,8 +96,8 @@ export default function ReceiptContent({ receipt }: ReceiptContentProps) {
 						</CustomCard>
 					</section>
 
-					<section className="md:w-11/12 mx-auto mt-8 text-center py-4">
-						<p className="text-sm sm:text-[.9rem] text-gray-700">Thank you for completing your payment</p>
+					<section className="md:w-11/12 mx-auto mt-8 font-normal text-center py-4">
+						<p className="text-sm sm:text-[.9rem] dark:text-gray-200 text-gray-700">Thank you for completing your payment</p>
 					</section>
 
 					{receiptFooter}
@@ -122,8 +123,8 @@ export default function ReceiptContent({ receipt }: ReceiptContentProps) {
 								receipt.paymentDate
 									? new Date(receipt.paymentDate).toLocaleDateString("en-GB")
 									: receipt.createdAt
-									? new Date(receipt.createdAt).toLocaleDateString("en-GB")
-									: "-"
+										? new Date(receipt.createdAt).toLocaleDateString("en-GB")
+										: "-"
 							}
 						/>
 					</div>
@@ -131,14 +132,14 @@ export default function ReceiptContent({ receipt }: ReceiptContentProps) {
 
 				{/* Payment Breakdown Section */}
 				<section className="mt-4 flex flex-col gap-y-4">
-					<header className="flex items-center justify-between bg-primary/10 px-4 md:px-6 py-2.5 rounded-md">
-						<h5 className="text-start text-xs sm:text-sm font-medium">Payment Breakdown</h5>
-						<span className="text-xs sm:text-sm text-end font-medium">
+					<header className="flex items-center justify-between gap-1 text-gray-800 dark:text-gray-100 bg-primary/10 dark:bg-primary/50 px-4 md:px-6 py-2.5 rounded-md">
+						<h5 className="text-xs sm:text-sm font-medium">Payment Breakdown</h5>
+						<span className="text-xs sm:text-sm font-medium text-center">
 							Payment duration ({receipt.contract?.durationValue ?? receipt.totalInstallments ?? "-"}{" "}
 							{receipt.contract?.durationUnit?.duration?.toLowerCase() === "weeks" ? "weeks" : "months"})
 						</span>
 					</header>
-					<CustomCard className="grid grid-cols-1 gap-y-1 px-4 py-5 bg-card border-0">
+					<CustomCard className="grid grid-cols-1 gap-y-1 px-4 py-5 bg-card border-0 dark:border">
 						<KeyValueRow
 							label="Property Name"
 							value={receipt.contract?.property?.name ?? receipt.propertyName ?? "-"}
@@ -147,13 +148,13 @@ export default function ReceiptContent({ receipt }: ReceiptContentProps) {
 						/>
 						<KeyValueRow
 							label="Total amount"
-							value={receipt.totalAmount ? `₦${Number(receipt.totalAmount).toLocaleString()}` : "-"}
+							value={receipt.contract?.property?.price ? `₦${Number(receipt.contract.property.price).toLocaleString()}` : "-"}
 							leftClassName="text-gray-600"
 							rightClassName="text-right font-medium"
 						/>
 						<KeyValueRow
 							label="Starting amount"
-							value={receipt.contract?.property?.price ? `₦${Number(receipt.contract.property.price).toLocaleString()}` : "-"}
+							value={receipt.contract?.downPayment ? `₦${Number(receipt.contract.downPayment).toLocaleString()}` : "-"}
 							leftClassName="text-gray-600"
 							rightClassName="text-right font-medium"
 						/>
@@ -177,7 +178,7 @@ export default function ReceiptContent({ receipt }: ReceiptContentProps) {
 						/>
 						<KeyValueRow
 							label="Remaining balance"
-							value={`₦${remainingBalance.toLocaleString()}`}
+							value={remainingBalanceRaw != null ? `₦${Number(remainingBalanceRaw).toLocaleString()}` : "-"}
 							leftClassName="text-gray-600"
 							rightClassName="text-right font-medium"
 						/>
@@ -186,11 +187,18 @@ export default function ReceiptContent({ receipt }: ReceiptContentProps) {
 
 				{/* Next Payment Information */}
 				<section className="md:w-11/12 mx-auto mt-4 text-center py-4 px-4">
-					<p className="text-xs sm:text-[.9rem] text-gray-700">
-						Next payment is due on the{" "}
-						<span className="font-semibold">{receipt.nextPaymentDate ? new Date(receipt.nextPaymentDate).toLocaleDateString("en-GB") : "-"}</span>.
-						Endeavour to make payment. Failure to make payment attracts an increase in accrued interest
-					</p>
+					{installmentParsed.covered === installmentParsed.total && installmentParsed.total > 0 ? (
+						<p className="text-xs font-normal sm:text-[.9rem] dark:text-gray-100 text-gray-700">
+							Thank you for completing all your installment payments. We appreciate your timely payment and look forward to serving you again in the
+							future.
+						</p>
+					) : (
+						<p className="text-xs font-normal sm:text-[.9rem] dark:text-gray-100 text-gray-700">
+							Next payment is due on the{" "}
+							<span className="font-semibold">{receipt.nextPaymentDate ? new Date(receipt.nextPaymentDate).toLocaleDateString("en-GB") : "-"}</span>.
+							Endeavour to make payment. Failure to make payment attracts an increase in accrued interest
+						</p>
+					)}
 				</section>
 				{/* Footer */}
 				{receiptFooter}
