@@ -633,12 +633,7 @@ export default function CreateContractModal({ open, onOpenChange }: { open: bool
 				]}
 			/>
 
-			<ContractSuccessModal
-				open={showSuccess && isPaymentLink}
-				onOpenChange={setShowSuccess}
-				link={generatedLink}
-				onSend={(email) => console.log("send-email", email, generatedLink)}
-			/>
+			<ContractSuccessModal open={showSuccess && isPaymentLink} onOpenChange={setShowSuccess} link={generatedLink} />
 		</>
 	);
 }

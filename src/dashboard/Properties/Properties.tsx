@@ -196,7 +196,7 @@ export default function Properties() {
 		}
 	};
 
-	const isDeleting = false; // TODO: Add loading state for delete
+	const isDeleting = false;
 
 	const properties = React.useMemo((): PropertyData[] => {
 		if (!propertiesData || typeof propertiesData !== "object") return [];
@@ -531,6 +531,7 @@ export default function Properties() {
 										vehicleChassisNumber: propertyToEdit.vehicleChassisNumber ?? "",
 										vehicleType: propertyToEdit.vehicleType ?? "",
 										vehicleRegistrationNumber: propertyToEdit.vehicleRegistrationNumber ?? "",
+										isPublic: propertyToEdit.isPublic,
 									}
 								: {
 										id: "",
@@ -552,6 +553,7 @@ export default function Properties() {
 										vehicleChassisNumber: "",
 										vehicleType: "",
 										vehicleRegistrationNumber: "",
+										isPublic: true,
 									}
 						}
 						onSave={(formData: unknown) => {
@@ -572,6 +574,7 @@ export default function Properties() {
 									quantityTotal: Number(typedFormData?.quantityTotal),
 									condition: typedFormData?.condition || propertyToEdit?.description || "Good",
 									description: typedFormData?.description || "",
+									isPublic: typedFormData?.isPublic,
 									mediaKeys: mediaKeysObject || {},
 								};
 

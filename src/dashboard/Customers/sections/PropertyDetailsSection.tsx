@@ -36,7 +36,15 @@ export default function PropertyDetailsSection({
 	isPropertyPrefilled = false,
 }: Props) {
 	void employmentStatusOptions;
-	const { data: propertiesData, isLoading: propertiesLoading } = useGetAllProperties();
+	const { data: propertiesData, isLoading: propertiesLoading } = useGetAllProperties(
+		undefined,
+		undefined,
+		undefined,
+		undefined,
+		undefined,
+		undefined,
+		"available",
+	);
 	const properties: PropertyData[] = React.useMemo(() => {
 		if (!propertiesData || typeof propertiesData !== "object") return [];
 		if (Array.isArray(propertiesData)) return propertiesData as PropertyData[];

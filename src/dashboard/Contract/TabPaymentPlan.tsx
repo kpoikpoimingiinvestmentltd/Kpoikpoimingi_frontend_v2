@@ -202,31 +202,16 @@ export default function TabPaymentPlan({ contract }: { contract?: Contract }) {
 												{/* Use displayStatus for rendering status and canGenerateLink to control button visibility */}
 												<div className="flex flex-col items-center gap-2">
 													<Badge value={(schedule.displayStatus as string) || "-"} size="sm" status={mapDisplayStatus(schedule.displayStatus)} />
-													{schedule.paymentLink ? (
-														<div className="flex justify-center items-center">
-															<a
-																href={schedule.paymentLink!}
-																target="_blank"
-																rel="noreferrer"
-																className={twMerge(
-																	"active-scale bg-white text-transparent bg-clip-text bg-gradient-to-r from-[#03B4FA] to-[#026B94] disabled:bg-white disabled:opacity-90 border border-stone-100 px-6 py-2 rounded-full text-sm shadow-xl",
-																	loadingScheduleId === schedule.id && "opacity-50 cursor-not-allowed",
-																)}>
-																Open Link
-															</a>
-														</div>
-													) : (
-														schedule.canGenerateLink && (
-															<button
-																onClick={() => handleGenerateLink(schedule.id)}
-																disabled={loadingScheduleId === schedule.id}
-																className={twMerge(
-																	"active-scale bg-white text-transparent bg-clip-text bg-gradient-to-r from-[#03B4FA] to-[#026B94] px-6 py-2 rounded-full text-sm shadow-xl",
-																	loadingScheduleId === schedule.id && "opacity-50 cursor-not-allowed",
-																)}>
-																{loadingScheduleId === schedule.id ? "Generating..." : "Generate Link"}
-															</button>
-														)
+													{schedule.canGenerateLink && (
+														<button
+															onClick={() => handleGenerateLink(schedule.id)}
+															disabled={loadingScheduleId === schedule.id}
+															className={twMerge(
+																"active-scale bg-white text-transparent bg-clip-text bg-gradient-to-r from-[#03B4FA] to-[#026B94] px-6 py-2 rounded-full text-sm shadow-xl",
+																loadingScheduleId === schedule.id && "opacity-50 cursor-not-allowed",
+															)}>
+															{loadingScheduleId === schedule.id ? "Generating..." : "Generate Link"}
+														</button>
 													)}
 												</div>
 											</TableCell>
@@ -260,14 +245,7 @@ export default function TabPaymentPlan({ contract }: { contract?: Contract }) {
 			</CustomCard>
 
 			{/* Payment Link Generated Modal */}
-			{generatedLink && (
-				<ContractSuccessModal
-					open={linkOpen}
-					onOpenChange={setLinkOpen}
-					link={generatedLink.paymentLink}
-					onSend={() => toast.success("Email sent!")}
-				/>
-			)}
+			{generatedLink && <ContractSuccessModal open={linkOpen} onOpenChange={setLinkOpen} link={generatedLink.paymentLink} />}
 
 			{/* Generate custom payment link modal */}
 			<GenerateCustomPaymentLinkModal

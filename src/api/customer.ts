@@ -147,3 +147,24 @@ export function useExportCustomersAsCSV() {
 		mutationFn: (payload) => exportCustomersAsCSV(payload?.search),
 	});
 }
+
+export async function getCustomersWithActiveContract(page = 1, limit = 10, search?: string, sortBy?: string, sortOrder?: string) {
+	const params = new URLSearchParams();
+	params.append("page", String(page));
+	params.append("limit", String(limit));
+	if (search) params.append("search", search);
+	if (sortBy) params.append("sortBy", sortBy);
+	if (sortOrder) params.append("sortOrder", sortOrder);
+
+	const qs = `?${params.toString()}`;
+	const url = `${API_ROUTES.customer.getCustomersWithActiveContract}${qs}`;
+	return apiGet(url) as Promise<GetAllCustomersResponse>;
+}
+
+export function useGetCustomersWithActiveContract(page = 1, limit = 10, search?: string, sortBy?: string, sortOrder?: string, enabled = true) {
+	return useQuery<GetAllCustomersResponse>({
+		queryKey: ["customers-with-active-contract", page, limit, search, sortBy, sortOrder],
+		queryFn: () => getCustomersWithActiveContract(page, limit, search, sortBy, sortOrder),
+		enabled,
+	});
+}

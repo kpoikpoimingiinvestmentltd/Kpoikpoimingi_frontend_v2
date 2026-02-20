@@ -41,6 +41,7 @@ export const API_ROUTES = {
 	},
 	customer: {
 		getAllCustomers: "/customer",
+		getCustomersWithActiveContract: "/customer/with-active-contract",
 		getCustomerDetails: (customerId: string) => `/customer/${customerId}`,
 		updateCustomer: (customerId: string) => `/customer/${customerId}`,
 		deleteCustomer: (customerId: string) => `/customer/${customerId}`,

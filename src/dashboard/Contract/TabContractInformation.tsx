@@ -177,12 +177,7 @@ export default function TabContractInformation({ contract }: { contract: Record<
 				</CustomCard>
 			</CustomCard>
 
-			<ContractSuccessModal
-				open={showSuccess}
-				onOpenChange={setShowSuccess}
-				link={generatedLink}
-				onSend={(email) => console.log("send-email", email, generatedLink)}
-			/>
+			<ContractSuccessModal open={showSuccess} onOpenChange={setShowSuccess} link={generatedLink} />
 		</>
 	);
 }

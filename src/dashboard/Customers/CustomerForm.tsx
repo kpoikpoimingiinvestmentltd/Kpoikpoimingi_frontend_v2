@@ -21,7 +21,7 @@ import {
 	extractEmploymentStatusOptions,
 	extractStateOptions,
 } from "@/lib/referenceDataHelpers";
-import { useNavigate } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
 import { _router } from "@/routes/_router";
 import EmailVerificationModal from "@/components/common/EmailVerificationModal";
 
@@ -66,11 +66,30 @@ export default function CustomerForm({
 	const detectedPaymentMethod = isEditMode ? getCustomerPaymentMethod(initial) : paymentMethodProp;
 	const paymentMethod = detectedPaymentMethod || paymentMethodProp;
 
+	// Get URL search params
+	const [searchParams] = useSearchParams();
+
+	// Extract selectedProperties from URL params if not provided as prop
+	const resolvedSelectedProperties = (() => {
+		if (selectedProperties && selectedProperties.length > 0) {
+			return selectedProperties;
+		}
+		const querySelectedProperties = searchParams.get("selectedProperties");
+		if (querySelectedProperties) {
+			try {
+				return JSON.parse(decodeURIComponent(querySelectedProperties));
+			} catch {
+				return undefined;
+			}
+		}
+		return undefined;
+	})();
+
 	// Form state
 	const { form, handleChange, uploadedFiles, setUploadedFiles, uploadedFieldsRef, resetFormCompletely } = useCustomerFormState(
 		paymentMethod,
 		initial,
-		selectedProperties,
+		resolvedSelectedProperties,
 	);
 
 	// Navigation helper
@@ -108,6 +127,24 @@ export default function CustomerForm({
 	const didPrefillRef = React.useRef(false);
 	const nextPrefilledRef = React.useRef(false);
 	const isPropertyPrefilledRef = React.useRef(false);
+	// Set isPropertyPrefilled flag when resolvedSelectedProperties are provided for installment payment
+	React.useEffect(() => {
+		if (paymentMethod === "installment" && resolvedSelectedProperties && resolvedSelectedProperties.length > 0 && !isEditMode) {
+			isPropertyPrefilledRef.current = true;
+		} else {
+			isPropertyPrefilledRef.current = false;
+		}
+	}, [resolvedSelectedProperties, paymentMethod, isEditMode]);
+
+	// Update property fields when resolvedSelectedProperties change (e.g., user goes back and selects a different property)
+	React.useEffect(() => {
+		if (!resolvedSelectedProperties || resolvedSelectedProperties.length === 0 || isEditMode) return;
+		if (paymentMethod !== "installment") return;
+
+		const firstProperty = resolvedSelectedProperties[0];
+		handleChange("propertyId", firstProperty.id);
+		handleChange("propertyName", firstProperty.name || "");
+	}, [resolvedSelectedProperties, paymentMethod, isEditMode, handleChange]);
 
 	React.useEffect(() => {
 		if (!initial) return;

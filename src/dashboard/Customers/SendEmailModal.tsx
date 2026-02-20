@@ -2,24 +2,27 @@ import { useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { modalContentStyle, tabListStyle, tabStyle, labelStyle, inputStyle } from "@/components/common/commonStyles";
 import CustomInput from "@/components/base/CustomInput";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { twMerge } from "tailwind-merge";
-import { useSendEmailToSpecificCustomers, useSendEmailBroadcast } from "@/api/customer";
+import { useSendEmailToSpecificCustomers, useSendEmailBroadcast, useGetAllCustomers } from "@/api/customer";
 import type { SendEmailResponse } from "@/types/email";
 import ConfirmModal from "@/components/common/ConfirmModal";
 import type { SendEmailModalProps, SendEmailFormData } from "@/types/email";
 import { toast } from "sonner";
 import { extractErrorMessage } from "@/lib/utils";
+import { Check } from "lucide-react";
+import { cn } from "@/lib/utils";
 
-export default function SendEmailModal({ open, onOpenChange, customers = [], onSend }: SendEmailModalProps) {
+export default function SendEmailModal({ open, onOpenChange, onSend }: SendEmailModalProps) {
 	const [activeTab, setActiveTab] = useState<"specific" | "all">("specific");
 	const [selectedEmails, setSelectedEmails] = useState<string[]>([]);
-	const [showEmailDropdown, setShowEmailDropdown] = useState(false);
 	const [confirmOpen, setConfirmOpen] = useState(false);
+	const [customerSearch, setCustomerSearch] = useState("");
+	const [currentPage, setCurrentPage] = useState(1);
+	const [customerSelectModalOpen, setCustomerSelectModalOpen] = useState(false);
 	const [previewData, setPreviewData] = useState<{
 		tab: "specific" | "all";
 		emailCount: number;
@@ -37,6 +40,8 @@ export default function SendEmailModal({ open, onOpenChange, customers = [], onS
 
 	const subject = watch("subject");
 	const details = watch("details");
+
+	const { data: customersData, isLoading: customersLoading } = useGetAllCustomers(currentPage, 50, customerSearch, "name", "asc");
 
 	const sendSpecificMutation = useSendEmailToSpecificCustomers(
 		(res: SendEmailResponse) => {
@@ -70,18 +75,19 @@ export default function SendEmailModal({ open, onOpenChange, customers = [], onS
 
 	const handleSelectEmail = (email: string) => {
 		setSelectedEmails((prev) => (prev.includes(email) ? prev : [...prev, email]));
-		setShowEmailDropdown(false);
 	};
 
 	const handleRemoveEmail = (email: string) => {
 		setSelectedEmails((prev) => prev.filter((e) => e !== email));
-		setShowEmailDropdown(false);
 	};
 
 	const resetForm = () => {
 		reset();
 		setSelectedEmails([]);
 		setPreviewData(null);
+		setCustomerSearch("");
+		setCurrentPage(1);
+		setCustomerSelectModalOpen(false);
 	};
 
 	const onFormSubmit = async (data: SendEmailFormData) => {
@@ -105,7 +111,7 @@ export default function SendEmailModal({ open, onOpenChange, customers = [], onS
 
 			await onSend?.({
 				tab: activeTab,
-				emailAddresses: activeTab === "all" ? customers.map((c) => c.email) : selectedEmails,
+				emailAddresses: activeTab === "all" ? customersData?.data?.map((c: any) => c.email) || [] : selectedEmails,
 				subject: data.subject,
 				details: data.details,
 			});
@@ -115,7 +121,7 @@ export default function SendEmailModal({ open, onOpenChange, customers = [], onS
 	};
 
 	const handleOpenConfirm = () => {
-		const emailCount = activeTab === "specific" ? selectedEmails.length : customers.length;
+		const emailCount = activeTab === "specific" ? selectedEmails.length : customersData?.data?.length || 0;
 		setPreviewData({
 			tab: activeTab,
 			emailCount,
@@ -124,10 +130,6 @@ export default function SendEmailModal({ open, onOpenChange, customers = [], onS
 			recipients: activeTab === "specific" ? selectedEmails : ["All customers"],
 		});
 		setConfirmOpen(true);
-	};
-
-	const getAvailableEmails = () => {
-		return customers.filter((c) => !selectedEmails.includes(c.email));
 	};
 
 	const isLoading_pending = sendSpecificMutation.isPending || sendBroadcastMutation.isPending;
@@ -160,61 +162,42 @@ export default function SendEmailModal({ open, onOpenChange, customers = [], onS
 											{selectedEmails.length > 0 && (
 												<button
 													type="button"
-													onPointerDown={(e) => {
-														e.stopPropagation();
-														e.preventDefault();
-													}}
-													onClick={() => {
-														setSelectedEmails([]);
-														setShowEmailDropdown(false);
-													}}
-													className="absolute right-2 top-1 text-sm text-rose-600 hover:text-rose-700">
+													onClick={() => setSelectedEmails([])}
+													className="absolute right-2 top-1 text-sm text-destructive hover:text-destructive/80">
 													Remove all
 												</button>
 											)}
 											<div className="relative">
-												<DropdownMenu open={showEmailDropdown} onOpenChange={setShowEmailDropdown}>
-													<DropdownMenuTrigger asChild>
-														<div className={twMerge(inputStyle, "cursor-pointer flex flex-wrap gap-2 items-start min-h-20 p-2 overflow-y-auto")}>
-															{selectedEmails.length === 0 ? (
-																<span className="text-stone-400 text-sm">Select email addresses</span>
-															) : (
-																<>
-																	<div className="flex flex-wrap items-center gap-2">
-																		{selectedEmails.map((email) => (
-																			<div key={email} className="bg-primary/20 text-primary px-2 py-1 rounded text-xs flex items-center gap-2">
-																				{email}
-																				<button
-																					type="button"
-																					onPointerDown={(e) => {
-																						e.stopPropagation();
-																						e.preventDefault();
-																					}}
-																					onClick={(e) => {
-																						e.stopPropagation();
-																						handleRemoveEmail(email);
-																					}}
-																					className="text-primary hover:text-primary/80">
-																					×
-																				</button>
-																			</div>
-																		))}
-																	</div>
-																	{/** Remove all button moved outside the trigger to keep it always visible */}
-																</>
-															)}
-														</div>
-													</DropdownMenuTrigger>
-													{getAvailableEmails().length > 0 && (
-														<DropdownMenuContent className="w-full min-w-80">
-															{getAvailableEmails().map((customer) => (
-																<DropdownMenuItem key={customer.id} onClick={() => handleSelectEmail(customer.email)}>
-																	{customer.email}
-																</DropdownMenuItem>
+												<Button
+													type="button"
+													variant="outline"
+													onClick={() => setCustomerSelectModalOpen(true)}
+													className={twMerge(inputStyle, "justify-start h-auto min-h-20 p-2")}>
+													{selectedEmails.length === 0 ? (
+														<span className="text-muted-foreground text-sm">Select email addresses</span>
+													) : (
+														<div className="flex flex-wrap items-center gap-2 w-full">
+															{selectedEmails.map((email) => (
+																<div key={email} className="bg-primary/20 text-primary px-2 py-1 rounded text-xs flex items-center gap-2">
+																	{email}
+																	<button
+																		type="button"
+																		onPointerDown={(e) => {
+																			e.stopPropagation();
+																			e.preventDefault();
+																		}}
+																		onClick={(e) => {
+																			e.stopPropagation();
+																			handleRemoveEmail(email);
+																		}}
+																		className="text-destructive hover:text-destructive/80">
+																		×
+																	</button>
+																</div>
 															))}
-														</DropdownMenuContent>
+														</div>
 													)}
-												</DropdownMenu>
+												</Button>
 											</div>
 										</div>
 
@@ -273,6 +256,93 @@ export default function SendEmailModal({ open, onOpenChange, customers = [], onS
 								</Button>
 							</div>
 						</form>
+					</div>
+				</DialogContent>
+			</Dialog>
+
+			{/* Customer Selection Modal */}
+			<Dialog open={customerSelectModalOpen} onOpenChange={setCustomerSelectModalOpen}>
+				<DialogContent className={modalContentStyle("md:max-w-2xl")}>
+					<DialogHeader>
+						<DialogTitle>Select Customer Emails</DialogTitle>
+					</DialogHeader>
+
+					<div className="space-y-4">
+						<div>
+							<label className={labelStyle()}>Search Customers</label>
+							<CustomInput
+								placeholder="Search by name or email..."
+								value={customerSearch}
+								onChange={(e) => {
+									setCustomerSearch(e.target.value);
+									setCurrentPage(1);
+								}}
+								className={inputStyle}
+							/>
+						</div>
+
+						<div className="max-h-96 overflow-y-auto border border-border rounded-md p-2 bg-background">
+							{customersLoading ? (
+								<div className="text-center text-sm text-muted-foreground py-4">Loading customers...</div>
+							) : customersData?.data?.length === 0 ? (
+								<div className="text-center text-sm text-muted-foreground py-4">No customers found.</div>
+							) : (
+								<div className="space-y-2">
+									{customersData?.data?.map((customer: any) => (
+										<div
+											key={customer.id}
+											onClick={() => handleSelectEmail(customer.email)}
+											className={cn(
+												"flex items-center justify-between p-3 rounded-md border cursor-pointer transition-colors",
+												selectedEmails.includes(customer.email)
+													? "bg-primary/10 border-primary dark:bg-primary/20"
+													: "border-border hover:bg-accent hover:text-accent-foreground bg-card",
+											)}>
+											<div className="flex items-center gap-3">
+												<Check className={cn("h-4 w-4", selectedEmails.includes(customer.email) ? "text-primary opacity-100" : "opacity-0")} />
+												<div>
+													<div className="font-medium text-sm text-foreground">{customer.fullName || customer.name}</div>
+													<div className="text-xs text-muted-foreground">{customer.email}</div>
+												</div>
+											</div>
+										</div>
+									))}
+								</div>
+							)}
+						</div>
+
+						{customersData?.pagination && (
+							<div className="flex items-center justify-between">
+								<Button
+									type="button"
+									variant="outline"
+									size="sm"
+									onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+									disabled={currentPage === 1}>
+									Previous
+								</Button>
+								<span className="text-sm text-muted-foreground">
+									Page {currentPage} of {customersData.pagination.totalPages}
+								</span>
+								<Button
+									type="button"
+									variant="outline"
+									size="sm"
+									onClick={() => setCurrentPage((prev) => Math.min(customersData.pagination.totalPages, prev + 1))}
+									disabled={currentPage === customersData.pagination.totalPages}>
+									Next
+								</Button>
+							</div>
+						)}
+
+						<div className="flex justify-end gap-2 pt-4 border-t">
+							<Button type="button" variant="outline" onClick={() => setCustomerSelectModalOpen(false)}>
+								Cancel
+							</Button>
+							<Button type="button" onClick={() => setCustomerSelectModalOpen(false)}>
+								Done ({selectedEmails.length} selected)
+							</Button>
+						</div>
 					</div>
 				</DialogContent>
 			</Dialog>
