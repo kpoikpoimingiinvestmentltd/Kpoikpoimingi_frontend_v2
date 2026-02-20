@@ -202,7 +202,7 @@ export default function TabPaymentPlan({ contract }: { contract?: Contract }) {
 												{/* Use displayStatus for rendering status and canGenerateLink to control button visibility */}
 												<div className="flex flex-col items-center gap-2">
 													<Badge value={(schedule.displayStatus as string) || "-"} size="sm" status={mapDisplayStatus(schedule.displayStatus)} />
-													{schedule.canGenerateLink && !schedule.paymentLink && (
+													{schedule.canGenerateLink && (
 														<button
 															onClick={() => handleGenerateLink(schedule.id)}
 															disabled={loadingScheduleId === schedule.id}
