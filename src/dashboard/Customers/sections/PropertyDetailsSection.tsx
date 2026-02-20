@@ -107,8 +107,12 @@ export default function PropertyDetailsSection({
 					<label className={labelStyle()}>Property Name*</label>
 					{isPropertyPrefilled ? (
 						// Show prefilled property as read-only
-						<div className={twMerge(inputStyle, "flex items-center px-3 py-2 bg-gray-50 rounded border border-gray-200")}>
-							<span className="text-gray-700">{form.propertyName}</span>
+						<div
+							className={twMerge(
+								inputStyle,
+								"flex items-center px-3 py-2 bg-gray-50 rounded-sm border dark:bg-neutral-700/30 dark:border-stone-50/20  border-gray-200",
+							)}>
+							<span className="text-gray-700 dark:text-stone-300">{form.propertyName}</span>
 						</div>
 					) : !form.isCustomProperty ? (
 						<>
