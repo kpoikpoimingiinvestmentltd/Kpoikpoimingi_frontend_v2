@@ -202,7 +202,7 @@ export default function ReceiptTable() {
 				) : items.length === 0 ? (
 					<EmptyData text="No receipts found" />
 				) : (
-					<>
+					<div className="w-full mt-5">
 						<Table>
 							<TableHeader>
 								<TableRow className={tableHeaderRowStyle}>
@@ -252,7 +252,7 @@ export default function ReceiptTable() {
 						</Table>
 
 						<CompactPagination showRange page={page} pages={pages} onPageChange={handlePageChange} />
-					</>
+					</div>
 				)}
 			</div>
 
