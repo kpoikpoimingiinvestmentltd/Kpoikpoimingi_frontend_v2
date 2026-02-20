@@ -7,7 +7,7 @@ import { inputStyle, labelStyle, modalContentStyle, selectTriggerStyle } from "@
 import ActionButton from "@/components/base/ActionButton";
 import { Textarea } from "@/components/ui/textarea";
 import { Spinner } from "@/components/ui/spinner";
-import { useGetAllCustomers } from "@/api/customer";
+import { useGetCustomersWithActiveContract } from "@/api/customer";
 import { useGenerateReceipt, getReceiptById } from "@/api/receipt";
 import ReceiptDisplayModal from "./ReceiptDisplayModal";
 import { toast } from "sonner";
@@ -33,24 +33,31 @@ export default function GenerateReceiptModal({ open, onOpenChange }: { open: boo
 			customerId: "",
 			paymentMethodId: "",
 			amountPaid: "",
-			paymentDate: "",
+			paymentDate: new Date().toISOString().split("T")[0],
 			notes: "",
 		},
 	});
 
 	const selectedCustomerId = watch("customerId");
 
-	const { data: customersData, isLoading: customersLoading } = useGetAllCustomers(currentPage, 50, customerSearch, "name", "asc");
+	const { data: activeContractCustomers, isLoading: activeContractLoading } = useGetCustomersWithActiveContract(
+		currentPage,
+		10,
+		customerSearch,
+		"name",
+		"asc",
+	);
 	const { mutate: generateReceiptMutation, isPending } = useGenerateReceipt();
 
+	// Prefill payment method when customer is selected
 	React.useEffect(() => {
-		if (!selectedCustomerId || !customersData?.data) return;
+		if (!selectedCustomerId || !activeContractCustomers?.data) return;
 
-		const selectedCustomer = customersData.data.find((c: any) => c.id === selectedCustomerId);
-		if (selectedCustomer?.registrations?.[0]?.paymentType?.id) {
-			setValue("paymentMethodId", String(selectedCustomer.registrations[0].paymentType.id));
+		const selectedCustomer = activeContractCustomers.data.find((c: any) => c.id === selectedCustomerId) as any;
+		if (selectedCustomer?.paymentType?.id) {
+			setValue("paymentMethodId", String(selectedCustomer.paymentType.id));
 		}
-	}, [selectedCustomerId, customersData, setValue]);
+	}, [selectedCustomerId, activeContractCustomers, setValue]);
 
 	const handleFormSubmit = (data: GenerateReceiptFormData) => {
 		// Validation
@@ -149,16 +156,16 @@ export default function GenerateReceiptModal({ open, onOpenChange }: { open: boo
 														}}
 													/>
 												</div>
-												{customersLoading ? (
+												{activeContractLoading ? (
 													<div className="p-2 text-center text-sm text-gray-500">Loading...</div>
 												) : (
 													<>
-														{customersData?.data?.map((customer: any) => (
+														{activeContractCustomers?.data?.map((customer: any) => (
 															<SelectItem key={customer.id} value={customer.id}>
 																{customer.fullName}
 															</SelectItem>
 														)) || []}
-														{customersData?.pagination && (
+														{activeContractCustomers?.pagination && (
 															<div className="flex items-center justify-between p-2 border-t">
 																<button
 																	type="button"
@@ -168,12 +175,12 @@ export default function GenerateReceiptModal({ open, onOpenChange }: { open: boo
 																	Prev
 																</button>
 																<span className="text-xs text-gray-500">
-																	Page {currentPage} of {customersData.pagination.totalPages}
+																	Page {currentPage} of {activeContractCustomers.pagination.totalPages}
 																</span>
 																<button
 																	type="button"
-																	onClick={() => setCurrentPage((prev) => Math.min(customersData.pagination.totalPages, prev + 1))}
-																	disabled={currentPage === customersData.pagination.totalPages}
+																	onClick={() => setCurrentPage((prev) => Math.min(activeContractCustomers.pagination.totalPages, prev + 1))}
+																	disabled={currentPage === activeContractCustomers.pagination.totalPages}
 																	className="px-2 py-1 text-xs dark:bg-neutral-800 bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed rounded">
 																	Next
 																</button>
