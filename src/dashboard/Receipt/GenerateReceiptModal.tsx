@@ -111,7 +111,7 @@ export default function GenerateReceiptModal({ open, onOpenChange }: { open: boo
 
 					toast.error(message);
 				},
-			}
+			},
 		);
 	};
 
@@ -164,7 +164,7 @@ export default function GenerateReceiptModal({ open, onOpenChange }: { open: boo
 																	type="button"
 																	onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
 																	disabled={currentPage === 1}
-																	className="px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed rounded">
+																	className="px-2 py-1 text-xs dark:bg-neutral-800 bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed rounded">
 																	Prev
 																</button>
 																<span className="text-xs text-gray-500">
@@ -174,7 +174,7 @@ export default function GenerateReceiptModal({ open, onOpenChange }: { open: boo
 																	type="button"
 																	onClick={() => setCurrentPage((prev) => Math.min(customersData.pagination.totalPages, prev + 1))}
 																	disabled={currentPage === customersData.pagination.totalPages}
-																	className="px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed rounded">
+																	className="px-2 py-1 text-xs dark:bg-neutral-800 bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed rounded">
 																	Next
 																</button>
 															</div>

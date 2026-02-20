@@ -47,9 +47,11 @@ export type PropertyResponse = {
 export type PropertyData = {
 	id: string;
 	propertyCode: string;
+	legacyId?: string | null;
 	name: string;
 	price: string;
 	description: string;
+	isPublic: boolean;
 	quantityTotal: number;
 	quantityAssigned: number;
 	quantityAvailable: number;

@@ -7,15 +7,9 @@ type Props = {
 	open: boolean;
 	onOpenChange: (v: boolean) => void;
 	link: string;
-	onSend?: (email: string) => void;
 };
 
-export default function ContractSuccessModal({ open, onOpenChange, link, onSend }: Props) {
-	const handleSend = () => {
-		onOpenChange(false);
-		onSend?.("");
-	};
-
+export default function ContractSuccessModal({ open, onOpenChange, link }: Props) {
 	const handleCopy = async () => {
 		if (navigator?.clipboard) {
 			await navigator.clipboard.writeText(link);
@@ -43,9 +37,6 @@ export default function ContractSuccessModal({ open, onOpenChange, link, onSend 
 					</div>
 
 					<div className="flex gap-3 justify-center mt-4">
-						<ActionButton onClick={handleSend} className="px-6 w-max">
-							Send Via Email
-						</ActionButton>
 						<ActionButton variant="outline" onClick={handleCopy} className="px-6 w-max">
 							Copy Link
 						</ActionButton>
