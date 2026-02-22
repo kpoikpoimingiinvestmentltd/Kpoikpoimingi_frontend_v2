@@ -241,7 +241,7 @@ export default function Customers() {
 		<div className="flex flex-col gap-y-6">
 			<div className="flex items-center justify-between flex-wrap gap-4 mb-4">
 				<PageTitles title="Customers" description="List of people who patronize Kpo kpoi mingi investment" />
-				<div className="flex items-center gap-3">
+				<div className="flex items-center flex-wrap gap-3">
 					{canExport && (
 						<ActionButton
 							type="button"
@@ -332,7 +332,7 @@ export default function Customers() {
 												<TableHead>Status</TableHead>
 												<TableHead>Date</TableHead>
 												<TableHead>Current Status</TableHead>
-												<TableHead>Action</TableHead>
+												<TableHead className="text-end">Action</TableHead>
 											</TableRow>
 										</TableHeader>
 										<TableBody>
@@ -355,7 +355,7 @@ export default function Customers() {
 															status={row.registrations?.some((reg) => reg.isCurrent) ? "active" : "inactive"}
 														/>
 													</TableCell>
-													<TableCell className="flex items-center gap-1">
+													<TableCell className="flex items-center justify-end gap-1">
 														{row.registrations?.some((reg) => reg.isCurrent) && (
 															<Link to={`${_router.dashboard.customerDetails.replace(":id", row.id)}?tab=details`} className="p-2 flex items-center">
 																<IconWrapper className="text-xl">

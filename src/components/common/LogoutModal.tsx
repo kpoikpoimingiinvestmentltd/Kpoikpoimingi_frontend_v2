@@ -41,7 +41,7 @@ export default function LogoutModal({
 			} catch (e) {}
 
 			dispatch(clearAuth());
-			navigate(_router.auth.login);
+			navigate(_router.auth.index);
 			onOpenChange(false);
 		} catch (e) {
 			const errMsg = (e as Record<string, unknown>)?.message ?? "Logout failed (session preserved)";

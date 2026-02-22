@@ -8,7 +8,7 @@ import { API_ROUTES } from "./routes";
 export function useLogin(onSuccess?: (data: LoginResponse) => void) {
 	return useMutation<LoginResponse, Error, LoginInput>({
 		mutationFn: async (payload: LoginInput) => {
-			const data = await apiPost<LoginResponse>(API_ROUTES.auth.login, payload, { skipAuth: true });
+			const data = await apiPost<LoginResponse>(API_ROUTES.auth.index, payload, { skipAuth: true });
 			const parsed = loginResponseSchema.parse(data);
 			saveAuthToStorage({ id: parsed.id, accessToken: parsed.accessToken, refreshToken: parsed.refreshToken });
 			return parsed;

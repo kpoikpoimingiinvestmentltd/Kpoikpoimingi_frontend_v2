@@ -28,7 +28,7 @@ export default function AdminForgotPassword() {
 							<div className="flex justify-end mt-2">
 								<p className="text-sm">
 									Remember Password?{" "}
-									<Link to={_router.auth.login} className="underline">
+									<Link to={_router.auth.index} className="underline">
 										Login
 									</Link>
 								</p>

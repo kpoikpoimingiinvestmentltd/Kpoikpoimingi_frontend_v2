@@ -1,6 +1,6 @@
 export const API_ROUTES = {
 	auth: {
-		login: "/auth/login",
+		index: "/auth/login",
 		refreshToken: "/auth/refresh-token",
 		logout: "/auth/logout",
 	},

@@ -1,13 +1,28 @@
-import { Outlet } from "react-router";
+import { Outlet, useNavigate } from "react-router";
 import AdminDashboardSidebar from "../components/navigation/AdminDashboardSidebar";
 import AdminDashboardHeader from "./AdminDashboardHeader";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import LogoutModal from "../components/common/LogoutModal";
 import SimpleCalculator from "@/components/common/Calculator";
+import { useSelector } from "react-redux";
+import type { RootState } from "@/store";
+import { _router } from "@/routes/_router";
 
 export default function AdminDashboardLayout() {
 	const [sidebarOpen, setSidebarOpen] = useState(false);
 	const [logoutOpen, setLogoutOpen] = useState(false);
+	const navigate = useNavigate();
+
+	// Check if user is authenticated
+	const authId = useSelector((state: RootState) => state.auth.id);
+	const authToken = useSelector((state: RootState) => state.auth.accessToken);
+
+	// Redirect to login if not authenticated
+	useEffect(() => {
+		if (!authId || !authToken) {
+			navigate(_router.auth.index, { replace: true });
+		}
+	}, [authId, authToken, navigate]);
 
 	return (
 		<div className="flex items-start w-full min-h-screen bg-gray-50/20 text-black dark:text-white">

@@ -14,14 +14,19 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema, type LoginInput } from "@/schemas/auth";
 import { useLogin } from "@/api/auth";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { setAuth } from "@/store/authSlice";
 import { toast } from "sonner";
+import type { RootState } from "@/store";
 
 export default function AdminLogin() {
 	const [showPassword, setShowPassword] = useState(false);
 	const navigate = useNavigate();
 	const dispatch = useDispatch();
+
+	// Check if user is already logged in
+	const authId = useSelector((state: RootState) => state.auth.id);
+	const authToken = useSelector((state: RootState) => state.auth.accessToken);
 
 	const {
 		register,
@@ -36,6 +41,13 @@ export default function AdminLogin() {
 		toast.success("Logged in successfully");
 		navigate(_router.dashboard.index);
 	});
+
+	// Redirect if already logged in
+	useEffect(() => {
+		if (authId && authToken) {
+			navigate(_router.dashboard.index, { replace: true });
+		}
+	}, [authId, authToken, navigate]);
 
 	useEffect(() => {
 		if (mutation.isError && mutation.error) {
