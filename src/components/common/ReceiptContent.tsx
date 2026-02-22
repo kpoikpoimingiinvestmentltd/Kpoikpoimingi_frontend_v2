@@ -9,6 +9,7 @@ interface ReceiptContentProps {
 
 export default function ReceiptContent({ receipt }: ReceiptContentProps) {
 	const isFullPayment = !receipt.totalInstallments || receipt.totalInstallments === 1;
+	const isMigrated = receipt.customer?.isMigrated ?? false;
 
 	const parseInstallmentProgress = (progress?: string) => {
 		if (!progress) return { covered: 0, total: 0 };
@@ -134,10 +135,12 @@ export default function ReceiptContent({ receipt }: ReceiptContentProps) {
 				<section className="mt-4 flex flex-col gap-y-4">
 					<header className="flex items-center justify-between gap-1 text-gray-800 dark:text-gray-100 bg-primary/10 dark:bg-primary/50 px-4 md:px-6 py-2.5 rounded-md">
 						<h5 className="text-xs sm:text-sm font-medium">Payment Breakdown</h5>
-						<span className="text-xs sm:text-sm font-medium text-center">
-							Payment duration ({receipt.contract?.durationValue ?? receipt.totalInstallments ?? "-"}{" "}
-							{receipt.contract?.durationUnit?.duration?.toLowerCase() === "weeks" ? "weeks" : "months"})
-						</span>
+						{!isMigrated && (
+							<span className="text-xs sm:text-sm font-medium text-center">
+								Payment duration ({receipt.contract?.durationValue ?? receipt.totalInstallments ?? "-"}{" "}
+								{receipt.contract?.durationUnit?.duration?.toLowerCase() === "weeks" ? "weeks" : "months"})
+							</span>
+						)}
 					</header>
 					<CustomCard className="grid grid-cols-1 gap-y-1 px-4 py-5 bg-card border-0 dark:border">
 						<KeyValueRow
@@ -170,12 +173,14 @@ export default function ReceiptContent({ receipt }: ReceiptContentProps) {
 							leftClassName="text-gray-600"
 							rightClassName="text-right font-medium"
 						/>
-						<KeyValueRow
-							label="Installment covered"
-							value={`${installmentParsed.covered}/${installmentParsed.total}`}
-							leftClassName="text-gray-600"
-							rightClassName="text-right font-medium"
-						/>
+						{!isMigrated && (
+							<KeyValueRow
+								label="Installment covered"
+								value={`${installmentParsed.covered}/${installmentParsed.total}`}
+								leftClassName="text-gray-600"
+								rightClassName="text-right font-medium"
+							/>
+						)}
 						<KeyValueRow
 							label="Remaining balance"
 							value={remainingBalanceRaw != null ? `₦${Number(remainingBalanceRaw).toLocaleString()}` : "-"}
@@ -186,20 +191,28 @@ export default function ReceiptContent({ receipt }: ReceiptContentProps) {
 				</section>
 
 				{/* Next Payment Information */}
-				<section className="md:w-11/12 mx-auto mt-4 text-center py-4 px-4">
-					{installmentParsed.covered === installmentParsed.total && installmentParsed.total > 0 ? (
+				{!isMigrated ? (
+					<section className="md:w-11/12 mx-auto mt-4 text-center py-4 px-4">
+						{installmentParsed.covered === installmentParsed.total && installmentParsed.total > 0 ? (
+							<p className="text-xs font-normal sm:text-[.9rem] dark:text-gray-100 text-gray-700">
+								Thank you for completing all your installment payments. We appreciate your timely payment and look forward to serving you again in the
+								future.
+							</p>
+						) : (
+							<p className="text-xs font-normal sm:text-[.9rem] dark:text-gray-100 text-gray-700">
+								Next payment is due on the{" "}
+								<span className="font-semibold">{receipt.nextPaymentDate ? new Date(receipt.nextPaymentDate).toLocaleDateString("en-GB") : "-"}</span>
+								. Endeavour to make payment. Failure to make payment attracts an increase in accrued interest
+							</p>
+						)}
+					</section>
+				) : (
+					<section className="md:w-11/12 mx-auto mt-4 text-center py-4 px-4">
 						<p className="text-xs font-normal sm:text-[.9rem] dark:text-gray-100 text-gray-700">
-							Thank you for completing all your installment payments. We appreciate your timely payment and look forward to serving you again in the
-							future.
+							Thank you for your payment. We appreciate your business and look forward to serving you again in the future.
 						</p>
-					) : (
-						<p className="text-xs font-normal sm:text-[.9rem] dark:text-gray-100 text-gray-700">
-							Next payment is due on the{" "}
-							<span className="font-semibold">{receipt.nextPaymentDate ? new Date(receipt.nextPaymentDate).toLocaleDateString("en-GB") : "-"}</span>.
-							Endeavour to make payment. Failure to make payment attracts an increase in accrued interest
-						</p>
-					)}
-				</section>
+					</section>
+				)}
 				{/* Footer */}
 				{receiptFooter}
 			</main>

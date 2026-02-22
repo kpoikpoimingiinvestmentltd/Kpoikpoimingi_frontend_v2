@@ -1,11 +1,6 @@
 import { CheckIcon, IconWrapper } from "@/assets/icons";
-import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router";
-import { _router } from "@/routes/_router";
 
 export default function PaymentSuccess() {
-	const navigate = useNavigate();
-
 	return (
 		<div className="min-h-screen flex items-center justify-center p-4 bg-gray-50 dark:bg-gray-900">
 			<div className="max-w-md w-full rounded-2xl shadow-sm p-8 text-center bg-white dark:bg-gray-800 border dark:border-gray-700">
@@ -28,14 +23,6 @@ export default function PaymentSuccess() {
 					<div className="text-green-600 dark:text-green-400 text-lg font-semibold mb-3">Completed</div>
 				</div>
 
-				{/* Action Buttons */}
-				<div className="space-y-3">
-					<Button
-						onClick={() => navigate(_router.dashboard.index)}
-						className="w-full py-3 rounded-lg font-medium bg-primary hover:bg-primary/90 dark:bg-blue-600 dark:hover:bg-blue-700 text-white">
-						Return to Home
-					</Button>
-				</div>
 				{/* Additional Info */}
 				<div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
 					<p className="text-gray-500 text-xs">If you have any questions about your payment, please contact our support team.</p>
