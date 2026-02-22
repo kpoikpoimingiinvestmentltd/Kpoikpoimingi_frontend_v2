@@ -267,9 +267,9 @@ export default function CustomerForm({
 						employmentStatus: String(
 							srcObj.employmentStatusId ||
 								(typeof srcObj.employmentStatus === "object" && srcObj.employmentStatus && "status" in srcObj.employmentStatus
-									? (srcObj.employmentStatus as { status: string }).status === "EMPLOYED"
+									? (srcObj.employmentStatus as { status?: string }).status === "EMPLOYED"
 										? "1"
-										: (srcObj.employmentStatus as { status: string }).status === "SELF EMPLOYED"
+										: (srcObj.employmentStatus as { status?: string }).status === "SELF EMPLOYED"
 											? "2"
 											: ""
 									: srcObj.employmentStatus) ||
@@ -491,14 +491,23 @@ export default function CustomerForm({
 						guarantorAgreementAt: new Date().toISOString(),
 						identityDocument: uploadedFiles[`guarantor_${idx}_doc`] || [],
 					})),
-					employmentDetails: {
-						employmentStatusId: Number(installmentForm.employment.status) || 0,
-						employerName: installmentForm.employment.employerName || installmentForm.employment.companyName || "",
-						employerAddress: installmentForm.employment.employerAddress || installmentForm.employment.businessAddress || "",
-						companyName: installmentForm.employment.companyName || "",
-						businessAddress: installmentForm.employment.businessAddress || "",
-						homeAddress: installmentForm.employment.homeAddress || "",
-					},
+					employmentDetails: installmentForm.employment
+						? {
+								employmentStatusId: Number(installmentForm.employment.status) || 0,
+								employerName: installmentForm.employment.employerName || installmentForm.employment.companyName || "",
+								employerAddress: installmentForm.employment.employerAddress || installmentForm.employment.businessAddress || "",
+								companyName: installmentForm.employment.companyName || "",
+								businessAddress: installmentForm.employment.businessAddress || "",
+								homeAddress: installmentForm.employment.homeAddress || "",
+							}
+						: {
+								employmentStatusId: 0,
+								employerName: "",
+								employerAddress: "",
+								companyName: "",
+								businessAddress: "",
+								homeAddress: "",
+							},
 					propertyInterestRequest: [
 						{
 							...(installmentForm.isCustomProperty

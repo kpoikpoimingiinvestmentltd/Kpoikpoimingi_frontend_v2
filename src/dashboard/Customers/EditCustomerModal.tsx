@@ -26,8 +26,19 @@ export default function EditCustomerModal({ open, onOpenChange, initial, documen
 		};
 	}, [normalizedInitial, documents]);
 
+	// Ensure employment object exists to prevent null access errors
+	const safeInitial = React.useMemo(() => {
+		if (!mergedInitial) return mergedInitial;
+		const initial = mergedInitial as Record<string, unknown>;
+		// Ensure employment object exists with default values
+		if (!initial.employment || typeof initial.employment !== "object") {
+			initial.employment = { status: "", employerName: "", employerAddress: "", companyName: "", businessAddress: "", homeAddress: "" };
+		}
+		return initial;
+	}, [mergedInitial]);
+
 	// Check if payment type is hire purchase (installment = paymentTypeId 1)
-	const isHirePurchase = (mergedInitial as any)?.paymentTypeId === 1 || (mergedInitial as any)?.paymentType?.id === 1;
+	const isHirePurchase = (safeInitial as any)?.paymentTypeId === 1 || (safeInitial as any)?.paymentType?.id === 1;
 
 	const handleSave = (data: unknown) => {
 		toast.success("Customer details updated successfully!");
@@ -45,7 +56,7 @@ export default function EditCustomerModal({ open, onOpenChange, initial, documen
 				</DialogHeader>
 				<CustomerForm
 					centeredContainer={() => "md:w-4/5 mx-auto"}
-					initial={mergedInitial}
+					initial={safeInitial}
 					onSubmit={handleSave}
 					onClose={() => onOpenChange(false)}
 					submitButtonText="Update Customer"

@@ -1,4 +1,4 @@
-import { createBrowserRouter, Navigate } from "react-router";
+import { createBrowserRouter } from "react-router";
 import { _router } from "./_router";
 import AdminDashboardLayout from "../layouts/AdminDashboardLayout";
 import AdminAuthLayout from "../layouts/AdminAuthLayout";
@@ -39,11 +39,7 @@ import { ROLE_BASED_ACCESS } from "@/config/roleBasedAccess";
 
 export const appRouter = createBrowserRouter([
 	{
-		index: true,
-		element: <Navigate to={_router.auth.login} />,
-	},
-	{
-		path: _router.auth.login,
+		path: _router.auth.index,
 		element: (
 			<AdminAuthLayout>
 				<AdminLogin />

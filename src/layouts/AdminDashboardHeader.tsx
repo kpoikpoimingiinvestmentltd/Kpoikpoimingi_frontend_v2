@@ -48,7 +48,7 @@ export default function AdminDashboardHeader({ onSidebarOpen, onLogoutOpen }: Ad
 	});
 
 	return (
-		<div className="bg-white dark:bg-neutral-900 border-b border-gray-100 dark:border-neutral-800 p-4 flex items-center justify-between sticky top-0 z-2">
+		<div className="bg-white dark:bg-neutral-900 border-b border-gray-100 dark:border-neutral-800 p-4 py-2 flex items-center justify-between sticky top-0 z-2">
 			<div className="flex items-center gap-1">
 				<button className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-neutral-800 xl:hidden" onClick={onSidebarOpen} aria-label="Open sidebar">
 					<IconWrapper>

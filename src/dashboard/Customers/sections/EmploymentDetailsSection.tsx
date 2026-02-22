@@ -25,7 +25,7 @@ export default function EmploymentDetailsSection({
 	missingFields = [],
 }: Props) {
 	const isSelfEmployed =
-		form.employment.status &&
+		form.employment?.status &&
 		(form.employment.status === "Self employer" ||
 			employmentStatusOptions.some((o) => o.key === form.employment.status && o.value.toLowerCase().includes("self")));
 
@@ -37,7 +37,7 @@ export default function EmploymentDetailsSection({
 					<label className={labelStyle()}>
 						Employment status <sup className="dark:text-red-500">*</sup>
 					</label>
-					<Select value={form.employment.status} onValueChange={(v) => handleChange("employment", { ...form.employment, status: v })}>
+					<Select value={form.employment?.status || ""} onValueChange={(v) => handleChange("employment", { ...(form.employment || {}), status: v })}>
 						<SelectTrigger className={twMerge(inputStyle, "w-full min-h-11 cursor-pointer")}>
 							<SelectValue placeholder="Select status" />
 						</SelectTrigger>
@@ -65,8 +65,8 @@ export default function EmploymentDetailsSection({
 								Home address <sup className="dark:text-red-500">*</sup>
 							</label>
 							<Textarea
-								value={form.employment.homeAddress}
-								onChange={(e) => handleChange("employment", { ...form.employment, homeAddress: e.target.value })}
+								value={form.employment?.homeAddress || ""}
+								onChange={(e) => handleChange("employment", { ...(form.employment || {}), homeAddress: e.target.value })}
 								className={twMerge(inputStyle)}
 							/>
 						</div>
@@ -77,8 +77,8 @@ export default function EmploymentDetailsSection({
 							label="Employer name"
 							required
 							labelClassName={labelStyle()}
-							value={form.employment.employerName}
-							onChange={(e) => handleChange("employment", { ...form.employment, employerName: e.target.value })}
+							value={form.employment?.employerName || ""}
+							onChange={(e) => handleChange("employment", { ...(form.employment || {}), employerName: e.target.value })}
 							className={twMerge(inputStyle)}
 						/>
 
@@ -86,8 +86,8 @@ export default function EmploymentDetailsSection({
 							label="Company address"
 							required
 							labelClassName={labelStyle()}
-							value={form.employment.businessAddress}
-							onChange={(e) => handleChange("employment", { ...form.employment, businessAddress: e.target.value })}
+							value={form.employment?.businessAddress || ""}
+							onChange={(e) => handleChange("employment", { ...(form.employment || {}), businessAddress: e.target.value })}
 							className={twMerge(inputStyle)}
 						/>
 					</>

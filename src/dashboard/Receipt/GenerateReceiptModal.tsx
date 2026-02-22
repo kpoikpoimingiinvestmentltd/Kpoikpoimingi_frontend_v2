@@ -132,7 +132,7 @@ export default function GenerateReceiptModal({ open, onOpenChange }: { open: boo
 					</DialogHeader>
 
 					<form onSubmit={handleSubmit(handleFormSubmit)} className="">
-						<div className="grid max-w-lg grid-cols-1 md:grid-cols-2 gap-4 mx-auto md:gap-x-8 md:gap-y-5 py-4 mt-4">
+						<div className="flex flex-col md:grid md:max-w-lg grid-cols-1 md:grid-cols-2 gap-4 mx-auto md:gap-x-8 md:gap-y-5 py-4 mt-4">
 							<Controller
 								name="customerId"
 								control={control}

@@ -1,7 +1,6 @@
 export const _router = {
 	auth: {
 		index: "/",
-		login: "/login",
 		forgotpassword: "/forgot-password",
 	},
 	paymentSuccess: "/payment/success",
