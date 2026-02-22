@@ -3,6 +3,7 @@ import { scaleTime, scaleLinear, line as d3line, max, area as d3area, curveMonot
 import { useGetIncomeAnalytics } from "@/api/analytics";
 import { useTheme } from "@/hooks/useTheme";
 import { Spinner } from "@/components/ui/spinner";
+import { useState, useRef } from "react";
 
 type Item = { name: string; value: number };
 
@@ -126,6 +127,9 @@ export function IndexPieChart() {
 
 export const IndexAreaChart = () => {
 	const { data: incomeData, isLoading } = useGetIncomeAnalytics();
+	const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+	const [, setTooltipPos] = useState({ x: 0, y: 0 });
+	const svgRef = useRef<SVGSVGElement>(null);
 
 	if (isLoading) {
 		return (
@@ -197,11 +201,39 @@ export const IndexAreaChart = () => {
 
 	// Month labels for x-axis
 	const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+	const handleMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
+		if (!svgRef.current) return;
+
+		const rect = svgRef.current.getBoundingClientRect();
+		const x = e.clientX - rect.left;
+		const xPercent = (x / rect.width) * 100;
+
+		// Find which month the user is hovering over
+		const monthWidth = 100 / months.length;
+		const monthIndex = Math.floor(xPercent / monthWidth);
+
+		if (monthIndex >= 0 && monthIndex < chartData.length) {
+			setHoveredIndex(monthIndex);
+			setTooltipPos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+		}
+	};
+
+	const handleMouseLeave = () => {
+		setHoveredIndex(null);
+	};
+
 	return (
 		<div className="relative h-72 w-full">
 			<div className="absolute inset-0 h-full w-full overflow-visible">
 				{/* Chart area */}
-				<svg viewBox="0 0 100 100" className="w-full h-full overflow-visible" preserveAspectRatio="none">
+				<svg
+					ref={svgRef}
+					viewBox="0 0 100 100"
+					className="w-full h-full overflow-visible"
+					preserveAspectRatio="none"
+					onMouseMove={handleMouseMove}
+					onMouseLeave={handleMouseLeave}>
 					{/* Area with blue gradient */}
 					<defs>
 						<linearGradient id="blueAreaGradient" x1="0" y1="0" x2="0" y2="1">
@@ -213,6 +245,19 @@ export const IndexAreaChart = () => {
 
 					{/* Line */}
 					<path d={d} fill="none" stroke="#03B4FA" strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
+
+					{/* Interactive hover areas for each month */}
+					{chartData.map((_, i) => (
+						<rect
+							key={`hover-${i}`}
+							x={`${(i / months.length) * 100}`}
+							y="0"
+							width={`${100 / months.length}`}
+							height="100"
+							fill="transparent"
+							style={{ cursor: "pointer" }}
+						/>
+					))}
 				</svg>
 
 				{/* X axis: months only, closer spacing */}
@@ -227,6 +272,23 @@ export const IndexAreaChart = () => {
 						{month}
 					</div>
 				))}
+
+				{/* Tooltip */}
+				{hoveredIndex !== null && chartData[hoveredIndex] && (
+					<div
+						style={{
+							position: "absolute",
+							left: `${((hoveredIndex + 0.5) / months.length) * 100}%`,
+							top: `${(100 - yScale(chartData[hoveredIndex].value)) * 0.72}%`,
+							transform: "translate(-50%, -120%)",
+							pointerEvents: "none",
+						}}
+						className="bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 px-3 py-2 rounded-md shadow-lg text-sm font-medium whitespace-nowrap z-50">
+						<div>{months[hoveredIndex]}</div>
+						<div className="text-xs font-normal">₦{chartData[hoveredIndex].value.toLocaleString()}</div>
+						<div className="absolute bottom-0 left-1/2 w-2 h-2 bg-gray-900 dark:bg-gray-100 transform translate-x-[-50%] translate-y-[50%] rotate-45"></div>
+					</div>
+				)}
 			</div>
 			{/* Y axis removed */}
 		</div>

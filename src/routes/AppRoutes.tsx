@@ -3,6 +3,7 @@ import { _router } from "./_router";
 import AdminDashboardLayout from "../layouts/AdminDashboardLayout";
 import AdminAuthLayout from "../layouts/AdminAuthLayout";
 import AdminLogin from "../auth/AdminLogin";
+import AdminForgotPassword from "../auth/AdminForgotPassword";
 import AuthPageNotFound from "../error/AuthPageNotFound";
 import Dashboard from "../dashboard/Dashboard/Dashboard";
 import Customers from "../dashboard/Customers/Customers";
@@ -38,21 +39,24 @@ import { ROLE_BASED_ACCESS } from "@/config/roleBasedAccess";
 
 export const appRouter = createBrowserRouter([
 	{
-		element: <AdminAuthLayout />,
-		children: [
-			{
-				index: true,
-				element: <Navigate to={_router.auth.login} />,
-			},
-			{
-				path: _router.auth.login,
-				element: <AdminLogin />,
-			},
-			{
-				path: "*",
-				element: <AuthPageNotFound />,
-			},
-		],
+		index: true,
+		element: <Navigate to={_router.auth.login} />,
+	},
+	{
+		path: _router.auth.login,
+		element: (
+			<AdminAuthLayout>
+				<AdminLogin />
+			</AdminAuthLayout>
+		),
+	},
+	{
+		path: _router.auth.forgotpassword,
+		element: (
+			<AdminAuthLayout>
+				<AdminForgotPassword />
+			</AdminAuthLayout>
+		),
 	},
 	{
 		path: _router.paymentSuccess,
@@ -211,5 +215,9 @@ export const appRouter = createBrowserRouter([
 				element: <DashboardPageNotFound />,
 			},
 		],
+	},
+	{
+		path: "*",
+		element: <AuthPageNotFound />,
 	},
 ]);

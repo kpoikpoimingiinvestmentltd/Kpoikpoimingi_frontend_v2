@@ -2,16 +2,18 @@ import { Outlet } from "react-router";
 import { media } from "../resources/images";
 import Image from "../components/base/Image";
 
-export default function AdminAuthLayout() {
+interface AdminAuthLayoutProps {
+	children?: React.ReactNode;
+}
+
+export default function AdminAuthLayout({ children }: AdminAuthLayoutProps) {
 	return (
 		<div
 			className="min-h-screen flex px-4 dark:bg-neutral-950"
 			style={{ backgroundImage: `url(${media.images.authBackgroundImage})`, backgroundSize: "cover", backgroundPosition: "center" }}>
 			<main className="max-w-lg w-full flex justify-center mx-auto">
 				<div className="w-full h-max relative">
-					<div className="bg-white min-h-[550px] px-5 py-14 rounded-b-3xl">
-						<Outlet />
-					</div>
+					<div className="bg-white min-h-[550px] px-5 py-14 rounded-b-3xl">{children ? children : <Outlet />}</div>
 					<Image
 						src={media.images.floatingDesign}
 						alt="floating design"

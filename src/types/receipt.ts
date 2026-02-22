@@ -64,6 +64,7 @@ export type ReceiptDetail = {
 		phoneNumber?: string;
 		email?: string;
 		customerCode?: string;
+		isMigrated?: boolean;
 		registrations?: Array<{
 			employmentDetails?: {
 				homeAddress?: string;

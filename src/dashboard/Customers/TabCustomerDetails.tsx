@@ -362,21 +362,21 @@ export default function TabCustomerDetails({ customer }: { customer?: CustomerDe
 						<div className="grid grid-cols-1 gap-2">
 							<KeyValueRow
 								label="Employment status"
-								value={getEmploymentStatusLabel(employment.employmentStatusId ?? employment.employmentStatus)}
+								value={getEmploymentStatusLabel(employment?.employmentStatusId ?? employment?.employmentStatus)}
 								leftClassName="text-sm text-muted-foreground"
 								rightClassName="text-right"
 							/>
-							{employment.employmentStatus?.status === "SELF EMPLOYED" ? (
+							{employment?.employmentStatus?.status === "SELF EMPLOYED" ? (
 								<>
 									<KeyValueRow
 										label="Company name"
-										value={employment.companyName || "N/A"}
+										value={employment?.companyName || "N/A"}
 										leftClassName="text-sm text-muted-foreground"
 										rightClassName="text-right"
 									/>
 									<KeyValueRow
 										label="Business address"
-										value={employment.businessAddress || "N/A"}
+										value={employment?.businessAddress || "N/A"}
 										leftClassName="text-sm text-muted-foreground"
 										rightClassName="text-right"
 									/>
@@ -385,13 +385,13 @@ export default function TabCustomerDetails({ customer }: { customer?: CustomerDe
 								<>
 									<KeyValueRow
 										label="Employer name"
-										value={employment.employerName || "N/A"}
+										value={employment?.employerName || "N/A"}
 										leftClassName="text-sm text-muted-foreground"
 										rightClassName="text-right"
 									/>
 									<KeyValueRow
 										label="Employer address"
-										value={employment.employerAddress || "N/A"}
+										value={employment?.employerAddress || "N/A"}
 										leftClassName="text-sm text-muted-foreground"
 										rightClassName="text-right"
 									/>
