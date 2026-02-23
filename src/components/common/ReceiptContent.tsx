@@ -170,10 +170,7 @@ export default function ReceiptContent({ receipt }: ReceiptContentProps) {
             />
             <KeyValueRow
               label="Home Address"
-              value={
-                receipt.customer?.registrations?.[0]?.employmentDetails
-                  ?.homeAddress ?? "-"
-              }
+              value={receipt.customer?.registrations?.[0]?.homeAddress ?? "-"}
             />
             <KeyValueRow
               label="Date"
