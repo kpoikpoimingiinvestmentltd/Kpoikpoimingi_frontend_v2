@@ -517,6 +517,9 @@ export default function UserDetails() {
                 return;
               }
               try {
+                const stateOfOriginIdNum = Number(formValues.stateOfOrigin);
+                const accountTypeIdNum = Number(formValues.accountType);
+                const bankNameIdNum = Number(formValues.bankName);
                 await updateMutation.mutateAsync({
                   id: userId,
                   payload: {
@@ -524,16 +527,21 @@ export default function UserDetails() {
                     email: formValues.email,
                     phoneNumber: formatPhoneNumber(formValues.phone),
                     houseAddress: formValues.houseAddress,
-                    stateOfOriginId:
-                      Number(formValues.stateOfOrigin) || undefined,
+                    stateOfOriginId: Number.isInteger(stateOfOriginIdNum)
+                      ? stateOfOriginIdNum
+                      : undefined,
                     dateOfBirth: formValues.dob || undefined,
                     roleId: Number(formValues.role) || undefined,
                     salaryAmount: formValues.salary
                       ? Number(formValues.salary)
                       : undefined,
                     accountNumber: formValues.accountNumber,
-                    accountType: formValues.accountType,
-                    bankName: formValues.bankName,
+                    accountTypeId: Number.isInteger(accountTypeIdNum)
+                      ? accountTypeIdNum
+                      : undefined,
+                    bankNameId: Number.isInteger(bankNameIdNum)
+                      ? bankNameIdNum
+                      : undefined,
                   },
                 });
 
