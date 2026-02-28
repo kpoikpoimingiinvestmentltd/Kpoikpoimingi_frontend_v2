@@ -446,8 +446,14 @@ export default function CreateContractModal({
                       >
                         <SelectValue placeholder="Search customer" />
                       </SelectTrigger>
-                      <SelectContent>
-                        <div className="p-1.5">
+                      <SelectContent
+                        onCloseAutoFocus={(e) => e.preventDefault()}
+                      >
+                        <div
+                          className="p-1.5"
+                          onPointerDown={(e) => e.stopPropagation()}
+                          onKeyDown={(e) => e.stopPropagation()}
+                        >
                           <CustomInput
                             placeholder="Search by name"
                             className={inputStyle}
@@ -455,6 +461,8 @@ export default function CreateContractModal({
                             onChange={(
                               e: React.ChangeEvent<HTMLInputElement>
                             ) => setSearchQuery(e.target.value)}
+                            onPointerDown={(e) => e.stopPropagation()}
+                            onClick={(e) => e.stopPropagation()}
                           />
                         </div>
                         {filteredRegistrations &&
