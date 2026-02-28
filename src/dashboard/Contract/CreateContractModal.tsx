@@ -22,6 +22,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import { ChevronDownIcon } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   inputStyle,
@@ -446,7 +447,7 @@ export default function CreateContractModal({
                         <button
                           type="button"
                           className={selectTriggerStyle(
-                            "flex items-center px-3 justify-start text-left text-sm w-full min-w-0"
+                            "flex items-center justify-between text-left text-sm w-full min-w-0 px-3"
                           )}
                         >
                           <span className="truncate">
@@ -456,6 +457,7 @@ export default function CreateContractModal({
                               } | null
                             )?.customer?.fullName ?? "Search customer"}
                           </span>
+                          <ChevronDownIcon className="size-4 shrink-0 opacity-50" />
                         </button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent
@@ -479,7 +481,7 @@ export default function CreateContractModal({
                           />
                         </div>
                         <div
-                          className="popover-list-scroll max-h-[220px] overflow-y-auto overflow-x-hidden p-1 my-2"
+                          className="max-h-[220px] overflow-y-auto overflow-x-hidden p-1 my-2"
                           style={{ WebkitOverflowScrolling: "touch" }}
                         >
                           {filteredRegistrations &&
