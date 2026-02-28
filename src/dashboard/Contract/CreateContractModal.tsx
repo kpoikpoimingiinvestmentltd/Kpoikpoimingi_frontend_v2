@@ -447,7 +447,7 @@ export default function CreateContractModal({
                         <button
                           type="button"
                           className={selectTriggerStyle(
-                            "flex items-center justify-between text-left text-sm w-full min-w-0 px-3"
+                            "flex items-center justify-between text-left text-sm w-full min-w-0 px-3 bg-[#13121205] dark:bg-input/30"
                           )}
                         >
                           <span className="truncate">

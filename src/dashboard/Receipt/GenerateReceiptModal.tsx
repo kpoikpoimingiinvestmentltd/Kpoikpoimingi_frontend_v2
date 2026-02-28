@@ -201,7 +201,7 @@ export default function GenerateReceiptModal({
                         <button
                           type="button"
                           className={selectTriggerStyle(
-                            "flex items-center justify-between px-3 text-left text-sm w-full min-w-0"
+                            "flex items-center justify-between px-3 text-left text-sm w-full min-w-0 bg-[#13121205] dark:bg-input/30"
                           )}
                         >
                           <span className="truncate">
