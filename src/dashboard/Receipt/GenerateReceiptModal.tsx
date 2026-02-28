@@ -211,12 +211,12 @@ export default function GenerateReceiptModal({
                         </button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent
-                        className="min-w-[16rem] w-52 p-0"
+                        className="min-w-[16rem] w-52 p-0 overflow-y-auto overflow-x-hidden flex flex-col max-h-[280px] scrollbar-hide"
                         align="start"
                         onCloseAutoFocus={(e) => e.preventDefault()}
                       >
                         <div
-                          className="p-1.5 border-b"
+                          className="sticky top-0 z-10 shrink-0 border-b bg-popover p-1.5"
                           onPointerDown={(e) => e.stopPropagation()}
                           onKeyDown={(e) => e.stopPropagation()}
                         >
@@ -234,7 +234,7 @@ export default function GenerateReceiptModal({
                           />
                         </div>
                         <div
-                          className="popover-list-scroll max-h-[220px] overflow-y-auto overflow-x-hidden p-1"
+                          className="min-h-0 flex-1 p-1"
                           style={{ WebkitOverflowScrolling: "touch" }}
                         >
                           {activeContractLoading ? (
