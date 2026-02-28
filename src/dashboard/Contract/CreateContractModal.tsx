@@ -15,6 +15,13 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   inputStyle,
@@ -57,6 +64,7 @@ export default function CreateContractModal({
   const [selectedCustomerData, setSelectedCustomerData] =
     React.useState<Registration | null>(null);
   const [searchQuery, setSearchQuery] = React.useState("");
+  const [customerOpen, setCustomerOpen] = React.useState(false);
 
   const registrationsQuery = useGetApprovedRegistrations(
     1,
@@ -91,6 +99,7 @@ export default function CreateContractModal({
     if (!open) {
       setSearchQuery("");
       setSelectedCustomerData(null);
+      setCustomerOpen(false);
     }
   }, [open]);
 
@@ -422,67 +431,84 @@ export default function CreateContractModal({
             className="w-full block"
           >
             <div className="w-full grid grid-cols-[1fr_1fr] gap-4 md:gap-x-8 md:gap-y-5 py-4">
-              {/* Customer Selection */}
+              {/* Customer Selection — DropdownMenu so search input can stay open on mobile */}
               <div className="w-full">
                 <Label className={labelStyle()}>Full name*</Label>
                 <Controller
                   control={control}
                   name="customerId"
                   render={({ field }) => (
-                    <Select
-                      onValueChange={(v) => {
-                        field.onChange(v);
-                        const val = v as string;
-                        const selected =
-                          filteredRegistrations.find(
-                            (reg: any) => reg.customer?.id === val
-                          ) ?? null;
-                        setSelectedCustomerData(selected);
-                      }}
-                      value={String(field.value)}
+                    <DropdownMenu
+                      open={customerOpen}
+                      onOpenChange={setCustomerOpen}
                     >
-                      <SelectTrigger
-                        className={selectTriggerStyle("text-sm w-full min-w-0")}
-                      >
-                        <SelectValue placeholder="Search customer" />
-                      </SelectTrigger>
-                      <SelectContent
+                      <DropdownMenuTrigger asChild>
+                        <button
+                          type="button"
+                          className={selectTriggerStyle(
+                            "flex items-center px-3 justify-start text-left text-sm w-full min-w-0"
+                          )}
+                        >
+                          <span className="truncate">
+                            {(
+                              selectedCustomerData as {
+                                customer?: { fullName?: string };
+                              } | null
+                            )?.customer?.fullName ?? "Search customer"}
+                          </span>
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent
+                        className="min-w-[16rem] w-72 p-0"
+                        align="start"
                         onCloseAutoFocus={(e) => e.preventDefault()}
                       >
                         <div
-                          className="p-1.5"
+                          className="p-1.5 border-b"
                           onPointerDown={(e) => e.stopPropagation()}
                           onKeyDown={(e) => e.stopPropagation()}
                         >
-                          <CustomInput
+                          <Input
                             placeholder="Search by name"
                             className={inputStyle}
                             value={searchQuery}
-                            onChange={(
-                              e: React.ChangeEvent<HTMLInputElement>
-                            ) => setSearchQuery(e.target.value)}
+                            onChange={(e) => setSearchQuery(e.target.value)}
                             onPointerDown={(e) => e.stopPropagation()}
                             onClick={(e) => e.stopPropagation()}
+                            autoFocus
                           />
                         </div>
-                        {filteredRegistrations &&
-                        filteredRegistrations.length > 0
-                          ? filteredRegistrations.map((registration: any) => (
-                              <SelectItem
-                                className="cursor-pointer"
+                        <div
+                          className="popover-list-scroll max-h-[220px] overflow-y-auto overflow-x-hidden p-1 my-2"
+                          style={{ WebkitOverflowScrolling: "touch" }}
+                        >
+                          {filteredRegistrations &&
+                          filteredRegistrations.length > 0 ? (
+                            filteredRegistrations.map((registration: any) => (
+                              <DropdownMenuItem
                                 key={String(registration.id)}
-                                value={String(registration.customer?.id)}
+                                className="cursor-pointer"
+                                onSelect={() => {
+                                  const cid = registration.customer?.id;
+                                  field.onChange(cid ?? "");
+                                  setSelectedCustomerData(registration);
+                                  setCustomerOpen(false);
+                                }}
+                                onClick={() => {
+                                  setSearchQuery("");
+                                }}
                               >
                                 {String(registration.customer?.fullName ?? "")}
-                              </SelectItem>
+                              </DropdownMenuItem>
                             ))
-                          : searchQuery && (
-                              <div className="p-3 text-center text-sm text-gray-500">
-                                No customers found
-                              </div>
-                            )}
-                      </SelectContent>
-                    </Select>
+                          ) : searchQuery ? (
+                            <div className="p-3 text-center text-sm text-muted-foreground">
+                              No customers found
+                            </div>
+                          ) : null}
+                        </div>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   )}
                 />
               </div>
