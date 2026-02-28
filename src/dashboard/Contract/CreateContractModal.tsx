@@ -467,7 +467,10 @@ export default function CreateContractModal({
                             autoFocus
                           />
                         </div>
-                        <div className="max-h-60 overflow-y-auto p-1">
+                        <div
+                          className="max-h-60 min-h-0 overflow-y-auto overflow-x-hidden p-1 overscroll-contain touch-pan-y"
+                          style={{ WebkitOverflowScrolling: "touch" }}
+                        >
                           {filteredRegistrations &&
                           filteredRegistrations.length > 0 ? (
                             filteredRegistrations.map((registration: any) => (
