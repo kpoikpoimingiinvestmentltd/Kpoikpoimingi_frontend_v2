@@ -15,6 +15,12 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   inputStyle,
@@ -57,6 +63,7 @@ export default function CreateContractModal({
   const [selectedCustomerData, setSelectedCustomerData] =
     React.useState<Registration | null>(null);
   const [searchQuery, setSearchQuery] = React.useState("");
+  const [customerOpen, setCustomerOpen] = React.useState(false);
 
   const registrationsQuery = useGetApprovedRegistrations(
     1,
@@ -91,6 +98,7 @@ export default function CreateContractModal({
     if (!open) {
       setSearchQuery("");
       setSelectedCustomerData(null);
+      setCustomerOpen(false);
     }
   }, [open]);
 
@@ -422,65 +430,69 @@ export default function CreateContractModal({
             className="w-full block"
           >
             <div className="w-full grid grid-cols-[1fr_1fr] gap-4 md:gap-x-8 md:gap-y-5 py-4">
-              {/* Customer Selection */}
+              {/* Customer Selection - Popover combobox so list stays open on mobile/touch */}
               <div className="w-full">
                 <Label className={labelStyle()}>Full name*</Label>
                 <Controller
                   control={control}
                   name="customerId"
                   render={({ field }) => (
-                    <Select
-                      onValueChange={(v) => {
-                        field.onChange(v);
-                        const val = v as string;
-                        const selected =
-                          filteredRegistrations.find(
-                            (reg: any) => reg.customer?.id === val
-                          ) ?? null;
-                        setSelectedCustomerData(selected);
-                      }}
-                      value={String(field.value)}
-                    >
-                      <SelectTrigger
-                        className={selectTriggerStyle("text-sm w-full min-w-0")}
-                      >
-                        <SelectValue placeholder="Search customer" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <div
-                          className="p-1.5"
-                          onKeyDown={(e) => e.stopPropagation()}
-                          onPointerDown={(e) => e.stopPropagation()}
+                    <Popover open={customerOpen} onOpenChange={setCustomerOpen}>
+                      <PopoverTrigger asChild>
+                        <button
+                          type="button"
+                          className={selectTriggerStyle(
+                            "text-sm w-full min-w-0 px-3 justify-between text-left font-normal"
+                          )}
                         >
-                          <CustomInput
+                          <span className="truncate">
+                            {(
+                              selectedCustomerData as {
+                                customer?: { fullName?: string };
+                              } | null
+                            )?.customer?.fullName ?? "Search customer"}
+                          </span>
+                        </button>
+                      </PopoverTrigger>
+                      <PopoverContent
+                        className="min-w-[16rem] w-72 p-0"
+                        align="start"
+                      >
+                        <div className="p-1.5 border-b">
+                          <Input
                             placeholder="Search by name"
                             className={inputStyle}
                             value={searchQuery}
-                            onChange={(
-                              e: React.ChangeEvent<HTMLInputElement>
-                            ) => setSearchQuery(e.target.value)}
-                            onKeyDown={(e) => e.stopPropagation()}
-                            onPointerDown={(e) => e.stopPropagation()}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            autoFocus
                           />
                         </div>
-                        {filteredRegistrations &&
-                        filteredRegistrations.length > 0
-                          ? filteredRegistrations.map((registration: any) => (
-                              <SelectItem
-                                className="cursor-pointer"
+                        <div className="max-h-60 overflow-y-auto p-1">
+                          {filteredRegistrations &&
+                          filteredRegistrations.length > 0 ? (
+                            filteredRegistrations.map((registration: any) => (
+                              <button
+                                type="button"
                                 key={String(registration.id)}
-                                value={String(registration.customer?.id)}
+                                className="w-full cursor-pointer rounded-md px-2 py-2 text-left text-sm hover:bg-accent hover:text-accent-foreground"
+                                onClick={() => {
+                                  const cid = registration.customer?.id;
+                                  field.onChange(cid ?? "");
+                                  setSelectedCustomerData(registration);
+                                  setCustomerOpen(false);
+                                }}
                               >
                                 {String(registration.customer?.fullName ?? "")}
-                              </SelectItem>
+                              </button>
                             ))
-                          : searchQuery && (
-                              <div className="p-3 text-center text-sm text-gray-500">
-                                No customers found
-                              </div>
-                            )}
-                      </SelectContent>
-                    </Select>
+                          ) : searchQuery ? (
+                            <div className="p-3 text-center text-sm text-gray-500">
+                              No customers found
+                            </div>
+                          ) : null}
+                        </div>
+                      </PopoverContent>
+                    </Popover>
                   )}
                 />
               </div>
@@ -755,7 +767,7 @@ export default function CreateContractModal({
                               Generate Payment Link
                             </Label>
                           </div>
-                          <div className="flex items-center space-x-2">
+                          <div className="flex  items-center space-x-2">
                             <RadioGroupItem
                               value="cash"
                               id="cash-full"
@@ -776,6 +788,7 @@ export default function CreateContractModal({
               )}
 
               {/* Start Date - Common to both */}
+
               <Controller
                 control={control}
                 name="startDate"
