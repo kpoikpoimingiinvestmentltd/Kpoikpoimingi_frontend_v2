@@ -422,7 +422,7 @@ export default function CreateContractModal({
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className={modalContentStyle("md:max-w-3xl")}>
           <DialogHeader className="justify-center flex flex-row mt-2 text-center">
-            <DialogTitle>Create Contract</DialogTitle>
+            <DialogTitle>Create Contract </DialogTitle>
             <DialogClose />
           </DialogHeader>
 
