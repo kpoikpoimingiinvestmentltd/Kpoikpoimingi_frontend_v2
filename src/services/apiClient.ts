@@ -1,5 +1,5 @@
 import { store } from "@/store";
-import { saveAuthToStorage } from "./authPersistence";
+import { saveAuthToStorage, loadAuthFromStorage, isTokenExpiringsoon } from "./authPersistence";
 import { API_ROUTES } from "@/api/routes";
 import { _constants } from "./constants";
 import { clearAuth } from "@/store/authSlice";
@@ -8,6 +8,8 @@ import { _router } from "../routes/_router";
 type ApiRequestOptions = RequestInit & { skipAuth?: boolean };
 
 let isRedirecting = false;
+let isRefreshing = false;
+let refreshPromise: Promise<any> | null = null;
 
 function resolveUrl(url: string) {
 	return url.startsWith("http") ? url : `${_constants.API_URL}${url.startsWith("/") ? "" : "/"}${url}`;
@@ -52,8 +54,33 @@ export async function apiGetFile(url: string, opts: ApiRequestOptions = {}) {
 	const state = store.getState() as {
 		auth?: { accessToken?: string; refreshToken?: string };
 	};
-	const token = state?.auth?.accessToken;
 	const skipAuth = !!opts.skipAuth;
+
+	// Proactively refresh token if it's expiring soon
+	if (!skipAuth) {
+		const storedAuth = loadAuthFromStorage();
+		if (storedAuth?.expiresAt && isTokenExpiringsoon(storedAuth.expiresAt)) {
+			if (storedAuth.refreshToken) {
+				// If already refreshing, wait for it
+				if (isRefreshing && refreshPromise) {
+					await refreshPromise;
+				} else if (!isRefreshing) {
+					isRefreshing = true;
+					refreshPromise = doRefresh(storedAuth.refreshToken)
+						.catch(() => {
+							// Refresh failed, will be handled in the regular flow
+						})
+						.finally(() => {
+							isRefreshing = false;
+							refreshPromise = null;
+						});
+					await refreshPromise;
+				}
+			}
+		}
+	}
+
+	const token = state?.auth?.accessToken;
 
 	const headers: Record<string, string> = {
 		...((opts.headers as Record<string, string>) || {}),
@@ -141,10 +168,15 @@ async function doRefresh(refreshToken?: string) {
 			data,
 		});
 	}
+
+	// Calculate expiration time: current time + expiresIn (in seconds)
+	const expiresAt = data?.expiresIn ? Date.now() + data.expiresIn * 1000 : undefined;
+
 	saveAuthToStorage({
 		id: data.id,
 		accessToken: data.accessToken,
 		refreshToken: data.refreshToken,
+		expiresAt,
 	});
 	store.dispatch({
 		type: "auth/setAuth",
@@ -172,8 +204,33 @@ export async function apiRequest<T = unknown>(url: string, opts: ApiRequestOptio
 	const state = store.getState() as {
 		auth?: { accessToken?: string; refreshToken?: string };
 	};
-	const token = state?.auth?.accessToken;
 	const skipAuth = !!opts.skipAuth;
+
+	// Proactively refresh token if it's expiring soon
+	if (!skipAuth) {
+		const storedAuth = loadAuthFromStorage();
+		if (storedAuth?.expiresAt && isTokenExpiringsoon(storedAuth.expiresAt)) {
+			if (storedAuth.refreshToken) {
+				// If already refreshing, wait for it
+				if (isRefreshing && refreshPromise) {
+					await refreshPromise;
+				} else if (!isRefreshing) {
+					isRefreshing = true;
+					refreshPromise = doRefresh(storedAuth.refreshToken)
+						.catch(() => {
+							// Refresh failed, will be handled in the regular flow
+						})
+						.finally(() => {
+							isRefreshing = false;
+							refreshPromise = null;
+						});
+					await refreshPromise;
+				}
+			}
+		}
+	}
+
+	const token = state?.auth?.accessToken;
 
 	const headers: Record<string, string> = {
 		...((opts.headers as Record<string, string>) || {}),

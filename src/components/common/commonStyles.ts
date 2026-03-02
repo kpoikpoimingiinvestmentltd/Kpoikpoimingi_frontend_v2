@@ -35,5 +35,5 @@ export const selectTriggerStyle = (style?: string) => {
 };
 
 export const modalContentStyle = (style?: string) => {
-	return twMerge("overflow-y-auto max-h-[90vh] md:max-w-2xl w-full", style);
+	return twMerge("overflow-y-auto overflow-x-hidden flex flex-col max-h-[90vh] md:max-w-2xl w-full", style);
 };

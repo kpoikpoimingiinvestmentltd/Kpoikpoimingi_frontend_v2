@@ -218,14 +218,12 @@ export default function ReceiptTable() {
 							<TableBody>
 								{items.map((it, idx) => (
 									<TableRow key={it.id ?? idx} className="hover:bg-card">
-										<TableCell className="text-sm text-muted-foreground">{it.receiptNumber ?? it.id}</TableCell>
-										<TableCell className="text-sm text-[#667085]">{it.customer?.fullName ?? "-"}</TableCell>
-										<TableCell className="text-sm text-[#667085]">{it.contract?.property?.name ?? it.propertyName ?? "-"}</TableCell>
-										<TableCell className="text-sm text-[#667085]">
-											{formatPaymentMethod(it.paymentMethod as string | { id?: number; method?: string })}
-										</TableCell>
-										<TableCell className="text-sm text-[#667085]">{formatCurrency(it.amountPaid ?? it.totalAmount)}</TableCell>
-										<TableCell className="text-sm text-[#667085]">
+										<TableCell className="text-sm">{it.receiptNumber ?? it.id}</TableCell>
+										<TableCell className="text-sm">{it.customer?.fullName ?? "-"}</TableCell>
+										<TableCell className="text-sm">{it.contract?.property?.name ?? it.propertyName ?? "-"}</TableCell>
+										<TableCell className="text-sm">{formatPaymentMethod(it.paymentMethod as string | { id?: number; method?: string })}</TableCell>
+										<TableCell className="text-sm">{formatCurrency(it.amountPaid ?? it.totalAmount)}</TableCell>
+										<TableCell className="text-sm">
 											{it.paymentDate
 												? new Date(it.paymentDate).toLocaleDateString()
 												: it.createdAt
