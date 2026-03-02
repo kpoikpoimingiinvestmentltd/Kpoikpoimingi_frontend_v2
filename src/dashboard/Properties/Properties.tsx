@@ -391,7 +391,7 @@ export default function Properties() {
 														className={twMerge("rounded-full !border-primary/50", checkboxStyle)}
 													/>
 												</div>
-												<div className="h-24 md:h-32 xl:h-56 flex items-center justify-center overflow-hidden bg-gray-50 rounded">
+												<div className="h-24 md:h-32 min-xl:h-56 min-2xl:h-72 flex items-center justify-center overflow-hidden bg-gray-50 rounded">
 													<Image src={imgSrc} alt={prod.name} className="max-h-full object-contain xl:object-contain" />
 												</div>
 												<div className="mt-3">
