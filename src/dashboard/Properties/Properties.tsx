@@ -392,7 +392,7 @@ export default function Properties() {
 													/>
 												</div>
 												<div className="h-24 md:h-32 min-xl:h-56 min-2xl:h-72 flex items-center justify-center overflow-hidden bg-gray-50 rounded">
-													<Image src={imgSrc} alt={prod.name} className="max-h-full object-contain xl:object-contain" />
+													<Image src={imgSrc} alt={prod.name} />
 												</div>
 												<div className="mt-3">
 													<h5 className="text-sm font-medium truncate">{prod.name}</h5>
