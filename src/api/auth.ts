@@ -10,7 +10,16 @@ export function useLogin(onSuccess?: (data: LoginResponse) => void) {
 		mutationFn: async (payload: LoginInput) => {
 			const data = await apiPost<LoginResponse>(API_ROUTES.auth.index, payload, { skipAuth: true });
 			const parsed = loginResponseSchema.parse(data);
-			saveAuthToStorage({ id: parsed.id, accessToken: parsed.accessToken, refreshToken: parsed.refreshToken });
+
+			// Calculate expiration time: current time + expiresIn (in seconds)
+			const expiresAt = parsed.expiresIn ? Date.now() + parsed.expiresIn * 1000 : undefined;
+
+			saveAuthToStorage({
+				id: parsed.id,
+				accessToken: parsed.accessToken,
+				refreshToken: parsed.refreshToken,
+				expiresAt,
+			});
 			return parsed;
 		},
 		onSuccess,
@@ -22,7 +31,16 @@ export function useRefreshToken(onSuccess?: (data: LoginResponse) => void) {
 		mutationFn: async (payload: RefreshTokenInput) => {
 			const data = await apiPost<LoginResponse>(API_ROUTES.auth.refreshToken, payload);
 			const parsed = loginResponseSchema.parse(data);
-			saveAuthToStorage({ id: parsed.id, accessToken: parsed.accessToken, refreshToken: parsed.refreshToken });
+
+			// Calculate expiration time: current time + expiresIn (in seconds)
+			const expiresAt = parsed.expiresIn ? Date.now() + parsed.expiresIn * 1000 : undefined;
+
+			saveAuthToStorage({
+				id: parsed.id,
+				accessToken: parsed.accessToken,
+				refreshToken: parsed.refreshToken,
+				expiresAt,
+			});
 			return parsed;
 		},
 		onSuccess,

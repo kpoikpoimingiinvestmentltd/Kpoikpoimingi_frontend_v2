@@ -3,10 +3,7 @@ import { useGetReferenceData } from "@/api/reference";
 import { twMerge } from "tailwind-merge";
 import { usePresignUploadMutation } from "@/api/presign-upload.api";
 import { uploadFileToPresignedUrl } from "@/utils/media-upload";
-import {
-  createInternalCustomerRegistration,
-  useUpdateCustomerRegistration,
-} from "@/api/customer-registration";
+import { createInternalCustomerRegistration, useUpdateCustomerRegistration } from "@/api/customer-registration";
 import { useCreateInternalFullPaymentRegistration } from "@/api/contracts";
 import { formatPhoneNumber, extractErrorMessage } from "@/lib/utils";
 import { toast } from "sonner";
@@ -15,1065 +12,872 @@ import { useCustomerFormState } from "./hooks/useCustomerFormState";
 import OncePaymentForm from "./forms/OncePaymentForm";
 import InstallmentPaymentForm from "./forms/InstallmentPaymentForm";
 import { getCustomerPaymentMethod } from "./helpers/transformCustomerToForm";
-import type {
-  CustomerRegistrationPayload,
-  InternalFullPaymentRegistrationPayload,
-} from "@/types/customerRegistration";
-import type {
-  OncePaymentForm as OncePaymentFormType,
-  InstallmentPaymentForm as InstallmentPaymentFormType,
-} from "@/types/customerRegistration";
+import type { CustomerRegistrationPayload, InternalFullPaymentRegistrationPayload } from "@/types/customerRegistration";
+import type { OncePaymentForm as OncePaymentFormType, InstallmentPaymentForm as InstallmentPaymentFormType } from "@/types/customerRegistration";
 import {
-  extractRelationshipOptions,
-  extractPaymentFrequencyOptions,
-  extractDurationUnitOptions,
-  extractEmploymentStatusOptions,
-  extractStateOptions,
+	extractRelationshipOptions,
+	extractPaymentFrequencyOptions,
+	extractDurationUnitOptions,
+	extractEmploymentStatusOptions,
+	extractStateOptions,
 } from "@/lib/referenceDataHelpers";
 import { useNavigate, useSearchParams } from "react-router";
 import { _router } from "@/routes/_router";
 import EmailVerificationModal from "@/components/common/EmailVerificationModal";
 
 type Props = {
-  onSubmit?: (data: unknown) => void;
-  onClose?: () => void;
-  initial?: Record<string, unknown>;
-  sectionTitle?: (additionalClasses?: string) => string;
-  centeredContainer?: (additionalClasses?: string) => string;
-  paymentMethod?: "once" | "installment";
-  selectedProperties?: Array<{
-    id: string;
-    name: string;
-    price: string;
-    quantity: number;
-    media?: string[];
-  }>;
-  submitButtonText?: string;
-  showSignedContract?: boolean;
-  skipEmailVerification?: boolean;
+	onSubmit?: (data: unknown) => void;
+	onClose?: () => void;
+	initial?: Record<string, unknown>;
+	sectionTitle?: (additionalClasses?: string) => string;
+	centeredContainer?: (additionalClasses?: string) => string;
+	paymentMethod?: "once" | "installment";
+	selectedProperties?: Array<{
+		id: string;
+		name: string;
+		price: string;
+		quantity: number;
+		media?: string[];
+	}>;
+	submitButtonText?: string;
+	showSignedContract?: boolean;
+	skipEmailVerification?: boolean;
 };
 
 export default function CustomerForm({
-  onSubmit,
-  initial,
-  sectionTitle: sectionTitleProp,
-  centeredContainer: centeredContainerProp,
-  paymentMethod: paymentMethodProp,
-  selectedProperties,
-  submitButtonText,
-  showSignedContract = false,
-  skipEmailVerification = false,
+	onSubmit,
+	initial,
+	sectionTitle: sectionTitleProp,
+	centeredContainer: centeredContainerProp,
+	paymentMethod: paymentMethodProp,
+	selectedProperties,
+	submitButtonText,
+	showSignedContract = false,
+	skipEmailVerification = false,
 }: Props) {
-  const baseEachSectionTitle = "text-lg font-normal";
-  const baseCenteredContainer = "mx-auto w-full md:w-2/3 w-full my-12";
+	const baseEachSectionTitle = "text-lg font-normal";
+	const baseCenteredContainer = "mx-auto w-full md:w-2/3 w-full my-12";
 
-  const sectionTitle =
-    sectionTitleProp ||
-    ((additionalClasses?: string) =>
-      twMerge(baseEachSectionTitle, additionalClasses));
-  const centeredContainer =
-    centeredContainerProp ||
-    ((additionalClasses?: string) =>
-      twMerge(baseCenteredContainer, additionalClasses));
+	const sectionTitle = sectionTitleProp || ((additionalClasses?: string) => twMerge(baseEachSectionTitle, additionalClasses));
+	const centeredContainer = centeredContainerProp || ((additionalClasses?: string) => twMerge(baseCenteredContainer, additionalClasses));
 
-  // Determine if we're in edit mode and which payment method to use
-  const isEditMode = !!initial?.id;
-  const detectedPaymentMethod = isEditMode
-    ? getCustomerPaymentMethod(initial)
-    : paymentMethodProp;
-  const paymentMethod = detectedPaymentMethod || paymentMethodProp;
+	// Determine if we're in edit mode and which payment method to use
+	const isEditMode = !!initial?.id;
+	const detectedPaymentMethod = isEditMode ? getCustomerPaymentMethod(initial) : paymentMethodProp;
+	const paymentMethod = detectedPaymentMethod || paymentMethodProp;
 
-  // Get URL search params
-  const [searchParams] = useSearchParams();
+	// Get URL search params
+	const [searchParams] = useSearchParams();
 
-  // Extract selectedProperties from URL params if not provided as prop
-  const resolvedSelectedProperties = (() => {
-    if (selectedProperties && selectedProperties.length > 0) {
-      return selectedProperties;
-    }
-    const querySelectedProperties = searchParams.get("selectedProperties");
-    if (querySelectedProperties) {
-      try {
-        return JSON.parse(decodeURIComponent(querySelectedProperties));
-      } catch {
-        return undefined;
-      }
-    }
-    return undefined;
-  })();
+	// Extract selectedProperties from URL params if not provided as prop
+	const resolvedSelectedProperties = (() => {
+		if (selectedProperties && selectedProperties.length > 0) {
+			return selectedProperties;
+		}
+		const querySelectedProperties = searchParams.get("selectedProperties");
+		if (querySelectedProperties) {
+			try {
+				return JSON.parse(decodeURIComponent(querySelectedProperties));
+			} catch {
+				return undefined;
+			}
+		}
+		return undefined;
+	})();
 
-  // Form state
-  const {
-    form,
-    handleChange,
-    uploadedFiles,
-    setUploadedFiles,
-    uploadedFieldsRef,
-    resetFormCompletely,
-  } = useCustomerFormState(paymentMethod, initial, resolvedSelectedProperties);
+	// Form state
+	const { form, handleChange, uploadedFiles, setUploadedFiles, uploadedFieldsRef, resetFormCompletely } = useCustomerFormState(
+		paymentMethod,
+		initial,
+		resolvedSelectedProperties,
+	);
 
-  // Navigation helper
-  const navigate = useNavigate();
+	// Navigation helper
+	const navigate = useNavigate();
 
-  // API hooks
-  const [presignUpload] = usePresignUploadMutation();
-  const [isSubmitting, setIsSubmitting] = React.useState(false);
-  const [showEmailVerification, setShowEmailVerification] =
-    React.useState(false);
-  const [pendingSubmission, setPendingSubmission] = React.useState<{
-    payload:
-      | CustomerRegistrationPayload
-      | InternalFullPaymentRegistrationPayload;
-    isEditMode: boolean;
-    paymentMethod: "once" | "installment";
-  } | null>(null);
+	// API hooks
+	const [presignUpload] = usePresignUploadMutation();
+	const [isSubmitting, setIsSubmitting] = React.useState(false);
+	const [showEmailVerification, setShowEmailVerification] = React.useState(false);
+	const [pendingSubmission, setPendingSubmission] = React.useState<{
+		payload: CustomerRegistrationPayload | InternalFullPaymentRegistrationPayload;
+		isEditMode: boolean;
+		paymentMethod: "once" | "installment";
+	} | null>(null);
 
-  // Full payment registration mutation
-  const fullPaymentMutation = useCreateInternalFullPaymentRegistration(() => {
-    toast.success(`Registration created successfully!`);
-  });
+	// Full payment registration mutation
+	const fullPaymentMutation = useCreateInternalFullPaymentRegistration(() => {
+		toast.success(`Registration created successfully!`);
+	});
 
-  const updateMutation = useUpdateCustomerRegistration(() => {
-    // no success toast here; parent will handle UI update
-  });
+	const updateMutation = useUpdateCustomerRegistration(() => {
+		// no success toast here; parent will handle UI update
+	});
 
-  // Reference data for dropdowns
-  const { data: refData, isLoading: refLoading } = useGetReferenceData();
+	// Reference data for dropdowns
+	const { data: refData, isLoading: refLoading } = useGetReferenceData();
 
-  // Reference-derived select options (declare early to avoid TDZ when effects use them)
-  const relationshipOptions = React.useMemo(
-    () => extractRelationshipOptions(refData),
-    [refData]
-  );
-  const paymentFrequencyOptions = React.useMemo(
-    () => extractPaymentFrequencyOptions(refData),
-    [refData]
-  );
-  const durationUnitOptions = React.useMemo(
-    () => extractDurationUnitOptions(refData),
-    [refData]
-  );
-  const employmentStatusOptions = React.useMemo(
-    () => extractEmploymentStatusOptions(refData),
-    [refData]
-  );
-  const stateOfOriginOptions = React.useMemo(
-    () => extractStateOptions(refData),
-    [refData]
-  );
+	// Reference-derived select options (declare early to avoid TDZ when effects use them)
+	const relationshipOptions = React.useMemo(() => extractRelationshipOptions(refData), [refData]);
+	const paymentFrequencyOptions = React.useMemo(() => extractPaymentFrequencyOptions(refData), [refData]);
+	const durationUnitOptions = React.useMemo(() => extractDurationUnitOptions(refData), [refData]);
+	const employmentStatusOptions = React.useMemo(() => extractEmploymentStatusOptions(refData), [refData]);
+	const stateOfOriginOptions = React.useMemo(() => extractStateOptions(refData), [refData]);
 
-  const didPrefillRef = React.useRef(false);
-  const nextPrefilledRef = React.useRef(false);
-  const isPropertyPrefilledRef = React.useRef(false);
-  // Set isPropertyPrefilled flag when resolvedSelectedProperties are provided for installment payment
-  React.useEffect(() => {
-    if (
-      paymentMethod === "installment" &&
-      resolvedSelectedProperties &&
-      resolvedSelectedProperties.length > 0 &&
-      !isEditMode
-    ) {
-      isPropertyPrefilledRef.current = true;
-    } else {
-      isPropertyPrefilledRef.current = false;
-    }
-  }, [resolvedSelectedProperties, paymentMethod, isEditMode]);
+	const didPrefillRef = React.useRef(false);
+	const nextPrefilledRef = React.useRef(false);
+	const isPropertyPrefilledRef = React.useRef(false);
+	// Set isPropertyPrefilled flag when resolvedSelectedProperties are provided for installment payment
+	React.useEffect(() => {
+		if (paymentMethod === "installment" && resolvedSelectedProperties && resolvedSelectedProperties.length > 0 && !isEditMode) {
+			isPropertyPrefilledRef.current = true;
+		} else {
+			isPropertyPrefilledRef.current = false;
+		}
+	}, [resolvedSelectedProperties, paymentMethod, isEditMode]);
 
-  // Update property fields when resolvedSelectedProperties change (e.g., user goes back and selects a different property)
-  React.useEffect(() => {
-    if (
-      !resolvedSelectedProperties ||
-      resolvedSelectedProperties.length === 0 ||
-      isEditMode
-    )
-      return;
-    if (paymentMethod !== "installment") return;
+	// Update property fields when resolvedSelectedProperties change (e.g., user goes back and selects a different property)
+	React.useEffect(() => {
+		if (!resolvedSelectedProperties || resolvedSelectedProperties.length === 0 || isEditMode) return;
+		if (paymentMethod !== "installment") return;
 
-    const firstProperty = resolvedSelectedProperties[0];
-    handleChange("propertyId", firstProperty.id);
-    handleChange("propertyName", firstProperty.name || "");
-  }, [resolvedSelectedProperties, paymentMethod, isEditMode, handleChange]);
+		const firstProperty = resolvedSelectedProperties[0];
+		handleChange("propertyId", firstProperty.id);
+		handleChange("propertyName", firstProperty.name || "");
+	}, [resolvedSelectedProperties, paymentMethod, isEditMode, handleChange]);
 
-  React.useEffect(() => {
-    if (!initial) return;
-    if (nextPrefilledRef.current) return;
-    nextPrefilledRef.current = true;
-    try {
-      const toLocalPhone = (phone?: string | null) => {
-        if (!phone) return "";
-        const cleaned = String(phone).replace(/\D/g, "");
-        if (cleaned.startsWith("234")) return `0${cleaned.slice(3)}`;
-        if (cleaned.startsWith("0")) return cleaned;
-        if (cleaned.length === 10) return `0${cleaned}`;
-        return cleaned;
-      };
+	React.useEffect(() => {
+		if (!initial) return;
+		if (nextPrefilledRef.current) return;
+		nextPrefilledRef.current = true;
+		try {
+			const toLocalPhone = (phone?: string | null) => {
+				if (!phone) return "";
+				const cleaned = String(phone).replace(/\D/g, "");
+				if (cleaned.startsWith("234")) return `0${cleaned.slice(3)}`;
+				if (cleaned.startsWith("0")) return cleaned;
+				if (cleaned.length === 10) return `0${cleaned}`;
+				return cleaned;
+			};
 
-      // Handle whatsapp number for "once" payment method
-      if (paymentMethod === "once") {
-        const phoneVal =
-          (
-            initial as {
-              phoneNumber?: string;
-              phone?: string;
-              whatsapp?: string;
-            }
-          )?.phoneNumber ||
-          (
-            initial as {
-              phoneNumber?: string;
-              phone?: string;
-              whatsapp?: string;
-            }
-          )?.phone ||
-          (
-            initial as {
-              phoneNumber?: string;
-              phone?: string;
-              whatsapp?: string;
-            }
-          )?.whatsapp;
-        if (phoneVal) {
-          handleChange(
-            "whatsapp",
-            toLocalPhone(typeof phoneVal === "string" ? phoneVal : "")
-          );
-        }
-      }
+			// Handle whatsapp number for "once" payment method
+			if (paymentMethod === "once") {
+				const phoneVal =
+					(
+						initial as {
+							phoneNumber?: string;
+							phone?: string;
+							whatsapp?: string;
+						}
+					)?.phoneNumber ||
+					(
+						initial as {
+							phoneNumber?: string;
+							phone?: string;
+							whatsapp?: string;
+						}
+					)?.phone ||
+					(
+						initial as {
+							phoneNumber?: string;
+							phone?: string;
+							whatsapp?: string;
+						}
+					)?.whatsapp;
+				if (phoneVal) {
+					handleChange("whatsapp", toLocalPhone(typeof phoneVal === "string" ? phoneVal : ""));
+				}
+			}
 
-      const nk = (initial as { nextOfKin?: Record<string, unknown> })
-        ?.nextOfKin;
-      if (!nk || typeof nk !== "object") return;
+			const nk = (initial as { nextOfKin?: Record<string, unknown> })?.nextOfKin;
+			if (!nk || typeof nk !== "object") return;
 
-      // Build desired nextOfKin object from initial
-      const desired = {
-        fullName: (nk.fullName as string) || "",
-        phone: toLocalPhone(
-          (nk.phoneNumber as string) || (nk.phone as string) || ""
-        ),
-        relationship:
-          ((nk.relationship as string) || "").charAt(0).toUpperCase() +
-          ((nk.relationship as string) || "").slice(1).toLowerCase(),
-        spouseName:
-          (nk.spouseFullName as string) ||
-          (nk.spouseName as string) ||
-          (((nk.relationship as string) || "").toLowerCase().includes("spouse")
-            ? (nk.fullName as string)
-            : undefined) ||
-          "",
-        spousePhone: toLocalPhone(
-          (nk.spousePhone as string) ||
-            (nk.phoneNumber as string) ||
-            (nk.phone as string) ||
-            ""
-        ),
-        address:
-          (nk.spouseAddress as string) || (nk.address as string) || "" || "",
-      };
+			// Build desired nextOfKin object from initial
+			const desired = {
+				fullName: (nk.fullName as string) || "",
+				phone: toLocalPhone((nk.phoneNumber as string) || (nk.phone as string) || ""),
+				relationship: ((nk.relationship as string) || "").charAt(0).toUpperCase() + ((nk.relationship as string) || "").slice(1).toLowerCase(),
+				spouseName:
+					(nk.spouseFullName as string) ||
+					(nk.spouseName as string) ||
+					(((nk.relationship as string) || "").toLowerCase().includes("spouse") ? (nk.fullName as string) : undefined) ||
+					"",
+				spousePhone: toLocalPhone((nk.spousePhone as string) || (nk.phoneNumber as string) || (nk.phone as string) || ""),
+				address: (nk.spouseAddress as string) || (nk.address as string) || "" || "",
+			};
 
-      handleChange("nextOfKin", desired);
-    } catch {
-      // ignore
-    }
-  }, [initial, paymentMethod, handleChange]);
+			handleChange("nextOfKin", desired);
+		} catch {
+			// ignore
+		}
+	}, [initial, paymentMethod, handleChange]);
 
-  // Reset prefill flag when initial data changes
-  React.useEffect(() => {
-    didPrefillRef.current = false;
-  }, [initial]);
+	// Reset prefill flag when initial data changes
+	React.useEffect(() => {
+		didPrefillRef.current = false;
+	}, [initial]);
 
-  React.useEffect(() => {
-    if (didPrefillRef.current) return;
-    if (!initial) return;
-    if (paymentMethod !== "installment") return;
-    const toLocalPhone = (phone?: string | null) => {
-      if (!phone) return "";
-      const cleaned = String(phone).replace(/\D/g, "");
-      if (cleaned.startsWith("234")) return `0${cleaned.slice(3)}`;
-      if (cleaned.startsWith("0")) return cleaned;
-      if (cleaned.length === 10) return `0${cleaned}`;
-      return cleaned;
-    };
+	React.useEffect(() => {
+		if (didPrefillRef.current) return;
+		if (!initial) return;
+		if (paymentMethod !== "installment") return;
+		const toLocalPhone = (phone?: string | null) => {
+			if (!phone) return "";
+			const cleaned = String(phone).replace(/\D/g, "");
+			if (cleaned.startsWith("234")) return `0${cleaned.slice(3)}`;
+			if (cleaned.startsWith("0")) return cleaned;
+			if (cleaned.length === 10) return `0${cleaned}`;
+			return cleaned;
+		};
 
-    try {
-      const phoneVal =
-        (initial as { phoneNumber?: string; phone?: string })?.phoneNumber ??
-        (initial as { phoneNumber?: string; phone?: string })?.phone;
-      handleChange(
-        "whatsapp",
-        toLocalPhone(typeof phoneVal === "string" ? phoneVal : "")
-      );
-    } catch {
-      // ignore
-    }
+		try {
+			const phoneVal =
+				(initial as { phoneNumber?: string; phone?: string })?.phoneNumber ?? (initial as { phoneNumber?: string; phone?: string })?.phone;
+			handleChange("whatsapp", toLocalPhone(typeof phoneVal === "string" ? phoneVal : ""));
+		} catch {
+			// ignore
+		}
 
-    // Also normalize nextOfKin phones if present
-    try {
-      const nk = (initial as { nextOfKin?: Record<string, unknown> })
-        ?.nextOfKin;
-      if (nk && typeof nk === "object") {
-        const nkPhoneVal = nk.phoneNumber ?? nk.phone ?? "";
-        const nkSpouseVal = nk.spousePhone ?? nk.phoneNumber ?? nk.phone ?? "";
-        const currNext = (form as InstallmentPaymentFormType).nextOfKin || {};
-        handleChange("nextOfKin", {
-          ...currNext,
-          phone: toLocalPhone(typeof nkPhoneVal === "string" ? nkPhoneVal : ""),
-          spousePhone: toLocalPhone(
-            typeof nkSpouseVal === "string" ? nkSpouseVal : ""
-          ),
-        });
-      }
-    } catch {
-      // ignore
-    }
+		// Also normalize nextOfKin phones if present
+		try {
+			const nk = (initial as { nextOfKin?: Record<string, unknown> })?.nextOfKin;
+			if (nk && typeof nk === "object") {
+				const nkPhoneVal = nk.phoneNumber ?? nk.phone ?? "";
+				const nkSpouseVal = nk.spousePhone ?? nk.phoneNumber ?? nk.phone ?? "";
+				const currNext = (form as InstallmentPaymentFormType).nextOfKin || {};
+				handleChange("nextOfKin", {
+					...currNext,
+					phone: toLocalPhone(typeof nkPhoneVal === "string" ? nkPhoneVal : ""),
+					spousePhone: toLocalPhone(typeof nkSpouseVal === "string" ? nkSpouseVal : ""),
+				});
+			}
+		} catch {
+			// ignore
+		}
 
-    // Normalize guarantor phones if present
-    try {
-      const gArr = (initial as { guarantors?: unknown[] })?.guarantors;
-      if (Array.isArray(gArr)) {
-        // Ensure we always have two guarantor slots in edit mode
-        const existing = (form as InstallmentPaymentFormType).guarantors || [];
-        const mapped = [0, 1].map((i) => {
-          const src = gArr[i] || {};
-          const srcObj = src as Record<string, unknown>;
-          const curr = existing[i] || {
-            fullName: "",
-            occupation: "",
-            phone: "",
-            email: "",
-            employmentStatus: "",
-            homeAddress: "",
-            businessAddress: "",
-            stateOfOrigin: "",
-            votersUploaded: 0,
-            hasAgreed: false,
-          };
-          return {
-            ...curr,
-            fullName: srcObj.fullName ?? curr.fullName,
-            occupation: srcObj.occupation ?? curr.occupation,
-            phone: toLocalPhone(
-              String(srcObj.phoneNumber ?? srcObj.phone ?? curr.phone ?? "")
-            ),
-            email: srcObj.email ?? curr.email,
-            employmentStatus: String(
-              srcObj.employmentStatusId ||
-                (typeof srcObj?.employmentStatus === "object" &&
-                srcObj?.employmentStatus &&
-                "status" in srcObj?.employmentStatus
-                  ? (srcObj.employmentStatus as { status?: string }).status ===
-                    "EMPLOYED"
-                    ? "1"
-                    : (srcObj?.employmentStatus as { status?: string })
-                        .status === "SELF EMPLOYED"
-                    ? "2"
-                    : ""
-                  : srcObj?.employmentStatus) ||
-                curr.employmentStatus ||
-                ""
-            ),
-            homeAddress: srcObj.homeAddress ?? curr.homeAddress,
-            businessAddress: srcObj.businessAddress ?? curr.businessAddress,
-            employerName: String(
-              srcObj.employerName ?? srcObj.employer ?? curr.employerName ?? ""
-            ),
-            stateOfOrigin: (srcObj.stateOfOrigin ??
-              curr.stateOfOrigin ??
-              "") as string,
-            votersUploaded: curr.votersUploaded ?? 0,
-            hasAgreed: Boolean(srcObj.hasAgreed ?? curr.hasAgreed ?? false),
-          };
-        });
-        handleChange("guarantors", mapped);
-      }
-    } catch {
-      // ignore
-    }
+		// Normalize guarantor phones if present
+		try {
+			const gArr = (initial as { guarantors?: unknown[] })?.guarantors;
+			if (Array.isArray(gArr)) {
+				// Ensure we always have two guarantor slots in edit mode
+				const existing = (form as InstallmentPaymentFormType).guarantors || [];
+				const mapped = [0, 1].map((i) => {
+					const src = gArr[i] || {};
+					const srcObj = src as Record<string, unknown>;
+					const curr = existing[i] || {
+						fullName: "",
+						occupation: "",
+						phone: "",
+						email: "",
+						employmentStatus: "",
+						homeAddress: "",
+						businessAddress: "",
+						stateOfOrigin: "",
+						votersUploaded: 0,
+						hasAgreed: false,
+					};
+					return {
+						...curr,
+						fullName: srcObj.fullName ?? curr.fullName,
+						occupation: srcObj.occupation ?? curr.occupation,
+						phone: toLocalPhone(String(srcObj.phoneNumber ?? srcObj.phone ?? curr.phone ?? "")),
+						email: srcObj.email ?? curr.email,
+						employmentStatus: String(
+							srcObj.employmentStatusId ||
+								(typeof srcObj?.employmentStatus === "object" && srcObj?.employmentStatus && "status" in srcObj?.employmentStatus
+									? (srcObj.employmentStatus as { status?: string }).status === "EMPLOYED"
+										? "1"
+										: (srcObj?.employmentStatus as { status?: string }).status === "SELF EMPLOYED"
+											? "2"
+											: ""
+									: srcObj?.employmentStatus) ||
+								curr.employmentStatus ||
+								"",
+						),
+						homeAddress: srcObj.homeAddress ?? curr.homeAddress,
+						businessAddress: srcObj.businessAddress ?? curr.businessAddress,
+						employerName: String(srcObj.employerName ?? srcObj.employer ?? curr.employerName ?? ""),
+						stateOfOrigin: (srcObj.stateOfOrigin ?? curr.stateOfOrigin ?? "") as string,
+						votersUploaded: curr.votersUploaded ?? 0,
+						hasAgreed: Boolean(srcObj.hasAgreed ?? curr.hasAgreed ?? false),
+					};
+				});
+				handleChange("guarantors", mapped);
+			}
+		} catch {
+			// ignore
+		}
 
-    didPrefillRef.current = true;
-  }, [initial, paymentMethod, handleChange]);
+		didPrefillRef.current = true;
+	}, [initial, paymentMethod, handleChange]);
 
-  React.useEffect(() => {
-    if (refLoading) return;
-    try {
-      const initGArr = Array.isArray(
-        (initial as { guarantors?: unknown[] })?.guarantors
-      )
-        ? ((initial as { guarantors?: unknown[] })?.guarantors as unknown[])
-        : [];
-      const gArr = (form as InstallmentPaymentFormType).guarantors || [];
-      const mapped = gArr.map((g, idx) => {
-        if (!g) return g;
-        // If already a valid key, keep it
-        if (stateOfOriginOptions.find((o) => o.key === g.stateOfOrigin))
-          return g;
-        // Try current raw value first
-        let raw = g.stateOfOrigin ?? "";
-        // Fallback to initial data's stateOfOrigin if current is empty
-        if (!raw && initGArr[idx] && typeof initGArr[idx] === "object") {
-          const src = initGArr[idx] as Record<string, unknown>;
-          raw = String(src.stateOfOrigin ?? src.stateOfOrigin ?? "");
-        }
-        if (!raw) return g;
-        const found = stateOfOriginOptions.find(
-          (o) => o.value.toLowerCase() === String(raw).toLowerCase()
-        );
-        if (found) return { ...g, stateOfOrigin: found.key };
-        return g;
-      });
-      const prev = JSON.stringify(gArr || []);
-      const next = JSON.stringify(mapped || []);
-      if (prev !== next) handleChange("guarantors", mapped);
-    } catch {
-      // ignore
-    }
-  }, [
-    refLoading,
-    stateOfOriginOptions,
-    handleChange,
-    (form as InstallmentPaymentFormType).guarantors,
-  ]);
+	React.useEffect(() => {
+		if (refLoading) return;
+		try {
+			const initGArr = Array.isArray((initial as { guarantors?: unknown[] })?.guarantors)
+				? ((initial as { guarantors?: unknown[] })?.guarantors as unknown[])
+				: [];
+			const gArr = (form as InstallmentPaymentFormType).guarantors || [];
+			const mapped = gArr.map((g, idx) => {
+				if (!g) return g;
+				// If already a valid key, keep it
+				if (stateOfOriginOptions.find((o) => o.key === g.stateOfOrigin)) return g;
+				// Try current raw value first
+				let raw = g.stateOfOrigin ?? "";
+				// Fallback to initial data's stateOfOrigin if current is empty
+				if (!raw && initGArr[idx] && typeof initGArr[idx] === "object") {
+					const src = initGArr[idx] as Record<string, unknown>;
+					raw = String(src.stateOfOrigin ?? src.stateOfOrigin ?? "");
+				}
+				if (!raw) return g;
+				const found = stateOfOriginOptions.find((o) => o.value.toLowerCase() === String(raw).toLowerCase());
+				if (found) return { ...g, stateOfOrigin: found.key };
+				return g;
+			});
+			const prev = JSON.stringify(gArr || []);
+			const next = JSON.stringify(mapped || []);
+			if (prev !== next) handleChange("guarantors", mapped);
+		} catch {
+			// ignore
+		}
+	}, [refLoading, stateOfOriginOptions, handleChange, (form as InstallmentPaymentFormType).guarantors]);
 
-  // Normalize guarantor phone numbers to local editable format (e.g., +234... -> 0...)
-  React.useEffect(() => {
-    if (paymentMethod !== "installment") return;
-    try {
-      const toLocalPhone = (phone?: string | null) => {
-        if (!phone) return "";
-        const cleaned = String(phone).replace(/\D/g, "");
-        if (cleaned.startsWith("234")) return `0${cleaned.slice(3)}`;
-        if (cleaned.startsWith("0")) return cleaned;
-        if (cleaned.length === 10) return `0${cleaned}`;
-        return cleaned;
-      };
+	// Normalize guarantor phone numbers to local editable format (e.g., +234... -> 0...)
+	React.useEffect(() => {
+		if (paymentMethod !== "installment") return;
+		try {
+			const toLocalPhone = (phone?: string | null) => {
+				if (!phone) return "";
+				const cleaned = String(phone).replace(/\D/g, "");
+				if (cleaned.startsWith("234")) return `0${cleaned.slice(3)}`;
+				if (cleaned.startsWith("0")) return cleaned;
+				if (cleaned.length === 10) return `0${cleaned}`;
+				return cleaned;
+			};
 
-      const gArr = (form as InstallmentPaymentFormType).guarantors || [];
-      const mapped = gArr.map((g) => {
-        const current = g || ({} as { phone?: string });
-        const rawPhone = current.phone ?? "";
-        const normalized = toLocalPhone(rawPhone);
-        if (normalized !== (current.phone ?? "")) {
-          return { ...current, phone: normalized };
-        }
-        return current;
-      });
-      const prev = JSON.stringify(gArr || []);
-      const next = JSON.stringify(mapped || []);
-      if (prev !== next) handleChange("guarantors", mapped);
-    } catch {
-      // ignore
-    }
-  }, [form, paymentMethod, handleChange]);
+			const gArr = (form as InstallmentPaymentFormType).guarantors || [];
+			const mapped = gArr.map((g) => {
+				const current = g || ({} as { phone?: string });
+				const rawPhone = current.phone ?? "";
+				const normalized = toLocalPhone(rawPhone);
+				if (normalized !== (current.phone ?? "")) {
+					return { ...current, phone: normalized };
+				}
+				return current;
+			});
+			const prev = JSON.stringify(gArr || []);
+			const next = JSON.stringify(mapped || []);
+			if (prev !== next) handleChange("guarantors", mapped);
+		} catch {
+			// ignore
+		}
+	}, [form, paymentMethod, handleChange]);
 
-  /**
-   * Handle file upload for media documents
-   */
-  async function handleFileUpload(
-    file: File,
-    fieldKey: string
-  ): Promise<string | null> {
-    if (!file) return null;
+	/**
+	 * Handle file upload for media documents
+	 */
+	async function handleFileUpload(file: File, fieldKey: string): Promise<string | null> {
+		if (!file) return null;
 
-    try {
-      // Step 1: Get presigned URL
-      const presignResult = await presignUpload({
-        filename: file.name,
-        contentType: file.type,
-        relatedTable: "customer",
-      }).unwrap();
+		try {
+			// Step 1: Get presigned URL
+			const presignResult = await presignUpload({
+				filename: file.name,
+				contentType: file.type,
+				relatedTable: "customer",
+			}).unwrap();
 
-      const uploadUrl = presignResult.url ?? presignResult.uploadUrl;
-      if (!uploadUrl) {
-        throw new Error("Presign upload did not return an uploadUrl");
-      }
+			const uploadUrl = presignResult.url ?? presignResult.uploadUrl;
+			if (!uploadUrl) {
+				throw new Error("Presign upload did not return an uploadUrl");
+			}
 
-      // Step 2: Upload file to presigned URL
-      const uploadResult = await uploadFileToPresignedUrl(uploadUrl, file);
-      if (!uploadResult.success) {
-        throw new Error(uploadResult.error ?? "Upload failed");
-      }
+			// Step 2: Upload file to presigned URL
+			const uploadResult = await uploadFileToPresignedUrl(uploadUrl, file);
+			if (!uploadResult.success) {
+				throw new Error(uploadResult.error ?? "Upload failed");
+			}
 
-      // Step 3: Get the media key
-      let mediaKey: string | undefined;
-      if (typeof presignResult.key === "string") mediaKey = presignResult.key;
-      else if (presignResult && typeof presignResult === "object") {
-        const pr = presignResult as Record<string, unknown>;
-        if (pr.data && typeof pr.data === "object") {
-          const dataObj = pr.data as Record<string, unknown>;
-          if (typeof dataObj.key === "string") mediaKey = dataObj.key;
-        }
-      }
+			// Step 3: Get the media key
+			let mediaKey: string | undefined;
+			if (typeof presignResult.key === "string") mediaKey = presignResult.key;
+			else if (presignResult && typeof presignResult === "object") {
+				const pr = presignResult as Record<string, unknown>;
+				if (pr.data && typeof pr.data === "object") {
+					const dataObj = pr.data as Record<string, unknown>;
+					if (typeof dataObj.key === "string") mediaKey = dataObj.key;
+				}
+			}
 
-      if (mediaKey) {
-        // Track uploaded file
-        setUploadedFiles((prev) => ({
-          ...prev,
-          [fieldKey]:
-            fieldKey === "contract"
-              ? [mediaKey]
-              : [...(prev[fieldKey] ?? []), mediaKey],
-        }));
+			if (mediaKey) {
+				// Track uploaded file
+				setUploadedFiles((prev) => ({
+					...prev,
+					[fieldKey]: fieldKey === "contract" ? [mediaKey] : [...(prev[fieldKey] ?? []), mediaKey],
+				}));
 
-        // Mark field as uploaded
-        uploadedFieldsRef.current.add(fieldKey);
+				// Mark field as uploaded
+				uploadedFieldsRef.current.add(fieldKey);
 
-        return mediaKey;
-      }
+				return mediaKey;
+			}
 
-      return null;
-    } catch (err: unknown) {
-      console.error(`File upload failed for ${fieldKey}:`, err);
-      toast.error(
-        `Upload failed: ${extractErrorMessage(err, "Unknown error")}`
-      );
-      return null;
-    }
-  }
+			return null;
+		} catch (err: unknown) {
+			console.error(`File upload failed for ${fieldKey}:`, err);
+			toast.error(`Upload failed: ${extractErrorMessage(err, "Unknown error")}`);
+			return null;
+		}
+	}
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
+	const handleSubmit = async (e: React.FormEvent) => {
+		e.preventDefault();
+		setIsSubmitting(true);
 
-    try {
-      let payload:
-        | CustomerRegistrationPayload
-        | InternalFullPaymentRegistrationPayload;
-      let currentPaymentMethod = paymentMethod;
+		try {
+			let payload: CustomerRegistrationPayload | InternalFullPaymentRegistrationPayload;
+			let currentPaymentMethod = paymentMethod;
 
-      if (!currentPaymentMethod) {
-        toast.error("Please select a payment method");
-        setIsSubmitting(false);
-        return;
-      }
+			if (!currentPaymentMethod) {
+				toast.error("Please select a payment method");
+				setIsSubmitting(false);
+				return;
+			}
 
-      if (paymentMethod === "once") {
-        // For full payment - create internal full payment registration
-        const onceForm = form as OncePaymentFormType;
+			if (paymentMethod === "once") {
+				// For full payment - create internal full payment registration
+				const onceForm = form as OncePaymentFormType;
 
-        // Convert OncePaymentForm to FullPaymentRegistrationPayload
-        const fullPaymentPayload = {
-          fullName: onceForm.fullName,
-          email: onceForm.email,
-          phoneNumber: formatPhoneNumber(onceForm.whatsapp),
-          paymentTypeId: 2, // Full Payment
-          properties: onceForm.properties.map((prop) => ({
-            propertyId:
-              prop.propertyId && String(prop.propertyId).trim()
-                ? prop.propertyId
-                : prop.propertyName,
-            quantity: Number(prop.quantity) || 0,
-            isCustomProperty: !!prop.isCustomProperty || !prop.propertyId,
-          })),
-        };
+				// Convert OncePaymentForm to FullPaymentRegistrationPayload
+				const fullPaymentPayload = {
+					fullName: onceForm.fullName,
+					email: onceForm.email,
+					phoneNumber: formatPhoneNumber(onceForm.whatsapp),
+					paymentTypeId: 2, // Full Payment
+					properties: onceForm.properties.map((prop) => ({
+						propertyId: prop.propertyId && String(prop.propertyId).trim() ? prop.propertyId : prop.propertyName,
+						quantity: Number(prop.quantity) || 0,
+						isCustomProperty: !!prop.isCustomProperty || !prop.propertyId,
+					})),
+				};
 
-        payload = fullPaymentPayload;
-      } else {
-        // For installment - create internal registration
-        const installmentForm = form as InstallmentPaymentFormType;
+				payload = fullPaymentPayload;
+			} else {
+				// For installment - create internal registration
+				const installmentForm = form as InstallmentPaymentFormType;
 
-        // Build the customer registration payload
-        payload = {
-          fullName: installmentForm.fullName,
-          email: installmentForm.email,
-          homeAddress: installmentForm.address,
-          phoneNumber: formatPhoneNumber(installmentForm.whatsapp),
-          paymentTypeId: 1, // Hire Purchase
-          isDriver: installmentForm.isDriver ? "Yes" : "No",
-          requestAgreement: "I hereby request to be a customer of the company",
-          requestAgreementAt: new Date().toISOString(),
-          dateOfBirth: installmentForm.dob,
-          purposeOfProperty: installmentForm.clarification.reason,
-          downPayment: Number(installmentForm.downPayment) || 0,
-          previousHirePurchase:
-            installmentForm.clarification.previousAgreement === true
-              ? "Yes"
-              : installmentForm.clarification.previousAgreement === false
-              ? "No"
-              : "",
-          previousCompany:
-            installmentForm.clarification.previousAgreement === true
-              ? installmentForm.clarification.prevCompany || ""
-              : "",
-          ...(installmentForm.clarification.previousAgreement === true && {
-            wasPreviousCompleted:
-              installmentForm.clarification.completedAgreement === true
-                ? "Yes"
-                : "No",
-          }),
-          nextOfKin: {
-            fullName: installmentForm.nextOfKin.fullName,
-            relationship: installmentForm.nextOfKin.relationship,
-            phoneNumber: formatPhoneNumber(installmentForm.nextOfKin.phone),
-            spouseFullName: installmentForm.nextOfKin.spouseName,
-            spousePhone: formatPhoneNumber(
-              installmentForm.nextOfKin.spousePhone
-            ),
-            spouseAddress: installmentForm.nextOfKin.address,
-            isNextOfKinSpouse: installmentForm.nextOfKin.spouseName
-              ? "Yes"
-              : "No",
-          },
-          guarantors: installmentForm.guarantors.map((g, idx) => ({
-            fullName: g.fullName,
-            occupation: g.occupation,
-            employmentStatusId: Number(g.employmentStatus) || 0,
-            address: g.homeAddress,
-            stateOfOrigin: g.stateOfOrigin,
-            phoneNumber: formatPhoneNumber(g.phone),
-            companyAddress: g.businessAddress,
-            homeAddress: g.homeAddress,
-            employerName: g.employerName || "",
-            email: g.email,
-            guarantorAgreement: "I agree to be a guarantor",
-            guarantorAgreementAt: new Date().toISOString(),
-            identityDocument: uploadedFiles[`guarantor_${idx}_doc`] || [],
-          })),
-          employmentDetails: installmentForm.employment
-            ? {
-                employmentStatusId:
-                  Number(installmentForm.employment.status) || 0,
-                employerName:
-                  installmentForm.employment.employerName ||
-                  installmentForm.employment.companyName ||
-                  "",
-                employerAddress:
-                  installmentForm.employment.employerAddress ||
-                  installmentForm.employment.businessAddress ||
-                  "",
-                companyName: installmentForm.employment.companyName || "",
-                businessAddress:
-                  installmentForm.employment.businessAddress || "",
-                homeAddress: installmentForm.employment.homeAddress || "",
-              }
-            : {
-                employmentStatusId: 0,
-                employerName: "",
-                employerAddress: "",
-                companyName: "",
-                businessAddress: "",
-                homeAddress: "",
-              },
-          propertyInterestRequest: [
-            {
-              ...(installmentForm.isCustomProperty
-                ? {
-                    customPropertyName: installmentForm.propertyName,
-                    customPropertyPrice:
-                      Number(installmentForm.customPropertyPrice) || 0,
-                    isCustomProperty: true,
-                  }
-                : {
-                    propertyId: installmentForm.propertyId,
-                    isCustomProperty: false,
-                  }),
-              paymentIntervalId: Number(installmentForm.paymentFrequency) || 0,
-              durationValue: Number(installmentForm.paymentDuration) || 0,
-              durationUnitId: Number(installmentForm.paymentDurationUnit) || 2,
-              downPayment: Number(installmentForm.downPayment) || 0,
-              quantity: 1,
-            },
-          ],
-          mediaKeys: {
-            ...(uploadedFiles.nin && {
-              identificationDocument: uploadedFiles.nin,
-            }),
-            ...(uploadedFiles.driverLicense && {
-              driverLicense: uploadedFiles.driverLicense,
-            }),
-            ...(uploadedFiles.indigeneCertificate && {
-              indegeneCertificate: uploadedFiles.indigeneCertificate,
-            }),
-            ...(uploadedFiles.guarantor_0_doc && {
-              guarantor_0_doc: uploadedFiles.guarantor_0_doc,
-            }),
-            ...(uploadedFiles.guarantor_1_doc && {
-              guarantor_1_doc: uploadedFiles.guarantor_1_doc,
-            }),
-            ...(uploadedFiles.contract && {
-              signedContract: uploadedFiles.contract,
-            }),
-          },
-        };
-      }
+				// Build the customer registration payload
+				payload = {
+					fullName: installmentForm.fullName,
+					email: installmentForm.email,
+					homeAddress: installmentForm.address,
+					phoneNumber: formatPhoneNumber(installmentForm.whatsapp),
+					paymentTypeId: 1, // Hire Purchase
+					isDriver: installmentForm.isDriver ? "Yes" : "No",
+					requestAgreement: "I hereby request to be a customer of the company",
+					requestAgreementAt: new Date().toISOString(),
+					dateOfBirth: installmentForm.dob,
+					purposeOfProperty: installmentForm.clarification.reason,
+					downPayment: Number(installmentForm.downPayment) || 0,
+					previousHirePurchase:
+						installmentForm.clarification.previousAgreement === true ? "Yes" : installmentForm.clarification.previousAgreement === false ? "No" : "",
+					previousCompany: installmentForm.clarification.previousAgreement === true ? installmentForm.clarification.prevCompany || "" : "",
+					...(installmentForm.clarification.previousAgreement === true && {
+						wasPreviousCompleted: installmentForm.clarification.completedAgreement === true ? "Yes" : "No",
+					}),
+					nextOfKin: {
+						fullName: installmentForm.nextOfKin.fullName,
+						relationship: installmentForm.nextOfKin.relationship,
+						phoneNumber: formatPhoneNumber(installmentForm.nextOfKin.phone),
+						spouseFullName: installmentForm.nextOfKin.spouseName,
+						spousePhone: formatPhoneNumber(installmentForm.nextOfKin.spousePhone),
+						spouseAddress: installmentForm.nextOfKin.address,
+						isNextOfKinSpouse: installmentForm.nextOfKin.spouseName ? "Yes" : "No",
+					},
+					guarantors: installmentForm.guarantors.map((g, idx) => ({
+						fullName: g.fullName,
+						occupation: g.occupation,
+						employmentStatusId: Number(g.employmentStatus) || 0,
+						address: g.homeAddress,
+						stateOfOrigin: g.stateOfOrigin,
+						phoneNumber: formatPhoneNumber(g.phone),
+						companyAddress: g.businessAddress,
+						homeAddress: g.homeAddress,
+						employerName: g.employerName || "",
+						email: g.email,
+						guarantorAgreement: "I agree to be a guarantor",
+						guarantorAgreementAt: new Date().toISOString(),
+						identityDocument: uploadedFiles[`guarantor_${idx}_doc`] || [],
+					})),
+					employmentDetails: installmentForm.employment
+						? {
+								employmentStatusId: Number(installmentForm.employment.status) || 0,
+								employerName: installmentForm.employment.employerName || installmentForm.employment.companyName || "",
+								employerAddress: installmentForm.employment.employerAddress || installmentForm.employment.businessAddress || "",
+								companyName: installmentForm.employment.companyName || "",
+								businessAddress: installmentForm.employment.businessAddress || "",
+								homeAddress: installmentForm.employment.homeAddress || "",
+							}
+						: {
+								employmentStatusId: 0,
+								employerName: "",
+								employerAddress: "",
+								companyName: "",
+								businessAddress: "",
+								homeAddress: "",
+							},
+					propertyInterestRequest: [
+						{
+							...(installmentForm.isCustomProperty
+								? {
+										customPropertyName: installmentForm.propertyName,
+										customPropertyPrice: Number(installmentForm.customPropertyPrice) || 0,
+										isCustomProperty: true,
+									}
+								: {
+										propertyId: installmentForm.propertyId,
+										isCustomProperty: false,
+									}),
+							paymentIntervalId: Number(installmentForm.paymentFrequency) || 0,
+							durationValue: Number(installmentForm.paymentDuration) || 0,
+							durationUnitId: Number(installmentForm.paymentDurationUnit) || 2,
+							downPayment: Number(installmentForm.downPayment) || 0,
+							quantity: 1,
+						},
+					],
+					mediaKeys: {
+						...(uploadedFiles.nin && {
+							identificationDocument: uploadedFiles.nin,
+						}),
+						...(uploadedFiles.driverLicense && {
+							driverLicense: uploadedFiles.driverLicense,
+						}),
+						...(uploadedFiles.indigeneCertificate && {
+							indegeneCertificate: uploadedFiles.indigeneCertificate,
+						}),
+						...(uploadedFiles.guarantor_0_doc && {
+							guarantor_0_doc: uploadedFiles.guarantor_0_doc,
+						}),
+						...(uploadedFiles.guarantor_1_doc && {
+							guarantor_1_doc: uploadedFiles.guarantor_1_doc,
+						}),
+						...(uploadedFiles.contract && {
+							signedContract: uploadedFiles.contract,
+						}),
+					},
+				};
+			}
 
-      // Store the submission data and show email verification modal
-      // Enforce identification document two-file requirement for hire purchase
-      if (currentPaymentMethod === "installment") {
-        if (!uploadedFiles.nin || uploadedFiles.nin.length < 2) {
-          toast.error("Identification document requires two files");
-          setIsSubmitting(false);
-          return;
-        }
-      }
-      setPendingSubmission({
-        payload,
-        isEditMode,
-        paymentMethod: currentPaymentMethod,
-      });
-      if (skipEmailVerification) {
-        await handleEmailVerification();
-      } else {
-        setShowEmailVerification(true);
-      }
-    } catch (err: unknown) {
-      console.error("Form validation failed", err);
-      toast.error(
-        `Validation failed: ${extractErrorMessage(err, "Unknown error")}`
-      );
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-  const handleEmailVerification = async () => {
-    if (!pendingSubmission) return;
+			// Store the submission data and show email verification modal
+			// Enforce identification document two-file requirement for hire purchase
+			if (currentPaymentMethod === "installment") {
+				if (!uploadedFiles.nin || uploadedFiles.nin.length < 2) {
+					toast.error("Identification document requires two files");
+					setIsSubmitting(false);
+					return;
+				}
+			}
+			setPendingSubmission({
+				payload,
+				isEditMode,
+				paymentMethod: currentPaymentMethod,
+			});
+			if (skipEmailVerification) {
+				await handleEmailVerification();
+			} else {
+				setShowEmailVerification(true);
+			}
+		} catch (err: unknown) {
+			console.error("Form validation failed", err);
+			toast.error(`Validation failed: ${extractErrorMessage(err, "Unknown error")}`);
+		} finally {
+			setIsSubmitting(false);
+		}
+	};
+	const handleEmailVerification = async () => {
+		if (!pendingSubmission) return;
 
-    try {
-      setIsSubmitting(true);
+		try {
+			setIsSubmitting(true);
 
-      // Email verification is already done in the modal, proceed with submission
+			// Email verification is already done in the modal, proceed with submission
 
-      // Proceed with the actual submission
-      if (pendingSubmission.paymentMethod === "once") {
-        // For full payment
-        const fullPaymentPayload =
-          pendingSubmission.payload as InternalFullPaymentRegistrationPayload;
-        if (pendingSubmission.isEditMode) {
-          const initObj =
-            initial && typeof initial === "object"
-              ? (initial as Record<string, unknown>)
-              : undefined;
-          const initId =
-            initObj && typeof initObj.id === "string" ? initObj.id : "";
-          await updateMutation.mutateAsync({
-            id: initId,
-            payload:
-              fullPaymentPayload as unknown as CustomerRegistrationPayload,
-          });
-        } else {
-          await fullPaymentMutation.mutateAsync(fullPaymentPayload);
-        }
-      } else {
-        // For installment
-        const installmentPayload =
-          pendingSubmission.payload as CustomerRegistrationPayload;
-        if (pendingSubmission.isEditMode) {
-          if (!initial || !initial.id) {
-            throw new Error("Initial data is required for edit mode");
-          }
-          // Enforce validation for installment/edit
-          if (pendingSubmission.paymentMethod === "installment") {
-            const gCount = Array.isArray(
-              (form as InstallmentPaymentFormType).guarantors
-            )
-              ? (form as InstallmentPaymentFormType).guarantors.length
-              : 0;
-            if (gCount < 2) {
-              throw new Error("Please provide two guarantors before saving");
-            }
-            const dur = Number(
-              (form as InstallmentPaymentFormType).paymentDuration || 0
-            );
-            if (!dur || dur <= 0) {
-              throw new Error("Duration value is required for hire purchase");
-            }
-            const missingIdx = (
-              (form as InstallmentPaymentFormType).guarantors || []
-            ).findIndex(
-              (g) =>
-                !g || !g.stateOfOrigin || String(g.stateOfOrigin).trim() === ""
-            );
-            if (missingIdx >= 0) {
-              throw new Error(
-                `Guarantor ${missingIdx + 1}: State of origin is required`
-              );
-            }
-          }
-          await updateMutation.mutateAsync({
-            id: initial.id as string,
-            payload: installmentPayload,
-          });
-        } else {
-          // Enforce validation for new installment registrations
-          if (pendingSubmission.paymentMethod === "installment") {
-            const gCount = Array.isArray(
-              (form as InstallmentPaymentFormType).guarantors
-            )
-              ? (form as InstallmentPaymentFormType).guarantors.length
-              : 0;
-            if (gCount < 2) {
-              throw new Error("Please provide two guarantors before saving");
-            }
-            const dur = Number(
-              (form as InstallmentPaymentFormType).paymentDuration || 0
-            );
-            if (!dur || dur <= 0) {
-              throw new Error("Duration value is required for hire purchase");
-            }
-            const missingIdx = (
-              (form as InstallmentPaymentFormType).guarantors || []
-            ).findIndex(
-              (g) =>
-                !g || !g.stateOfOrigin || String(g.stateOfOrigin).trim() === ""
-            );
-            if (missingIdx >= 0) {
-              throw new Error(
-                `Guarantor ${missingIdx + 1}: State of origin is required`
-              );
-            }
-          }
-          const response = await createInternalCustomerRegistration(
-            installmentPayload
-          );
-          toast.success(
-            `Registration created successfully! Code: ${response.registrationCode}`
-          );
-        }
-      }
+			// Proceed with the actual submission
+			if (pendingSubmission.paymentMethod === "once") {
+				// For full payment
+				const fullPaymentPayload = pendingSubmission.payload as InternalFullPaymentRegistrationPayload;
+				if (pendingSubmission.isEditMode) {
+					const initObj = initial && typeof initial === "object" ? (initial as Record<string, unknown>) : undefined;
+					const initId = initObj && typeof initObj.id === "string" ? initObj.id : "";
+					await updateMutation.mutateAsync({
+						id: initId,
+						payload: fullPaymentPayload as unknown as CustomerRegistrationPayload,
+					});
+				} else {
+					await fullPaymentMutation.mutateAsync(fullPaymentPayload);
+				}
+			} else {
+				// For installment
+				const installmentPayload = pendingSubmission.payload as CustomerRegistrationPayload;
+				if (pendingSubmission.isEditMode) {
+					if (!initial || !initial.id) {
+						throw new Error("Initial data is required for edit mode");
+					}
+					// Enforce validation for installment/edit
+					if (pendingSubmission.paymentMethod === "installment") {
+						const gCount = Array.isArray((form as InstallmentPaymentFormType).guarantors)
+							? (form as InstallmentPaymentFormType).guarantors.length
+							: 0;
+						if (gCount < 2) {
+							throw new Error("Please provide two guarantors before saving");
+						}
+						const dur = Number((form as InstallmentPaymentFormType).paymentDuration || 0);
+						if (!dur || dur <= 0) {
+							throw new Error("Duration value is required for hire purchase");
+						}
+						const missingIdx = ((form as InstallmentPaymentFormType).guarantors || []).findIndex(
+							(g) => !g || !g.stateOfOrigin || String(g.stateOfOrigin).trim() === "",
+						);
+						if (missingIdx >= 0) {
+							throw new Error(`Guarantor ${missingIdx + 1}: State of origin is required`);
+						}
+					}
+					await updateMutation.mutateAsync({
+						id: initial.id as string,
+						payload: installmentPayload,
+					});
+				} else {
+					// Enforce validation for new installment registrations
+					if (pendingSubmission.paymentMethod === "installment") {
+						const gCount = Array.isArray((form as InstallmentPaymentFormType).guarantors)
+							? (form as InstallmentPaymentFormType).guarantors.length
+							: 0;
+						if (gCount < 2) {
+							throw new Error("Please provide two guarantors before saving");
+						}
+						const dur = Number((form as InstallmentPaymentFormType).paymentDuration || 0);
+						if (!dur || dur <= 0) {
+							throw new Error("Duration value is required for hire purchase");
+						}
+						const missingIdx = ((form as InstallmentPaymentFormType).guarantors || []).findIndex(
+							(g) => !g || !g.stateOfOrigin || String(g.stateOfOrigin).trim() === "",
+						);
+						if (missingIdx >= 0) {
+							throw new Error(`Guarantor ${missingIdx + 1}: State of origin is required`);
+						}
+					}
+					const response = await createInternalCustomerRegistration(installmentPayload);
+					toast.success(`Registration created successfully! Code: ${response.registrationCode}`);
+				}
+			}
 
-      // Clear localStorage drafts after successful creation
-      if (!pendingSubmission.isEditMode) {
-        localStorage.removeItem("customer_registration_draft");
-        localStorage.removeItem("customer_registration_uploaded_files");
-        // Reset form and navigate for new registrations only
-        resetFormCompletely();
-        navigate(_router.dashboard.customers);
-      }
+			// Clear localStorage drafts after successful creation
+			if (!pendingSubmission.isEditMode) {
+				localStorage.removeItem("customer_registration_draft");
+				localStorage.removeItem("customer_registration_uploaded_files");
+				// Reset form and navigate for new registrations only
+				resetFormCompletely();
+				navigate(_router.dashboard.customers);
+			}
 
-      // Call parent onSubmit if provided
-      if (onSubmit) {
-        onSubmit({
-          message: pendingSubmission.isEditMode
-            ? "Registration updated successfully"
-            : "Registration saved successfully",
-        });
-      }
+			// Call parent onSubmit if provided
+			if (onSubmit) {
+				onSubmit({
+					message: pendingSubmission.isEditMode ? "Registration updated successfully" : "Registration saved successfully",
+				});
+			}
 
-      // Clear pending submission
-      setPendingSubmission(null);
-    } catch (err: unknown) {
-      console.error("Email verification or submission failed", err);
-      toast.error(
-        `Verification failed: ${extractErrorMessage(err, "Unknown error")}`
-      );
-      throw err; // Re-throw to let the modal handle the error
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+			// Clear pending submission
+			setPendingSubmission(null);
+		} catch (err: unknown) {
+			console.error("Email verification or submission failed", err);
+			toast.error(`Verification failed: ${extractErrorMessage(err, "Unknown error")}`);
+			throw err; // Re-throw to let the modal handle the error
+		} finally {
+			setIsSubmitting(false);
+		}
+	};
 
-  // Validation helpers
-  const isOnceValid = () => {
-    if (paymentMethod !== "once") return true;
-    const f = form as OncePaymentFormType;
-    // Check all required fields
-    if (!f.fullName || String(f.fullName).trim() === "") return false;
-    if (!f.email || String(f.email).trim() === "") return false;
-    if (!f.whatsapp || String(f.whatsapp).trim() === "") return false;
-    const validProperties = f.properties.filter(
-      (p) => p.propertyName && String(p.propertyName).trim() !== ""
-    );
-    // Check that at least one property is filled
-    if (validProperties.length === 0) return false;
-    // Check each valid property has required fields
-    for (const p of validProperties) {
-      if (!p.quantity || Number(p.quantity) < 1) return false;
-    }
-    return true;
-  };
+	// Validation helpers
+	const isOnceValid = () => {
+		if (paymentMethod !== "once") return true;
+		const f = form as OncePaymentFormType;
+		// Check all required fields
+		if (!f.fullName || String(f.fullName).trim() === "") return false;
+		if (!f.email || String(f.email).trim() === "") return false;
+		if (!f.whatsapp || String(f.whatsapp).trim() === "") return false;
+		const validProperties = f.properties.filter((p) => p.propertyName && String(p.propertyName).trim() !== "");
+		// Check that at least one property is filled
+		if (validProperties.length === 0) return false;
+		// Check each valid property has required fields
+		for (const p of validProperties) {
+			if (!p.quantity || Number(p.quantity) < 1) return false;
+		}
+		return true;
+	};
 
-  // When ref data loads, set defaults
-  React.useEffect(() => {
-    if (refLoading) return;
-  }, [
-    refLoading,
-    relationshipOptions,
-    paymentFrequencyOptions,
-    durationUnitOptions,
-    employmentStatusOptions,
-    stateOfOriginOptions,
-  ]);
+	// When ref data loads, set defaults
+	React.useEffect(() => {
+		if (refLoading) return;
+	}, [refLoading, relationshipOptions, paymentFrequencyOptions, durationUnitOptions, employmentStatusOptions, stateOfOriginOptions]);
 
-  const onceValid = isOnceValid();
+	const onceValid = isOnceValid();
 
-  // Render Once Payment Form
-  if (paymentMethod === "once") {
-    return (
-      <>
-        <OncePaymentForm
-          form={form as OncePaymentFormType}
-          handleChange={handleChange}
-          isSubmitting={isSubmitting}
-          onSubmit={handleSubmit}
-          centeredContainer={centeredContainer}
-          sectionTitle={sectionTitle}
-          isValid={onceValid}
-          submitButtonText={submitButtonText}
-        />
-        <EmailVerificationModal
-          isOpen={showEmailVerification}
-          onClose={() => {
-            setShowEmailVerification(false);
-            setPendingSubmission(null);
-          }}
-          email={pendingSubmission?.payload.email || ""}
-          onVerify={handleEmailVerification}
-        />
-      </>
-    );
-  }
+	// Render Once Payment Form
+	if (paymentMethod === "once") {
+		return (
+			<>
+				<OncePaymentForm
+					form={form as OncePaymentFormType}
+					handleChange={handleChange}
+					isSubmitting={isSubmitting}
+					onSubmit={handleSubmit}
+					centeredContainer={centeredContainer}
+					sectionTitle={sectionTitle}
+					isValid={onceValid}
+					submitButtonText={submitButtonText}
+				/>
+				<EmailVerificationModal
+					isOpen={showEmailVerification}
+					onClose={() => {
+						setShowEmailVerification(false);
+						setPendingSubmission(null);
+					}}
+					email={pendingSubmission?.payload.email || ""}
+					onVerify={handleEmailVerification}
+				/>
+			</>
+		);
+	}
 
-  // Render Installment Payment Form
-  const missingFields: string[] = React.useMemo(() => {
-    if (paymentMethod !== "installment") return [];
-    const f = form as InstallmentPaymentFormType;
-    const miss: string[] = [];
+	// Render Installment Payment Form
+	const missingFields: string[] = React.useMemo(() => {
+		if (paymentMethod !== "installment") return [];
+		const f = form as InstallmentPaymentFormType;
+		const miss: string[] = [];
 
-    // Personal details validation
-    if (!f.fullName || String(f.fullName).trim() === "") {
-      miss.push("Full name is required");
-    }
-    if (!f.email || String(f.email).trim() === "") {
-      miss.push("Email is required");
-    }
-    if (!f.whatsapp || String(f.whatsapp).trim() === "") {
-      miss.push("WhatsApp number is required");
-    }
-    if (!f.address || String(f.address).trim() === "") {
-      miss.push("Home address is required");
-    }
-    if (!f.dob || String(f.dob).trim() === "") {
-      miss.push("Date of birth is required");
-    }
+		// Personal details validation
+		if (!f.fullName || String(f.fullName).trim() === "") {
+			miss.push("Full name is required");
+		}
+		if (!f.email || String(f.email).trim() === "") {
+			miss.push("Email is required");
+		}
+		if (!f.whatsapp || String(f.whatsapp).trim() === "") {
+			miss.push("WhatsApp number is required");
+		}
+		if (!f.address || String(f.address).trim() === "") {
+			miss.push("Home address is required");
+		}
+		if (!f.dob || String(f.dob).trim() === "") {
+			miss.push("Date of birth is required");
+		}
 
-    // Next of Kin validation
-    if (
-      !f.nextOfKin ||
-      !f.nextOfKin.fullName ||
-      String(f.nextOfKin.fullName).trim() === ""
-    ) {
-      miss.push("Next of Kin full name is required");
-    }
-    if (
-      !f.nextOfKin ||
-      !f.nextOfKin.relationship ||
-      String(f.nextOfKin.relationship).trim() === ""
-    ) {
-      miss.push("Next of Kin relationship is required");
-    }
-    if (
-      !f.nextOfKin ||
-      !f.nextOfKin.phone ||
-      String(f.nextOfKin.phone).trim() === ""
-    ) {
-      miss.push("Next of Kin phone is required");
-    }
+		// Next of Kin validation
+		if (!f.nextOfKin || !f.nextOfKin.fullName || String(f.nextOfKin.fullName).trim() === "") {
+			miss.push("Next of Kin full name is required");
+		}
+		if (!f.nextOfKin || !f.nextOfKin.relationship || String(f.nextOfKin.relationship).trim() === "") {
+			miss.push("Next of Kin relationship is required");
+		}
+		if (!f.nextOfKin || !f.nextOfKin.phone || String(f.nextOfKin.phone).trim() === "") {
+			miss.push("Next of Kin phone is required");
+		}
 
-    // Guarantors validation
-    if (!Array.isArray(f.guarantors) || f.guarantors.length < 2) {
-      miss.push("Two guarantors required");
-    } else {
-      f.guarantors.forEach((g, idx) => {
-        if (!g) return;
-        if (!g.fullName || String(g.fullName).trim() === "") {
-          miss.push(`Guarantor ${idx + 1}: Full name is required`);
-        }
-        if (!g.occupation || String(g.occupation).trim() === "") {
-          miss.push(`Guarantor ${idx + 1}: Occupation is required`);
-        }
-        if (!g.phone || String(g.phone).trim() === "") {
-          miss.push(`Guarantor ${idx + 1}: Phone number is required`);
-        }
-        if (!g.email || String(g.email).trim() === "") {
-          miss.push(`Guarantor ${idx + 1}: Email is required`);
-        }
-        if (!g.employmentStatus || String(g.employmentStatus).trim() === "") {
-          miss.push(`Guarantor ${idx + 1}: Employment status is required`);
-        }
-        // If guarantor is employed, require company/business address and employer name; otherwise require home address
-        const guarantorEmployed =
-          String(g.employmentStatus) === "1" ||
-          Number(g.employmentStatus) === 1;
-        if (guarantorEmployed) {
-          if (!g.businessAddress || String(g.businessAddress).trim() === "") {
-            miss.push(
-              `Guarantor ${idx + 1}: Company / Business address is required`
-            );
-          }
-          if (!g.employerName || String(g.employerName).trim() === "") {
-            miss.push(
-              `Guarantor ${idx + 1}: Employer / Company name is required`
-            );
-          }
-        } else {
-          if (!g.homeAddress || String(g.homeAddress).trim() === "") {
-            miss.push(`Guarantor ${idx + 1}: Home address is required`);
-          }
-        }
-        if (!g.stateOfOrigin || String(g.stateOfOrigin).trim() === "") {
-          miss.push(`Guarantor ${idx + 1}: State of origin is required`);
-        }
-      });
-    }
+		// Guarantors validation
+		if (!Array.isArray(f.guarantors) || f.guarantors.length < 2) {
+			miss.push("Two guarantors required");
+		} else {
+			f.guarantors.forEach((g, idx) => {
+				if (!g) return;
+				if (!g.fullName || String(g.fullName).trim() === "") {
+					miss.push(`Guarantor ${idx + 1}: Full name is required`);
+				}
+				if (!g.occupation || String(g.occupation).trim() === "") {
+					miss.push(`Guarantor ${idx + 1}: Occupation is required`);
+				}
+				if (!g.phone || String(g.phone).trim() === "") {
+					miss.push(`Guarantor ${idx + 1}: Phone number is required`);
+				}
+				if (!g.email || String(g.email).trim() === "") {
+					miss.push(`Guarantor ${idx + 1}: Email is required`);
+				}
+				if (!g.employmentStatus || String(g.employmentStatus).trim() === "") {
+					miss.push(`Guarantor ${idx + 1}: Employment status is required`);
+				}
+				// If guarantor is employed, require company/business address and employer name; otherwise require home address
+				const guarantorEmployed = String(g.employmentStatus) === "1" || Number(g.employmentStatus) === 1;
+				if (guarantorEmployed) {
+					if (!g.businessAddress || String(g.businessAddress).trim() === "") {
+						miss.push(`Guarantor ${idx + 1}: Company / Business address is required`);
+					}
+					if (!g.employerName || String(g.employerName).trim() === "") {
+						miss.push(`Guarantor ${idx + 1}: Employer / Company name is required`);
+					}
+				} else {
+					if (!g.homeAddress || String(g.homeAddress).trim() === "") {
+						miss.push(`Guarantor ${idx + 1}: Home address is required`);
+					}
+				}
+				if (!g.stateOfOrigin || String(g.stateOfOrigin).trim() === "") {
+					miss.push(`Guarantor ${idx + 1}: State of origin is required`);
+				}
+			});
+		}
 
-    // Employment details validation
-    if (
-      !f.employment ||
-      !f.employment.status ||
-      String(f.employment.status).trim() === ""
-    ) {
-      miss.push("Employment status is required");
-    }
-    if (
-      (!f.propertyName || String(f.propertyName).trim() === "") &&
-      (!f.propertyId || String(f.propertyId).trim() === "")
-    ) {
-      miss.push("Property name is required");
-    }
+		// Employment details validation
+		if (!f.employment || !f.employment.status || String(f.employment.status).trim() === "") {
+			miss.push("Employment status is required");
+		}
+		if ((!f.propertyName || String(f.propertyName).trim() === "") && (!f.propertyId || String(f.propertyId).trim() === "")) {
+			miss.push("Property name is required");
+		}
 
-    // Hire purchase specific validation
-    if (!f.paymentDuration || Number(f.paymentDuration) <= 0) {
-      miss.push("Payment duration is required for hire purchase");
-    }
-    if (!f.downPayment || Number(f.downPayment) < 0) {
-      miss.push("Down payment is required");
-    }
+		// Hire purchase specific validation
+		if (!f.paymentDuration || Number(f.paymentDuration) <= 0) {
+			miss.push("Payment duration is required for hire purchase");
+		}
+		if (!f.downPayment || Number(f.downPayment) < 0) {
+			miss.push("Down payment is required");
+		}
 
-    return miss;
-  }, [form, paymentMethod]);
+		return miss;
+	}, [form, paymentMethod]);
 
-  return (
-    <>
-      <InstallmentPaymentForm
-        form={form as InstallmentPaymentFormType}
-        handleChange={handleChange}
-        isSubmitting={isSubmitting}
-        onSubmit={handleSubmit}
-        uploadedFiles={uploadedFiles}
-        uploadedFieldsRef={uploadedFieldsRef}
-        handleFileUpload={handleFileUpload}
-        relationshipOptions={relationshipOptions}
-        paymentFrequencyOptions={paymentFrequencyOptions}
-        durationUnitOptions={durationUnitOptions}
-        employmentStatusOptions={employmentStatusOptions}
-        stateOfOriginOptions={stateOfOriginOptions}
-        refLoading={refLoading}
-        paymentMethod={paymentMethod}
-        centeredContainer={centeredContainer}
-        sectionTitle={sectionTitle}
-        setUploadedFiles={setUploadedFiles}
-        showSignedContract={showSignedContract}
-        missingFields={missingFields}
-        isPropertyPrefilled={isPropertyPrefilledRef.current}
-        submitButtonText={submitButtonText}
-      />
-      <EmailVerificationModal
-        isOpen={showEmailVerification}
-        onClose={() => {
-          setShowEmailVerification(false);
-          setPendingSubmission(null);
-        }}
-        email={pendingSubmission?.payload.email || ""}
-        onVerify={handleEmailVerification}
-      />
-    </>
-  );
+	return (
+		<>
+			<InstallmentPaymentForm
+				form={form as InstallmentPaymentFormType}
+				handleChange={handleChange}
+				isSubmitting={isSubmitting}
+				onSubmit={handleSubmit}
+				uploadedFiles={uploadedFiles}
+				uploadedFieldsRef={uploadedFieldsRef}
+				handleFileUpload={handleFileUpload}
+				relationshipOptions={relationshipOptions}
+				paymentFrequencyOptions={paymentFrequencyOptions}
+				durationUnitOptions={durationUnitOptions}
+				employmentStatusOptions={employmentStatusOptions}
+				stateOfOriginOptions={stateOfOriginOptions}
+				refLoading={refLoading}
+				paymentMethod={paymentMethod}
+				centeredContainer={centeredContainer}
+				sectionTitle={sectionTitle}
+				setUploadedFiles={setUploadedFiles}
+				showSignedContract={showSignedContract}
+				missingFields={missingFields}
+				isPropertyPrefilled={isPropertyPrefilledRef.current}
+				submitButtonText={submitButtonText}
+			/>
+			<EmailVerificationModal
+				isOpen={showEmailVerification}
+				onClose={() => {
+					setShowEmailVerification(false);
+					setPendingSubmission(null);
+				}}
+				email={pendingSubmission?.payload.email || ""}
+				onVerify={handleEmailVerification}
+			/>
+		</>
+	);
 }
