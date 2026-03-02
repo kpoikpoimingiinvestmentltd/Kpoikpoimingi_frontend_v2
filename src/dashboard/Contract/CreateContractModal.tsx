@@ -16,7 +16,6 @@ import { useCreateContract } from "@/api/contracts";
 import { useGetApprovedRegistrations } from "@/api/customer-registration";
 import ContractSuccessModal from "./ContractSuccessModal";
 import CustomInput from "../../components/base/CustomInput";
-import { CalendarIcon } from "../../assets/icons";
 import ActionButton from "../../components/base/ActionButton";
 import { extractPaymentFrequencyOptions, extractDurationUnitOptions } from "@/lib/referenceDataHelpers";
 import type { RefOption } from "@/lib/referenceDataHelpers";
@@ -615,7 +614,7 @@ export default function CreateContractModal({ open, onOpenChange }: { open: bool
 									render={({ field }) => (
 										<CustomInput
 											type="date"
-											iconRight={<CalendarIcon />}
+											// iconRight={<CalendarIcon />}
 											label="Start Date"
 											value={field.value}
 											onChange={field.onChange}

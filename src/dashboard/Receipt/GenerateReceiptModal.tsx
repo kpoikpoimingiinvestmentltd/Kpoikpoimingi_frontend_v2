@@ -294,9 +294,7 @@ export default function GenerateReceiptModal({ open, onOpenChange }: { open: boo
 								name="paymentDate"
 								control={control}
 								rules={{ required: "Payment date is required" }}
-								render={({ field }) => (
-									<CustomInput label="Payment Date" required containerClassName="w-full" type="date" {...field} className={inputStyle} />
-								)}
+								render={({ field }) => <CustomInput label="Payment Date" required type="date" {...field} className={inputStyle} />}
 							/>
 
 							<Controller
