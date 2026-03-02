@@ -383,7 +383,7 @@ export default function Properties() {
 										const checked = !!selected[prod.id];
 										const imgSrc = prod.media?.[0] || media.images._product1;
 										return (
-											<div key={prod.id} className={twMerge("bg-white rounded-md p-4 relative", checked ? "bg-primary/10" : "bg-transparent")}>
+											<div key={prod.id} className={twMerge("rounded-md p-4 relative", checked ? "bg-primary/10" : "bg-transparent")}>
 												<div className="absolute top-2 right-2">
 													<Checkbox
 														checked={checked}
@@ -391,8 +391,8 @@ export default function Properties() {
 														className={twMerge("rounded-full !border-primary/50", checkboxStyle)}
 													/>
 												</div>
-												<div className="h-24 md:h-32 flex items-center justify-center overflow-hidden bg-gray-50 rounded">
-													<Image src={imgSrc} alt={prod.name} className="max-h-full object-contain" />
+												<div className="h-24 md:h-32 xl:h-56 flex items-center justify-center overflow-hidden bg-gray-50 rounded">
+													<Image src={imgSrc} alt={prod.name} className="max-h-full object-contain xl:object-contain" />
 												</div>
 												<div className="mt-3">
 													<h5 className="text-sm font-medium truncate">{prod.name}</h5>
