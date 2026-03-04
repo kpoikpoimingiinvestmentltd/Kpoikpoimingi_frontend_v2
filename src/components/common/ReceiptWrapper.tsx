@@ -103,8 +103,8 @@ export default function ReceiptWrapper({
 		<>
 			<div id="receipt-container">
 				<CustomCard className="receipt-wrapper-outer border-0 bg-transparent dark:bg-transparent px-0 py-4">
-					<div className="flex flex-col items-center gap-y-6">
-						<header className="receipt-header w-full max-w-[210mm] flex justify-between items-center gap-x-4 gap-y-3 flex-wrap px-4 md:px-0">
+					<div className="max-w-4xl mx-auto flex flex-col gap-y-6 w-full px-3 md:px-0">
+						<header className="receipt-header w-full mx-auto flex justify-between items-center gap-x-4 gap-y-3 flex-wrap">
 							<h2 className="text-lg font-medium">Receipt</h2>
 							<div className="receipt-actions flex items-center gap-2">
 								<ReceiptActions
@@ -117,11 +117,8 @@ export default function ReceiptWrapper({
 								/>
 							</div>
 						</header>
-						<main className="receipt-main flex justify-center">
-							<CustomCard
-								ref={printRef}
-								className="receipt-content relative shadow-lg isolate py-6 px-4 md:px-8"
-								style={{ width: "210mm", minHeight: "297mm" }}>
+						<main className="receipt-main flex justify-center w-full">
+							<CustomCard ref={printRef} className="receipt-content relative shadow-lg isolate py-6 px-4 md:px-8 w-full">
 								<Image src={media.images.verticalCuts} className="w-11/12 mx-auto absolute right-0 left-0 top-0 dark:opacity-10" />
 								<Image src={media.images.verticalCuts} className="w-11/12 mx-auto absolute right-0 left-0 bottom-0 -rotate-x-180 dark:opacity-10" />
 								<div ref={contentRef}>{children}</div>

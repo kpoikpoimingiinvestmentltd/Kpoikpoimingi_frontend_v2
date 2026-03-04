@@ -3,8 +3,26 @@ import html2canvas from "html2canvas";
 import { jsPDF } from "jspdf";
 import { sendReceiptPdfToEmail, trackReceiptDownload } from "@/api/receipt";
 
+const A4_WIDTH_PX = 794; // A4 at 96dpi
+
 export const generatePDF = async (element: HTMLElement, filename: string, isForSharing = false) => {
 	if (!element) return null;
+
+	const clone = element.cloneNode(true) as HTMLElement;
+
+	clone.style.position = "fixed";
+	clone.style.top = "-9999px";
+	clone.style.left = "-9999px";
+	clone.style.width = `${A4_WIDTH_PX}px`;
+	clone.style.minWidth = `${A4_WIDTH_PX}px`;
+	clone.style.overflow = "visible";
+	clone.style.zIndex = "-1";
+	clone.style.pointerEvents = "none";
+
+	document.body.appendChild(clone);
+
+	// Force reflow at the new width before html2canvas reads layout
+	void clone.offsetWidth;
 
 	try {
 		const styleEl = document.createElement("style");
@@ -23,30 +41,32 @@ export const generatePDF = async (element: HTMLElement, filename: string, isForS
 		`;
 		document.head.appendChild(styleEl);
 
-		const canvas = await html2canvas(element, {
+		const canvas = await html2canvas(clone, {
 			useCORS: true,
 			allowTaint: true,
-			scale: 1.3,
+			scale: 2,
 			backgroundColor: "#ffffff",
 			logging: false,
-			onclone: (clonedDocument) => {
-				const allElements = clonedDocument.querySelectorAll("*");
-				allElements.forEach((el) => {
+			windowWidth: A4_WIDTH_PX,
+			width: A4_WIDTH_PX,
+			onclone: (clonedDocument, clonedElement) => {
+				clonedElement.style.width = `${A4_WIDTH_PX}px`;
+				clonedElement.style.minWidth = `${A4_WIDTH_PX}px`;
+				clonedElement.style.boxSizing = "border-box";
+				clonedElement.style.overflow = "visible";
+
+				// Fix oklch/oklab colors unsupported by canvas
+				clonedDocument.querySelectorAll("*").forEach((el) => {
 					const htmlEl = el as HTMLElement;
 					const styles = window.getComputedStyle(el);
 
-					const bgColor = styles.backgroundColor;
-					if (bgColor && (bgColor.includes("oklch") || bgColor.includes("oklab"))) {
+					if (styles.backgroundColor?.includes("oklch") || styles.backgroundColor?.includes("oklab")) {
 						htmlEl.style.backgroundColor = "#f3fbff";
 					}
-
-					const textColor = styles.color;
-					if (textColor && (textColor.includes("oklch") || textColor.includes("oklab"))) {
+					if (styles.color?.includes("oklch") || styles.color?.includes("oklab")) {
 						htmlEl.style.color = "#1f2937";
 					}
-
-					const borderColor = styles.borderColor;
-					if (borderColor && (borderColor.includes("oklch") || borderColor.includes("oklab"))) {
+					if (styles.borderColor?.includes("oklch") || styles.borderColor?.includes("oklab")) {
 						htmlEl.style.borderColor = "#d1d5db";
 					}
 				});
@@ -55,13 +75,12 @@ export const generatePDF = async (element: HTMLElement, filename: string, isForS
 
 		styleEl.remove();
 
-		const pdf = new jsPDF("p", "mm", "a4");
+		const pdf = new jsPDF("p", "mm", "a4", true);
 		const pdfWidth = pdf.internal.pageSize.getWidth();
 		const margin = 10;
 		const contentWidth = pdfWidth - margin * 2;
-
 		const imgHeight = (canvas.height * contentWidth) / canvas.width;
-		const imgData = canvas.toDataURL("image/jpeg", 0.85);
+		const imgData = canvas.toDataURL("image/jpeg", 0.92);
 
 		pdf.addImage(imgData, "JPEG", margin, margin, contentWidth, imgHeight);
 
@@ -78,6 +97,9 @@ export const generatePDF = async (element: HTMLElement, filename: string, isForS
 		console.error("PDF generation failed:", errMsg, err);
 		toast.error(`Failed to generate PDF: ${errMsg}`);
 		return null;
+	} finally {
+		// ── Always remove the off-screen clone ─────────────────────────────────
+		document.body.removeChild(clone);
 	}
 };
 
@@ -85,13 +107,11 @@ export const handleDownloadPDF = async (element: HTMLElement, receiptNumber?: st
 	const filename = `receipt-${receiptNumber || receiptId || "unknown"}.pdf`;
 	await generatePDF(element, filename, false);
 
-	// Track the download
 	if (receiptId) {
 		try {
 			await trackReceiptDownload(String(receiptId));
 		} catch (err) {
 			console.error("Failed to track receipt download:", err);
-			// Don't show error toast - tracking failure shouldn't block the download
 		}
 	}
 };
@@ -126,12 +146,8 @@ export const handleSendPDFViaEmail = async (element: HTMLElement, receiptId: str
 	}
 
 	try {
-		// Show loading state
 		const loadingToastId = toast.loading("Generating and sending receipt...");
-
 		const filename = `receipt-${receiptNumber || receiptId || "unknown"}.pdf`;
-
-		// Generate PDF file
 		const pdfFile = await generatePDF(element, filename, true);
 
 		if (!pdfFile) {
@@ -140,20 +156,16 @@ export const handleSendPDFViaEmail = async (element: HTMLElement, receiptId: str
 			return false;
 		}
 
-		// Convert PDF to base64
 		const reader = new FileReader();
 		const pdfBase64 = await new Promise<string>((resolve, reject) => {
 			reader.onload = () => {
 				const result = reader.result as string;
-				// Extract base64 string (remove data:application/pdf;base64, prefix)
-				const base64String = result.split(",")[1];
-				resolve(base64String);
+				resolve(result.split(",")[1]);
 			};
 			reader.onerror = reject;
 			reader.readAsDataURL(pdfFile);
 		});
 
-		// Send PDF via API endpoint
 		await sendReceiptPdfToEmail(receiptId, pdfBase64, recipientEmail);
 
 		toast.dismiss(loadingToastId);
