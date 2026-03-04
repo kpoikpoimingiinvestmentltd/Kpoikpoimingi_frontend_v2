@@ -31,7 +31,7 @@ export default function ReceiptDisplayModal({ open, onOpenChange, receipt }: Rec
 
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
-			<DialogContent className={modalContentStyle("md:max-w-4xl md:max-h-[90vh] overflow-y-auto")}>
+			<DialogContent className={modalContentStyle("md:max-w-4xl max-h-[calc(100vh-3rem)] overflow-y-auto")}>
 				<div className="absolute right-2 top-2 z-50">
 					<DialogClose />
 				</div>
