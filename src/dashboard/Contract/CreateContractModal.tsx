@@ -2,13 +2,14 @@ import React from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Input } from "@/components/ui/input";
 import { ChevronDownIcon } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { inputStyle, labelStyle, modalContentStyle, selectTriggerStyle, radioStyle } from "../../components/common/commonStyles";
 import { useGetReferenceData } from "@/api/reference";
 import { Spinner } from "@/components/ui/spinner";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useForm, Controller } from "react-hook-form";
 import { useQueryClient } from "@tanstack/react-query";
 import ConfirmModal from "@/components/common/ConfirmModal";
@@ -321,14 +322,14 @@ export default function CreateContractModal({ open, onOpenChange }: { open: bool
 										control={control}
 										name="customerId"
 										render={({ field }) => (
-											<DropdownMenu open={customerOpen} onOpenChange={setCustomerOpen}>
-												<DropdownMenuTrigger asChild>
+											<Popover open={customerOpen} onOpenChange={setCustomerOpen} modal>
+												<PopoverTrigger asChild>
 													<button
 														type="button"
 														className={selectTriggerStyle(
 															"flex items-center justify-between text-left text-sm w-full min-w-0 px-3 bg-[#13121205] dark:bg-input/30",
 														)}>
-														<span className="truncate">
+														<span className="truncate text-sm">
 															{(
 																selectedCustomerData as {
 																	customer?: { fullName?: string };
@@ -337,11 +338,10 @@ export default function CreateContractModal({ open, onOpenChange }: { open: bool
 														</span>
 														<ChevronDownIcon className="size-4 shrink-0 opacity-50" />
 													</button>
-												</DropdownMenuTrigger>
-												<DropdownMenuContent
-													className="min-w-[16rem] w-72 p-0 overflow-y-auto overflow-x-hidden flex flex-col max-h-[280px] scrollbar-hide"
-													align="start"
-													onCloseAutoFocus={(e) => e.preventDefault()}>
+												</PopoverTrigger>
+												<PopoverContent
+													className="min-w-[16rem] w-72 p-0 overflow-y-auto overflow-x-hidden flex flex-col max-h-[280px]"
+													align="start">
 													<div
 														className="sticky top-0 z-10 shrink-0 border-b bg-popover p-1.5"
 														onPointerDown={(e) => e.stopPropagation()}
@@ -357,29 +357,40 @@ export default function CreateContractModal({ open, onOpenChange }: { open: bool
 														/>
 													</div>
 													<div className="min-h-0 flex-1 p-1 my-2" style={{ WebkitOverflowScrolling: "touch" }}>
-														{filteredRegistrations && filteredRegistrations.length > 0 ? (
-															filteredRegistrations.map((registration: any) => (
-																<DropdownMenuItem
-																	key={String(registration.id)}
-																	className="cursor-pointer"
-																	onSelect={() => {
-																		const cid = registration.customer?.id;
-																		field.onChange(cid ?? "");
-																		setSelectedCustomerData(registration);
-																		setCustomerOpen(false);
-																	}}
-																	onClick={() => {
-																		setSearchQuery("");
-																	}}>
-																	{String(registration.customer?.fullName ?? "")}
-																</DropdownMenuItem>
-															))
+														{registrationsQuery.isFetching ? (
+															<div className="space-y-2 p-2">
+																{[...Array(6)].map((_, i) => (
+																	<div key={i} className="px-2">
+																		<Skeleton className="h-4 w-full rounded-md" />
+																	</div>
+																))}
+															</div>
+														) : filteredRegistrations && filteredRegistrations.length > 0 ? (
+															filteredRegistrations.map((registration: any) => {
+																const cid = registration.customer?.id;
+																return (
+																	<button
+																		type="button"
+																		key={String(registration.id)}
+																		className="w-full text-left px-2 py-1.5 text-sm rounded-sm hover:bg-accent/30"
+																		onClick={() => {
+																			field.onChange(cid ?? "");
+																			setSelectedCustomerData(registration);
+																			setCustomerOpen(false);
+																			setSearchQuery("");
+																		}}>
+																		{String(registration.customer?.fullName ?? "")}
+																	</button>
+																);
+															})
 														) : searchQuery ? (
 															<div className="p-3 text-center text-sm text-muted-foreground">No customers found</div>
-														) : null}
+														) : (
+															<div className="p-3 text-center text-sm text-muted-foreground">Type to search customers</div>
+														)}
 													</div>
-												</DropdownMenuContent>
-											</DropdownMenu>
+												</PopoverContent>
+											</Popover>
 										)}
 									/>
 								</div>
