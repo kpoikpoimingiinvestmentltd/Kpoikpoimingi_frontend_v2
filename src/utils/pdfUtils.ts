@@ -3,7 +3,7 @@ import html2canvas from "html2canvas";
 import { jsPDF } from "jspdf";
 import { sendReceiptPdfToEmail, trackReceiptDownload } from "@/api/receipt";
 
-const A4_WIDTH_PX = 794; // A4 at 96dpi
+const A4_WIDTH_PX = 794;
 
 export const generatePDF = async (element: HTMLElement, filename: string, isForSharing = false) => {
 	if (!element) return null;
@@ -21,7 +21,6 @@ export const generatePDF = async (element: HTMLElement, filename: string, isForS
 
 	document.body.appendChild(clone);
 
-	// Force reflow at the new width before html2canvas reads layout
 	void clone.offsetWidth;
 
 	try {
@@ -98,7 +97,6 @@ export const generatePDF = async (element: HTMLElement, filename: string, isForS
 		toast.error(`Failed to generate PDF: ${errMsg}`);
 		return null;
 	} finally {
-		// ── Always remove the off-screen clone ─────────────────────────────────
 		document.body.removeChild(clone);
 	}
 };
