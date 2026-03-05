@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import type { RootState } from "@/store";
-import { loadAuthFromStorage, isTokenExpiringsoon } from "@/services/authPersistence";
+import { isTokenExpiringSoon, loadAuthFromStorage } from "@/services/authPersistence";
 import { apiPost } from "@/services/apiClient";
 import { API_ROUTES } from "@/api/routes";
 import { setAuth } from "@/store/authSlice";
@@ -26,7 +26,7 @@ export function AuthInitializer() {
 			}
 
 			// Token is expiring soon, refresh it
-			if (storedAuth.expiresAt && isTokenExpiringsoon(storedAuth.expiresAt)) {
+			if (storedAuth.expiresAt && isTokenExpiringSoon(storedAuth.expiresAt)) {
 				if (storedAuth.refreshToken) {
 					try {
 						const response = await apiPost<{
