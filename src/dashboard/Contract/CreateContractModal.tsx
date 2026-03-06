@@ -35,12 +35,6 @@ export default function CreateContractModal({ open, onOpenChange }: { open: bool
 
 	const registrationsQuery = useGetApprovedRegistrations(1, 1000, searchQuery, undefined, undefined, open);
 
-	React.useEffect(() => {
-		if (registrationsQuery.data) {
-			console.log("Approved Registrations Response:", registrationsQuery.data);
-		}
-	}, [registrationsQuery.data]);
-
 	const registrations = registrationsQuery?.data;
 
 	const filteredRegistrations = React.useMemo<any[]>(() => {
