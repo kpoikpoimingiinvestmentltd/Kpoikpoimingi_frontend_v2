@@ -194,7 +194,7 @@ export default function ReceiptTable() {
 				</div>
 			</div>
 
-			<div className="overflow-x-auto min-h-96 flex items-center justify-center">
+			<div className="overflow-x-auto min-h-96 flex items-start justify-center [&>*]:grow">
 				{isLoading || isFetching ? (
 					<TableSkeleton rows={6} cols={7} />
 				) : items.length === 0 ? (
