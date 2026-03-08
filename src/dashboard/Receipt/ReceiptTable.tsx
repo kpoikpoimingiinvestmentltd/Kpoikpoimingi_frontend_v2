@@ -155,44 +155,42 @@ export default function ReceiptTable() {
 			<div className="flex items-center justify-between flex-wrap gap-4">
 				<h3 className="text-base font-medium">All Receipt</h3>
 				<div className="flex items-center gap-2">
-					{items.length > 0 && (
-						<SearchWithFilters
-							search={search}
-							onSearchChange={handleSearchChange}
-							setPage={handlePageChange}
-							placeholder="Search by receipt number or customer name"
-							fields={
-								[
-									{
-										key: "limit",
-										label: "Items per page",
-										type: "select",
-										options: [
-											{ value: "5", label: "5" },
-											{ value: "10", label: "10" },
-											{ value: "20", label: "20" },
-											{ value: "50", label: "50" },
-										],
-									},
-									{
-										key: "sortBy",
-										label: "Sort By",
-										type: "sortBy",
-										options: [
-											{ value: "createdAt", label: "createdAt" },
-											{ value: "paymentDate", label: "paymentDate" },
-											{ value: "amountPaid", label: "amountPaid" },
-											{ value: "receiptNumber", label: "receiptNumber" },
-										],
-									},
-									{ key: "sortOrder", label: "Sort Order", type: "sortOrder" },
-								] as FilterField[]
-							}
-							initialValues={{ limit: filters.limit || "10", sortBy: filters.sortBy || "", sortOrder: filters.sortOrder || "" }}
-							onApply={handleFiltersApply}
-							onReset={handleFiltersReset}
-						/>
-					)}
+					<SearchWithFilters
+						search={search}
+						onSearchChange={handleSearchChange}
+						setPage={handlePageChange}
+						placeholder="Search by receipt number or customer name"
+						fields={
+							[
+								{
+									key: "limit",
+									label: "Items per page",
+									type: "select",
+									options: [
+										{ value: "5", label: "5" },
+										{ value: "10", label: "10" },
+										{ value: "20", label: "20" },
+										{ value: "50", label: "50" },
+									],
+								},
+								{
+									key: "sortBy",
+									label: "Sort By",
+									type: "sortBy",
+									options: [
+										{ value: "createdAt", label: "createdAt" },
+										{ value: "paymentDate", label: "paymentDate" },
+										{ value: "amountPaid", label: "amountPaid" },
+										{ value: "receiptNumber", label: "receiptNumber" },
+									],
+								},
+								{ key: "sortOrder", label: "Sort Order", type: "sortOrder" },
+							] as FilterField[]
+						}
+						initialValues={{ limit: filters.limit || "10", sortBy: filters.sortBy || "", sortOrder: filters.sortOrder || "" }}
+						onApply={handleFiltersApply}
+						onReset={handleFiltersReset}
+					/>
 				</div>
 			</div>
 
