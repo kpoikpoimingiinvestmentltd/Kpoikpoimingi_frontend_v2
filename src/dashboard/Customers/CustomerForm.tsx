@@ -492,7 +492,7 @@ export default function CustomerForm({
 						spouseFullName: installmentForm.nextOfKin.spouseName,
 						spousePhone: formatPhoneNumber(installmentForm.nextOfKin.spousePhone),
 						spouseAddress: installmentForm.nextOfKin.address,
-						isNextOfKinSpouse: installmentForm.nextOfKin.spouseName ? "Yes" : "No",
+						isNextOfKinSpouse: installmentForm.nextOfKin.isNextOfKinSpouse ? "Yes" : "No",
 					},
 					guarantors: installmentForm.guarantors.map((g, idx) => ({
 						fullName: g.fullName,

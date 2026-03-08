@@ -58,8 +58,8 @@ export default function ReceiptContent({ receipt }: ReceiptContentProps) {
 					{/* Payment Breakdown Section */}
 					<section className="mt-4 flex flex-col gap-y-4">
 						<header className="flex items-center justify-between gap-1 text-gray-800 dark:text-gray-100 bg-primary/10 dark:bg-primary/50 px-4 md:px-6 py-2.5 rounded-md">
-							<h5 className="font-medium">Payment Breakdown</h5>
-							<span className="text-sm font-medium text-center">Payment duration (One time)</span>
+							<h5 className="text-xs sm:text-sm font-medium">Payment Breakdown</h5>
+							<span className="ttext-xs sm:text-sm font-medium text-end">Payment duration (One time)</span>
 						</header>
 						<CustomCard className="grid grid-cols-1 gap-y-1 px-4 py-5 bg-card border-0 dark:border">
 							<KeyValueRow

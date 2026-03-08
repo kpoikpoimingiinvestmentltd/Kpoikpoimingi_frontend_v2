@@ -8,7 +8,7 @@ interface ReceiptHeaderProps {
 export default function ReceiptHeader({ receiptNumber }: ReceiptHeaderProps) {
 	return (
 		<header className="grid grid-cols-1 gap-4 pt-2 items-start border-b-2 border-dashed pb-8">
-			<aside className="order-1 text-start md:text-end flex justify-start md:justify-end h-full">
+			<aside className="order-1 text-start md:text-end flex justify-end h-full">
 				<p className="text-black dark:text-white text-sm sm:text-base font-semibold">Invoice: {receiptNumber ?? "-"}</p>
 			</aside>
 			<aside className="order-2 flex flex-col max-w-sm items-start gap-y-3">

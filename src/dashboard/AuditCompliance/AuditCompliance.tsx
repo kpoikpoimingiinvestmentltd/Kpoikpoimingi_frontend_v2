@@ -19,11 +19,39 @@ import { useSearchParams } from "react-router";
 export default function AuditCompliance() {
 	const [searchParams, setSearchParams] = useSearchParams();
 
-	const page = Number(searchParams.get("page")) || 1;
-	const pageSize = 10;
-	const search = searchParams.get("search") || "";
-	const sortBy = searchParams.get("sortBy") || "createdAt";
-	const sortOrder = searchParams.get("sortOrder") || "desc";
+	// Initialize state from URL params
+	const [page, setPage] = React.useState(() => {
+		const pageParam = searchParams.get("page");
+		return pageParam ? parseInt(pageParam, 10) : 1;
+	});
+	const [search, setSearch] = React.useState(() => {
+		return searchParams.get("search") || "";
+	});
+	const [filters, setFilters] = React.useState<Record<string, string>>(() => {
+		const urlFilters: Record<string, string> = {};
+		const sortBy = searchParams.get("sortBy");
+		const sortOrder = searchParams.get("sortOrder");
+		if (sortBy) urlFilters.sortBy = sortBy;
+		if (sortOrder) urlFilters.sortOrder = sortOrder;
+		return urlFilters;
+	});
+
+	// Sync state with URL params on mount and when URL changes (back/forward navigation)
+	React.useEffect(() => {
+		const pageParam = searchParams.get("page");
+		const newPage = pageParam ? parseInt(pageParam, 10) : 1;
+		setPage(newPage);
+
+		const searchParam = searchParams.get("search") || "";
+		setSearch(searchParam);
+
+		const urlFilters: Record<string, string> = {};
+		const sortBy = searchParams.get("sortBy");
+		const sortOrder = searchParams.get("sortOrder");
+		if (sortBy) urlFilters.sortBy = sortBy;
+		if (sortOrder) urlFilters.sortOrder = sortOrder;
+		setFilters(urlFilters);
+	}, [searchParams]);
 
 	// Initialize URL params on mount if not present
 	React.useEffect(() => {
@@ -33,27 +61,28 @@ export default function AuditCompliance() {
 			params.set("page", "1");
 			params.set("sortBy", "createdAt");
 			params.set("sortOrder", "desc");
-			setSearchParams(params);
+			setSearchParams(params, { replace: true });
 		}
 	}, []);
 
+	// Update URL when state changes
+	React.useEffect(() => {
+		const params = new URLSearchParams(searchParams);
+		params.set("page", page.toString());
+		params.set("search", search);
+		if (filters.sortBy) params.set("sortBy", filters.sortBy);
+		else params.delete("sortBy");
+		if (filters.sortOrder) params.set("sortOrder", filters.sortOrder);
+		else params.delete("sortOrder");
+		setSearchParams(params, { replace: true });
+	}, [page, search, filters, setSearchParams]);
+
+	const pageSize = 10;
+	const sortBy = (filters.sortBy as string) || "createdAt";
+	const sortOrder = (filters.sortOrder as string) || "desc";
+
 	const debouncedSearch = useDebounceSearch(search, 400);
 	const [showExportModal, setShowExportModal] = useState(false);
-
-	const updateSearchParams = React.useCallback(
-		(updates: Record<string, string | number | null>) => {
-			const params = new URLSearchParams(searchParams);
-			Object.entries(updates).forEach(([key, value]) => {
-				if (value === null) {
-					params.delete(key);
-				} else {
-					params.set(key, String(value));
-				}
-			});
-			setSearchParams(params);
-		},
-		[searchParams, setSearchParams],
-	);
 
 	const { data: auditData, isLoading } = useGetAuditLogsGrouped(page, pageSize, debouncedSearch || undefined, sortBy, sortOrder);
 
@@ -81,19 +110,23 @@ export default function AuditCompliance() {
 	];
 
 	const handleFilterApply = (newFilters: Record<string, string>) => {
-		updateSearchParams({
-			sortBy: newFilters.sortBy || null,
-			sortOrder: newFilters.sortOrder || null,
-			page: 1,
-		});
+		setFilters(newFilters);
+		setPage(1);
 	};
 
 	const handleSearchChange = (value: string) => {
-		updateSearchParams({ search: value || null, page: 1 });
+		setSearch(value);
+		setPage(1);
 	};
 
 	const handlePageChange = (newPage: number) => {
-		updateSearchParams({ page: newPage });
+		setPage(newPage);
+	};
+
+	const handleFiltersReset = () => {
+		setSearch("");
+		setFilters({});
+		setPage(1);
 	};
 
 	const hasActiveFilters = !!(debouncedSearch || sortBy !== "createdAt" || sortOrder !== "desc");
@@ -177,10 +210,7 @@ export default function AuditCompliance() {
 					fields={filterFields}
 					initialValues={{ sortBy: sortBy || "", sortOrder: sortOrder || "" }}
 					onApply={handleFilterApply}
-					onReset={() => {
-						handleSearchChange("");
-						updateSearchParams({ sortBy: null, sortOrder: null, page: 1 });
-					}}
+					onReset={handleFiltersReset}
 				/>
 			</div>
 
