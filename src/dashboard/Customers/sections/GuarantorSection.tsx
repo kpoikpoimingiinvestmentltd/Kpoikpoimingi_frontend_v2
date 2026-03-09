@@ -37,11 +37,28 @@ export default function GuarantorSection({
 			<div className="mt-4 flex flex-col gap-y-6">
 				{form.guarantors.map((g: InstallmentPaymentForm["guarantors"][number], idx: number) => (
 					<GuarantorField
-						key={idx}
+						key={`guarantor-${idx}`}
 						guarantor={g}
 						guarantorIndex={idx}
 						onFieldChange={(field, value) => {
 							const next = [...form.guarantors];
+							// Ensure the guarantor object exists before updating
+							if (!next[idx]) {
+								next[idx] = {
+									fullName: "",
+									occupation: "",
+									phone: "",
+									email: "",
+									employmentStatus: "",
+									homeAddress: "",
+									employerName: "",
+									businessAddress: "",
+									stateOfOrigin: "",
+									votersUploaded: 0,
+									hasAgreed: false,
+								};
+							}
+							// Preserve all existing guarantor fields, only update the one being changed
 							next[idx] = { ...next[idx], [field]: value };
 							handleChange("guarantors", next);
 						}}

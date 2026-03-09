@@ -584,13 +584,14 @@ export default function CustomerForm({
 			});
 			if (skipEmailVerification) {
 				await handleEmailVerification();
+				setIsSubmitting(false);
 			} else {
 				setShowEmailVerification(true);
+				// Don't set isSubmitting to false yet - it will be managed by handleEmailVerification
 			}
 		} catch (err: unknown) {
 			console.error("Form validation failed", err);
 			toast.error(`Validation failed: ${extractErrorMessage(err, "Unknown error")}`);
-		} finally {
 			setIsSubmitting(false);
 		}
 	};

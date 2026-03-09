@@ -78,6 +78,11 @@ export function useCustomerFormState(
 			console.warn("Failed to parse customer draft from localStorage", err);
 		}
 
+		// If initial data has guarantors (edit mode), don't restore from localStorage
+		if (initial && typeof initial === "object" && (initial as Record<string, unknown>).guarantors) {
+			return transformCustomerToInstallmentForm(initial);
+		}
+
 		const defaultInstallment = {
 			fullName: "",
 			email: "",
@@ -154,6 +159,15 @@ export function useCustomerFormState(
 		}
 	}, [initial]);
 
+	// Re-initialize form when initial prop changes (for edit mode)
+	React.useEffect(() => {
+		if (initial && typeof initial === "object") {
+			skipFormSaveRef.current = true;
+			const freshState = initializeFormState();
+			setForm(freshState);
+		}
+	}, [initial?.id]); // Only re-initialize when the ID changes, not on every initial change
+
 	// Load uploaded files metadata on mount
 	React.useEffect(() => {
 		try {
@@ -167,13 +181,20 @@ export function useCustomerFormState(
 		}
 	}, []);
 
-	// Save form data to localStorage (debounced)
+	// Save form data to localStorage (debounced) - but skip in edit mode to prevent losing guarantor data
 	const saveTimer = React.useRef<number | null>(null);
 	const skipFormSaveRef = React.useRef(false);
+	const isEditMode = React.useMemo(() => !!(initial && typeof initial === "object" && (initial as Record<string, unknown>).id), [initial]);
+
 	React.useEffect(() => {
 		if (saveTimer.current) {
 			window.clearTimeout(saveTimer.current);
 		}
+		// Skip localStorage autosave in edit mode to prevent losing guarantor data
+		if (isEditMode) {
+			return;
+		}
+
 		saveTimer.current = window.setTimeout(() => {
 			if (skipFormSaveRef.current) {
 				skipFormSaveRef.current = false;
@@ -189,7 +210,7 @@ export function useCustomerFormState(
 		return () => {
 			if (saveTimer.current) window.clearTimeout(saveTimer.current);
 		};
-	}, [form]);
+	}, [form, isEditMode]);
 
 	// Save uploaded files metadata to localStorage
 	const filesTimer = React.useRef<number | null>(null);
