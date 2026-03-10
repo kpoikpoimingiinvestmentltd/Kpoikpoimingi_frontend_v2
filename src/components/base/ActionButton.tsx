@@ -40,7 +40,7 @@ export default function ActionButton({
 	})();
 
 	const base =
-		"flex items-center justify-center py-2.5 rounded-md active-scale text-white px-4 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:scale-100 disabled:hover:opacity-50 disabled:cursor-not-allowed";
+		"flex items-center justify-center py-2.5 rounded-md text-white px-4 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:scale-100 disabled:hover:opacity-50 disabled:cursor-not-allowed";
 
 	const classes = twMerge(base, variantClass, fullWidth ? "w-full" : "", className ?? "");
 
