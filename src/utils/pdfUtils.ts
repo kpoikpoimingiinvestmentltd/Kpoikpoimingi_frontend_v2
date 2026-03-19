@@ -46,26 +46,36 @@ export const generatePDF = async (element: HTMLElement, filename: string, isForS
 				padding-top: 0.5rem !important;
 				padding-bottom: 2rem !important;
 			}
-			header aside:first-child {
+			header.receipt-header.receipt-header aside:first-child {
 				grid-column: 2 !important;
 				display: flex !important;
 				justify-content: flex-end !important;
 				align-items: flex-start !important;
 			}
-			header aside:first-child p {
+			header.receipt-header aside:first-child p {
 				display: block !important;
 				visibility: visible !important;
 				white-space: normal !important;
 				margin: 0 !important;
 			}
-			header aside:last-child {
+			header.receipt-header aside:last-child {
 				grid-column: 1 !important;
 				display: flex !important;
 				flex-direction: column !important;
 				gap: 0.75rem !important;
-				align-items: flex-end !important;
-				justify-content: flex-end !important;
+				align-items: flex-start !important;
+				justify-content: flex-start !important;
 				text-align: left !important;
+			}
+			section > header {
+				display: flex !important;
+				align-items: center !important;
+				justify-content: space-between !important;
+				width: 100% !important;
+			}
+			section > header span {
+				text-align: right !important;
+				margin-left: auto !important;
 			}
 		`;
 		document.head.appendChild(styleEl);
