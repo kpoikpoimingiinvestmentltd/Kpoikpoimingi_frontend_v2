@@ -63,7 +63,7 @@ export const generatePDF = async (element: HTMLElement, filename: string, isForS
 				display: flex !important;
 				flex-direction: column !important;
 				gap: 0.75rem !important;
-				align-items: flex-start !important;
+				align-items: flex-end !important;
 				justify-content: flex-end !important;
 				text-align: left !important;
 			}
