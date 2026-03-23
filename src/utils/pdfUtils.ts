@@ -24,7 +24,7 @@ export const generatePDF = async (element: HTMLElement, filename: string, isForS
 	void clone.offsetWidth;
 
 	try {
-			const canvas = await html2canvas(clone, {
+		const canvas = await html2canvas(clone, {
 			useCORS: true,
 			allowTaint: true,
 			scale: 2,
