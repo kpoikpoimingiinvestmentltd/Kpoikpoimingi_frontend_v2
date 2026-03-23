@@ -24,22 +24,6 @@ export const generatePDF = async (element: HTMLElement, filename: string, isForS
 	void clone.offsetWidth;
 
 	try {
-		const styleEl = document.createElement("style");
-		styleEl.id = isForSharing ? "pdf-color-override-share" : "pdf-color-override";
-		styleEl.textContent = `
-			.receipt-content {
-				border: none !important;
-				box-shadow: none !important;
-				display: flex;
-				flex-direction: column;
-			}
-			table tr td, table tr th {
-				vertical-align: middle !important;
-				padding: 8px !important;
-			}
-		`;
-		document.head.appendChild(styleEl);
-
 		const canvas = await html2canvas(clone, {
 			useCORS: true,
 			allowTaint: true,
@@ -54,25 +38,52 @@ export const generatePDF = async (element: HTMLElement, filename: string, isForS
 				clonedElement.style.boxSizing = "border-box";
 				clonedElement.style.overflow = "visible";
 
-				// Fix oklch/oklab colors unsupported by canvas
-				clonedDocument.querySelectorAll("*").forEach((el) => {
-					const htmlEl = el as HTMLElement;
-					const styles = window.getComputedStyle(el);
+				// Inject overrides directly into the cloned document so they apply
+				// inside html2canvas's own rendering context. This avoids the
+				// cross-document getComputedStyle bug where calling
+				// window.getComputedStyle with an element from a different document
+				// returns empty/stale styles on mobile browsers — causing dark-mode
+				// white text (e.g. the receipt number) to render invisible on the
+				// white PDF background.
+				const overrideStyle = clonedDocument.createElement("style");
+				overrideStyle.textContent = `
+					* {
+						color: #1f2937 !important;
+						border-color: #d1d5db !important;
+					}
+					*:not(img):not(svg):not([class*="bg-primary"]):not([class*="bg-card"]) {
+						background-color: transparent !important;
+					}
+				[class*="bg-primary"] {
+					background-color: #e8f4fb !important;
+				}
+					[class*="bg-card"], .receipt-content {
+						background-color: #ffffff !important;
+						border: none !important;
+						box-shadow: none !important;
+						display: flex;
+						flex-direction: column;
+					}
+				`;
+			clonedDocument.head.appendChild(overrideStyle);
 
-					if (styles.backgroundColor?.includes("oklch") || styles.backgroundColor?.includes("oklab")) {
-						htmlEl.style.backgroundColor = "#f3fbff";
-					}
-					if (styles.color?.includes("oklch") || styles.color?.includes("oklab")) {
-						htmlEl.style.color = "#1f2937";
-					}
-					if (styles.borderColor?.includes("oklch") || styles.borderColor?.includes("oklab")) {
-						htmlEl.style.borderColor = "#d1d5db";
-					}
-				});
-			},
+			// Directly override the payment breakdown header elements via JavaScript
+			// so html2canvas doesn't need to compute flex/table layout at all.
+			// position:absolute with matching height/line-height is the most
+			// reliably rendered layout in html2canvas.
+			const bgPrimaryHeaders = clonedElement.querySelectorAll<HTMLElement>('div[class*="bg-primary"]');
+			bgPrimaryHeaders.forEach((header) => {
+				header.style.cssText = "background-color:#e8f4fb;border-radius:6px;height:40px;position:relative;overflow:hidden;";
+				const spans = Array.from(header.querySelectorAll<HTMLElement>("span"));
+				if (spans[0]) {
+					spans[0].style.cssText = "position:absolute;left:16px;top:0;height:40px;line-height:40px;font-size:12px;font-weight:500;white-space:nowrap;color:#1f2937;";
+				}
+				if (spans[1]) {
+					spans[1].style.cssText = "position:absolute;right:16px;top:0;height:40px;line-height:40px;font-size:12px;font-weight:500;color:#1f2937;";
+				}
+			});
+		},
 		});
-
-		styleEl.remove();
 
 		const pdf = new jsPDF("p", "mm", "a4", true);
 		const pdfWidth = pdf.internal.pageSize.getWidth();

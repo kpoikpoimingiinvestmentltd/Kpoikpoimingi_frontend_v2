@@ -56,11 +56,11 @@ export default function ReceiptContent({ receipt }: ReceiptContentProps) {
 					</section>
 
 					{/* Payment Breakdown Section */}
-					<section className="mt-4 flex flex-col gap-y-4">
-						<header className="flex items-center justify-between gap-1 text-gray-800 dark:text-gray-100 bg-primary/10 dark:bg-primary/50 px-4 md:px-6 py-2.5 rounded-md">
-							<h5 className="text-xs sm:text-sm font-medium">Payment Breakdown</h5>
-							<span className="ttext-xs sm:text-sm font-medium text-end">Payment duration (One time)</span>
-						</header>
+		<section className="mt-4 flex flex-col gap-y-4">
+	<div className="bg-primary/10 dark:bg-primary/50 text-gray-800 dark:text-gray-100 rounded-md flex items-center justify-between px-4 h-10">
+		<span className="text-xs font-medium whitespace-nowrap">Payment Breakdown</span>
+		<span className="text-xs font-medium">Payment duration (One time)</span>
+	</div>
 						<CustomCard className="grid grid-cols-1 gap-y-1 px-4 py-5 bg-card border-0 dark:border">
 							<KeyValueRow
 								label="Property Name"
@@ -132,16 +132,16 @@ export default function ReceiptContent({ receipt }: ReceiptContentProps) {
 				</section>
 
 				{/* Payment Breakdown Section */}
-				<section className="mt-4 flex flex-col gap-y-4">
-					<header className="flex items-center justify-between gap-1 text-gray-800 dark:text-gray-100 bg-primary/10 dark:bg-primary/50 px-4 md:px-6 py-2.5 rounded-md">
-						<h5 className="text-xs sm:text-sm font-medium">Payment Breakdown</h5>
-						{!isMigrated && (
-							<span className="text-xs sm:text-sm font-medium text-center">
-								Payment duration ({receipt.contract?.durationValue ?? receipt.totalInstallments ?? "-"}{" "}
-								{receipt.contract?.durationUnit?.duration?.toLowerCase() === "weeks" ? "weeks" : "months"})
-							</span>
-						)}
-					</header>
+			<section className="mt-4 flex flex-col gap-y-4">
+		<div className="bg-primary/10 dark:bg-primary/50 text-gray-800 dark:text-gray-100 rounded-md flex items-center justify-between px-4 h-10">
+			<span className="text-xs font-medium whitespace-nowrap">Payment Breakdown</span>
+			{!isMigrated && (
+				<span className="text-xs font-medium">
+					Payment duration ({receipt.contract?.durationValue ?? receipt.totalInstallments ?? "-"}{" "}
+					{receipt.contract?.durationUnit?.duration?.toLowerCase() === "weeks" ? "weeks" : "months"})
+				</span>
+			)}
+		</div>
 					<CustomCard className="grid grid-cols-1 gap-y-1 px-4 py-5 bg-card border-0 dark:border">
 						<KeyValueRow
 							label="Property Name"
