@@ -1,10 +1,9 @@
 import CustomInput from "@/components/base/CustomInput";
-import { checkboxStyle, inputStyle, labelStyle } from "@/components/common/commonStyles";
+import { inputStyle, labelStyle } from "@/components/common/commonStyles";
 import { twMerge } from "tailwind-merge";
 import { Button } from "@/components/ui/button";
 import { IconWrapper } from "@/assets/icons";
-import { Link, useNavigate } from "react-router";
-import { Checkbox } from "@/components/ui/checkbox";
+import { useNavigate } from "react-router";
 import { Label } from "@/components/ui/label";
 import { _router } from "@/routes/_router";
 import { EyeIcon, EyeOff } from "lucide-react";
