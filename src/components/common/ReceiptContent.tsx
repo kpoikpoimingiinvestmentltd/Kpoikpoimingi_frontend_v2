@@ -61,40 +61,55 @@ export default function ReceiptContent({ receipt }: ReceiptContentProps) {
 		<span className="text-xs font-medium whitespace-nowrap">Payment Breakdown</span>
 		<span className="text-xs font-medium">Payment duration (One time)</span>
 	</div>
-						<CustomCard className="grid grid-cols-1 gap-y-1 px-4 py-5 bg-card border-0 dark:border">
+				<CustomCard className="grid grid-cols-1 gap-y-1 px-4 py-5 bg-card border-0 dark:border">
+						{receipt.propertiesBreakdown && receipt.propertiesBreakdown.length > 1 ? (
+							<>
+								{receipt.propertiesBreakdown.map((item, i) => (
+									<KeyValueRow
+										key={i}
+										label={`${item.name}${item.quantity > 1 ? ` ×${item.quantity}` : ""}`}
+										value={`₦${item.subtotal.toLocaleString()}`}
+										leftClassName="text-gray-600"
+										rightClassName="text-right font-medium"
+									/>
+								))}
+								<div className="border-t border-dashed border-gray-200 dark:border-gray-600 my-1" />
+							</>
+						) : (
 							<KeyValueRow
 								label="Property Name"
 								value={receipt.contract?.property?.name ?? receipt.propertyName ?? "-"}
 								leftClassName="text-gray-600"
 								rightClassName="text-right font-medium"
 							/>
-							<KeyValueRow
-								label="Total amount"
-								value={receipt.totalAmount ? `₦${Number(receipt.totalAmount).toLocaleString()}` : "-"}
-								leftClassName="text-gray-600"
-								rightClassName="text-right font-medium"
-							/>
-							<KeyValueRow
-								label="Amount paid"
-								value={receipt.amountPaid ? `₦${Number(receipt.amountPaid).toLocaleString()}` : "-"}
-								leftClassName="text-gray-600"
-								rightClassName="text-right font-medium"
-							/>
-							<KeyValueRow
-								label="VAT Amount"
-								value={receipt.vatAmount ? `₦${Number(receipt.vatAmount).toLocaleString()}` : "-"}
-								leftClassName="text-gray-600"
-								rightClassName="text-right font-medium"
-							/>
-							<KeyValueRow
-								label="Amount paid plus VAT"
-								value={
-									receipt.amountPaid && receipt.vatAmount ? `₦${(Number(receipt.amountPaid) + Number(receipt.vatAmount)).toLocaleString()}` : "-"
-								}
-								leftClassName="text-gray-600"
-								rightClassName="text-right font-medium"
-							/>
-						</CustomCard>
+						)}
+						<KeyValueRow
+							label="Total amount"
+							value={receipt.totalAmount ? `₦${Number(receipt.totalAmount).toLocaleString()}` : "-"}
+							leftClassName="text-gray-600"
+							rightClassName="text-right font-medium"
+						/>
+						<KeyValueRow
+							label="Amount paid"
+							value={receipt.amountPaid ? `₦${Number(receipt.amountPaid).toLocaleString()}` : "-"}
+							leftClassName="text-gray-600"
+							rightClassName="text-right font-medium"
+						/>
+						<KeyValueRow
+							label="VAT Amount"
+							value={receipt.vatAmount ? `₦${Number(receipt.vatAmount).toLocaleString()}` : "-"}
+							leftClassName="text-gray-600"
+							rightClassName="text-right font-medium"
+						/>
+						<KeyValueRow
+							label="Amount paid plus VAT"
+							value={
+								receipt.amountPaid && receipt.vatAmount ? `₦${(Number(receipt.amountPaid) + Number(receipt.vatAmount)).toLocaleString()}` : "-"
+							}
+							leftClassName="text-gray-600"
+							rightClassName="text-right font-medium"
+						/>
+					</CustomCard>
 					</section>
 
 					<section className="md:w-11/12 mx-auto mt-8 font-normal text-center py-4">
