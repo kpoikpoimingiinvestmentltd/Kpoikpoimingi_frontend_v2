@@ -48,6 +48,15 @@ export default function TabContractInformation({ contract }: { contract: Record<
 
 		await createPaymentLinkMutation.mutateAsync(payload);
 	};
+	type PropertyBreakdownItem = { name: string; quantity: number; unitPrice: number; subtotal: number };
+	const propertiesBreakdown = (contract?.propertiesBreakdown as PropertyBreakdownItem[] | undefined) ?? [];
+	const hasMultipleProperties = propertiesBreakdown.length > 1;
+
+	const rawTotalProductAmount = (contract?.totalProductAmount as number) ?? null;
+	const totalProductAmountFormatted = rawTotalProductAmount != null
+		? `₦${rawTotalProductAmount.toLocaleString()}`
+		: `₦${parseFloat(((contract?.property as Record<string, unknown>)?.price as string) || "0").toLocaleString()}`;
+
 	const contractData = {
 		customerName: ((contract?.customer as Record<string, unknown>)?.fullName as string) || "N/A",
 		whatsapp: ((contract?.customer as Record<string, unknown>)?.phoneNumber as string) || "N/A",
@@ -60,7 +69,7 @@ export default function TabContractInformation({ contract }: { contract: Record<
 		paymentDuration:
 			`${(contract?.durationValue as number) || 0} ${((contract?.durationUnit as Record<string, unknown>)?.duration as string) || ""}` || "N/A",
 		totalPayable: `₦${parseFloat((contract?.outStandingBalance as string) || "0").toLocaleString()}` || "N/A",
-		totalProductAmount: `₦${parseFloat(((contract?.property as Record<string, unknown>)?.price as string) || "0").toLocaleString()}` || "N/A",
+		totalProductAmount: totalProductAmountFormatted,
 		contractRange:
 			(contract?.startDate as string) && (contract?.endDate as string)
 				? `${new Date(contract.startDate as string).toLocaleDateString()} to ${new Date(contract.endDate as string).toLocaleDateString()}`
@@ -111,12 +120,24 @@ export default function TabContractInformation({ contract }: { contract: Record<
 								leftClassName="text-sm text-muted-foreground"
 								rightClassName="text-right"
 							/>
+						{hasMultipleProperties ? (
+							propertiesBreakdown.map((item, i) => (
+								<KeyValueRow
+									key={i}
+									label={i === 0 ? "Properties" : ""}
+									value={`${item.name}${item.quantity > 1 ? ` ×${item.quantity}` : ""} — ₦${item.subtotal.toLocaleString()}`}
+									leftClassName="text-sm text-muted-foreground"
+									rightClassName="text-right"
+								/>
+							))
+						) : (
 							<KeyValueRow
 								label="Property Name"
 								value={contractData.propertyName}
 								leftClassName="text-sm text-muted-foreground"
 								rightClassName="text-right"
 							/>
+						)}
 							<KeyValueRow
 								label="Payment type"
 								value={contractData.paymentType}
