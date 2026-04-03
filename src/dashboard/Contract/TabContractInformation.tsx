@@ -65,10 +65,12 @@ export default function TabContractInformation({ contract }: { contract: Record<
 		status: ((contract?.status as Record<string, unknown>)?.status as string) || "N/A",
 		propertyName: ((contract?.property as Record<string, unknown>)?.name as string) || "N/A",
 		paymentType: ((contract?.paymentType as Record<string, unknown>)?.type as string) || "N/A",
-		downPayment: `₦${parseFloat((contract?.downPayment as string) || "0").toLocaleString()}` || "N/A",
+		downPayment: contract?.downPayment ? `₦${parseFloat(contract.downPayment as string).toLocaleString()}` : "N/A",
 		paymentDuration:
-			`${(contract?.durationValue as number) || 0} ${((contract?.durationUnit as Record<string, unknown>)?.duration as string) || ""}` || "N/A",
-		totalPayable: `₦${parseFloat((contract?.outStandingBalance as string) || "0").toLocaleString()}` || "N/A",
+			(contract?.durationValue as number)
+				? `${contract.durationValue} ${((contract?.durationUnit as Record<string, unknown>)?.duration as string) || ""}`
+				: "N/A",
+		totalPayable: contract?.outStandingBalance ? `₦${parseFloat(contract.outStandingBalance as string).toLocaleString()}` : "N/A",
 		totalProductAmount: totalProductAmountFormatted,
 		contractRange:
 			(contract?.startDate as string) && (contract?.endDate as string)
