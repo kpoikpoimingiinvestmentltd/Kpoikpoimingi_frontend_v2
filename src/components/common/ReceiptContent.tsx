@@ -67,7 +67,7 @@ export default function ReceiptContent({ receipt }: ReceiptContentProps) {
 								{receipt.propertiesBreakdown.map((item, i) => (
 									<KeyValueRow
 										key={i}
-										label={`${item.name}${item.quantity > 1 ? ` ×${item.quantity}` : ""}`}
+										label={`${item.name} (Qty: ${item.quantity})`}
 										value={`₦${item.subtotal.toLocaleString()}`}
 										leftClassName="text-gray-600"
 										rightClassName="text-right font-medium"
