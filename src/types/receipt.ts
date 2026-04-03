@@ -61,6 +61,13 @@ export type ReceiptDetail = {
     downPayment?: string;
     outStandingBalance?: string;
     paymentType?: { id?: number; type?: string };
+    propertyInterestRequests?: Array<{
+      quantity: number;
+      isCustomProperty?: boolean;
+      customPropertyName?: string | null;
+      customPropertyPrice?: string | null;
+      property?: { id?: string; name?: string; price?: string };
+    }>;
   };
   customer?: {
     id?: string;
