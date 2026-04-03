@@ -62,7 +62,7 @@ export default function ReceiptContent({ receipt }: ReceiptContentProps) {
 		<span className="text-xs font-medium">Payment duration (One time)</span>
 	</div>
 				<CustomCard className="grid grid-cols-1 gap-y-1 px-4 py-5 bg-card border-0 dark:border">
-						{receipt.propertiesBreakdown && receipt.propertiesBreakdown.length > 1 ? (
+						{receipt.propertiesBreakdown && receipt.propertiesBreakdown.length > 0 ? (
 							<>
 								{receipt.propertiesBreakdown.map((item, i) => (
 									<KeyValueRow
