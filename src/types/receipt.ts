@@ -79,4 +79,11 @@ export type ReceiptDetail = {
   };
   installmentProgress?: string;
   totalInstallments?: number;
+  propertiesBreakdown?: Array<{
+    name: string;
+    quantity: number;
+    unitPrice: number;
+    subtotal: number;
+  }>;
+  payment?: { reference?: string };
 };
