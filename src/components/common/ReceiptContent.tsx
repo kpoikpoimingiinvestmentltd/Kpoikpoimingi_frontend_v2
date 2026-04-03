@@ -22,6 +22,27 @@ export default function ReceiptContent({ receipt }: ReceiptContentProps) {
 	const remainingBalanceRaw =
 		receipt.contract && (receipt.contract as any).outStandingBalance != null ? (receipt.contract as any).outStandingBalance : null;
 
+	// Build a unified property list: prefer propertiesBreakdown (has subtotals),
+	// fall back to propertyInterestRequests, last resort is a single row from contract.property.
+	type PropertyRow = { name: string; quantity: number; subtotal: number | null };
+	const propertyRows: PropertyRow[] = (() => {
+		if (receipt.propertiesBreakdown && receipt.propertiesBreakdown.length > 0) {
+			return receipt.propertiesBreakdown.map((p) => ({ name: p.name, quantity: p.quantity, subtotal: p.subtotal }));
+		}
+		if (receipt.contract?.propertyInterestRequests && receipt.contract.propertyInterestRequests.length > 0) {
+			return receipt.contract.propertyInterestRequests.map((p) => ({
+				name: p.isCustomProperty ? (p.customPropertyName ?? "Custom Property") : (p.property?.name ?? "-"),
+				quantity: p.quantity,
+				subtotal: p.property?.price ? Number(p.property.price) * p.quantity : null,
+			}));
+		}
+		const fallbackName = receipt.contract?.property?.name ?? receipt.propertyName;
+		if (fallbackName) {
+			return [{ name: fallbackName, quantity: 1, subtotal: null }];
+		}
+		return [];
+	})();
+
 	const receiptFooter = (
 		<footer className="border-t-2 border-dashed dark:border-t-neutral-700 pb-4 pt-6 text-center">
 			{receipt.issuedBy?.fullName && (
@@ -62,23 +83,25 @@ export default function ReceiptContent({ receipt }: ReceiptContentProps) {
 		<span className="text-xs font-medium">Payment duration (One time)</span>
 	</div>
 				<CustomCard className="grid grid-cols-1 gap-y-1 px-4 py-5 bg-card border-0 dark:border">
-						{receipt.propertiesBreakdown && receipt.propertiesBreakdown.length > 0 ? (
+						{propertyRows.length > 0 ? (
 							<>
-								{receipt.propertiesBreakdown.map((item, i) => (
+								{propertyRows.map((item, i) => (
 									<KeyValueRow
 										key={i}
 										label={`${item.name} (Qty: ${item.quantity})`}
-										value={`₦${item.subtotal.toLocaleString()}`}
+										value={item.subtotal != null ? `₦${item.subtotal.toLocaleString()}` : "-"}
 										leftClassName="text-gray-600"
 										rightClassName="text-right font-medium"
 									/>
 								))}
-								<div className="border-t border-dashed border-gray-200 dark:border-gray-600 my-1" />
+								{propertyRows.length > 1 && (
+									<div className="border-t border-dashed border-gray-200 dark:border-gray-600 my-1" />
+								)}
 							</>
 						) : (
 							<KeyValueRow
 								label="Property Name"
-								value={receipt.contract?.property?.name ?? receipt.propertyName ?? "-"}
+								value={receipt.propertyName ?? "-"}
 								leftClassName="text-gray-600"
 								rightClassName="text-right font-medium"
 							/>

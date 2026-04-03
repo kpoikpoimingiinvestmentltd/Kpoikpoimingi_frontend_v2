@@ -50,7 +50,7 @@ export default function TabContractInformation({ contract }: { contract: Record<
 	};
 	type PropertyBreakdownItem = { name: string; quantity: number; unitPrice: number; subtotal: number };
 	const propertiesBreakdown = (contract?.propertiesBreakdown as PropertyBreakdownItem[] | undefined) ?? [];
-	const hasMultipleProperties = propertiesBreakdown.length > 1;
+	const hasBreakdown = propertiesBreakdown.length > 0;
 
 	const rawTotalProductAmount = (contract?.totalProductAmount as number) ?? null;
 	const totalProductAmountFormatted = rawTotalProductAmount != null
@@ -122,24 +122,24 @@ export default function TabContractInformation({ contract }: { contract: Record<
 								leftClassName="text-sm text-muted-foreground"
 								rightClassName="text-right"
 							/>
-						{hasMultipleProperties ? (
-							propertiesBreakdown.map((item, i) => (
-								<KeyValueRow
-									key={i}
-									label={i === 0 ? "Properties" : ""}
-									value={`${item.name}${item.quantity > 1 ? ` ×${item.quantity}` : ""} — ₦${item.subtotal.toLocaleString()}`}
-									leftClassName="text-sm text-muted-foreground"
-									rightClassName="text-right"
-								/>
-							))
-						) : (
+					{hasBreakdown ? (
+						propertiesBreakdown.map((item, i) => (
 							<KeyValueRow
-								label="Property Name"
-								value={contractData.propertyName}
+								key={i}
+								label={i === 0 ? (propertiesBreakdown.length > 1 ? "Properties" : "Property Name") : ""}
+								value={`${item.name} (Qty: ${item.quantity}) — ₦${item.subtotal.toLocaleString()}`}
 								leftClassName="text-sm text-muted-foreground"
 								rightClassName="text-right"
 							/>
-						)}
+						))
+					) : (
+						<KeyValueRow
+							label="Property Name"
+							value={contractData.propertyName}
+							leftClassName="text-sm text-muted-foreground"
+							rightClassName="text-right"
+						/>
+					)}
 							<KeyValueRow
 								label="Payment type"
 								value={contractData.paymentType}
