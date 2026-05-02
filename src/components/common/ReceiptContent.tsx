@@ -63,7 +63,15 @@ export default function ReceiptContent({ receipt }: ReceiptContentProps) {
 						<KeyValueRow label="Name" value={receipt.customer?.fullName ?? receipt.id ?? "-"} />
 						<KeyValueRow label="Email" value={receipt.customer?.email ?? "-"} />
 						<KeyValueRow label="Whatsapp number" value={receipt.customer?.phoneNumber ?? "-"} />
-						<KeyValueRow label="Home Address" value={receipt.customer?.registrations?.[0].homeAddress ?? "-"} />
+						<KeyValueRow
+							label="Home Address"
+							value={
+								receipt.customer?.homeAddress ??
+								receipt.customer?.address ??
+								receipt.customer?.registrations?.[0]?.homeAddress ??
+								"-"
+							}
+						/>
 						<KeyValueRow
 							label="Date"
 							value={
@@ -155,7 +163,15 @@ export default function ReceiptContent({ receipt }: ReceiptContentProps) {
 						<KeyValueRow label="Name" value={receipt.customer?.fullName ?? receipt.id ?? "-"} />
 						<KeyValueRow label="Email" value={receipt.customer?.email ?? "-"} />
 						<KeyValueRow label="Whatsapp number" value={receipt.customer?.phoneNumber ?? "-"} />
-						<KeyValueRow label="Home Address" value={receipt.customer?.registrations?.[0]?.homeAddress ?? "-"} />
+						<KeyValueRow
+							label="Home Address"
+							value={
+								receipt.customer?.homeAddress ??
+								receipt.customer?.address ??
+								receipt.customer?.registrations?.[0]?.homeAddress ??
+								"-"
+							}
+						/>
 						<KeyValueRow
 							label="Date"
 							value={
