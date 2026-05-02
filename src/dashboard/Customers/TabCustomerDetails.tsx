@@ -376,6 +376,7 @@ export default function TabCustomerDetails({
                 label="Property name"
                 value={
                   property.propertyName ||
+                  property.property?.name ||
                   registration?.customPropertyName ||
                   "N/A"
                 }
@@ -571,7 +572,12 @@ export default function TabCustomerDetails({
               />
               <KeyValueRow
                 label="State of origin"
-                value={getStateNameById(guarantors[0]?.stateOfOrigin) || "N/A"}
+                value={
+                  getStateNameById(
+                    guarantors[0]?.stateOfOrigin ||
+                      String(guarantors[0]?.stateOfOriginId ?? ""),
+                  ) || "N/A"
+                }
                 leftClassName="text-sm text-muted-foreground"
                 rightClassName="text-right"
               />
@@ -647,7 +653,12 @@ export default function TabCustomerDetails({
               />
               <KeyValueRow
                 label="State of origin"
-                value={getStateNameById(guarantors[1]?.stateOfOrigin || "")}
+                value={
+                  getStateNameById(
+                    guarantors[1]?.stateOfOrigin ||
+                      String(guarantors[1]?.stateOfOriginId ?? ""),
+                  ) || "N/A"
+                }
                 leftClassName="text-sm text-muted-foreground"
                 rightClassName="text-right"
               />
