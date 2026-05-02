@@ -60,8 +60,14 @@ export default function TabContractInformation({ contract }: { contract: Record<
 	const contractData = {
 		customerName: ((contract?.customer as Record<string, unknown>)?.fullName as string) || "N/A",
 		whatsapp: ((contract?.customer as Record<string, unknown>)?.phoneNumber as string) || "N/A",
-		address: ((contract?.customer as Record<string, unknown>)?.houseAddress as string) || "N/A",
-		businessAddress: ((contract?.customer as Record<string, unknown>)?.businessAddress as string) || "N/A",
+		address:
+			((contract?.customer as Record<string, unknown>)?.homeAddress as string) ||
+			((contract?.customer as Record<string, unknown>)?.houseAddress as string) ||
+			"N/A",
+		businessAddress:
+			((contract?.customer as Record<string, unknown>)?.businessAddress as string) ||
+			((contract?.customer as Record<string, unknown>)?.companyAddress as string) ||
+			"N/A",
 		status: ((contract?.status as Record<string, unknown>)?.status as string) || "N/A",
 		propertyName: ((contract?.property as Record<string, unknown>)?.name as string) || "N/A",
 		paymentType: ((contract?.paymentType as Record<string, unknown>)?.type as string) || "N/A",
