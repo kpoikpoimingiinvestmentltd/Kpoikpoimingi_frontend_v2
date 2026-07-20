@@ -4,6 +4,9 @@ dist
 .gitignore
 .DS_Store
 *.md
-.env.local
+.env
+.env.*
+!.env.example
 .vscode
 .idea
+Dockerfile.dev
