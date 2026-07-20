@@ -105,6 +105,24 @@ export function transformCustomerToInstallmentForm(customer: unknown): Installme
 			? (c.propertyInterestRequest[0] as Record<string, unknown>)
 			: undefined;
 
+	const nestedProperty =
+		firstInterest?.property && typeof firstInterest.property === "object"
+			? (firstInterest.property as Record<string, unknown>)
+			: undefined;
+
+	const resolvedPropertyId =
+		firstInterest?.propertyId != null && String(firstInterest.propertyId).trim() !== ""
+			? String(firstInterest.propertyId)
+			: nestedProperty?.id != null
+				? String(nestedProperty.id)
+				: "";
+
+	const resolvedPropertyName =
+		(firstInterest?.customPropertyName as string) ||
+		(firstInterest?.propertyName as string) ||
+		(nestedProperty?.name as string) ||
+		"";
+
 	const guarantorsArray = Array.isArray(c.guarantors) ? (c.guarantors as unknown[]) : [];
 
 	return {
@@ -135,8 +153,8 @@ export function transformCustomerToInstallmentForm(customer: unknown): Installme
 				address: ((nk.spouseAddress as string) || (nk.address as string) || "") as string,
 			};
 		})(),
-		propertyName: (firstInterest && ((firstInterest.customPropertyName as string) || (firstInterest.propertyName as string))) || "",
-		propertyId: (firstInterest && (firstInterest.propertyId as string)) || "",
+		propertyName: resolvedPropertyName,
+		propertyId: resolvedPropertyId,
 		isCustomProperty: Boolean(firstInterest && (firstInterest.isCustomProperty as boolean)),
 		customPropertyPrice: String((firstInterest && (firstInterest.customPropertyPrice as number)) || ""),
 		paymentFrequency: String((firstInterest && firstInterest.paymentIntervalId) || ""),
