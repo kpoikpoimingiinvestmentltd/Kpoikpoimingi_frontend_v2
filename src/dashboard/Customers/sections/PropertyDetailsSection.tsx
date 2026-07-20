@@ -46,13 +46,30 @@ export default function PropertyDetailsSection({
 		"available",
 	);
 	const properties: PropertyData[] = React.useMemo(() => {
-		if (!propertiesData || typeof propertiesData !== "object") return [];
-		if (Array.isArray(propertiesData)) return propertiesData as PropertyData[];
-		const dataObj = propertiesData as Record<string, unknown>;
-		if (Array.isArray(dataObj.data as unknown)) return dataObj.data as unknown as PropertyData[];
-		if (Array.isArray(dataObj.items as unknown)) return dataObj.items as unknown as PropertyData[];
-		return [];
-	}, [propertiesData]);
+		let list: PropertyData[] = [];
+		if (propertiesData && typeof propertiesData === "object") {
+			if (Array.isArray(propertiesData)) list = propertiesData as PropertyData[];
+			else {
+				const dataObj = propertiesData as Record<string, unknown>;
+				if (Array.isArray(dataObj.data as unknown)) list = dataObj.data as unknown as PropertyData[];
+				else if (Array.isArray(dataObj.items as unknown)) list = dataObj.items as unknown as PropertyData[];
+			}
+		}
+
+		// Keep the currently selected property visible even if it's no longer "available"
+		if (form.propertyId && form.propertyName && !list.some((p) => String(p.id) === String(form.propertyId))) {
+			list = [
+				{
+					id: form.propertyId,
+					name: form.propertyName,
+					price: form.customPropertyPrice || "",
+				} as PropertyData,
+				...list,
+			];
+		}
+
+		return list;
+	}, [propertiesData, form.propertyId, form.propertyName, form.customPropertyPrice]);
 
 	React.useEffect(() => {
 		if (form.paymentFrequency) {
@@ -116,9 +133,9 @@ export default function PropertyDetailsSection({
 						</div>
 					) : !form.isCustomProperty ? (
 						<>
-							<Select value={form.propertyId} onValueChange={handlePropertySelect}>
+							<Select value={form.propertyId ? String(form.propertyId) : undefined} onValueChange={handlePropertySelect}>
 								<SelectTrigger className={twMerge(inputStyle, "w-full min-h-11 cursor-pointer")}>
-									<SelectValue placeholder="Select property or enter custom" />
+									<SelectValue placeholder="Select property or enter custom">{form.propertyName || undefined}</SelectValue>
 								</SelectTrigger>
 								<SelectContent>
 									{propertiesLoading ? (
@@ -128,7 +145,7 @@ export default function PropertyDetailsSection({
 									) : properties.length > 0 ? (
 										<>
 											{properties.map((prop) => (
-												<SelectItem key={prop.id} value={prop.id}>
+												<SelectItem key={prop.id} value={String(prop.id)}>
 													{prop.name}
 												</SelectItem>
 											))}
