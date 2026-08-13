@@ -9,6 +9,19 @@ export type PenaltyRecord = {
 	lateFee: number;
 	interestRate: string;
 	dueDate: string;
+	status: string;
+};
+
+export type PaidPenaltyRecord = {
+	id: string;
+	contractCode: string;
+	propertyName: string;
+	customerName: string;
+	lateFee: number;
+	status: string;
+	paymentNumber: number;
+	dueDate: string;
+	paidAt: string;
 };
 
 export type PaginationMeta = {
@@ -20,6 +33,11 @@ export type PaginationMeta = {
 
 export type PenaltiesResponse = {
 	data: PenaltyRecord[];
+	pagination: PaginationMeta;
+};
+
+export type PaidPenaltiesResponse = {
+	data: PaidPenaltyRecord[];
 	pagination: PaginationMeta;
 };
 
