@@ -12,7 +12,6 @@ interface ReportAnalyticsState {
 	vatToDate: string | null;
 	isFilterApplied: boolean;
 	// Penalties specific
-	penaltyView: "outstanding" | "history";
 	penaltyPage: number;
 	penaltySearch: string;
 	penaltyLimit: number;
@@ -35,7 +34,6 @@ const initialState: ReportAnalyticsState = {
 	vatToDate: null,
 	isFilterApplied: false,
 	// Penalties specific
-	penaltyView: "outstanding",
 	penaltyPage: 1,
 	penaltySearch: "",
 	penaltyLimit: 10,
@@ -77,10 +75,6 @@ const reportAnalyticsSlice = createSlice({
 		},
 		setPenaltyPage: (state, action: PayloadAction<number>) => {
 			state.penaltyPage = action.payload;
-		},
-		setPenaltyView: (state, action: PayloadAction<"outstanding" | "history">) => {
-			state.penaltyView = action.payload;
-			state.penaltyPage = 1;
 		},
 		setPenaltySearch: (state, action: PayloadAction<string>) => {
 			state.penaltySearch = action.payload;
@@ -132,7 +126,6 @@ export const {
 	setVatToDate,
 	setIsFilterApplied,
 	setPenaltyPage,
-	setPenaltyView,
 	setPenaltySearch,
 	setPenaltyLimit,
 	setPenaltySortBy,

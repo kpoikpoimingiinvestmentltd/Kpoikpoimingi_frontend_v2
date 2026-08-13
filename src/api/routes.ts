@@ -129,8 +129,6 @@ export const API_ROUTES = {
 		exportVATRecords: "/reports/export/csv",
 		getInterestPenaltiesExport: "/reports/interest-penalties/export/csv",
 		getPenalties: "/reports/penalties",
-		getPenaltiesHistory: "/reports/penalties/history",
-		getPenaltiesHistoryExport: "/reports/penalties/history/export/csv",
 	},
 	duePayment: {
 		getAllDuePayments: "/due-payments",

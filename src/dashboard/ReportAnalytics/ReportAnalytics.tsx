@@ -13,7 +13,6 @@ import {
 	setVatToDate,
 	setIsFilterApplied,
 	setPenaltyPage,
-	setPenaltyView,
 	setPenaltySearch,
 	setPenaltyLimit,
 	setPenaltySortBy,
@@ -30,7 +29,7 @@ import StatCard from "@/components/base/StatCard";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { tabListStyle, tabStyle } from "@/components/common/commonStyles";
 import { IconWrapper, ExportFileIcon } from "@/assets/icons";
-import { useExportInterestPenalties, useExportPaidInterestPenalties, useExportVATRecords } from "@/api/analytics";
+import { useExportInterestPenalties, useExportVATRecords } from "@/api/analytics";
 import ExportConfirmModal from "@/components/common/ExportConfirmModal";
 import EmptyData from "@/components/common/EmptyData";
 import SearchWithFilters from "@/components/common/SearchWithFilters";
@@ -39,13 +38,12 @@ import VATCollected from "./VATCollected";
 import InterestPenalties from "./InterestPenalties";
 import {
 	useGetPenalties,
-	useGetPaidPenalties,
 	useGetVATRecords,
 	useGetIncomeEarned,
 	useGetVatCollected,
 	useGetInterestPenalties,
 } from "@/api/analytics";
-import type { PenaltyRecord, PaidPenaltyRecord, VATRecord } from "@/types/reports";
+import type { PenaltyRecord, VATRecord } from "@/types/reports";
 import ActionButton from "@/components/base/ActionButton";
 import { toast } from "sonner";
 import { extractErrorMessage } from "@/lib/utils";
@@ -67,7 +65,6 @@ export default function ReportAnalytics() {
 		incomePeriod,
 		vatPeriod,
 		penaltyPeriod,
-		penaltyView,
 		penaltyPage,
 		penaltySearch,
 		penaltyLimit,
@@ -97,15 +94,11 @@ export default function ReportAnalytics() {
 		const urlPenaltySortBy = searchParams.get("penaltySortBy") || "createdAt";
 		const urlPenaltySortOrder = searchParams.get("penaltySortOrder") || "desc";
 		const urlPenaltySearch = searchParams.get("penaltySearch") || "";
-		const urlPenaltyViewRaw = searchParams.get("penaltyView") || "outstanding";
-		const urlPenaltyView =
-			urlPenaltyViewRaw === "history" || urlPenaltyViewRaw === "outstanding" ? urlPenaltyViewRaw : "outstanding";
 
 		// Dispatch to Redux to restore state
 		dispatch(setTab(urlTab as "vat" | "interest"));
 		dispatch(setVatPage(urlVatPage));
 		dispatch(setPenaltyPage(urlPenaltyPage));
-		dispatch(setPenaltyView(urlPenaltyView));
 		dispatch(setIncomePeriod(urlIncomePeriod));
 		dispatch(setVatPeriod(urlVatPeriod));
 		dispatch(setPenaltyPeriod(urlPenaltyPeriod));
@@ -126,7 +119,6 @@ export default function ReportAnalytics() {
 			params.set("tab", urlTab);
 			params.set("vatPage", String(urlVatPage));
 			params.set("penaltyPage", String(urlPenaltyPage));
-			params.set("penaltyView", urlPenaltyView);
 			params.set("incomePeriod", urlIncomePeriod);
 			params.set("vatPeriod", urlVatPeriod);
 			params.set("penaltyPeriod", urlPenaltyPeriod);
@@ -192,14 +184,14 @@ export default function ReportAnalytics() {
 		params.set("penaltyLimit", String(penaltyLimit));
 		params.set("penaltySortBy", penaltySortBy);
 		params.set("penaltySortOrder", penaltySortOrder);
-		params.set("penaltyView", penaltyView);
+		params.delete("penaltyView");
 		if (penaltySearch) {
 			params.set("penaltySearch", penaltySearch);
 		} else {
 			params.delete("penaltySearch");
 		}
 		setSearchParams(params);
-	}, [penaltyLimit, penaltySortBy, penaltySortOrder, penaltySearch, penaltyView]);
+	}, [penaltyLimit, penaltySortBy, penaltySortOrder, penaltySearch]);
 
 	const isEmpty = false;
 	const [vatExportOpen, setVatExportOpen] = useState(false);
@@ -230,30 +222,15 @@ export default function ReportAnalytics() {
 		penaltySearch || undefined,
 		penaltySortBy,
 		penaltySortOrder,
-		tab === "interest" && penaltyView === "outstanding",
-	);
-
-	const { data: paidPenaltiesData, isLoading: isPaidPenaltiesLoading } = useGetPaidPenalties(
-		penaltyPage,
-		penaltyLimit,
-		penaltySearch || undefined,
-		tab === "interest" && penaltyView === "history",
+		tab === "interest",
 	);
 
 	const penaltyRows: PenaltyRecord[] = penaltiesData?.data || [];
-	const paidPenaltyRows: PaidPenaltyRecord[] = paidPenaltiesData?.data || [];
-	const totalPages =
-		penaltyView === "history"
-			? paidPenaltiesData?.pagination?.totalPages || 1
-			: penaltiesData?.pagination?.totalPages || 1;
-	const isInterestTableLoading = penaltyView === "history" ? isPaidPenaltiesLoading : isPenaltiesLoading;
-	const interestTableEmpty =
-		penaltyView === "history" ? paidPenaltyRows.length === 0 : penaltyRows.length === 0;
+	const totalPages = penaltiesData?.pagination?.totalPages || 1;
 
 	// Hooks for exporting CSV
 	const exportVATMutation = useExportVATRecords();
 	const exportInterestMutation = useExportInterestPenalties();
-	const exportPaidInterestMutation = useExportPaidInterestPenalties();
 
 	// VAT Export handlers
 	const handleVATExportClick = async () => {
@@ -329,24 +306,18 @@ export default function ReportAnalytics() {
 
 	const handlePenaltyExportFiltered = async () => {
 		try {
-			const blob =
-				penaltyView === "history"
-					? await exportPaidInterestMutation.mutateAsync({ search: penaltySearch || "" })
-					: await exportInterestMutation.mutateAsync({
-							page: penaltyPage || 1,
-							limit: penaltyLimit || 10,
-							search: penaltySearch || "",
-							sortBy: penaltySortBy || "createdAt",
-							sortOrder: penaltySortOrder || "desc",
-							period: penaltyPeriod || "daily",
-						});
+			const blob = await exportInterestMutation.mutateAsync({
+				page: penaltyPage || 1,
+				limit: penaltyLimit || 10,
+				search: penaltySearch || "",
+				sortBy: penaltySortBy || "createdAt",
+				sortOrder: penaltySortOrder || "desc",
+				period: penaltyPeriod || "daily",
+			});
 			const url = URL.createObjectURL(blob);
 			const link = document.createElement("a");
 			link.href = url;
-			link.download =
-				penaltyView === "history"
-					? `interest-penalties-history-filtered-${new Date().toISOString().slice(0, 10)}.csv`
-					: `interest-penalties-filtered-${new Date().toISOString().slice(0, 10)}.csv`;
+			link.download = `interest-penalties-filtered-${new Date().toISOString().slice(0, 10)}.csv`;
 			document.body.appendChild(link);
 			link.click();
 			document.body.removeChild(link);
@@ -360,24 +331,18 @@ export default function ReportAnalytics() {
 
 	const handlePenaltyExportAll = async () => {
 		try {
-			const blob =
-				penaltyView === "history"
-					? await exportPaidInterestMutation.mutateAsync({ search: "" })
-					: await exportInterestMutation.mutateAsync({
-							page: 1,
-							limit: 10,
-							search: "",
-							sortBy: "createdAt",
-							sortOrder: "desc",
-							period: penaltyPeriod || "daily",
-						});
+			const blob = await exportInterestMutation.mutateAsync({
+				page: 1,
+				limit: 10,
+				search: "",
+				sortBy: "createdAt",
+				sortOrder: "desc",
+				period: penaltyPeriod || "daily",
+			});
 			const url = URL.createObjectURL(blob);
 			const link = document.createElement("a");
 			link.href = url;
-			link.download =
-				penaltyView === "history"
-					? `interest-penalties-history-${new Date().toISOString().slice(0, 10)}.csv`
-					: `interest-penalties-${new Date().toISOString().slice(0, 10)}.csv`;
+			link.download = `interest-penalties-${new Date().toISOString().slice(0, 10)}.csv`;
 			document.body.appendChild(link);
 			link.click();
 			document.body.removeChild(link);
@@ -550,21 +515,11 @@ export default function ReportAnalytics() {
 							type="button"
 							className="bg-primary/10 text-primary hover:bg-primary/20 flex items-center gap-2"
 							onClick={handlePenaltyExportClick}
-							disabled={
-								penaltyView === "history"
-									? exportPaidInterestMutation.isPending
-									: exportInterestMutation.isPending
-							}>
+							disabled={exportInterestMutation.isPending}>
 							<IconWrapper className="text-base">
 								<ExportFileIcon />
 							</IconWrapper>
-							<span className="text-sm">
-								{(penaltyView === "history"
-									? exportPaidInterestMutation.isPending
-									: exportInterestMutation.isPending)
-									? "Exporting..."
-									: "Export"}
-							</span>
+							<span className="text-sm">{exportInterestMutation.isPending ? "Exporting..." : "Export"}</span>
 						</ActionButton>
 					)}
 				</div>
@@ -603,22 +558,6 @@ export default function ReportAnalytics() {
 												</TabsTrigger>
 											</TabsList>
 										</Tabs>
-										{tab === "interest" && (
-											<Tabs
-												value={penaltyView}
-												onValueChange={(v) =>
-													dispatch(setPenaltyView(v as "outstanding" | "history"))
-												}>
-												<TabsList className={tabListStyle}>
-													<TabsTrigger className={tabStyle} value="outstanding">
-														Outstanding
-													</TabsTrigger>
-													<TabsTrigger className={tabStyle} value="history">
-														Payment History
-													</TabsTrigger>
-												</TabsList>
-											</Tabs>
-										)}
 									</div>
 
 									<div className="flex items-center justify-end">
@@ -681,31 +620,19 @@ export default function ReportAnalytics() {
 										) : (
 											<VATCollected rows={vatRows} page={vatPage} pages={vatTotalPages} onPageChange={(p) => dispatch(setVatPage(p))} />
 										)
-									) : isInterestTableLoading ? (
-										<TableSkeleton rows={5} cols={7} />
-									) : interestTableEmpty ? (
+									) : isPenaltiesLoading ? (
+										<TableSkeleton rows={5} cols={9} />
+									) : penaltyRows.length === 0 ? (
 										<div className="py-8">
-											<EmptyData
-												text={
-													penaltyView === "history"
-														? "No paid late fees recorded yet."
-														: "No interest penalties found for the selected filters."
-												}
-											/>
+											<EmptyData text="No interest penalties found for the selected filters." />
 										</div>
 									) : (
 										<InterestPenalties
-											view={penaltyView}
 											rows={penaltyRows}
-											historyRows={paidPenaltyRows}
 											page={penaltyPage}
 											pages={totalPages}
 											onPageChange={(p) => dispatch(setPenaltyPage(p))}
-											pagination={
-												penaltyView === "history"
-													? paidPenaltiesData?.pagination
-													: penaltiesData?.pagination
-											}
+											pagination={penaltiesData?.pagination}
 										/>
 									)}
 								</CustomCard>
@@ -732,11 +659,7 @@ export default function ReportAnalytics() {
 					filterLabels={getPenaltyFilterLabels()}
 					onExportFiltered={handlePenaltyExportFiltered}
 					onExportAll={handlePenaltyExportAll}
-					isLoading={
-						penaltyView === "history"
-							? exportPaidInterestMutation.isPending
-							: exportInterestMutation.isPending
-					}
+					isLoading={exportInterestMutation.isPending}
 				/>
 			</CustomCard>
 		</div>
