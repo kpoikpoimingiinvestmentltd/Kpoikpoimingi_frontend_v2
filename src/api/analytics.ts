@@ -3,7 +3,7 @@ import type { UseQueryResult } from "@tanstack/react-query";
 import { apiGet, apiGetFile } from "@/services/apiClient";
 import { API_ROUTES } from "./routes";
 import type { IncomeAnalytics } from "@/types/analytics";
-import type { PenaltiesResponse, PaidPenaltiesResponse, VATResponse, IncomeEarnedResponse, VatCollectedResponse, InterestPenaltiesResponse } from "@/types/reports";
+import type { PenaltiesResponse, VATResponse, IncomeEarnedResponse, VatCollectedResponse, InterestPenaltiesResponse } from "@/types/reports";
 
 export type AnalyticsOverview = {
 	totalPropertyRequests: number;
@@ -167,30 +167,6 @@ export function useGetPenalties(
 	}) as UseQueryResult<PenaltiesResponse, unknown>;
 }
 
-export async function getPaidPenalties(page = 1, limit = 10, search?: string): Promise<PaidPenaltiesResponse> {
-	const params = new URLSearchParams();
-	params.append("page", String(page));
-	params.append("limit", String(limit));
-	if (search) params.append("search", search);
-
-	const qs = `?${params.toString()}`;
-	const url = `${API_ROUTES.reports.getPenaltiesHistory}${qs}`;
-	return apiGet<PaidPenaltiesResponse>(url) as Promise<PaidPenaltiesResponse>;
-}
-
-export function useGetPaidPenalties(
-	page = 1,
-	limit = 10,
-	search?: string,
-	enabled = true
-): UseQueryResult<PaidPenaltiesResponse, unknown> {
-	return useQuery({
-		queryKey: ["paidPenalties", page, limit, search],
-		queryFn: async () => getPaidPenalties(page, limit, search),
-		enabled,
-	}) as UseQueryResult<PaidPenaltiesResponse, unknown>;
-}
-
 export async function getVATRecords(
 	page = 1,
 	limit = 10,
@@ -296,20 +272,6 @@ export function useExportInterestPenalties() {
 				payload?.sortOrder || "desc",
 				payload?.period || "daily"
 			),
-	});
-}
-
-export async function exportPaidInterestPenalties(search = "") {
-	const params = new URLSearchParams();
-	if (search) params.append("search", search);
-	const query = params.toString();
-	const url = `${API_ROUTES.reports.getPenaltiesHistoryExport}${query ? `?${query}` : ""}`;
-	return apiGetFile(url) as Promise<Blob>;
-}
-
-export function useExportPaidInterestPenalties() {
-	return useMutation<Blob, unknown, { search?: string }, unknown>({
-		mutationFn: (payload) => exportPaidInterestPenalties(payload?.search || ""),
 	});
 }
 
