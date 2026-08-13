@@ -77,7 +77,7 @@ export default function ReportAnalytics() {
 		const urlPenaltyPage = parseInt(searchParams.get("penaltyPage") || "1", 10);
 		const urlIncomePeriod = searchParams.get("incomePeriod") || "daily";
 		const urlVatPeriod = searchParams.get("vatPeriod") || "daily";
-		const urlPenaltyPeriod = searchParams.get("penaltyPeriod") || "daily";
+		const urlPenaltyPeriod = searchParams.get("penaltyPeriod") || "monthly";
 		const urlVatLimit = parseInt(searchParams.get("vatLimit") || "10", 10);
 		const urlVatSortBy = searchParams.get("vatSortBy") || "createdAt";
 		const urlVatSortOrder = searchParams.get("vatSortOrder") || "desc";
