@@ -1,11 +1,17 @@
 import { useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import type { RootState } from "@/store";
-import { isTokenExpiringSoon, loadAuthFromStorage } from "@/services/authPersistence";
+import {
+	expiresInToExpiresAt,
+	isTokenExpiringSoon,
+	loadAuthFromStorage,
+	saveAuthToStorage,
+} from "@/services/authPersistence";
 import { apiPost } from "@/services/apiClient";
 import { API_ROUTES } from "@/api/routes";
-import { setAuth } from "@/store/authSlice";
-import { saveAuthToStorage } from "@/services/authPersistence";
+import { clearAuth, setAuth } from "@/store/authSlice";
+
+const MAX_TIMEOUT_MS = 2_147_483_647; // setTimeout 32-bit limit
 
 export function AuthInitializer() {
 	const dispatch = useDispatch();
@@ -14,18 +20,16 @@ export function AuthInitializer() {
 	const initializeRef = useRef(false);
 
 	useEffect(() => {
-		if (initializeRef.current) return; // Prevent multiple initializations
+		if (initializeRef.current) return;
 		initializeRef.current = true;
 
 		const initializeAuth = async () => {
 			const storedAuth = loadAuthFromStorage();
 
-			// No stored auth data, nothing to do
 			if (!storedAuth || !storedAuth.accessToken) {
 				return;
 			}
 
-			// Token is expiring soon, refresh it
 			if (storedAuth.expiresAt && isTokenExpiringSoon(storedAuth.expiresAt)) {
 				if (storedAuth.refreshToken) {
 					try {
@@ -34,15 +38,17 @@ export function AuthInitializer() {
 							accessToken: string;
 							refreshToken: string;
 							expiresIn?: number;
-						}>(API_ROUTES.auth.refreshToken, { refreshToken: storedAuth.refreshToken });
-
-						const expiresAt = response.expiresIn ? Date.now() + response.expiresIn * 1000 : undefined;
+						}>(
+							API_ROUTES.auth.refreshToken,
+							{ refreshToken: storedAuth.refreshToken },
+							{ skipAuth: true },
+						);
 
 						saveAuthToStorage({
 							id: response.id,
 							accessToken: response.accessToken,
 							refreshToken: response.refreshToken,
-							expiresAt,
+							expiresAt: expiresInToExpiresAt(response.expiresIn),
 						});
 
 						dispatch(
@@ -52,15 +58,13 @@ export function AuthInitializer() {
 								refreshToken: response.refreshToken,
 							}),
 						);
-					} catch (error) {
-						// Refresh failed, clear auth
+					} catch {
 						saveAuthToStorage(null);
-						dispatch(setAuth({ id: null, accessToken: null, refreshToken: null }));
+						dispatch(clearAuth());
 					}
 				} else {
-					// No refresh token, clear auth
 					saveAuthToStorage(null);
-					dispatch(setAuth({ id: null, accessToken: null, refreshToken: null }));
+					dispatch(clearAuth());
 				}
 			}
 		};
@@ -68,24 +72,20 @@ export function AuthInitializer() {
 		initializeAuth();
 	}, [dispatch]);
 
-	// Auto-refresh token when expiring soon
 	useEffect(() => {
 		if (!refreshToken || !authToken) return;
 
 		const storedAuth = loadAuthFromStorage();
 		if (!storedAuth?.expiresAt) return;
 
-		// Calculate time until expiration
 		const timeUntilExpiration = storedAuth.expiresAt - Date.now();
-		const bufferTime = 5 * 60 * 1000; // Refresh 5 minutes before expiration
+		const bufferTime = 5 * 60 * 1000;
 
 		if (timeUntilExpiration <= 0) {
-			// Already expired, don't set a timer
 			return;
 		}
 
-		// Set a timer to refresh before expiration
-		const refreshTime = timeUntilExpiration - bufferTime;
+		const refreshTime = Math.min(timeUntilExpiration - bufferTime, MAX_TIMEOUT_MS);
 		if (refreshTime > 0) {
 			const timer = setTimeout(async () => {
 				try {
@@ -94,15 +94,13 @@ export function AuthInitializer() {
 						accessToken: string;
 						refreshToken: string;
 						expiresIn?: number;
-					}>(API_ROUTES.auth.refreshToken, { refreshToken });
-
-					const expiresAt = response.expiresIn ? Date.now() + response.expiresIn * 1000 : undefined;
+					}>(API_ROUTES.auth.refreshToken, { refreshToken }, { skipAuth: true });
 
 					saveAuthToStorage({
 						id: response.id,
 						accessToken: response.accessToken,
 						refreshToken: response.refreshToken,
-						expiresAt,
+						expiresAt: expiresInToExpiresAt(response.expiresIn),
 					});
 
 					dispatch(
@@ -112,10 +110,9 @@ export function AuthInitializer() {
 							refreshToken: response.refreshToken,
 						}),
 					);
-				} catch (error) {
-					// Refresh failed, clear auth
+				} catch {
 					saveAuthToStorage(null);
-					dispatch(setAuth({ id: null, accessToken: null, refreshToken: null }));
+					dispatch(clearAuth());
 				}
 			}, refreshTime);
 
@@ -123,5 +120,5 @@ export function AuthInitializer() {
 		}
 	}, [authToken, refreshToken, dispatch]);
 
-	return null; // This component doesn't render anything
+	return null;
 }
