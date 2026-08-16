@@ -1,5 +1,9 @@
 import { store } from "@/store";
-import { saveAuthToStorage, loadAuthFromStorage } from "./authPersistence";
+import {
+  expiresInToExpiresAt,
+  saveAuthToStorage,
+  loadAuthFromStorage,
+} from "./authPersistence";
 import { API_ROUTES } from "@/api/routes";
 import { _constants } from "./constants";
 import { clearAuth } from "@/store/authSlice";
@@ -67,15 +71,11 @@ async function doRefresh(refreshToken?: string) {
     });
   }
 
-  const expiresAt = data?.expiresIn
-    ? Date.now() + data.expiresIn * 1000
-    : undefined;
-
   saveAuthToStorage({
     id: data.id,
     accessToken: data.accessToken,
     refreshToken: data.refreshToken,
-    expiresAt,
+    expiresAt: expiresInToExpiresAt(data?.expiresIn),
   });
 
   // Update Redux so getTokenFromStore() returns the new token immediately

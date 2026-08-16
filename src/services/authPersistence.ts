@@ -28,6 +28,18 @@ export function loadAuthFromStorage(): StoredAuthData | null {
 	}
 }
 
+/**
+ * Backend returns `expiresIn` as an absolute Unix timestamp in ms
+ * (Date.now() + TTL). Older/alternate APIs may return a duration in seconds.
+ */
+export function expiresInToExpiresAt(expiresIn?: number): number | undefined {
+	if (!expiresIn) return undefined;
+	// Absolute ms timestamp (e.g. 1749527333498)
+	if (expiresIn > 1_000_000_000_000) return expiresIn;
+	// Duration in seconds (e.g. 3600)
+	return Date.now() + expiresIn * 1000;
+}
+
 export function isTokenExpired(expiresAt?: number): boolean {
 	if (!expiresAt) return false;
 	return Date.now() >= expiresAt;
