@@ -71,7 +71,7 @@ function PieTooltip({
 	if (!active || !payload?.length) return null;
 	const item = payload[0];
 	return (
-		<div className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm shadow-lg dark:border-neutral-700 dark:bg-neutral-900">
+		<div className="relative z-50 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm shadow-lg dark:border-neutral-700 dark:bg-neutral-900">
 			<p className="text-xs text-muted-foreground mb-0.5">{item.name}</p>
 			<p className="font-semibold text-slate-900 dark:text-slate-100">{formatNaira(item.value ?? 0)}</p>
 		</div>
@@ -106,29 +106,9 @@ export function IndexPieChart() {
 	}
 
 	return (
-		<div className="relative w-full h-64">
-			<ResponsiveContainer width="100%" height="100%">
-				<PieChart>
-					<Pie
-						data={pieData}
-						dataKey="value"
-						nameKey="name"
-						cx="50%"
-						cy="50%"
-						innerRadius="62%"
-						outerRadius="88%"
-						paddingAngle={4}
-						cornerRadius={8}
-						stroke="none">
-						{pieData.map((entry) => (
-							<Cell key={entry.name} fill={entry.color} />
-						))}
-					</Pie>
-					<Tooltip content={<PieTooltip />} />
-				</PieChart>
-			</ResponsiveContainer>
-
-			<div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+		<div className="relative w-full h-64 overflow-visible">
+			{/* Center labels sit under the chart so tooltips stay on top */}
+			<div className="pointer-events-none absolute inset-0 z-0 flex flex-col items-center justify-center">
 				<p className={`text-2xl font-semibold tracking-tight ${isDark ? "text-white" : "text-slate-800"}`}>
 					{formatCompact(totalIncome)}
 				</p>
@@ -141,6 +121,33 @@ export function IndexPieChart() {
 					}}>
 					Yearly
 				</span>
+			</div>
+
+			<div className="relative z-10 h-full w-full">
+				<ResponsiveContainer width="100%" height="100%">
+					<PieChart>
+						<Pie
+							data={pieData}
+							dataKey="value"
+							nameKey="name"
+							cx="50%"
+							cy="50%"
+							innerRadius="62%"
+							outerRadius="88%"
+							paddingAngle={4}
+							cornerRadius={8}
+							stroke="none">
+							{pieData.map((entry) => (
+								<Cell key={entry.name} fill={entry.color} />
+							))}
+						</Pie>
+						<Tooltip
+							content={<PieTooltip />}
+							wrapperStyle={{ zIndex: 50, outline: "none" }}
+							allowEscapeViewBox={{ x: true, y: true }}
+						/>
+					</PieChart>
+				</ResponsiveContainer>
 			</div>
 		</div>
 	);
