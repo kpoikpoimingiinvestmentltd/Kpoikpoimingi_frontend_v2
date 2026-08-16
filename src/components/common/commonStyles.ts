@@ -22,9 +22,10 @@ export const tableHeaderRowStyle =
 	"bg-slate-100 dark:bg-slate-800 h-12 overflow-hidden py-4 rounded-lg [&_tr]:border-0 [&_th]:text-slate-700 dark:text-slate-200 [&_th]:font-semibold";
 
 export const tabStyle =
-	"data-[state=active]:text-primary dark:data-[state=active]:text-primary border-0 bg-transparent data-[state=active]:shadow-none data-[state=active]:underline underline-offset-[6px] text-[.9rem] justify-start p-0 justify-start disabled:cursor-not-allowed disabled:opacity-50";
+	"data-[state=active]:text-primary dark:data-[state=active]:text-primary border-0 bg-transparent data-[state=active]:bg-transparent dark:data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:underline underline-offset-[6px] text-[.9rem] justify-start p-0 disabled:cursor-not-allowed disabled:opacity-50";
 
-export const tabListStyle = "bg-transparent flex-wrap gap-5 p-0 h-auto";
+export const tabListStyle =
+	"bg-transparent dark:bg-transparent flex-wrap gap-5 p-0 h-auto rounded-none";
 
 export const labelStyle = (style?: string) => {
 	return twMerge("text-sm block mb-1.5 dark:text-gray-200 text-slate-800", style);
