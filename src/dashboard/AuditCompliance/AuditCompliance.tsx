@@ -66,13 +66,31 @@ function formatArea(entityType?: string | null): string | null {
  * Turn raw audit strings like "CREATED CONTRACT" or
  * "UPDATE CUSTOMER: CUS-001 - Ada" into plain English.
  */
-function explainAction(raw?: string | null): { summary: string; detail?: string } {
+function splitActionParts(action: string): { head: string; detail?: string } {
+	const colonIdx = action.indexOf(":");
+	const dashIdx = action.indexOf(" - ");
+	let cut = -1;
+	let sepLen = 0;
+	if (colonIdx >= 0 && (dashIdx < 0 || colonIdx < dashIdx)) {
+		cut = colonIdx;
+		sepLen = 1;
+	} else if (dashIdx >= 0) {
+		cut = dashIdx;
+		sepLen = 3;
+	}
+	if (cut < 0) return { head: action.trim() };
+	const head = action.slice(0, cut).trim();
+	const detail = action.slice(cut + sepLen).trim();
+	return { head, detail: detail || undefined };
+}
+
+function explainAction(raw?: string | null): { summary: string; detail?: string; isSystem?: boolean } {
 	if (!raw?.trim()) return { summary: "Did something in the system" };
 
 	const action = raw.trim();
-	const [head, ...rest] = action.split(/[:\-–—]/).map((s) => s.trim()).filter(Boolean);
-	const detail = rest.length ? rest.join(" — ") : undefined;
+	const { head, detail } = splitActionParts(action);
 	const key = head.toUpperCase();
+	const isSystem = key.startsWith("SYSTEM ");
 
 	const known: Record<string, string> = {
 		"CREATED CONTRACT": "Created a new contract",
@@ -103,6 +121,8 @@ function explainAction(raw?: string | null): { summary: string; detail?: string 
 		"UPDATED VAT RATE": "Updated the VAT rate",
 		"UPDATED INTEREST RATE": "Updated the interest rate",
 		"UPDATED PENALTY RATE": "Updated the penalty rate",
+		"CREATED PAYMENT LINK": "Created a payment link",
+		"SYSTEM CREATED PAYMENT LINK": "Automatically created a payment link (payment reminder)",
 		"CATEGORY CREATED": "Created a category",
 		"SUBCATEGORY ADDED": "Added a subcategory",
 		"CATEGORY UPDATED": "Updated a category",
@@ -112,19 +132,17 @@ function explainAction(raw?: string | null): { summary: string; detail?: string 
 	};
 
 	if (known[key]) {
-		return { summary: known[key], detail };
+		return { summary: known[key], detail, isSystem };
 	}
 
-	// Prefix matches e.g. "CREATED USER - Jane"
 	for (const [pattern, summary] of Object.entries(known)) {
 		if (key.startsWith(pattern)) {
 			const leftover = head.slice(pattern.length).replace(/^[\s\-–—:]+/, "").trim();
-			return { summary, detail: leftover || detail };
+			return { summary, detail: leftover || detail, isSystem };
 		}
 	}
 
-	// Generic fallback: "CREATED SOMETHING" → "Created something"
-	const softened = titleCase(head)
+	const softened = titleCase(head.replace(/^SYSTEM\s+/i, ""))
 		.replace(/\bCreated\b/i, "Created")
 		.replace(/\bUpdated\b/i, "Updated")
 		.replace(/\bDeleted\b/i, "Deleted")
@@ -132,7 +150,11 @@ function explainAction(raw?: string | null): { summary: string; detail?: string 
 		.replace(/\bLogged In\b/i, "Logged in")
 		.replace(/\bLogged Out\b/i, "Logged out");
 
-	return { summary: softened, detail };
+	return {
+		summary: isSystem ? `Automatically ${softened.charAt(0).toLowerCase() + softened.slice(1)}` : softened,
+		detail,
+		isSystem,
+	};
 }
 
 function formatWhen(dateStr: string, timeStr: string): string {
@@ -182,9 +204,12 @@ function readFiltersFromParams(params: URLSearchParams): Record<string, string> 
 }
 
 function ActivityRow({ log }: { log: AuditLogItem }) {
-	const { summary, detail } = explainAction(log.action);
-	const who = log.staffName || "Unknown staff";
-	const role = formatRole(log.role);
+	const { summary, detail, isSystem } = explainAction(log.action);
+	const automated =
+		isSystem ||
+		(!log.staffName && /^(SYSTEM\b|CREATED PAYMENT LINK)/i.test(log.action || ""));
+	const who = log.staffName || (automated ? "System" : "Unknown staff");
+	const role = log.staffName ? formatRole(log.role) : automated ? "Automated" : formatRole(log.role);
 	const area = formatArea(log.entityType);
 	const when = formatWhen(log.date, log.time);
 
@@ -198,7 +223,7 @@ function ActivityRow({ log }: { log: AuditLogItem }) {
 					</p>
 					{detail && (
 						<p className="text-sm text-slate-600 dark:text-slate-300 break-words">
-							<span className="text-muted-foreground">Details: </span>
+							<span className="text-muted-foreground">Customer: </span>
 							{detail}
 						</p>
 					)}
