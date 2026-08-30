@@ -50,6 +50,7 @@ export const API_ROUTES = {
 		getCustomerContracts: (customerId: string) => `/customer/${customerId}/contracts`,
 		getCustomerPayments: (customerId: string) => `/customer/payments/${customerId}`,
 		getCustomerDocuments: (customerId: string) => `/customer/documents/${customerId}`,
+		deleteCustomerDocument: (mediaId: string) => `/customer/documents/file/${mediaId}`,
 		getCustomerReceipts: (customerId: string) => `/customer/receipts/${customerId}`,
 		sendEmailSpecific: "/customer/send-email/specific",
 		sendEmailBroadcast: "/customer/send-email/broadcast",
