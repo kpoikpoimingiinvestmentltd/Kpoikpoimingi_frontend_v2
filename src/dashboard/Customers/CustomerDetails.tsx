@@ -167,7 +167,7 @@ export default function CustomerDetails() {
 							<TabReceipt receipts={receipts} />
 						</TabsContent>
 						<TabsContent value="document">
-							<TabDocument documents={documents} />
+							<TabDocument documents={documents} customerId={id} />
 						</TabsContent>
 						<TabsContent value="contract">
 							<TabContractInfo contracts={contracts} isLoading={isLoadingContracts} />

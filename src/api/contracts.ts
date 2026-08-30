@@ -412,6 +412,7 @@ export function useGetContractPayments(contractId: string | undefined, enabled =
 }
 
 export type SignedContractItem = {
+	id?: string;
 	fileUrl: string;
 };
 
