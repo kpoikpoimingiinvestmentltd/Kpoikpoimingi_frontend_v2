@@ -85,6 +85,7 @@ export const API_ROUTES = {
 		editContract: (id: string) => `/contracts/${id}`,
 		getContractPayments: (id: string) => `/contracts/${id}/payments`,
 		getSignedContract: (id: string) => `/contracts/${id}/signed-contract`,
+		getContractDocuments: (id: string) => `/contracts/${id}/documents`,
 		getAllContracts: "/contracts",
 		getAllContractDebts: "/contracts/debts",
 		getAllContractDebtsExport: "/contracts/debts/export/csv",
