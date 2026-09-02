@@ -158,6 +158,18 @@ export default function AddProperties({ propertyRequestId, onComplete }: { prope
 		e.currentTarget.blur();
 	};
 
+	// Format number with commas (e.g., 1000000 -> 1,000,000)
+	const formatPriceDisplay = (value: string | number) => {
+		if (!value) return "";
+		const numStr = String(value).replace(/,/g, ""); // Remove existing commas
+		return numStr.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+	};
+
+	// Remove commas and convert to number
+	const parsePriceValue = (value: string) => {
+		return value.replace(/,/g, "");
+	};
+
 	const onSubmit = async (formData: PropertyFormData) => {
 		if (uploadedMediaKeys.length === 0) {
 			toast.error("Please upload at least one property image");
@@ -348,15 +360,21 @@ export default function AddProperties({ propertyRequestId, onComplete }: { prope
 									name="price"
 									control={control}
 									rules={{ required: "Price is required", min: { value: 0, message: "Price must be greater than 0" } }}
-									render={({ field }) => (
+									render={({ field: { value, onChange, ...field } }) => (
 										<div>
 											<CustomInput
 												{...field}
+												value={formatPriceDisplay(value)}
+												onChange={(e) => {
+													const inputValue = e.target.value;
+													const cleanedValue = parsePriceValue(inputValue);
+													onChange(cleanedValue || "0");
+												}}
 												label="Price*"
 												labelClassName="block text-sm dark:text-gray-300 mb-2"
-												type="number"
+												type="text"
 												className={twMerge(inputStyle)}
-												onWheel={handleNumberInputWheel}
+												placeholder="0"
 											/>
 											{errors.price && <p className="text-red-500 text-sm mt-1">{errors.price.message}</p>}
 										</div>

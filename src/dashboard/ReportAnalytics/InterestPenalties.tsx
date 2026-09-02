@@ -15,7 +15,8 @@ function formatCurrency(amount: number): string {
 	return `₦${amount.toLocaleString()}`;
 }
 
-function formatDate(dateString: string): string {
+function formatDate(dateString: string | null | undefined): string {
+	if (!dateString) return "—";
 	try {
 		const date = new Date(dateString);
 		return date.toLocaleDateString("en-NG", {
@@ -26,6 +27,11 @@ function formatDate(dateString: string): string {
 	} catch {
 		return dateString;
 	}
+}
+
+function formatStatus(status: string): string {
+	if (!status) return "—";
+	return status.charAt(0) + status.slice(1).toLowerCase();
 }
 
 export default function InterestPenalties({ rows, page, pages, onPageChange, pagination }: InterestPenaltiesProps) {
@@ -45,19 +51,23 @@ export default function InterestPenalties({ rows, page, pages, onPageChange, pag
 							<TableHead>Total Amount</TableHead>
 							<TableHead>Late Fee</TableHead>
 							<TableHead>Interest Rate</TableHead>
+							<TableHead>Status</TableHead>
 							<TableHead>Due Date</TableHead>
+							<TableHead>Paid At</TableHead>
 						</TableRow>
 					</TableHeader>
 					<TableBody>
 						{rows.map((row: PenaltyRecord, idx: number) => (
-							<TableRow key={idx} className="hover:bg-[#F6FBFF] dark:hover:bg-neutral-900/50">
+							<TableRow key={row.id || idx} className="hover:bg-[#F6FBFF] dark:hover:bg-neutral-900/50">
 								<TableCell className="py-4">{row.contractCode}</TableCell>
 								<TableCell className="py-4">{row.propertyName}</TableCell>
 								<TableCell className="py-4">{row.customerName}</TableCell>
 								<TableCell className="py-4">{formatCurrency(row.totalAmount)}</TableCell>
 								<TableCell className="py-4">{formatCurrency(row.lateFee)}</TableCell>
 								<TableCell className="py-4">{row.interestRate}</TableCell>
+								<TableCell className="py-4">{formatStatus(row.status)}</TableCell>
 								<TableCell className="py-4">{formatDate(row.dueDate)}</TableCell>
+								<TableCell className="py-4">{formatDate(row.paidAt)}</TableCell>
 							</TableRow>
 						))}
 					</TableBody>

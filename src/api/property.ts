@@ -43,7 +43,13 @@ export async function getAllProperties(
 	if (stockStatus) qs.append("stockStatus", stockStatus);
 
 	const url = `${API_ROUTES.property.getAllProperties}${qs.toString() ? `?${qs.toString()}` : ""}`;
-	return apiGet(url);
+	const apiKey = import.meta.env.VITE_EXTERNAL_API_KEY;
+
+	return apiGet(url, {
+		headers: {
+			"x-api-key": apiKey,
+		},
+	});
 }
 
 export function useGetAllProperties(

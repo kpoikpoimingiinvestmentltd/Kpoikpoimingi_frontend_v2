@@ -50,7 +50,14 @@ export function transformCustomerToInstallmentForm(customer: unknown): Installme
 		dob: "",
 		address: "",
 		isDriver: undefined,
-		nextOfKin: { fullName: "", phone: "", relationship: "", spouseName: "", spousePhone: "", address: "" },
+		nextOfKin: {
+			fullName: "",
+			phone: "",
+			relationship: "",
+			spouseName: "",
+			spousePhone: "",
+			address: "",
+		},
 		propertyId: "",
 		propertyName: "",
 		isCustomProperty: false,
@@ -60,8 +67,20 @@ export function transformCustomerToInstallmentForm(customer: unknown): Installme
 		paymentDurationUnit: "",
 		downPayment: "",
 		amountAvailable: "",
-		clarification: { previousAgreement: null, completedAgreement: null, prevCompany: "", reason: "" },
-		employment: { status: "", employerName: "", employerAddress: "", companyName: "", businessAddress: "", homeAddress: "" },
+		clarification: {
+			previousAgreement: null,
+			completedAgreement: null,
+			prevCompany: "",
+			reason: "",
+		},
+		employment: {
+			status: "",
+			employerName: "",
+			employerAddress: "",
+			companyName: "",
+			businessAddress: "",
+			homeAddress: "",
+		},
 		guarantors: [],
 	};
 
@@ -86,6 +105,24 @@ export function transformCustomerToInstallmentForm(customer: unknown): Installme
 			? (c.propertyInterestRequest[0] as Record<string, unknown>)
 			: undefined;
 
+	const nestedProperty =
+		firstInterest?.property && typeof firstInterest.property === "object"
+			? (firstInterest.property as Record<string, unknown>)
+			: undefined;
+
+	const resolvedPropertyId =
+		firstInterest?.propertyId != null && String(firstInterest.propertyId).trim() !== ""
+			? String(firstInterest.propertyId)
+			: nestedProperty?.id != null
+				? String(nestedProperty.id)
+				: "";
+
+	const resolvedPropertyName =
+		(firstInterest?.customPropertyName as string) ||
+		(firstInterest?.propertyName as string) ||
+		(nestedProperty?.name as string) ||
+		"";
+
 	const guarantorsArray = Array.isArray(c.guarantors) ? (c.guarantors as unknown[]) : [];
 
 	return {
@@ -93,7 +130,7 @@ export function transformCustomerToInstallmentForm(customer: unknown): Installme
 		email: (c.email || "") as string,
 		whatsapp: toLocalPhone((c.phoneNumber || c.phone || "") as string),
 		dob: toDateInput(c.dateOfBirth ?? c.dob),
-		address: (c.homeAddress || (c.employmentDetails && (c.employmentDetails as Record<string, unknown>).homeAddress) || c.address || "") as string,
+		address: (c.homeAddress || (c.employmentDetails && (c.employmentDetails as Record<string, unknown>)?.homeAddress) || c.address || "") as string,
 		isDriver: c.isDriver === "Yes" || c.isDriver === true ? true : false,
 		nextOfKin: (() => {
 			const nk = (c.nextOfKin as Record<string, unknown>) || {};
@@ -103,9 +140,11 @@ export function transformCustomerToInstallmentForm(customer: unknown): Installme
 			const spouseFull = (nk.spouseFullName as string) || (nk.spouseName as string) || "";
 			const spousePhoneRaw = (nk.spousePhone as string) || "";
 
-			const isSpouse = typeof rel === "string" && rel.toLowerCase().includes("spouse");
+			const isSpouse =
+				nk.isNextOfKinSpouse === "true" || nk.isNextOfKinSpouse === true || (typeof rel === "string" && rel.toLowerCase().includes("spouse"));
 
 			return {
+				isNextOfKinSpouse: isSpouse,
 				fullName: full,
 				phone: toLocalPhone(phoneNum),
 				relationship: rel.charAt(0).toUpperCase() + rel.slice(1).toLowerCase(),
@@ -114,8 +153,8 @@ export function transformCustomerToInstallmentForm(customer: unknown): Installme
 				address: ((nk.spouseAddress as string) || (nk.address as string) || "") as string,
 			};
 		})(),
-		propertyName: (firstInterest && ((firstInterest.customPropertyName as string) || (firstInterest.propertyName as string))) || "",
-		propertyId: (firstInterest && (firstInterest.propertyId as string)) || "",
+		propertyName: resolvedPropertyName,
+		propertyId: resolvedPropertyId,
 		isCustomProperty: Boolean(firstInterest && (firstInterest.isCustomProperty as boolean)),
 		customPropertyPrice: String((firstInterest && (firstInterest.customPropertyPrice as number)) || ""),
 		paymentFrequency: String((firstInterest && firstInterest.paymentIntervalId) || ""),
@@ -148,34 +187,31 @@ export function transformCustomerToInstallmentForm(customer: unknown): Installme
 			reason: (c.purposeOfProperty || "") as string,
 		},
 		employment: {
-			status: String(
-				(c.employmentDetails && (c.employmentDetails as Record<string, unknown>).employmentStatusId) ||
-					(c.employmentDetails &&
-					(c.employmentDetails as Record<string, unknown>).employmentStatus &&
-					typeof (c.employmentDetails as Record<string, unknown>).employmentStatus === "object" &&
-					"status" in ((c.employmentDetails as Record<string, unknown>).employmentStatus as Record<string, unknown>)
-						? ((c.employmentDetails as Record<string, unknown>).employmentStatus as { status: string }).status === "EMPLOYED"
-							? "1"
-							: ((c.employmentDetails as Record<string, unknown>).employmentStatus as { status: string }).status === "SELF EMPLOYED"
-								? "2"
-								: ""
-						: (c.employmentDetails as Record<string, unknown>).employmentStatus) ||
-					"",
-			),
+			status: (() => {
+				const ed = c.employmentDetails as Record<string, unknown> | null | undefined;
+				const empStatus = ed?.employmentStatus;
+				if (ed?.employmentStatusId != null && String(ed.employmentStatusId).trim() !== "") return String(ed.employmentStatusId);
+				if (empStatus != null && typeof empStatus === "object" && "status" in empStatus) {
+					const s = (empStatus as { status?: string }).status;
+					if (s === "EMPLOYED") return "1";
+					if (s === "SELF EMPLOYED") return "2";
+				}
+				return String(empStatus ?? "");
+			})(),
 			employerName: String((c.employmentDetails && (c.employmentDetails as Record<string, unknown>).employerName) || ""),
 			employerAddress: String((c.employmentDetails && (c.employmentDetails as Record<string, unknown>).employerAddress) || ""),
 			// Map employer fields into company fields when company fields are absent
 			companyName: String(
-				(c.employmentDetails && (c.employmentDetails as Record<string, unknown>).companyName) ||
-					(c.employmentDetails && (c.employmentDetails as Record<string, unknown>).employerName) ||
+				(c.employmentDetails && (c.employmentDetails as Record<string, unknown>)?.companyName) ||
+					(c.employmentDetails && (c.employmentDetails as Record<string, unknown>)?.employerName) ||
 					"",
 			),
 			businessAddress: String(
-				(c.employmentDetails && (c.employmentDetails as Record<string, unknown>).businessAddress) ||
-					(c.employmentDetails && (c.employmentDetails as Record<string, unknown>).employerAddress) ||
+				(c.employmentDetails && (c.employmentDetails as Record<string, unknown>)?.businessAddress) ||
+					(c.employmentDetails && (c.employmentDetails as Record<string, unknown>)?.employerAddress) ||
 					"",
 			),
-			homeAddress: String((c.employmentDetails && (c.employmentDetails as Record<string, unknown>).homeAddress) || ""),
+			homeAddress: String((c.employmentDetails && (c.employmentDetails as Record<string, unknown>)?.homeAddress) || ""),
 		},
 		guarantors: guarantorsArray.map((g) => {
 			const gg = g && typeof g === "object" ? (g as Record<string, unknown>) : {};
@@ -192,7 +228,7 @@ export function transformCustomerToInstallmentForm(customer: unknown): Installme
 								: (gg.employmentStatus as { status: string }).status === "SELF EMPLOYED"
 									? "2"
 									: ""
-							: gg.employmentStatus) ||
+							: gg?.employmentStatus) ||
 						"",
 				),
 				homeAddress: (gg.homeAddress || "") as string,
@@ -211,7 +247,13 @@ export function transformCustomerToInstallmentForm(customer: unknown): Installme
  * Transform API customer response to OncePaymentForm structure
  */
 export function transformCustomerToOnceForm(customer: unknown): OncePaymentForm {
-	const empty: OncePaymentForm = { fullName: "", email: "", whatsapp: "", numberOfProperties: "0", properties: [] };
+	const empty: OncePaymentForm = {
+		fullName: "",
+		email: "",
+		whatsapp: "",
+		numberOfProperties: "0",
+		properties: [],
+	};
 	if (!customer || typeof customer !== "object") return empty;
 
 	const c = customer as Record<string, unknown>;

@@ -3,65 +3,94 @@ import html2canvas from "html2canvas";
 import { jsPDF } from "jspdf";
 import { sendReceiptPdfToEmail, trackReceiptDownload } from "@/api/receipt";
 
+const A4_WIDTH_PX = 794;
+
 export const generatePDF = async (element: HTMLElement, filename: string, isForSharing = false) => {
 	if (!element) return null;
 
-	try {
-		const styleEl = document.createElement("style");
-		styleEl.id = isForSharing ? "pdf-color-override-share" : "pdf-color-override";
-		styleEl.textContent = `
-			.receipt-content {
-				border: none !important;
-				box-shadow: none !important;
-				display: flex;
-				flex-direction: column;
-			}
-			table tr td, table tr th {
-				vertical-align: middle !important;
-				padding: 8px !important;
-			}
-		`;
-		document.head.appendChild(styleEl);
+	const clone = element.cloneNode(true) as HTMLElement;
 
-		const canvas = await html2canvas(element, {
+	clone.style.position = "fixed";
+	clone.style.top = "-9999px";
+	clone.style.left = "-9999px";
+	clone.style.width = `${A4_WIDTH_PX}px`;
+	clone.style.minWidth = `${A4_WIDTH_PX}px`;
+	clone.style.overflow = "visible";
+	clone.style.zIndex = "-1";
+	clone.style.pointerEvents = "none";
+
+	document.body.appendChild(clone);
+
+	void clone.offsetWidth;
+
+	try {
+		const canvas = await html2canvas(clone, {
 			useCORS: true,
 			allowTaint: true,
-			scale: 1.3,
+			scale: 2,
 			backgroundColor: "#ffffff",
 			logging: false,
-			onclone: (clonedDocument) => {
-				const allElements = clonedDocument.querySelectorAll("*");
-				allElements.forEach((el) => {
-					const htmlEl = el as HTMLElement;
-					const styles = window.getComputedStyle(el);
+			windowWidth: A4_WIDTH_PX,
+			width: A4_WIDTH_PX,
+			onclone: (clonedDocument, clonedElement) => {
+				clonedElement.style.width = `${A4_WIDTH_PX}px`;
+				clonedElement.style.minWidth = `${A4_WIDTH_PX}px`;
+				clonedElement.style.boxSizing = "border-box";
+				clonedElement.style.overflow = "visible";
 
-					const bgColor = styles.backgroundColor;
-					if (bgColor && (bgColor.includes("oklch") || bgColor.includes("oklab"))) {
-						htmlEl.style.backgroundColor = "#f3fbff";
+				// Inject overrides directly into the cloned document so they apply
+				// inside html2canvas's own rendering context. This avoids the
+				// cross-document getComputedStyle bug where calling
+				// window.getComputedStyle with an element from a different document
+				// returns empty/stale styles on mobile browsers — causing dark-mode
+				// white text (e.g. the receipt number) to render invisible on the
+				// white PDF background.
+				const overrideStyle = clonedDocument.createElement("style");
+				overrideStyle.textContent = `
+					* {
+						color: #1f2937 !important;
+						border-color: #d1d5db !important;
 					}
+					*:not(img):not(svg):not([class*="bg-primary"]):not([class*="bg-card"]) {
+						background-color: transparent !important;
+					}
+				[class*="bg-primary"] {
+					background-color: #e8f4fb !important;
+				}
+					[class*="bg-card"], .receipt-content {
+						background-color: #ffffff !important;
+						border: none !important;
+						box-shadow: none !important;
+						display: flex;
+						flex-direction: column;
+					}
+				`;
+			clonedDocument.head.appendChild(overrideStyle);
 
-					const textColor = styles.color;
-					if (textColor && (textColor.includes("oklch") || textColor.includes("oklab"))) {
-						htmlEl.style.color = "#1f2937";
-					}
-
-					const borderColor = styles.borderColor;
-					if (borderColor && (borderColor.includes("oklch") || borderColor.includes("oklab"))) {
-						htmlEl.style.borderColor = "#d1d5db";
-					}
-				});
-			},
+			// Directly override the payment breakdown header elements via JavaScript
+			// so html2canvas doesn't need to compute flex/table layout at all.
+			// position:absolute with matching height/line-height is the most
+			// reliably rendered layout in html2canvas.
+			const bgPrimaryHeaders = clonedElement.querySelectorAll<HTMLElement>('div[class*="bg-primary"]');
+			bgPrimaryHeaders.forEach((header) => {
+				header.style.cssText = "background-color:#e8f4fb;border-radius:6px;height:40px;position:relative;overflow:hidden;";
+				const spans = Array.from(header.querySelectorAll<HTMLElement>("span"));
+				if (spans[0]) {
+					spans[0].style.cssText = "position:absolute;left:16px;top:0;height:40px;line-height:40px;font-size:12px;font-weight:500;white-space:nowrap;color:#1f2937;";
+				}
+				if (spans[1]) {
+					spans[1].style.cssText = "position:absolute;right:16px;top:0;height:40px;line-height:40px;font-size:12px;font-weight:500;color:#1f2937;";
+				}
+			});
+		},
 		});
 
-		styleEl.remove();
-
-		const pdf = new jsPDF("p", "mm", "a4");
+		const pdf = new jsPDF("p", "mm", "a4", true);
 		const pdfWidth = pdf.internal.pageSize.getWidth();
 		const margin = 10;
 		const contentWidth = pdfWidth - margin * 2;
-
 		const imgHeight = (canvas.height * contentWidth) / canvas.width;
-		const imgData = canvas.toDataURL("image/jpeg", 0.85);
+		const imgData = canvas.toDataURL("image/jpeg", 0.92);
 
 		pdf.addImage(imgData, "JPEG", margin, margin, contentWidth, imgHeight);
 
@@ -78,6 +107,8 @@ export const generatePDF = async (element: HTMLElement, filename: string, isForS
 		console.error("PDF generation failed:", errMsg, err);
 		toast.error(`Failed to generate PDF: ${errMsg}`);
 		return null;
+	} finally {
+		document.body.removeChild(clone);
 	}
 };
 
@@ -85,13 +116,11 @@ export const handleDownloadPDF = async (element: HTMLElement, receiptNumber?: st
 	const filename = `receipt-${receiptNumber || receiptId || "unknown"}.pdf`;
 	await generatePDF(element, filename, false);
 
-	// Track the download
 	if (receiptId) {
 		try {
 			await trackReceiptDownload(String(receiptId));
 		} catch (err) {
 			console.error("Failed to track receipt download:", err);
-			// Don't show error toast - tracking failure shouldn't block the download
 		}
 	}
 };
@@ -126,12 +155,8 @@ export const handleSendPDFViaEmail = async (element: HTMLElement, receiptId: str
 	}
 
 	try {
-		// Show loading state
 		const loadingToastId = toast.loading("Generating and sending receipt...");
-
 		const filename = `receipt-${receiptNumber || receiptId || "unknown"}.pdf`;
-
-		// Generate PDF file
 		const pdfFile = await generatePDF(element, filename, true);
 
 		if (!pdfFile) {
@@ -140,20 +165,16 @@ export const handleSendPDFViaEmail = async (element: HTMLElement, receiptId: str
 			return false;
 		}
 
-		// Convert PDF to base64
 		const reader = new FileReader();
 		const pdfBase64 = await new Promise<string>((resolve, reject) => {
 			reader.onload = () => {
 				const result = reader.result as string;
-				// Extract base64 string (remove data:application/pdf;base64, prefix)
-				const base64String = result.split(",")[1];
-				resolve(base64String);
+				resolve(result.split(",")[1]);
 			};
 			reader.onerror = reject;
 			reader.readAsDataURL(pdfFile);
 		});
 
-		// Send PDF via API endpoint
 		await sendReceiptPdfToEmail(receiptId, pdfBase64, recipientEmail);
 
 		toast.dismiss(loadingToastId);

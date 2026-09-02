@@ -1,15 +1,97 @@
-import { pie, arc, type PieArcDatum } from "d3";
-import { scaleTime, scaleLinear, line as d3line, max, area as d3area, curveMonotoneX } from "d3";
+import { useMemo } from "react";
+import {
+	Area,
+	AreaChart,
+	CartesianGrid,
+	Cell,
+	Pie,
+	PieChart,
+	ResponsiveContainer,
+	Tooltip,
+	XAxis,
+	YAxis,
+} from "recharts";
 import { useGetIncomeAnalytics } from "@/api/analytics";
 import { useTheme } from "@/hooks/useTheme";
 import { Spinner } from "@/components/ui/spinner";
-import { useState, useRef } from "react";
 
-type Item = { name: string; value: number };
+const PIE_COLORS = ["#751BE3", "#E3901B"] as const;
+const AREA_COLOR = "#03B4FA";
+const UNPAID_COLOR = "#F3E9FF";
+
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+function formatCompact(num: number) {
+	if (num >= 1e9) return `${(num / 1e9).toFixed(1).replace(/\.0$/, "")}B`;
+	if (num >= 1e6) return `${(num / 1e6).toFixed(1).replace(/\.0$/, "")}M`;
+	if (num >= 1e3) return `${(num / 1e3).toFixed(1).replace(/\.0$/, "")}K`;
+	return String(Math.round(num));
+}
+
+function formatNaira(num: number) {
+	return `₦${Number(num || 0).toLocaleString("en-NG")}`;
+}
+
+function ChartEmpty({ title, subtitle }: { title: string; subtitle: string }) {
+	return (
+		<div className="flex items-center justify-center h-64 text-gray-400">
+			<div className="text-center">
+				<p className="text-sm font-medium">{title}</p>
+				<p className="text-xs">{subtitle}</p>
+			</div>
+		</div>
+	);
+}
+
+function IncomeTooltip({
+	active,
+	payload,
+	label,
+}: {
+	active?: boolean;
+	payload?: Array<{ value?: number }>;
+	label?: string;
+}) {
+	if (!active || !payload?.length) return null;
+	return (
+		<div className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm shadow-lg dark:border-neutral-700 dark:bg-neutral-900">
+			<p className="text-xs text-muted-foreground mb-0.5">{label}</p>
+			<p className="font-semibold text-slate-900 dark:text-slate-100">{formatNaira(payload[0]?.value ?? 0)}</p>
+		</div>
+	);
+}
+
+function PieTooltip({
+	active,
+	payload,
+}: {
+	active?: boolean;
+	payload?: Array<{ name?: string; value?: number }>;
+}) {
+	if (!active || !payload?.length) return null;
+	const item = payload[0];
+	return (
+		<div className="relative z-50 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm shadow-lg dark:border-neutral-700 dark:bg-neutral-900">
+			<p className="text-xs text-muted-foreground mb-0.5">{item.name}</p>
+			<p className="font-semibold text-slate-900 dark:text-slate-100">{formatNaira(item.value ?? 0)}</p>
+		</div>
+	);
+}
 
 export function IndexPieChart() {
 	const { data: incomeData, isLoading } = useGetIncomeAnalytics();
 	const { isDark } = useTheme();
+
+	const pieData = useMemo(
+		() => [
+			{ name: "Full Payment", value: incomeData?.fullPayment ?? 0, color: PIE_COLORS[0] },
+			{ name: "Hire Purchase", value: incomeData?.hirePurchase ?? 0, color: PIE_COLORS[1] },
+		],
+		[incomeData],
+	);
+
+	const totalIncome = incomeData?.totalIncome ?? 0;
+	const sliceTotal = pieData.reduce((sum, d) => sum + d.value, 0);
 
 	if (isLoading) {
 		return (
@@ -19,117 +101,73 @@ export function IndexPieChart() {
 		);
 	}
 
-	const pieData: Item[] = [
-		{ name: "Full Payment", value: incomeData?.fullPayment ?? 0 },
-		{ name: "Hire Purchase", value: incomeData?.hirePurchase ?? 0 },
-	];
-
-	// Check if all values are zero
-	const totalValue = pieData.reduce((sum, item) => sum + item.value, 0);
-	if (totalValue === 0) {
-		return (
-			<div className="flex items-center justify-center w-full h-64 text-gray-400">
-				<div className="text-center">
-					<p className="text-sm font-medium">No income data</p>
-					<p className="text-xs">All values are currently zero</p>
-				</div>
-			</div>
-		);
+	if (sliceTotal === 0) {
+		return <ChartEmpty title="No income data" subtitle="All values are currently zero" />;
 	}
 
-	const radius = 550; // Chart base dimensions
-	const gap = 0.08; // Gap between slices
-	// Smaller value -> thinner white separator (thinner donut bars)
-	const lightStrokeEffect = 4; // 3d light effect around the slice
-
-	// Pie layout and arc generator
-	const pieLayout = pie<Item>()
-		.value((d) => d.value)
-		.padAngle(gap); // Creates a gap between slices
-
-	// Adjust innerRadius to create a donut shape
-	const innerRadius = radius / 1.225;
-	const arcGenerator = arc<PieArcDatum<Item>>()
-		.innerRadius(innerRadius)
-		.outerRadius(radius)
-		.cornerRadius(lightStrokeEffect + 2);
-
-	// Create an arc generator for the clip path that matches the outer path of the arc
-	const arcClip =
-		arc<PieArcDatum<Item>>()
-			.innerRadius(innerRadius + lightStrokeEffect / 2)
-			.outerRadius(radius)
-			.cornerRadius(lightStrokeEffect + 2) || undefined;
-
-	const arcs = pieLayout(pieData);
-
-	const colors = ["#751BE3", "#E3901B"];
-
-	// Format number with commas
-	const formatAmount = (num: number) => {
-		if (num >= 1e9) return (num / 1e9).toFixed(1).replace(/\.0$/, "") + "B";
-		if (num >= 1e6) return (num / 1e6).toFixed(1).replace(/\.0$/, "") + "M";
-		if (num >= 1e3) return (num / 1e3).toFixed(1).replace(/\.0$/, "") + "K";
-		return num.toString();
-	};
-
-	const formattedTotal = formatAmount(incomeData?.totalIncome ?? 0);
-	const baseLength = 6;
-	const fontSize = Math.max(50, 150 - (formattedTotal.length - baseLength) * 20);
-
 	return (
-		<div className="relative flex flex-col items-center">
-			<svg viewBox={`-${radius} -${radius} ${radius * 2} ${radius * 2}`} className="max-w-[14.5rem] mx-auto">
-				{/* Define clip paths and colors for each slice */}
-				<defs>
-					{arcs.map((d, i) => (
-						<clipPath key={`donut-c0-clip-${i}`} id={`donut-c0-clip-${i}`}>
-							<path d={arcClip(d) || undefined} />
-							<linearGradient key={i} id={`donut-c0-gradient-${i}`}>
-								<stop offset="55%" stopColor={colors[i]} stopOpacity={0.95} />
-							</linearGradient>
-						</clipPath>
-					))}
-				</defs>
-
-				{/* Slices */}
-				{arcs.map((d, i) => (
-					<g key={i}>
-						{/* Use the clip path on this group or individual path */}
-						<g clipPath={`url(#donut-c0-clip-${i})`}>
-							<path
-								fill={`url(#donut-c0-gradient-${i})`}
-								stroke="#ffffff33" // Lighter stroke for a 3D effect
-								strokeWidth={lightStrokeEffect} // Adjust stroke width for the desired effect
-								d={arcGenerator(d) || undefined}
-							/>
-						</g>
-						{/* labels removed per design (no text inside curved bars) */}
-					</g>
-				))}
-
-				<text x="0" y="-30" textAnchor="middle" fill={isDark ? "#FFFFFF" : "#1F2937"} style={{ fontSize: `${fontSize}px`, fontWeight: "500" }}>
-					{formattedTotal}
-				</text>
-				<text x="0" y="80" textAnchor="middle" fill={isDark ? "#F3F4F6" : "#6B7280"} style={{ fontSize: "70px", fontWeight: "400" }}>
-					Total income
-				</text>
-
-				{/* Yearly badge */}
-				<rect x="-110" y="140" width="220" height="80" rx="50" fill={isDark ? "#8826d9" : "#F3E9FF"} />
-				<text x="0" y="195" textAnchor="middle" fill={isDark ? "#fff" : "#9CA3AF"} style={{ fontSize: "50px", fontWeight: "400" }}>
+		<div className="relative w-full h-64 overflow-visible">
+			{/* Center labels sit under the chart so tooltips stay on top */}
+			<div className="pointer-events-none absolute inset-0 z-0 flex flex-col items-center justify-center">
+				<p className={`text-2xl font-semibold tracking-tight ${isDark ? "text-white" : "text-slate-800"}`}>
+					{formatCompact(totalIncome)}
+				</p>
+				<p className={`text-xs ${isDark ? "text-slate-300" : "text-slate-500"}`}>Total income</p>
+				<span
+					className="mt-2 rounded-full px-3 py-0.5 text-[11px]"
+					style={{
+						background: isDark ? "#8826d9" : UNPAID_COLOR,
+						color: isDark ? "#fff" : "#9CA3AF",
+					}}>
 					Yearly
-				</text>
-			</svg>
+				</span>
+			</div>
+
+			<div className="relative z-10 h-full w-full">
+				<ResponsiveContainer width="100%" height="100%">
+					<PieChart>
+						<Pie
+							data={pieData}
+							dataKey="value"
+							nameKey="name"
+							cx="50%"
+							cy="50%"
+							innerRadius="62%"
+							outerRadius="88%"
+							paddingAngle={4}
+							cornerRadius={8}
+							stroke="none">
+							{pieData.map((entry) => (
+								<Cell key={entry.name} fill={entry.color} />
+							))}
+						</Pie>
+						<Tooltip
+							content={<PieTooltip />}
+							wrapperStyle={{ zIndex: 50, outline: "none" }}
+							allowEscapeViewBox={{ x: true, y: true }}
+						/>
+					</PieChart>
+				</ResponsiveContainer>
+			</div>
 		</div>
 	);
 }
 
-export const IndexAreaChart = () => {
+export function IndexAreaChart() {
 	const { data: incomeData, isLoading } = useGetIncomeAnalytics();
-	const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
-	const [, setTooltipPos] = useState({ x: 0, y: 0 });
-	const svgRef = useRef<SVGSVGElement>(null);
+	const { isDark } = useTheme();
+
+	const chartData = useMemo(() => {
+		const monthlyData = incomeData?.monthlyIncomeData || [];
+		return monthlyData.map((d) => ({
+			month: d.monthName?.slice(0, 3) || MONTHS[d.month - 1] || String(d.month),
+			income: Number(d.income) || 0,
+		}));
+	}, [incomeData]);
+
+	const totalIncome = chartData.reduce((sum, d) => sum + d.income, 0);
+	const axisColor = isDark ? "#94A3B8" : "#64748B";
+	const gridColor = isDark ? "rgba(148,163,184,0.16)" : "rgba(148,163,184,0.35)";
 
 	if (isLoading) {
 		return (
@@ -139,158 +177,57 @@ export const IndexAreaChart = () => {
 		);
 	}
 
-	// Convert monthly data to chart format
-	const monthlyData = incomeData?.monthlyIncomeData || [];
-	const chartData = monthlyData.map((d) => ({
-		date: new Date(2024, d.month - 1, 1), // Use current year
-		value: d.income,
-	}));
-
-	if (!chartData || chartData.length === 0) {
-		return (
-			<div className="flex items-center justify-center h-72 text-gray-400">
-				<div className="text-center">
-					<p className="text-sm font-medium">No income data</p>
-					<p className="text-xs">Monthly income data is not available</p>
-				</div>
-			</div>
-		);
+	if (!chartData.length) {
+		return <ChartEmpty title="No income data" subtitle="Monthly income data is not available" />;
 	}
 
-	// Check if all values are zero
-	const totalIncome = chartData.reduce((sum: number, item: { value: number }) => sum + item.value, 0);
 	if (totalIncome === 0) {
-		return (
-			<div className="flex items-center justify-center h-72 text-gray-400">
-				<div className="text-center">
-					<p className="text-sm font-medium">No income data</p>
-					<p className="text-xs">All income values are currently zero</p>
-				</div>
-			</div>
-		);
+		return <ChartEmpty title="No income data" subtitle="All income values are currently zero" />;
 	}
-
-	let areaChartData = chartData as { date: Date; value: number }[];
-	// Area chart implementation goes here
-	let xScale = scaleTime()
-		.domain([areaChartData[0].date, areaChartData[areaChartData.length - 1].date])
-		.range([0, 100]);
-
-	let yScale = scaleLinear()
-		.domain([0, max(areaChartData, (d: { value: number }) => d.value) ?? 0])
-		.range([100, 0]);
-
-	let line = d3line<(typeof areaChartData)[number]>()
-		.x((d) => xScale(d.date))
-		.y((d) => yScale(d.value))
-		.curve(curveMonotoneX);
-
-	let area = d3area<(typeof areaChartData)[number]>()
-		.x((d) => xScale(d.date))
-		.y0(yScale(0))
-		.y1((d) => yScale(d.value))
-		.curve(curveMonotoneX);
-
-	let areaPath = area(areaChartData) ?? undefined;
-
-	let d = line(areaChartData);
-
-	if (!d) {
-		return null;
-	}
-
-	// Month labels for x-axis
-	const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-
-	const handleMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
-		if (!svgRef.current) return;
-
-		const rect = svgRef.current.getBoundingClientRect();
-		const x = e.clientX - rect.left;
-		const xPercent = (x / rect.width) * 100;
-
-		// Find which month the user is hovering over
-		const monthWidth = 100 / months.length;
-		const monthIndex = Math.floor(xPercent / monthWidth);
-
-		if (monthIndex >= 0 && monthIndex < chartData.length) {
-			setHoveredIndex(monthIndex);
-			setTooltipPos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
-		}
-	};
-
-	const handleMouseLeave = () => {
-		setHoveredIndex(null);
-	};
 
 	return (
-		<div className="relative h-72 w-full">
-			<div className="absolute inset-0 h-full w-full overflow-visible">
-				{/* Chart area */}
-				<svg
-					ref={svgRef}
-					viewBox="0 0 100 100"
-					className="w-full h-full overflow-visible"
-					preserveAspectRatio="none"
-					onMouseMove={handleMouseMove}
-					onMouseLeave={handleMouseLeave}>
-					{/* Area with blue gradient */}
+		<div className="w-full h-72">
+			<ResponsiveContainer width="100%" height="100%">
+				<AreaChart data={chartData} margin={{ top: 12, right: 8, left: 0, bottom: 4 }}>
 					<defs>
-						<linearGradient id="blueAreaGradient" x1="0" y1="0" x2="0" y2="1">
-							<stop offset="0%" stopColor="#03B4FA" stopOpacity="0.7" />
-							<stop offset="100%" stopColor="#03B4FA" stopOpacity="0" />
+						<linearGradient id="incomeAreaFill" x1="0" y1="0" x2="0" y2="1">
+							<stop offset="0%" stopColor={AREA_COLOR} stopOpacity={0.38} />
+							<stop offset="70%" stopColor={AREA_COLOR} stopOpacity={0.08} />
+							<stop offset="100%" stopColor={AREA_COLOR} stopOpacity={0} />
 						</linearGradient>
 					</defs>
-					<path d={areaPath} fill="url(#blueAreaGradient)" />
-
-					{/* Line */}
-					<path d={d} fill="none" stroke="#03B4FA" strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
-
-					{/* Interactive hover areas for each month */}
-					{chartData.map((_, i) => (
-						<rect
-							key={`hover-${i}`}
-							x={`${(i / months.length) * 100}`}
-							y="0"
-							width={`${100 / months.length}`}
-							height="100"
-							fill="transparent"
-							style={{ cursor: "pointer" }}
-						/>
-					))}
-				</svg>
-
-				{/* X axis: months only, closer spacing */}
-				{months.map((month, i) => (
-					<div
-						key={month}
-						style={{
-							left: `${(i / months.length) * 100 + 100 / (months.length * 2)}%`,
-							top: "90%",
+					<CartesianGrid stroke={gridColor} strokeDasharray="4 4" vertical={false} />
+					<XAxis
+						dataKey="month"
+						tickLine={false}
+						axisLine={false}
+						tick={{ fill: axisColor, fontSize: 12 }}
+						dy={6}
+					/>
+					<YAxis
+						tickLine={false}
+						axisLine={false}
+						width={44}
+						tick={{ fill: axisColor, fontSize: 11 }}
+						tickFormatter={formatCompact}
+					/>
+					<Tooltip content={<IncomeTooltip />} cursor={{ stroke: AREA_COLOR, strokeOpacity: 0.35, strokeDasharray: "4 4" }} />
+					<Area
+						type="monotone"
+						dataKey="income"
+						stroke={AREA_COLOR}
+						strokeWidth={2.5}
+						fill="url(#incomeAreaFill)"
+						dot={false}
+						activeDot={{
+							r: 5,
+							stroke: AREA_COLOR,
+							strokeWidth: 2,
+							fill: "#fff",
 						}}
-						className="absolute text-xs text-zinc-500 -translate-x-1/2">
-						{month}
-					</div>
-				))}
-
-				{/* Tooltip */}
-				{hoveredIndex !== null && chartData[hoveredIndex] && (
-					<div
-						style={{
-							position: "absolute",
-							left: `${((hoveredIndex + 0.5) / months.length) * 100}%`,
-							top: `${(100 - yScale(chartData[hoveredIndex].value)) * 0.72}%`,
-							transform: "translate(-50%, -120%)",
-							pointerEvents: "none",
-						}}
-						className="bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 px-3 py-2 rounded-md shadow-lg text-sm font-medium whitespace-nowrap z-50">
-						<div>{months[hoveredIndex]}</div>
-						<div className="text-xs font-normal">₦{chartData[hoveredIndex].value.toLocaleString()}</div>
-						<div className="absolute bottom-0 left-1/2 w-2 h-2 bg-gray-900 dark:bg-gray-100 transform translate-x-[-50%] translate-y-[50%] rotate-45"></div>
-					</div>
-				)}
-			</div>
-			{/* Y axis removed */}
+					/>
+				</AreaChart>
+			</ResponsiveContainer>
 		</div>
 	);
-};
+}

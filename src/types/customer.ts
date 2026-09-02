@@ -162,10 +162,12 @@ export type Registration = {
 	};
 	propertyInterestRequest?: Array<{
 		propertyName?: string;
+		customPropertyName?: string;
 		paymentInterval?: { intervals?: string };
 		durationValue?: number;
 		durationUnit?: { id?: number };
 		downPayment?: number;
+		property?: { name?: string; price?: string };
 	}>;
 	customPropertyName?: string;
 	guarantors?: Array<{
@@ -180,6 +182,7 @@ export type Registration = {
 		companyAddress?: string;
 		businessAddress?: string;
 		stateOfOrigin?: string;
+		stateOfOriginId?: number | string;
 		hasAgreed?: boolean;
 		employerName?: string | null;
 		guarantorAgreement?: string;

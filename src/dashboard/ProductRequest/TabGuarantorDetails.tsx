@@ -122,19 +122,25 @@ export default function TabGuarantorDetails({ data }: { data: Record<string, unk
 						<DialogTitle>{previewLabel ?? "Document"}</DialogTitle>
 					</DialogHeader>
 
-					<div className="p-6">
-						<div className="max-w-md mx-auto">
-							{previewImage ? (
+				<div className="p-6">
+					<div className="max-w-md mx-auto">
+						{previewImage ? (
+							/\.pdf(\?|$)/i.test(previewImage) ? (
+								<div className="border-dashed border-2 border-gray-200 rounded-md overflow-hidden" style={{ height: 480 }}>
+									<iframe src={previewImage} className="w-full h-full" title={previewLabel ?? "Document"} />
+								</div>
+							) : (
 								<div className="border-dashed border-2 border-gray-200 flex items-center justify-center rounded-md p-4">
 									<Image src={previewImage} className="max-w-full min-h-64 rounded-md" />
 								</div>
-							) : (
-								<div className="border-dashed border-2 min-h-52 border-gray-200 rounded-md p-8 flex flex-col items-center justify-center">
-									<p className="text-sm text-muted-foreground mt-4">Not available</p>
-								</div>
-							)}
-						</div>
+							)
+						) : (
+							<div className="border-dashed border-2 min-h-52 border-gray-200 rounded-md p-8 flex flex-col items-center justify-center">
+								<p className="text-sm text-muted-foreground mt-4">Not available</p>
+							</div>
+						)}
 					</div>
+				</div>
 				</DialogContent>
 			</Dialog>
 		</CustomCard>

@@ -168,6 +168,18 @@ export default function EditPropertyDetailsModal({ open, onOpenChange, initial, 
 		e.currentTarget.blur();
 	};
 
+	// Format number with commas (e.g., 1000000 -> 1,000,000)
+	const formatPriceDisplay = (value: string | number) => {
+		if (!value) return "";
+		const numStr = String(value).replace(/,/g, ""); // Remove existing commas
+		return numStr.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+	};
+
+	// Remove commas and convert to number
+	const parsePriceValue = (value: string) => {
+		return value.replace(/,/g, "");
+	};
+
 	const handleImageUpload = async (files: File[]) => {
 		if (files && files.length > 0) {
 			setIsUploadingImages(true);
@@ -321,10 +333,14 @@ export default function EditPropertyDetailsModal({ open, onOpenChange, initial, 
 								<CustomInput
 									required
 									label="Price"
-									type="number"
-									value={form.price}
-									onChange={(e) => handleChange("price")(e.target.value)}
-									onWheel={handleNumberInputWheel}
+									type="text"
+									value={formatPriceDisplay(form.price)}
+									onChange={(e) => {
+										const inputValue = e.target.value;
+										const cleanedValue = parsePriceValue(inputValue);
+										handleChange("price")(cleanedValue || "0");
+									}}
+									placeholder="0"
 									className={twMerge(inputStyle)}
 								/>
 							</div>

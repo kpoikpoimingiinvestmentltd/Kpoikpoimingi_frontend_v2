@@ -22,6 +22,27 @@ export default function ReceiptContent({ receipt }: ReceiptContentProps) {
 	const remainingBalanceRaw =
 		receipt.contract && (receipt.contract as any).outStandingBalance != null ? (receipt.contract as any).outStandingBalance : null;
 
+	// Build a unified property list: prefer propertiesBreakdown (has subtotals),
+	// fall back to propertyInterestRequests, last resort is a single row from contract.property.
+	type PropertyRow = { name: string; quantity: number; subtotal: number | null };
+	const propertyRows: PropertyRow[] = (() => {
+		if (receipt.propertiesBreakdown && receipt.propertiesBreakdown.length > 0) {
+			return receipt.propertiesBreakdown.map((p) => ({ name: p.name, quantity: p.quantity, subtotal: p.subtotal }));
+		}
+		if (receipt.contract?.propertyInterestRequests && receipt.contract.propertyInterestRequests.length > 0) {
+			return receipt.contract.propertyInterestRequests.map((p) => ({
+				name: p.isCustomProperty ? (p.customPropertyName ?? "Custom Property") : (p.property?.name ?? "-"),
+				quantity: p.quantity,
+				subtotal: p.property?.price ? Number(p.property.price) * p.quantity : null,
+			}));
+		}
+		const fallbackName = receipt.contract?.property?.name ?? receipt.propertyName;
+		if (fallbackName) {
+			return [{ name: fallbackName, quantity: 1, subtotal: null }];
+		}
+		return [];
+	})();
+
 	const receiptFooter = (
 		<footer className="border-t-2 border-dashed dark:border-t-neutral-700 pb-4 pt-6 text-center">
 			{receipt.issuedBy?.fullName && (
@@ -42,7 +63,15 @@ export default function ReceiptContent({ receipt }: ReceiptContentProps) {
 						<KeyValueRow label="Name" value={receipt.customer?.fullName ?? receipt.id ?? "-"} />
 						<KeyValueRow label="Email" value={receipt.customer?.email ?? "-"} />
 						<KeyValueRow label="Whatsapp number" value={receipt.customer?.phoneNumber ?? "-"} />
-						<KeyValueRow label="Home Address" value={receipt.customer?.registrations?.[0]?.employmentDetails?.homeAddress ?? "-"} />
+						<KeyValueRow
+							label="Home Address"
+							value={
+								receipt.customer?.homeAddress ??
+								receipt.customer?.address ??
+								receipt.customer?.registrations?.[0]?.homeAddress ??
+								"-"
+							}
+						/>
 						<KeyValueRow
 							label="Date"
 							value={
@@ -56,45 +85,62 @@ export default function ReceiptContent({ receipt }: ReceiptContentProps) {
 					</section>
 
 					{/* Payment Breakdown Section */}
-					<section className="mt-4 flex flex-col gap-y-4">
-						<header className="flex items-center justify-between gap-1 text-gray-800 dark:text-gray-100 bg-primary/10 dark:bg-primary/50 px-4 md:px-6 py-2.5 rounded-md">
-							<h5 className="font-medium">Payment Breakdown</h5>
-							<span className="text-sm font-medium text-center">Payment duration (One time)</span>
-						</header>
-						<CustomCard className="grid grid-cols-1 gap-y-1 px-4 py-5 bg-card border-0 dark:border">
+		<section className="mt-4 flex flex-col gap-y-4">
+	<div className="bg-primary/10 dark:bg-primary/50 text-gray-800 dark:text-gray-100 rounded-md flex items-center justify-between px-4 h-10">
+		<span className="text-xs font-medium whitespace-nowrap">Payment Breakdown</span>
+		<span className="text-xs font-medium">Payment duration (One time)</span>
+	</div>
+				<CustomCard className="grid grid-cols-1 gap-y-1 px-4 py-5 bg-card border-0 dark:border">
+						{propertyRows.length > 0 ? (
+							<>
+								{propertyRows.map((item, i) => (
+									<KeyValueRow
+										key={i}
+										label={`${item.name} (Qty: ${item.quantity})`}
+										value={item.subtotal != null ? `₦${item.subtotal.toLocaleString()}` : "-"}
+										leftClassName="text-gray-600"
+										rightClassName="text-right font-medium"
+									/>
+								))}
+								{propertyRows.length > 1 && (
+									<div className="border-t border-dashed border-gray-200 dark:border-gray-600 my-1" />
+								)}
+							</>
+						) : (
 							<KeyValueRow
 								label="Property Name"
-								value={receipt.contract?.property?.name ?? receipt.propertyName ?? "-"}
+								value={receipt.propertyName ?? "-"}
 								leftClassName="text-gray-600"
 								rightClassName="text-right font-medium"
 							/>
-							<KeyValueRow
-								label="Total amount"
-								value={receipt.totalAmount ? `₦${Number(receipt.totalAmount).toLocaleString()}` : "-"}
-								leftClassName="text-gray-600"
-								rightClassName="text-right font-medium"
-							/>
-							<KeyValueRow
-								label="Amount paid"
-								value={receipt.amountPaid ? `₦${Number(receipt.amountPaid).toLocaleString()}` : "-"}
-								leftClassName="text-gray-600"
-								rightClassName="text-right font-medium"
-							/>
-							<KeyValueRow
-								label="VAT Amount"
-								value={receipt.vatAmount ? `₦${Number(receipt.vatAmount).toLocaleString()}` : "-"}
-								leftClassName="text-gray-600"
-								rightClassName="text-right font-medium"
-							/>
-							<KeyValueRow
-								label="Amount paid plus VAT"
-								value={
-									receipt.amountPaid && receipt.vatAmount ? `₦${(Number(receipt.amountPaid) + Number(receipt.vatAmount)).toLocaleString()}` : "-"
-								}
-								leftClassName="text-gray-600"
-								rightClassName="text-right font-medium"
-							/>
-						</CustomCard>
+						)}
+						<KeyValueRow
+							label="Total amount"
+							value={receipt.totalAmount ? `₦${Number(receipt.totalAmount).toLocaleString()}` : "-"}
+							leftClassName="text-gray-600"
+							rightClassName="text-right font-medium"
+						/>
+						<KeyValueRow
+							label="Amount paid"
+							value={receipt.amountPaid ? `₦${Number(receipt.amountPaid).toLocaleString()}` : "-"}
+							leftClassName="text-gray-600"
+							rightClassName="text-right font-medium"
+						/>
+						<KeyValueRow
+							label="VAT Amount"
+							value={receipt.vatAmount ? `₦${Number(receipt.vatAmount).toLocaleString()}` : "-"}
+							leftClassName="text-gray-600"
+							rightClassName="text-right font-medium"
+						/>
+						<KeyValueRow
+							label="Amount paid plus VAT"
+							value={
+								receipt.amountPaid && receipt.vatAmount ? `₦${(Number(receipt.amountPaid) + Number(receipt.vatAmount)).toLocaleString()}` : "-"
+							}
+							leftClassName="text-gray-600"
+							rightClassName="text-right font-medium"
+						/>
+					</CustomCard>
 					</section>
 
 					<section className="md:w-11/12 mx-auto mt-8 font-normal text-center py-4">
@@ -117,7 +163,15 @@ export default function ReceiptContent({ receipt }: ReceiptContentProps) {
 						<KeyValueRow label="Name" value={receipt.customer?.fullName ?? receipt.id ?? "-"} />
 						<KeyValueRow label="Email" value={receipt.customer?.email ?? "-"} />
 						<KeyValueRow label="Whatsapp number" value={receipt.customer?.phoneNumber ?? "-"} />
-						<KeyValueRow label="Home Address" value={receipt.customer?.registrations?.[0]?.employmentDetails?.homeAddress ?? "-"} />
+						<KeyValueRow
+							label="Home Address"
+							value={
+								receipt.customer?.homeAddress ??
+								receipt.customer?.address ??
+								receipt.customer?.registrations?.[0]?.homeAddress ??
+								"-"
+							}
+						/>
 						<KeyValueRow
 							label="Date"
 							value={
@@ -132,16 +186,16 @@ export default function ReceiptContent({ receipt }: ReceiptContentProps) {
 				</section>
 
 				{/* Payment Breakdown Section */}
-				<section className="mt-4 flex flex-col gap-y-4">
-					<header className="flex items-center justify-between gap-1 text-gray-800 dark:text-gray-100 bg-primary/10 dark:bg-primary/50 px-4 md:px-6 py-2.5 rounded-md">
-						<h5 className="text-xs sm:text-sm font-medium">Payment Breakdown</h5>
-						{!isMigrated && (
-							<span className="text-xs sm:text-sm font-medium text-center">
-								Payment duration ({receipt.contract?.durationValue ?? receipt.totalInstallments ?? "-"}{" "}
-								{receipt.contract?.durationUnit?.duration?.toLowerCase() === "weeks" ? "weeks" : "months"})
-							</span>
-						)}
-					</header>
+			<section className="mt-4 flex flex-col gap-y-4">
+		<div className="bg-primary/10 dark:bg-primary/50 text-gray-800 dark:text-gray-100 rounded-md flex items-center justify-between px-4 h-10">
+			<span className="text-xs font-medium whitespace-nowrap">Payment Breakdown</span>
+			{!isMigrated && (
+				<span className="text-xs font-medium">
+					Payment duration ({receipt.contract?.durationValue ?? receipt.totalInstallments ?? "-"}{" "}
+					{receipt.contract?.durationUnit?.duration?.toLowerCase() === "weeks" ? "weeks" : "months"})
+				</span>
+			)}
+		</div>
 					<CustomCard className="grid grid-cols-1 gap-y-1 px-4 py-5 bg-card border-0 dark:border">
 						<KeyValueRow
 							label="Property Name"

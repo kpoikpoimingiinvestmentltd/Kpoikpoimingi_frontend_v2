@@ -42,7 +42,7 @@ const initialState: ReportAnalyticsState = {
 	// Periods
 	incomePeriod: "daily",
 	vatPeriod: "daily",
-	penaltyPeriod: "daily",
+	penaltyPeriod: "monthly",
 };
 
 const reportAnalyticsSlice = createSlice({
