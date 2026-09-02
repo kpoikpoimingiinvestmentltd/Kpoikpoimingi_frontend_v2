@@ -3,6 +3,7 @@ import { apiPost, apiGet, apiPatch } from "@/services/apiClient";
 import { apiGetFile } from "@/services/apiClient";
 import { API_ROUTES } from "./routes";
 import type { InternalFullPaymentRegistrationPayload, FullPaymentRegistrationResponse } from "@/types/customerRegistration";
+import type { DocumentBuckets } from "@/components/common/DocumentGroupView";
 
 type ListResponse<T = unknown> = {
 	pagination?: Record<string, unknown> | null;
@@ -433,15 +434,7 @@ export type ContractDocumentsResponse = {
 	registrationId?: string | null;
 	registrationCode?: string | null;
 	registrationDate?: string | null;
-	documents: {
-		identificationDocument: SignedContractItem[];
-		indegeneCertificate: SignedContractItem[];
-		driverLicense: SignedContractItem[];
-		guarantor_0_doc: SignedContractItem[];
-		guarantor_1_doc: SignedContractItem[];
-		signedContract: SignedContractItem[];
-		other: SignedContractItem[];
-	};
+	documents: DocumentBuckets;
 };
 
 export async function getContractDocuments(contractId: string) {
