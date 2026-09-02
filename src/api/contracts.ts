@@ -414,6 +414,8 @@ export function useGetContractPayments(contractId: string | undefined, enabled =
 export type SignedContractItem = {
 	id?: string;
 	fileUrl: string;
+	uploadedAt?: string;
+	label?: string;
 };
 
 export type SignedContractResponse = {
@@ -422,6 +424,37 @@ export type SignedContractResponse = {
 	registrationCode?: string;
 	signedContract: SignedContractItem[];
 };
+
+export type ContractDocumentsResponse = {
+	contractId: string;
+	contractCode: string;
+	contractDate: string;
+	propertyName?: string | null;
+	registrationId?: string | null;
+	registrationCode?: string | null;
+	registrationDate?: string | null;
+	documents: {
+		identificationDocument: SignedContractItem[];
+		indegeneCertificate: SignedContractItem[];
+		driverLicense: SignedContractItem[];
+		guarantor_0_doc: SignedContractItem[];
+		guarantor_1_doc: SignedContractItem[];
+		signedContract: SignedContractItem[];
+		other: SignedContractItem[];
+	};
+};
+
+export async function getContractDocuments(contractId: string) {
+	return apiGet(API_ROUTES.contracts.getContractDocuments(contractId)) as Promise<ContractDocumentsResponse>;
+}
+
+export function useGetContractDocuments(contractId: string | undefined, enabled = true) {
+	return useQuery<ContractDocumentsResponse, unknown>({
+		queryKey: ["contract-documents", contractId],
+		queryFn: () => getContractDocuments(contractId || ""),
+		enabled: !!contractId && enabled,
+	});
+}
 
 export async function getSignedContract(contractId: string) {
 	return apiGet(API_ROUTES.contracts.getSignedContract(contractId)) as Promise<SignedContractResponse>;
