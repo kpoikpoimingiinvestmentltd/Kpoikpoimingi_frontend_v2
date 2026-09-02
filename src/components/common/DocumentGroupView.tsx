@@ -11,7 +11,7 @@ import { useIsSuperAdmin } from "@/hooks/usePermissions";
 import { toast } from "sonner";
 
 export type DocumentItem = {
-	id: string;
+	id?: string;
 	fileUrl: string;
 	uploadedAt?: string;
 	label?: string;
@@ -112,8 +112,8 @@ export default function DocumentGroupView({
 			<div className="max-w-xs flex flex-col justify-center gap-3">
 				<h6 className="text-sm">{title}</h6>
 				<div className="flex items-center gap-6 flex-wrap pb-3">
-					{items.map((item) => (
-						<div key={item.id} className="relative flex flex-col items-start gap-2.5 w-20">
+					{items.map((item, index) => (
+						<div key={item.id ?? `${title}-${index}`} className="relative flex flex-col items-start gap-2.5 w-20">
 							<Link
 								to={item.fileUrl}
 								target="_blank"
@@ -124,7 +124,7 @@ export default function DocumentGroupView({
 									{item.uploadedAt ? formatDate(item.uploadedAt) : "Document"}
 								</div>
 							</Link>
-							{canDelete && (
+							{canDelete && item.id && (
 								<button
 									type="button"
 									aria-label={`Delete ${title} document`}
