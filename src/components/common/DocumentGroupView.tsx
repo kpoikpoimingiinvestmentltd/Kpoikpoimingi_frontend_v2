@@ -133,6 +133,7 @@ export default function DocumentGroupView({
 									onClick={(e) => {
 										e.preventDefault();
 										e.stopPropagation();
+										if (!item.id) return;
 										setPendingDelete({ id: item.id, label: title });
 									}}>
 									<IconWrapper className="text-xs">
