@@ -18,6 +18,7 @@ export default function ReceiptWrapper({
 	onShare,
 	contentRef,
 	receiptId,
+	adminIssuerLabel,
 }: {
 	children: React.ReactNode;
 	emailSubject?: string;
@@ -30,6 +31,7 @@ export default function ReceiptWrapper({
 	onShare?: () => void;
 	contentRef?: React.Ref<HTMLDivElement>;
 	receiptId?: string;
+	adminIssuerLabel?: string | null;
 }) {
 	const printRef = useRef<HTMLDivElement>(null);
 
@@ -89,7 +91,7 @@ export default function ReceiptWrapper({
 					try {
 						onShare();
 						return;
-					} catch (e) {
+					} catch {
 						/* swallow */
 					}
 				}
@@ -103,9 +105,16 @@ export default function ReceiptWrapper({
 		<>
 			<div id="receipt-container">
 				<CustomCard className="receipt-wrapper-outer border-0 bg-transparent dark:bg-transparent px-0 py-4">
-					<div className="max-w-4xl mx-auto flex flex-col gap-y-6">
-						<header className="receipt-header flex justify-between items-center gap-x-4 gap-y-3 flex-wrap">
-							<h2 className="text-lg font-medium">Receipt</h2>
+					<div className="max-w-4xl mx-auto flex flex-col gap-y-6 w-full px-3 md:px-0">
+						<header className="receipt-header w-full mx-auto flex justify-between items-center gap-x-4 gap-y-3 flex-wrap">
+							<div className="flex flex-col gap-0.5">
+								<h2 className="text-lg font-medium">Receipt</h2>
+								{adminIssuerLabel ? (
+									<p className="text-xs sm:text-sm text-muted-foreground">
+										Issued by <span className="font-medium text-foreground">{adminIssuerLabel}</span>
+									</p>
+								) : null}
+							</div>
 							<div className="receipt-actions flex items-center gap-2">
 								<ReceiptActions
 									showPrint={shouldPrint}
@@ -117,8 +126,8 @@ export default function ReceiptWrapper({
 								/>
 							</div>
 						</header>
-						<main className="receipt-main flex">
-							<CustomCard ref={printRef} className="receipt-content relative flex-grow shadow-lg isolate py-6 px-4 md:px-8">
+						<main className="receipt-main flex justify-center w-full">
+							<CustomCard ref={printRef} className="receipt-content relative shadow-lg isolate py-6 px-4 md:px-8 w-full">
 								<Image src={media.images.verticalCuts} className="w-11/12 mx-auto absolute right-0 left-0 top-0 dark:opacity-10" />
 								<Image src={media.images.verticalCuts} className="w-11/12 mx-auto absolute right-0 left-0 bottom-0 -rotate-x-180 dark:opacity-10" />
 								<div ref={contentRef}>{children}</div>

@@ -123,7 +123,8 @@ export default function UserForm({
 			<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 				<div>
 					<CustomInput
-						label="Full Name*"
+						label="Full Name"
+						required
 						labelClassName="text-sm block mb-2"
 						className={twMerge(inputStyle)}
 						value={values.fullName ?? ""}
@@ -133,7 +134,8 @@ export default function UserForm({
 
 				<div>
 					<CustomInput
-						label="Username*"
+						label="Username"
+						required
 						labelClassName="text-sm block mb-2"
 						className={twMerge(inputStyle)}
 						value={values.username ?? ""}
@@ -142,7 +144,8 @@ export default function UserForm({
 				</div>
 				<div>
 					<CustomInput
-						label="Email*"
+						label="Email"
+						required
 						labelClassName="text-sm block mb-2"
 						className={twMerge(inputStyle)}
 						value={values.email ?? ""}
@@ -153,7 +156,8 @@ export default function UserForm({
 
 				<div>
 					<CustomInput
-						label="Phone Number*"
+						label="Phone Number"
+						required
 						labelClassName="text-sm block mb-2"
 						className={twMerge(inputStyle)}
 						value={values.phone ?? ""}
@@ -164,7 +168,8 @@ export default function UserForm({
 
 				<div>
 					<CustomInput
-						label="House Address*"
+						label="House Address"
+						required
 						labelClassName="text-sm block mb-2"
 						className={twMerge(inputStyle)}
 						value={values.houseAddress ?? ""}
@@ -194,9 +199,10 @@ export default function UserForm({
 				</div>
 				<div className="">
 					<CustomInput
-						label="Date Of Birth*"
+						label="Date Of Birth"
+						required
 						labelClassName="text-sm block mb-2"
-						className={twMerge(inputStyle, "")}
+						className={twMerge(inputStyle)}
 						type="date"
 						value={values.dob ?? ""}
 						onChange={(e) => onChange("dob", e.target.value)}

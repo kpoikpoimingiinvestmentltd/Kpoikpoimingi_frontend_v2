@@ -27,15 +27,37 @@ export default function NextOfKinSection({
 	sectionTitle,
 	missingFields = [],
 }: Props) {
-	const isSpouse =
-		form.nextOfKin.relationship &&
-		(form.nextOfKin.relationship === "Spouse" ||
-			relationshipOptions.some((o) => o.key === form.nextOfKin.relationship && o.value.toLowerCase().includes("spouse")));
+	const isSpouse = form.nextOfKin.isNextOfKinSpouse === true;
 
 	return (
 		<>
 			<div className={centeredContainer()}>
 				<h3 className={sectionTitle()}>Next Of Kin Details</h3>
+
+				{/* Is next of kin spouse toggle */}
+				<div className="mt-4 flex items-center gap-4">
+					<span className="text-sm font-medium">Is next of kin spouse?</span>
+					<div className="flex gap-2">
+						<button
+							type="button"
+							onClick={() => handleChange("nextOfKin", { ...form.nextOfKin, isNextOfKinSpouse: false })}
+							className={twMerge(
+								"px-4 py-2 rounded-md text-sm font-medium transition",
+								!isSpouse ? "bg-primary text-white" : "bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300",
+							)}>
+							No
+						</button>
+						<button
+							type="button"
+							onClick={() => handleChange("nextOfKin", { ...form.nextOfKin, isNextOfKinSpouse: true })}
+							className={twMerge(
+								"px-4 py-2 rounded-md text-sm font-medium transition",
+								isSpouse ? "bg-primary text-white" : "bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300",
+							)}>
+							Yes
+						</button>
+					</div>
+				</div>
 
 				{isSpouse ? (
 					<>
@@ -67,54 +89,12 @@ export default function NextOfKinSection({
 						</div>
 
 						<div className="mt-4">
-							<label className={labelStyle()}>Address*</label>
+							<label className={labelStyle()}>Spouse Address*</label>
 							<Textarea
 								value={form.nextOfKin.address}
 								onChange={(e) => handleChange("nextOfKin", { ...form.nextOfKin, address: e.target.value })}
 								className={twMerge(inputStyle)}
 							/>
-						</div>
-
-						<div className="mt-4 grid grid-cols-1 md:grid-cols-1 gap-4">
-							<div>
-								<label className={labelStyle()}>Relationship*</label>
-								<Select value={form.nextOfKin.relationship} onValueChange={(v) => handleChange("nextOfKin", { ...form.nextOfKin, relationship: v })}>
-									<SelectTrigger className={twMerge(inputStyle, "w-full min-h-11 cursor-pointer")}>
-										<SelectValue placeholder="Select relationship" />
-									</SelectTrigger>
-									<SelectContent>
-										{refLoading ? (
-											<div className="p-3 text-center">
-												<Spinner className="size-4" />
-											</div>
-										) : relationshipOptions.length === 0 ? (
-											<>
-												<SelectItem value="Spouse">Spouse</SelectItem>
-												<SelectItem value="Father">Father</SelectItem>
-												<SelectItem value="Mother">Mother</SelectItem>
-												<SelectItem value="Son">Son</SelectItem>
-												<SelectItem value="Daughter">Daughter</SelectItem>
-												<SelectItem value="Brother">Brother</SelectItem>
-												<SelectItem value="Sister">Sister</SelectItem>
-												<SelectItem value="Niece">Niece</SelectItem>
-												<SelectItem value="Nephew">Nephew</SelectItem>
-												<SelectItem value="Grandfather">Grandfather</SelectItem>
-												<SelectItem value="Grandmother">Grandmother</SelectItem>
-												<SelectItem value="Uncle">Uncle</SelectItem>
-												<SelectItem value="Aunt">Aunt</SelectItem>
-												<SelectItem value="Cousin">Cousin</SelectItem>
-												<SelectItem value="Friend">Friend</SelectItem>
-											</>
-										) : (
-											relationshipOptions.map((it) => (
-												<SelectItem key={it.key} value={it.key}>
-													{it.value}
-												</SelectItem>
-											))
-										)}
-									</SelectContent>
-								</Select>
-							</div>
 						</div>
 					</>
 				) : (
@@ -161,7 +141,6 @@ export default function NextOfKinSection({
 											</div>
 										) : relationshipOptions.length === 0 ? (
 											<>
-												<SelectItem value="Spouse">Spouse</SelectItem>
 												<SelectItem value="Father">Father</SelectItem>
 												<SelectItem value="Mother">Mother</SelectItem>
 												<SelectItem value="Son">Son</SelectItem>

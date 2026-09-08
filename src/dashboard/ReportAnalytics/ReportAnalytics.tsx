@@ -36,7 +36,13 @@ import SearchWithFilters from "@/components/common/SearchWithFilters";
 import type { FilterField } from "@/components/common/SearchWithFilters";
 import VATCollected from "./VATCollected";
 import InterestPenalties from "./InterestPenalties";
-import { useGetPenalties, useGetVATRecords, useGetIncomeEarned, useGetVatCollected, useGetInterestPenalties } from "@/api/analytics";
+import {
+	useGetPenalties,
+	useGetVATRecords,
+	useGetIncomeEarned,
+	useGetVatCollected,
+	useGetInterestPenalties,
+} from "@/api/analytics";
 import type { PenaltyRecord, VATRecord } from "@/types/reports";
 import ActionButton from "@/components/base/ActionButton";
 import { toast } from "sonner";
@@ -77,7 +83,7 @@ export default function ReportAnalytics() {
 		const urlPenaltyPage = parseInt(searchParams.get("penaltyPage") || "1", 10);
 		const urlIncomePeriod = searchParams.get("incomePeriod") || "daily";
 		const urlVatPeriod = searchParams.get("vatPeriod") || "daily";
-		const urlPenaltyPeriod = searchParams.get("penaltyPeriod") || "daily";
+		const urlPenaltyPeriod = searchParams.get("penaltyPeriod") || "monthly";
 		const urlVatLimit = parseInt(searchParams.get("vatLimit") || "10", 10);
 		const urlVatSortBy = searchParams.get("vatSortBy") || "createdAt";
 		const urlVatSortOrder = searchParams.get("vatSortOrder") || "desc";
@@ -178,6 +184,7 @@ export default function ReportAnalytics() {
 		params.set("penaltyLimit", String(penaltyLimit));
 		params.set("penaltySortBy", penaltySortBy);
 		params.set("penaltySortOrder", penaltySortOrder);
+		params.delete("penaltyView");
 		if (penaltySearch) {
 			params.set("penaltySearch", penaltySearch);
 		} else {
@@ -540,7 +547,7 @@ export default function ReportAnalytics() {
 						<CustomCard className="border-0 flex-grow w-full p-0">
 							<div className="w-full">
 								<div className="flex items-center justify-between flex-wrap gap-6">
-									<div className="flex items-center gap-4">
+									<div className="flex items-center gap-4 flex-wrap">
 										<Tabs value={tab} onValueChange={(v) => dispatch(setTab(v as "vat" | "interest"))}>
 											<TabsList className={tabListStyle}>
 												<TabsTrigger className={tabStyle} value="vat">
@@ -614,7 +621,7 @@ export default function ReportAnalytics() {
 											<VATCollected rows={vatRows} page={vatPage} pages={vatTotalPages} onPageChange={(p) => dispatch(setVatPage(p))} />
 										)
 									) : isPenaltiesLoading ? (
-										<TableSkeleton rows={5} cols={7} />
+										<TableSkeleton rows={5} cols={9} />
 									) : penaltyRows.length === 0 ? (
 										<div className="py-8">
 											<EmptyData text="No interest penalties found for the selected filters." />

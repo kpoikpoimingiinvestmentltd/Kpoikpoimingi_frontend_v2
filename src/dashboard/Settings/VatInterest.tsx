@@ -86,6 +86,8 @@ export default function VatInterest() {
 		</div>
 	);
 
+	console.log(data);
+
 	return (
 		<div className="mt-4">
 			<CustomCard className="px-0 py-2 bg-[#fafafa]">

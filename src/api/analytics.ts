@@ -4,6 +4,7 @@ import { apiGet, apiGetFile } from "@/services/apiClient";
 import { API_ROUTES } from "./routes";
 import type { IncomeAnalytics } from "@/types/analytics";
 import type { PenaltiesResponse, VATResponse, IncomeEarnedResponse, VatCollectedResponse, InterestPenaltiesResponse } from "@/types/reports";
+import type { AuditLogsGroupedResponse } from "@/types/auditLogs";
 
 export type AnalyticsOverview = {
 	totalPropertyRequests: number;
@@ -59,23 +60,36 @@ export function useGetRevenueAnalytics(enabled = true) {
 	});
 }
 
-export async function getAuditLogsGrouped(page = 1, limit = 10, search?: string, sortBy = "createdAt", sortOrder = "desc") {
+export async function getAuditLogsGrouped(
+	page = 1,
+	limit = 10,
+	search?: string,
+	startDate?: string,
+	endDate?: string,
+): Promise<AuditLogsGroupedResponse> {
 	const params = new URLSearchParams();
 	params.append("page", String(page));
 	params.append("limit", String(limit));
 	if (search) params.append("search", search);
-	params.append("sortBy", sortBy);
-	params.append("sortOrder", sortOrder);
+	if (startDate) params.append("startDate", startDate);
+	if (endDate) params.append("endDate", endDate);
 
 	const qs = `?${params.toString()}`;
 	const url = `${API_ROUTES.auditLogs.getAuditLogsGrouped}${qs}`;
-	return apiGet(url) as Promise<any>;
+	return apiGet(url) as Promise<AuditLogsGroupedResponse>;
 }
 
-export function useGetAuditLogsGrouped(page = 1, limit = 10, search?: string, sortBy = "createdAt", sortOrder = "desc", enabled = true) {
+export function useGetAuditLogsGrouped(
+	page = 1,
+	limit = 10,
+	search?: string,
+	startDate?: string,
+	endDate?: string,
+	enabled = true,
+) {
 	return useQuery({
-		queryKey: ["auditLogsGrouped", page, limit, search, sortBy, sortOrder],
-		queryFn: async () => getAuditLogsGrouped(page, limit, search, sortBy, sortOrder),
+		queryKey: ["auditLogsGrouped", page, limit, search, startDate, endDate],
+		queryFn: async () => getAuditLogsGrouped(page, limit, search, startDate, endDate),
 		enabled,
 		staleTime: 5 * 60 * 1000,
 	});

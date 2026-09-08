@@ -85,6 +85,20 @@ export function useGetCustomerDocuments(customerId?: string, enabled = true) {
 	});
 }
 
+export async function deleteCustomerDocument(mediaId: string) {
+	return apiDelete(API_ROUTES.customer.deleteCustomerDocument(mediaId)) as Promise<{
+		success: boolean;
+		message: string;
+		id: string;
+	}>;
+}
+
+export function useDeleteCustomerDocument() {
+	return useMutation({
+		mutationFn: (mediaId: string) => deleteCustomerDocument(mediaId),
+	});
+}
+
 export async function getCustomerReceipts(customerId: string) {
 	return apiGet(API_ROUTES.customer.getCustomerReceipts(customerId)) as Promise<any>;
 }

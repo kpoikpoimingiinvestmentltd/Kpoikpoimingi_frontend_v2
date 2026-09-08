@@ -148,11 +148,22 @@ export function extractStateOptions(refData: unknown): RefOption[] {
 	for (const k of prefer) {
 		const arr = data[k];
 		if (Array.isArray(arr) && arr.length) {
-			return arr.map((it: unknown) => {
+			const options = arr.map((it: unknown) => {
 				const item = it as Record<string, unknown>;
 				const value = String(item.state ?? item.name ?? item.value ?? "");
 				const key = String(item.id ?? value ?? "");
 				return { key, value };
+			});
+			const isFct = (value: string) => {
+				const normalized = value.trim().toUpperCase();
+				return normalized === "FCT" || normalized.includes("FEDERAL CAPITAL");
+			};
+			return options.sort((a, b) => {
+				const aFct = isFct(a.value);
+				const bFct = isFct(b.value);
+				if (aFct && !bFct) return 1;
+				if (!aFct && bFct) return -1;
+				return a.value.localeCompare(b.value);
 			});
 		}
 	}

@@ -2,6 +2,7 @@
 export type ReportDto = { id: string; name?: string };
 
 export type PenaltyRecord = {
+	id?: string;
 	contractCode: string;
 	propertyName: string;
 	customerName: string;
@@ -9,6 +10,9 @@ export type PenaltyRecord = {
 	lateFee: number;
 	interestRate: string;
 	dueDate: string;
+	paidAt?: string | null;
+	paymentNumber?: number;
+	status: string;
 };
 
 export type PaginationMeta = {

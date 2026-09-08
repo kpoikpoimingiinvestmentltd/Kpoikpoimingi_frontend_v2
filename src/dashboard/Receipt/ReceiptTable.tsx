@@ -155,48 +155,46 @@ export default function ReceiptTable() {
 			<div className="flex items-center justify-between flex-wrap gap-4">
 				<h3 className="text-base font-medium">All Receipt</h3>
 				<div className="flex items-center gap-2">
-					{items.length > 0 && (
-						<SearchWithFilters
-							search={search}
-							onSearchChange={handleSearchChange}
-							setPage={handlePageChange}
-							placeholder="Search by receipt number or customer name"
-							fields={
-								[
-									{
-										key: "limit",
-										label: "Items per page",
-										type: "select",
-										options: [
-											{ value: "5", label: "5" },
-											{ value: "10", label: "10" },
-											{ value: "20", label: "20" },
-											{ value: "50", label: "50" },
-										],
-									},
-									{
-										key: "sortBy",
-										label: "Sort By",
-										type: "sortBy",
-										options: [
-											{ value: "createdAt", label: "createdAt" },
-											{ value: "paymentDate", label: "paymentDate" },
-											{ value: "amountPaid", label: "amountPaid" },
-											{ value: "receiptNumber", label: "receiptNumber" },
-										],
-									},
-									{ key: "sortOrder", label: "Sort Order", type: "sortOrder" },
-								] as FilterField[]
-							}
-							initialValues={{ limit: filters.limit || "10", sortBy: filters.sortBy || "", sortOrder: filters.sortOrder || "" }}
-							onApply={handleFiltersApply}
-							onReset={handleFiltersReset}
-						/>
-					)}
+					<SearchWithFilters
+						search={search}
+						onSearchChange={handleSearchChange}
+						setPage={handlePageChange}
+						placeholder="Search by receipt number or customer name"
+						fields={
+							[
+								{
+									key: "limit",
+									label: "Items per page",
+									type: "select",
+									options: [
+										{ value: "5", label: "5" },
+										{ value: "10", label: "10" },
+										{ value: "20", label: "20" },
+										{ value: "50", label: "50" },
+									],
+								},
+								{
+									key: "sortBy",
+									label: "Sort By",
+									type: "sortBy",
+									options: [
+										{ value: "createdAt", label: "createdAt" },
+										{ value: "paymentDate", label: "paymentDate" },
+										{ value: "amountPaid", label: "amountPaid" },
+										{ value: "receiptNumber", label: "receiptNumber" },
+									],
+								},
+								{ key: "sortOrder", label: "Sort Order", type: "sortOrder" },
+							] as FilterField[]
+						}
+						initialValues={{ limit: filters.limit || "10", sortBy: filters.sortBy || "", sortOrder: filters.sortOrder || "" }}
+						onApply={handleFiltersApply}
+						onReset={handleFiltersReset}
+					/>
 				</div>
 			</div>
 
-			<div className="overflow-x-auto min-h-96 flex items-center justify-center">
+			<div className="overflow-x-auto min-h-96 flex items-start justify-center [&>*]:grow">
 				{isLoading || isFetching ? (
 					<TableSkeleton rows={6} cols={7} />
 				) : items.length === 0 ? (
@@ -218,14 +216,12 @@ export default function ReceiptTable() {
 							<TableBody>
 								{items.map((it, idx) => (
 									<TableRow key={it.id ?? idx} className="hover:bg-card">
-										<TableCell className="text-sm text-muted-foreground">{it.receiptNumber ?? it.id}</TableCell>
-										<TableCell className="text-sm text-[#667085]">{it.customer?.fullName ?? "-"}</TableCell>
-										<TableCell className="text-sm text-[#667085]">{it.contract?.property?.name ?? it.propertyName ?? "-"}</TableCell>
-										<TableCell className="text-sm text-[#667085]">
-											{formatPaymentMethod(it.paymentMethod as string | { id?: number; method?: string })}
-										</TableCell>
-										<TableCell className="text-sm text-[#667085]">{formatCurrency(it.amountPaid ?? it.totalAmount)}</TableCell>
-										<TableCell className="text-sm text-[#667085]">
+										<TableCell className="text-sm">{it.receiptNumber ?? it.id}</TableCell>
+										<TableCell className="text-sm">{it.customer?.fullName ?? "-"}</TableCell>
+										<TableCell className="text-sm">{it.contract?.property?.name ?? it.propertyName ?? "-"}</TableCell>
+										<TableCell className="text-sm">{formatPaymentMethod(it.paymentMethod as string | { id?: number; method?: string })}</TableCell>
+										<TableCell className="text-sm">{formatCurrency(it.amountPaid ?? it.totalAmount)}</TableCell>
+										<TableCell className="text-sm">
 											{it.paymentDate
 												? new Date(it.paymentDate).toLocaleDateString()
 												: it.createdAt

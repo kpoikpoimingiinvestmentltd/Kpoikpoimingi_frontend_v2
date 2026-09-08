@@ -110,15 +110,24 @@ export default function Users() {
 	const sortOrder = (filters.sortOrder as string) || "desc";
 
 	// delete confirmation state
-	const [toDelete, setToDelete] = React.useState<{ id?: string; title?: string } | null>(null);
+	const [toDelete, setToDelete] = React.useState<{
+		id?: string;
+		title?: string;
+	} | null>(null);
 	const [confirmOpen, setConfirmOpen] = React.useState(false);
 
 	// deactivate confirmation state
-	const [toDeactivate, setToDeactivate] = React.useState<{ id?: string; title?: string } | null>(null);
+	const [toDeactivate, setToDeactivate] = React.useState<{
+		id?: string;
+		title?: string;
+	} | null>(null);
 	const [deactivateConfirmOpen, setDeactivateConfirmOpen] = React.useState(false);
 
 	// reset password confirmation state
-	const [toResetPassword, setToResetPassword] = React.useState<{ id?: string; title?: string } | null>(null);
+	const [toResetPassword, setToResetPassword] = React.useState<{
+		id?: string;
+		title?: string;
+	} | null>(null);
 	const [resetPasswordConfirmOpen, setResetPasswordConfirmOpen] = React.useState(false);
 	const [resetPasswordSuccessOpen, setResetPasswordSuccessOpen] = React.useState(false);
 	const [generatedPassword, setGeneratedPassword] = React.useState<string | null>(null);
@@ -258,6 +267,7 @@ export default function Users() {
 	const getAssigned = (r: unknown) =>
 		isUser(r) ? (r.numberOfAssignedCustomers ?? "-") : ((r as Record<string, unknown>).numberOfAssignedCustomers ?? "-");
 	const getSalary = (r: unknown) => (r as Record<string, unknown>).salaryAmount ?? "-";
+	const getStaffCode = (r: unknown) => (r as Record<string, unknown>).staffCode ?? "-";
 
 	return (
 		<div className="flex flex-col gap-y-6">
@@ -278,48 +288,54 @@ export default function Users() {
 			<div className="min-h-96 flex">
 				{isLoading || isFetching || users.length > 0 ? (
 					<CustomCard className="bg-white grow w-full rounded-lg p-4 border border-gray-100">
-						{users.length > 0 && (
-							<div className="flex items-center justify-between flex-wrap gap-6">
-								<h2 className="font-semibold">All Users</h2>
-								<div className="flex items-center gap-2">
-									<SearchWithFilters
-										search={search}
-										onSearchChange={handleSearchChange}
-										setPage={handlePageChange}
-										placeholder="Search by user full name or email"
-										fields={
-											[
-												{
-													key: "limit",
-													label: "Items per page",
-													type: "select",
-													options: [
-														{ value: "5", label: "5" },
-														{ value: "10", label: "10" },
-														{ value: "20", label: "20" },
-														{ value: "50", label: "50" },
-													],
-												},
-												{
-													key: "sortBy",
-													label: "Sort By",
-													type: "sortBy",
-													options: [
-														{ value: "createdAt", label: "createdAt" },
-														{ value: "fullName", label: "fullName" },
-														{ value: "email", label: "email" },
-													],
-												},
-												{ key: "sortOrder", label: "Sort Order", type: "sortOrder" },
-											] as FilterField[]
-										}
-										initialValues={{ limit: filters.limit || "10", sortBy: filters.sortBy || "", sortOrder: filters.sortOrder || "" }}
-										onApply={handleFiltersApply}
-										onReset={handleFiltersReset}
-									/>
-								</div>
+						<div className="flex items-center justify-between flex-wrap gap-6">
+							<h2 className="font-semibold">All Users</h2>
+							<div className="flex items-center gap-2">
+								<SearchWithFilters
+									search={search}
+									onSearchChange={handleSearchChange}
+									setPage={handlePageChange}
+									placeholder="Search by user full name or email"
+									fields={
+										[
+											{
+												key: "limit",
+												label: "Items per page",
+												type: "select",
+												options: [
+													{ value: "5", label: "5" },
+													{ value: "10", label: "10" },
+													{ value: "20", label: "20" },
+													{ value: "50", label: "50" },
+												],
+											},
+											{
+												key: "sortBy",
+												label: "Sort By",
+												type: "sortBy",
+												options: [
+													{ value: "createdAt", label: "createdAt" },
+													{ value: "fullName", label: "fullName" },
+													{ value: "email", label: "email" },
+												],
+											},
+											{
+												key: "sortOrder",
+												label: "Sort Order",
+												type: "sortOrder",
+											},
+										] as FilterField[]
+									}
+									initialValues={{
+										limit: filters.limit || "10",
+										sortBy: filters.sortBy || "",
+										sortOrder: filters.sortOrder || "",
+									}}
+									onApply={handleFiltersApply}
+									onReset={handleFiltersReset}
+								/>
 							</div>
-						)}
+						</div>
 
 						{isLoading || isFetching ? (
 							<TableSkeleton rows={6} cols={6} />
@@ -336,6 +352,7 @@ export default function Users() {
 												<TableHead>User Role</TableHead>
 												<TableHead>Assigned Customers</TableHead>
 												<TableHead>Salary</TableHead>
+												<TableHead>Staff Code</TableHead>
 												<TableHead>Action</TableHead>
 											</TableRow>
 										</TableHeader>
@@ -347,6 +364,7 @@ export default function Users() {
 													<TableCell>{renderField(getRole(row))}</TableCell>
 													<TableCell>{renderField(getAssigned(row))}</TableCell>
 													<TableCell>{renderField(getSalary(row))}</TableCell>
+													<TableCell>{renderField(getStaffCode(row))}</TableCell>
 													<TableCell className="flex items-center gap-1">
 														<DropdownMenu>
 															<DropdownMenuTrigger asChild>
@@ -378,7 +396,10 @@ export default function Users() {
 																		label: "Deactivate",
 																		danger: false,
 																		action: () => {
-																			setToDeactivate({ id: (row as Record<string, unknown>).id as string, title: String(getName(row)) });
+																			setToDeactivate({
+																				id: (row as Record<string, unknown>).id as string,
+																				title: String(getName(row)),
+																			});
 																			setDeactivateConfirmOpen(true);
 																		},
 																	},
@@ -387,7 +408,10 @@ export default function Users() {
 																		label: "Reset Password",
 																		danger: false,
 																		action: () => {
-																			setToResetPassword({ id: (row as Record<string, unknown>).id as string, title: String(getName(row)) });
+																			setToResetPassword({
+																				id: (row as Record<string, unknown>).id as string,
+																				title: String(getName(row)),
+																			});
 																			setResetPasswordConfirmOpen(true);
 																		},
 																	},
@@ -398,7 +422,10 @@ export default function Users() {
 																					label: "Delete",
 																					danger: true,
 																					action: () => {
-																						setToDelete({ id: (row as Record<string, unknown>).id as string, title: String(getName(row)) });
+																						setToDelete({
+																							id: (row as Record<string, unknown>).id as string,
+																							title: String(getName(row)),
+																						});
 																						setConfirmOpen(true);
 																					},
 																				},
@@ -462,7 +489,12 @@ export default function Users() {
 					</DialogHeader>
 					<UserForm
 						values={formValues}
-						onChange={(k: string, v: unknown) => setFormValues((s: Record<string, unknown>) => ({ ...(s ?? {}), [k]: v }))}
+						onChange={(k: string, v: unknown) =>
+							setFormValues((s: Record<string, unknown>) => ({
+								...(s ?? {}),
+								[k]: v,
+							}))
+						}
 						onAvatarUploaded={(key) => setAvatarMediaKey(key)}
 						onSubmit={async () => {
 							if (!selectedUser?.id) {
@@ -470,6 +502,9 @@ export default function Users() {
 								return;
 							}
 							try {
+								const stateOfOriginIdNum = Number(formValues.stateOfOrigin);
+								const accountTypeIdNum = Number(formValues.accountType);
+								const bankNameIdNum = Number(formValues.bankName);
 								await updateMutation.mutateAsync({
 									id: selectedUser.id,
 									payload: {
@@ -477,13 +512,13 @@ export default function Users() {
 										email: formValues.email,
 										phoneNumber: formatPhoneNumber(formValues.phone),
 										houseAddress: formValues.houseAddress,
-										stateOfOrigin: formValues.stateOfOrigin,
+										stateOfOriginId: Number.isInteger(stateOfOriginIdNum) ? stateOfOriginIdNum : undefined,
 										dateOfBirth: formValues.dob || undefined,
 										roleId: Number(formValues.role) || undefined,
 										salaryAmount: formValues.salary ? Number(formValues.salary) : undefined,
 										accountNumber: formValues.accountNumber,
-										accountType: formValues.accountType,
-										bankName: formValues.bankName,
+										accountTypeId: Number.isInteger(accountTypeIdNum) ? accountTypeIdNum : undefined,
+										bankNameId: Number.isInteger(bankNameIdNum) ? bankNameIdNum : undefined,
 									},
 								});
 

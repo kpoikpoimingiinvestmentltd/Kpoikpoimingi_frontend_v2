@@ -56,7 +56,7 @@ export default function KeyValueRow({
 				<p className={twMerge("text-muted-foreground dark:text-gray-200 text-xs min-[450px]:text-sm", leftClassName)}>{label}</p>
 			</aside>
 
-			<aside {...(rightProps || {})} className={twMerge(`flex items-center gap-4 justify-end max-w-[120px]`, rightClassName)}>
+			<aside {...(rightProps || {})} className={twMerge(`flex items-center gap-4 justify-end`, rightClassName)}>
 				<div className="flex-1 text-right">
 					{variant === "text" ? (
 						link ? (
@@ -66,7 +66,7 @@ export default function KeyValueRow({
 						) : React.isValidElement(value) ? (
 							value
 						) : (
-							<div className="text-xs min-[450px]:text-sm text-balance sm:text-nowrap text-gray-800 dark:text-gray-100">{value}</div>
+							<div className="text-xs min-[450px]:text-sm text-balance text-gray-800 dark:text-gray-100">{value}</div>
 						)
 					) : variant === "action" ? (
 						React.isValidElement(value) ? (
