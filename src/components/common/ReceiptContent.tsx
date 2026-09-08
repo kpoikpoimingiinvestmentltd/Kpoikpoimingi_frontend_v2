@@ -43,14 +43,12 @@ export default function ReceiptContent({ receipt }: ReceiptContentProps) {
 		return [];
 	})();
 
+	const issuerCode = receipt.issuedBy?.staffCode;
 	const receiptFooter = (
 		<footer className="border-t-2 border-dashed dark:border-t-neutral-700 pb-4 pt-6 text-center">
-			{(receipt.issuedBy?.staffCode || receipt.issuedBy?.fullName) && (
+			{issuerCode && (
 				<p className="text-gray-700 dark:text-gray-50 font-normal text-xs sm:text-[.9rem]">
-					Receipt granted by:{" "}
-					<span className="font-medium dark:text-gray-300 text-black">
-						{receipt.issuedBy.staffCode ?? receipt.issuedBy.fullName}
-					</span>
+					Receipt granted by: <span className="font-medium dark:text-gray-300 text-black">{issuerCode}</span>
 				</p>
 			)}
 		</footer>

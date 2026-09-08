@@ -7,6 +7,7 @@ import SimpleCalculator from "@/components/common/Calculator";
 import { useSelector } from "react-redux";
 import type { RootState } from "@/store";
 import { _router } from "@/routes/_router";
+import { loadAuthFromStorage, isTokenExpired } from "@/services/authPersistence";
 
 export default function AdminDashboardLayout() {
 	const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -17,11 +18,18 @@ export default function AdminDashboardLayout() {
 	const authId = useSelector((state: RootState) => state.auth.id);
 	const authToken = useSelector((state: RootState) => state.auth.accessToken);
 
-	// Redirect to login if not authenticated
+	// Redirect to login if not authenticated (Redux empty AND storage empty/expired)
 	useEffect(() => {
-		if (!authId || !authToken) {
-			navigate(_router.auth.index, { replace: true });
-		}
+		if (authId && authToken) return;
+
+		const stored = loadAuthFromStorage();
+		const hasStoredSession =
+			!!stored?.accessToken && !isTokenExpired(stored.expiresAt);
+
+		// AuthInitializer may still be rehydrating from localStorage after HMR
+		if (hasStoredSession) return;
+
+		navigate(_router.auth.index, { replace: true });
 	}, [authId, authToken, navigate]);
 
 	return (

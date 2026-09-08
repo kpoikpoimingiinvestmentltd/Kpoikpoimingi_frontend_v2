@@ -8,6 +8,7 @@ import type { ReceiptDetail } from "@/types/receipt";
 import { useRef } from "react";
 import { handleDownloadPDF as downloadPDF, handleSharePDF as sharePDF } from "@/utils/pdfUtils";
 import { useCanPerformAction } from "@/hooks/usePermissions";
+import { formatAdminIssuerLabel } from "@/utils/staffIssuer";
 
 export default function ReceiptDetails() {
 	const params = useParams();
@@ -67,7 +68,8 @@ export default function ReceiptDetails() {
 			onShare={handleSharePDF}
 			shouldDownload={canDownloadReceipt}
 			shouldShare={canSendEmails}
-			receiptId={id}>
+			receiptId={id}
+			adminIssuerLabel={formatAdminIssuerLabel(receipt.issuedBy)}>
 			<ReceiptContent receipt={receipt} />
 		</ReceiptWrapper>
 	);

@@ -30,6 +30,15 @@ export function AuthInitializer() {
 				return;
 			}
 
+			// Always rehydrate Redux from storage (fixes Vite HMR / remount wiping in-memory auth)
+			dispatch(
+				setAuth({
+					id: storedAuth.id ?? null,
+					accessToken: storedAuth.accessToken,
+					refreshToken: storedAuth.refreshToken ?? null,
+				}),
+			);
+
 			if (storedAuth.expiresAt && isTokenExpiringSoon(storedAuth.expiresAt)) {
 				if (storedAuth.refreshToken) {
 					try {

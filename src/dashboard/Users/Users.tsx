@@ -267,6 +267,7 @@ export default function Users() {
 	const getAssigned = (r: unknown) =>
 		isUser(r) ? (r.numberOfAssignedCustomers ?? "-") : ((r as Record<string, unknown>).numberOfAssignedCustomers ?? "-");
 	const getSalary = (r: unknown) => (r as Record<string, unknown>).salaryAmount ?? "-";
+	const getStaffCode = (r: unknown) => (r as Record<string, unknown>).staffCode ?? "-";
 
 	return (
 		<div className="flex flex-col gap-y-6">
@@ -351,6 +352,7 @@ export default function Users() {
 												<TableHead>User Role</TableHead>
 												<TableHead>Assigned Customers</TableHead>
 												<TableHead>Salary</TableHead>
+												<TableHead>Staff Code</TableHead>
 												<TableHead>Action</TableHead>
 											</TableRow>
 										</TableHeader>
@@ -362,6 +364,7 @@ export default function Users() {
 													<TableCell>{renderField(getRole(row))}</TableCell>
 													<TableCell>{renderField(getAssigned(row))}</TableCell>
 													<TableCell>{renderField(getSalary(row))}</TableCell>
+													<TableCell>{renderField(getStaffCode(row))}</TableCell>
 													<TableCell className="flex items-center gap-1">
 														<DropdownMenu>
 															<DropdownMenuTrigger asChild>
