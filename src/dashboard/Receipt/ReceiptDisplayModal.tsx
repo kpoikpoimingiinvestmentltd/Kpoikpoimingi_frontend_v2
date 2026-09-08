@@ -5,6 +5,7 @@ import ReceiptContent from "@/components/common/ReceiptContent";
 import { modalContentStyle } from "@/components/common/commonStyles";
 import type { ReceiptDetail } from "@/types/receipt";
 import { handleDownloadPDF as downloadPDF, handleSharePDF as sharePDF } from "@/utils/pdfUtils";
+import { formatAdminIssuerLabel } from "@/utils/staffIssuer";
 
 interface ReceiptDisplayModalProps {
 	open: boolean;
@@ -43,7 +44,8 @@ export default function ReceiptDisplayModal({ open, onOpenChange, receipt }: Rec
 						emailBody="Please find attached the receipt."
 						onDownload={handleDownloadPDF}
 						onPrint={handlePrint}
-						onShare={handleSharePDF}>
+						onShare={handleSharePDF}
+						adminIssuerLabel={formatAdminIssuerLabel(receipt.issuedBy)}>
 						<ReceiptContent receipt={receipt} />
 					</ReceiptWrapper>
 				)}
