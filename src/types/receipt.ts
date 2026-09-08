@@ -42,7 +42,7 @@ export type ReceiptDetail = {
   paymentDate?: string;
   paymentMethodId?: number;
   issuedById?: string;
-  issuedBy?: { id?: string; fullName?: string };
+  issuedBy?: { id?: string; fullName?: string; staffCode?: string };
   vatAmount?: string | number;
   vatUsed?: string | number;
   totalAmount?: string | number;
