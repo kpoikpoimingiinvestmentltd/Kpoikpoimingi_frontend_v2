@@ -4,6 +4,7 @@ import AdminDashboardHeader from "./AdminDashboardHeader";
 import { useState, useEffect } from "react";
 import LogoutModal from "../components/common/LogoutModal";
 import SimpleCalculator from "@/components/common/Calculator";
+import WhatsNewOnEnter from "@/components/common/WhatsNewOnEnter";
 import { useSelector } from "react-redux";
 import type { RootState } from "@/store";
 import { _router } from "@/routes/_router";
@@ -56,6 +57,7 @@ export default function AdminDashboardLayout() {
 
 			<LogoutModal open={logoutOpen} onOpenChange={setLogoutOpen} />
 			<SimpleCalculator />
+			<WhatsNewOnEnter />
 		</div>
 	);
 }
