@@ -26,6 +26,9 @@ type Props = {
 	/** When true, show the controlled Edit Acquisition action */
 	showEditAction?: boolean;
 	onEditAcquisition?: () => void;
+	/** When no purchase exists, show Add Acquisition */
+	showAddAction?: boolean;
+	onAddAcquisition?: () => void;
 	/** Compact note under the summary (for edit property modal) */
 	showManagementNote?: boolean;
 	className?: string;
@@ -38,6 +41,8 @@ export default function AcquisitionInfoPanel({
 	errorMessage,
 	showEditAction,
 	onEditAcquisition,
+	showAddAction,
+	onAddAcquisition,
 	showManagementNote,
 	className,
 }: Props) {
@@ -64,10 +69,19 @@ export default function AcquisitionInfoPanel({
 	if (!purchase) {
 		return (
 			<div className={className}>
-				<h3 className="font-semibold text-base mb-2">Acquisition Information</h3>
-				<p className="text-sm text-muted-foreground">
-					No acquisition has been recorded for this property.
-				</p>
+				<div className="flex items-start justify-between gap-3 mb-2">
+					<div>
+						<h3 className="font-semibold text-base">Acquisition Information</h3>
+						<p className="text-sm text-muted-foreground mt-1">
+							No acquisition has been recorded for this property yet.
+						</p>
+					</div>
+					{showAddAction && onAddAcquisition ? (
+						<ActionButton className="shrink-0 text-sm" onClick={onAddAcquisition}>
+							Add Acquisition
+						</ActionButton>
+					) : null}
+				</div>
 			</div>
 		);
 	}

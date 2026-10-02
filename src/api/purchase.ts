@@ -288,6 +288,43 @@ export async function updateIndividualPurchase(id: string, payload: UpdateIndivi
 	return apiPatch(API_ROUTES.purchase.update(id), payload);
 }
 
+export type AttachAcquisitionPayload = {
+	mode: "individual" | "existing_batch";
+	purchasePrice: string | number;
+	notes?: string;
+	supplierId?: string;
+	purchaseDate?: string;
+	transportation?: string | number;
+	miscellaneous?: string | number;
+	batchId?: string;
+	manualAllocations?: Array<{
+		purchaseId?: string;
+		isNew?: boolean;
+		allocatedTransportation: string | number;
+		allocatedMiscellaneous: string | number;
+	}>;
+	pricingMethod?: "MANUAL" | "COST_PLUS_MARKUP";
+	markupPercentage?: string | number;
+	price?: string | number;
+};
+
+export async function attachAcquisition(propertyId: string, payload: AttachAcquisitionPayload) {
+	return apiPost(API_ROUTES.purchase.attach(propertyId), payload);
+}
+
+export function useAttachAcquisition(onSuccess?: (data: unknown) => void, onError?: (error: unknown) => void) {
+	const qc = useQueryClient();
+	return useMutation({
+		mutationFn: ({ propertyId, payload }: { propertyId: string; payload: AttachAcquisitionPayload }) =>
+			attachAcquisition(propertyId, payload),
+		onSuccess: (data) => {
+			invalidatePurchaseQueries(qc);
+			onSuccess?.(data);
+		},
+		onError,
+	});
+}
+
 export async function previewBatchUpdate(batchId: string, payload: UpdateBatchPurchasePayload) {
 	return apiPost(API_ROUTES.purchase.previewBatch(batchId), payload);
 }

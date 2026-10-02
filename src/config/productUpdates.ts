@@ -19,6 +19,7 @@ export const PRODUCT_UPDATES: ProductUpdate[] = [
 			"You can now record how properties were bought (individually or in batches) with clear acquisition costs, and set listing price by selling price or markup.",
 		bullets: [
 			"Add a property with Individual purchase, Part of a new batch, or Part of an existing batch.",
+			"On older properties with no purchase record, open the property and use Add Acquisition.",
 			"Track purchase price, transportation, and miscellaneous fees; batch fees can be split equally, by purchase price, or manually.",
 			"Choose Manual selling price or Cost + markup when setting the listing price.",
 			"View acquisition details on the property page, and use Edit Acquisition to correct purchase costs.",
