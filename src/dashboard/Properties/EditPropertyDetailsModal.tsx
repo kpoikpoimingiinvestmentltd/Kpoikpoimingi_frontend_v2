@@ -15,12 +15,28 @@ import { toast } from "sonner";
 import { twMerge } from "tailwind-merge";
 import type { EditPropertyDetailsModalProps } from "@/types/property";
 import type { PresignUploadResponse } from "@/types/media";
+import AcquisitionInfoPanel from "./AcquisitionInfoPanel";
+import EditAcquisitionModal from "./EditAcquisitionModal";
+import AddAcquisitionModal from "./AddAcquisitionModal";
+import { useGetPurchaseByPropertyId, type PurchaseRecord } from "@/api/purchase";
 
 export default function EditPropertyDetailsModal({ open, onOpenChange, initial, onSave, isLoading }: EditPropertyDetailsModalProps) {
 	const initialImgs = initial?.media ?? initial?.images ?? [media.images._product1, media.images._product2];
 	const [currentImages, setCurrentImages] = React.useState<string[]>(Array.isArray(initialImgs) ? initialImgs : [initialImgs as string]);
 	const [uploadedMediaKeys, setUploadedMediaKeys] = React.useState<string[]>([]);
 	const [isUploadingImages, setIsUploadingImages] = React.useState(false);
+	const [acquisitionEditOpen, setAcquisitionEditOpen] = React.useState(false);
+	const [acquisitionAddOpen, setAcquisitionAddOpen] = React.useState(false);
+
+	const propertyId = open ? initial?.id : undefined;
+	const {
+		data: purchaseData,
+		isLoading: purchaseLoading,
+		isError: purchaseError,
+		error: purchaseErr,
+		refetch: refetchPurchase,
+	} = useGetPurchaseByPropertyId(propertyId);
+	const purchase = (purchaseData as PurchaseRecord | null | undefined) || null;
 
 	const uploadedImages = currentImages.map((src) => ({
 		src,
@@ -168,6 +184,18 @@ export default function EditPropertyDetailsModal({ open, onOpenChange, initial, 
 		e.currentTarget.blur();
 	};
 
+	// Format number with commas (e.g., 1000000 -> 1,000,000)
+	const formatPriceDisplay = (value: string | number) => {
+		if (!value) return "";
+		const numStr = String(value).replace(/,/g, ""); // Remove existing commas
+		return numStr.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+	};
+
+	// Remove commas and convert to number
+	const parsePriceValue = (value: string) => {
+		return value.replace(/,/g, "");
+	};
+
 	const handleImageUpload = async (files: File[]) => {
 		if (files && files.length > 0) {
 			setIsUploadingImages(true);
@@ -188,7 +216,7 @@ export default function EditPropertyDetailsModal({ open, onOpenChange, initial, 
 				...form,
 				images: currentImages,
 				mediaKeys: allMediaKeys,
-				price: Number(form.price),
+				price: Number(parsePriceValue(String(form.price ?? "0"))),
 				quantityTotal: Number(form.quantityTotal),
 				quantityAssigned: Number(form.quantityAssigned),
 			};
@@ -315,19 +343,8 @@ export default function EditPropertyDetailsModal({ open, onOpenChange, initial, 
 							</div>
 						</div>
 
-						{/* Price and Quantity */}
+						{/* Quantity and Selling Price */}
 						<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-							<div>
-								<CustomInput
-									required
-									label="Price"
-									type="number"
-									value={form.price}
-									onChange={(e) => handleChange("price")(e.target.value)}
-									onWheel={handleNumberInputWheel}
-									className={twMerge(inputStyle)}
-								/>
-							</div>
 							<div>
 								<CustomInput
 									required
@@ -336,6 +353,15 @@ export default function EditPropertyDetailsModal({ open, onOpenChange, initial, 
 									value={form.quantityTotal}
 									onChange={(e) => handleChange("quantityTotal")(e.target.value)}
 									onWheel={handleNumberInputWheel}
+									className={twMerge(inputStyle)}
+								/>
+							</div>
+							<div>
+								<CustomInput
+									required
+									label="Selling Price"
+									value={formatPriceDisplay(form.price)}
+									onChange={(e) => handleChange("price")(parsePriceValue(e.target.value))}
 									className={twMerge(inputStyle)}
 								/>
 							</div>
@@ -461,6 +487,23 @@ export default function EditPropertyDetailsModal({ open, onOpenChange, initial, 
 							/>
 						</div>
 
+						{/* Acquisition — read-only with controlled edit */}
+						<div className="border-t pt-6">
+							<AcquisitionInfoPanel
+								purchase={purchase}
+								loading={purchaseLoading}
+								error={purchaseError}
+								errorMessage={
+									purchaseErr instanceof Error ? purchaseErr.message : undefined
+								}
+								showEditAction={Boolean(purchase)}
+								onEditAcquisition={() => setAcquisitionEditOpen(true)}
+								showAddAction={!purchase && !purchaseLoading && !purchaseError}
+								onAddAcquisition={() => setAcquisitionAddOpen(true)}
+								showManagementNote
+							/>
+						</div>
+
 						{/* Action Button */}
 						<footer className="mt-4 w-full">
 							<ActionButton variant="primary" onClick={handleSave} disabled={isLoading} className="w-full">
@@ -470,6 +513,24 @@ export default function EditPropertyDetailsModal({ open, onOpenChange, initial, 
 					</div>
 				</div>
 			</DialogContent>
+
+			<EditAcquisitionModal
+				open={acquisitionEditOpen}
+				onOpenChange={setAcquisitionEditOpen}
+				purchase={purchase}
+			/>
+			{propertyId ? (
+				<AddAcquisitionModal
+					open={acquisitionAddOpen}
+					onOpenChange={setAcquisitionAddOpen}
+					propertyId={propertyId}
+					quantityTotal={Number(initial?.quantityTotal) || 1}
+					currentListingPrice={initial?.price}
+					onAttached={() => {
+						refetchPurchase();
+					}}
+				/>
+			) : null}
 		</Dialog>
 	);
 }

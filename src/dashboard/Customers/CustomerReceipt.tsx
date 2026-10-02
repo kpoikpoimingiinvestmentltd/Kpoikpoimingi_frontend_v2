@@ -7,6 +7,7 @@ import { useGetReceiptById } from "@/api/receipt";
 import { CardSkeleton, RectangleSkeleton } from "@/components/common/Skeleton";
 import type { ReceiptDetail } from "@/types/receipt";
 import { handleDownloadPDF as downloadPDF, handleSharePDF as sharePDF } from "@/utils/pdfUtils";
+import { formatAdminIssuerLabel } from "@/utils/staffIssuer";
 
 export default function CustomerReceipt() {
 	const params = useParams();
@@ -63,7 +64,8 @@ export default function CustomerReceipt() {
 				emailBody="Please find attached the receipt."
 				onDownload={handleDownloadPDF}
 				onShare={handleSharePDF}
-				receiptId={receiptId}>
+				receiptId={receiptId}
+				adminIssuerLabel={formatAdminIssuerLabel(receipt.issuedBy)}>
 				<ReceiptContent receipt={receipt} />
 			</ReceiptWrapper>
 		</div>

@@ -163,9 +163,27 @@ export default function CustomerForm({
 			// Handle whatsapp number for "once" payment method
 			if (paymentMethod === "once") {
 				const phoneVal =
-					(initial as { phoneNumber?: string; phone?: string; whatsapp?: string })?.phoneNumber ||
-					(initial as { phoneNumber?: string; phone?: string; whatsapp?: string })?.phone ||
-					(initial as { phoneNumber?: string; phone?: string; whatsapp?: string })?.whatsapp;
+					(
+						initial as {
+							phoneNumber?: string;
+							phone?: string;
+							whatsapp?: string;
+						}
+					)?.phoneNumber ||
+					(
+						initial as {
+							phoneNumber?: string;
+							phone?: string;
+							whatsapp?: string;
+						}
+					)?.phone ||
+					(
+						initial as {
+							phoneNumber?: string;
+							phone?: string;
+							whatsapp?: string;
+						}
+					)?.whatsapp;
 				if (phoneVal) {
 					handleChange("whatsapp", toLocalPhone(typeof phoneVal === "string" ? phoneVal : ""));
 				}
@@ -266,13 +284,13 @@ export default function CustomerForm({
 						email: srcObj.email ?? curr.email,
 						employmentStatus: String(
 							srcObj.employmentStatusId ||
-								(typeof srcObj.employmentStatus === "object" && srcObj.employmentStatus && "status" in srcObj.employmentStatus
+								(typeof srcObj?.employmentStatus === "object" && srcObj?.employmentStatus && "status" in srcObj?.employmentStatus
 									? (srcObj.employmentStatus as { status?: string }).status === "EMPLOYED"
 										? "1"
-										: (srcObj.employmentStatus as { status?: string }).status === "SELF EMPLOYED"
+										: (srcObj?.employmentStatus as { status?: string }).status === "SELF EMPLOYED"
 											? "2"
 											: ""
-									: srcObj.employmentStatus) ||
+									: srcObj?.employmentStatus) ||
 								curr.employmentStatus ||
 								"",
 						),
@@ -474,7 +492,7 @@ export default function CustomerForm({
 						spouseFullName: installmentForm.nextOfKin.spouseName,
 						spousePhone: formatPhoneNumber(installmentForm.nextOfKin.spousePhone),
 						spouseAddress: installmentForm.nextOfKin.address,
-						isNextOfKinSpouse: installmentForm.nextOfKin.spouseName ? "Yes" : "No",
+						isNextOfKinSpouse: installmentForm.nextOfKin.isNextOfKinSpouse ? "Yes" : "No",
 					},
 					guarantors: installmentForm.guarantors.map((g, idx) => ({
 						fullName: g.fullName,
@@ -528,12 +546,24 @@ export default function CustomerForm({
 						},
 					],
 					mediaKeys: {
-						...(uploadedFiles.nin && { identificationDocument: uploadedFiles.nin }),
-						...(uploadedFiles.driverLicense && { driverLicense: uploadedFiles.driverLicense }),
-						...(uploadedFiles.indigeneCertificate && { indegeneCertificate: uploadedFiles.indigeneCertificate }),
-						...(uploadedFiles.guarantor_0_doc && { guarantor_0_doc: uploadedFiles.guarantor_0_doc }),
-						...(uploadedFiles.guarantor_1_doc && { guarantor_1_doc: uploadedFiles.guarantor_1_doc }),
-						...(uploadedFiles.contract && { signedContract: uploadedFiles.contract }),
+						...(uploadedFiles.nin && {
+							identificationDocument: uploadedFiles.nin,
+						}),
+						...(uploadedFiles.driverLicense && {
+							driverLicense: uploadedFiles.driverLicense,
+						}),
+						...(uploadedFiles.indigeneCertificate && {
+							indegeneCertificate: uploadedFiles.indigeneCertificate,
+						}),
+						...(uploadedFiles.guarantor_0_doc && {
+							guarantor_0_doc: uploadedFiles.guarantor_0_doc,
+						}),
+						...(uploadedFiles.guarantor_1_doc && {
+							guarantor_1_doc: uploadedFiles.guarantor_1_doc,
+						}),
+						...(uploadedFiles.contract && {
+							signedContract: uploadedFiles.contract,
+						}),
 					},
 				};
 			}
@@ -554,13 +584,14 @@ export default function CustomerForm({
 			});
 			if (skipEmailVerification) {
 				await handleEmailVerification();
+				setIsSubmitting(false);
 			} else {
 				setShowEmailVerification(true);
+				// Don't set isSubmitting to false yet - it will be managed by handleEmailVerification
 			}
 		} catch (err: unknown) {
 			console.error("Form validation failed", err);
 			toast.error(`Validation failed: ${extractErrorMessage(err, "Unknown error")}`);
-		} finally {
 			setIsSubmitting(false);
 		}
 	};

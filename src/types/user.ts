@@ -18,6 +18,7 @@ export type User = {
 	fullName: string;
 	email?: string;
 	username?: string;
+	staffCode?: string | null;
 	roleId?: number;
 	status?: UserStatus;
 	role?: UserRole;

@@ -48,26 +48,74 @@ export default function TabContractInformation({ contract }: { contract: Record<
 
 		await createPaymentLinkMutation.mutateAsync(payload);
 	};
+	type PropertyBreakdownItem = { name: string; quantity: number; unitPrice: number; subtotal: number };
+	const propertiesBreakdown = (contract?.propertiesBreakdown as PropertyBreakdownItem[] | undefined) ?? [];
+	const hasBreakdown = propertiesBreakdown.length > 0;
+
+	const rawTotalProductAmount = (contract?.totalProductAmount as number) ?? null;
+	const productPrice =
+		rawTotalProductAmount != null
+			? rawTotalProductAmount
+			: parseFloat(((contract?.property as Record<string, unknown>)?.price as string) || "0");
+	const totalProductAmountFormatted = `₦${productPrice.toLocaleString()}`;
+
+	const downPaymentNum = parseFloat(String(contract?.downPayment ?? "0")) || 0;
+	const outstandingNum = parseFloat(String(contract?.outStandingBalance ?? "0")) || 0;
+	const durationValue = Number(contract?.durationValue) || 0;
+	const durationUnit = String(
+		((contract?.durationUnit as Record<string, unknown>)?.duration as string) || "",
+	).toUpperCase();
+	const storedRatePct = Number(contract?.interestRate);
+	const rateDecimal = Number.isFinite(storedRatePct) && storedRatePct > 0 ? storedRatePct / 100 : null;
+	const principal = Math.max(productPrice - downPaymentNum, 0);
+	const timeInYears =
+		durationValue > 0
+			? durationUnit === "WEEKS" || durationUnit === "WEEK"
+				? durationValue / 52
+				: durationValue / 12
+			: 0;
+	// Reconstruct original financed total (principal + interest) from rate + duration —
+	// outStandingBalance shrinks after payments and must not be labeled "Total payable".
+	const originalTotalPayable =
+		rateDecimal != null && timeInYears > 0
+			? principal + principal * rateDecimal * timeInYears
+			: (() => {
+					const interestAmt = parseFloat(String(contract?.interest ?? ""));
+					return Number.isFinite(interestAmt) ? principal + interestAmt : null;
+				})();
+
+	const formatNaira = (n: number | null) =>
+		n != null && Number.isFinite(n) ? `₦${Math.round(n).toLocaleString()}` : "N/A";
+
 	const contractData = {
 		customerName: ((contract?.customer as Record<string, unknown>)?.fullName as string) || "N/A",
 		whatsapp: ((contract?.customer as Record<string, unknown>)?.phoneNumber as string) || "N/A",
-		address: ((contract?.customer as Record<string, unknown>)?.houseAddress as string) || "N/A",
-		businessAddress: ((contract?.customer as Record<string, unknown>)?.businessAddress as string) || "N/A",
+		address:
+			((contract?.customer as Record<string, unknown>)?.homeAddress as string) ||
+			((contract?.customer as Record<string, unknown>)?.houseAddress as string) ||
+			"N/A",
+		businessAddress:
+			((contract?.customer as Record<string, unknown>)?.businessAddress as string) ||
+			((contract?.customer as Record<string, unknown>)?.companyAddress as string) ||
+			"N/A",
 		status: ((contract?.status as Record<string, unknown>)?.status as string) || "N/A",
 		propertyName: ((contract?.property as Record<string, unknown>)?.name as string) || "N/A",
 		paymentType: ((contract?.paymentType as Record<string, unknown>)?.type as string) || "N/A",
-		downPayment: `₦${parseFloat((contract?.downPayment as string) || "0").toLocaleString()}` || "N/A",
+		downPayment: contract?.downPayment ? `₦${downPaymentNum.toLocaleString()}` : "N/A",
 		paymentDuration:
-			`${(contract?.durationValue as number) || 0} ${((contract?.durationUnit as Record<string, unknown>)?.duration as string) || ""}` || "N/A",
-		totalPayable: `₦${parseFloat((contract?.outStandingBalance as string) || "0").toLocaleString()}` || "N/A",
-		totalProductAmount: `₦${parseFloat(((contract?.property as Record<string, unknown>)?.price as string) || "0").toLocaleString()}` || "N/A",
+			(contract?.durationValue as number)
+				? `${contract.durationValue} ${((contract?.durationUnit as Record<string, unknown>)?.duration as string) || ""}`
+				: "N/A",
+		totalPayable: formatNaira(originalTotalPayable),
+		outstandingBalance: formatNaira(outstandingNum),
+		totalProductAmount: totalProductAmountFormatted,
 		contractRange:
 			(contract?.startDate as string) && (contract?.endDate as string)
 				? `${new Date(contract.startDate as string).toLocaleDateString()} to ${new Date(contract.endDate as string).toLocaleDateString()}`
 				: "N/A",
 		assignedStaff: ((contract?.createdBy as Record<string, unknown>)?.fullName as string) || "N/A",
-		interest: (contract?.interestRate as number) ? `${contract.interestRate}%` : "N/A",
-		vat: (contract?.vatPercentage as number) ? `${contract.vatPercentage}%` : "N/A",
+		interest: Number.isFinite(storedRatePct) && storedRatePct > 0 ? `${storedRatePct}%` : "N/A",
+		vat: (contract?.vatPercentage as number) ? `${Number(contract.vatPercentage) * 100}%` : "N/A",
 		startDate: (contract?.startDate as string) ? new Date(contract.startDate as string).toLocaleDateString() : "N/A",
 	};
 	return (
@@ -111,12 +159,24 @@ export default function TabContractInformation({ contract }: { contract: Record<
 								leftClassName="text-sm text-muted-foreground"
 								rightClassName="text-right"
 							/>
+					{hasBreakdown ? (
+						propertiesBreakdown.map((item, i) => (
 							<KeyValueRow
-								label="Property Name"
-								value={contractData.propertyName}
+								key={i}
+								label={i === 0 ? (propertiesBreakdown.length > 1 ? "Properties" : "Property Name") : ""}
+								value={`${item.name} (Qty: ${item.quantity}) — ₦${item.subtotal.toLocaleString()}`}
 								leftClassName="text-sm text-muted-foreground"
 								rightClassName="text-right"
 							/>
+						))
+					) : (
+						<KeyValueRow
+							label="Property Name"
+							value={contractData.propertyName}
+							leftClassName="text-sm text-muted-foreground"
+							rightClassName="text-right"
+						/>
+					)}
 							<KeyValueRow
 								label="Payment type"
 								value={contractData.paymentType}
@@ -138,6 +198,12 @@ export default function TabContractInformation({ contract }: { contract: Record<
 							<KeyValueRow
 								label="Total payable"
 								value={contractData.totalPayable}
+								leftClassName="text-sm text-muted-foreground"
+								rightClassName="text-right"
+							/>
+							<KeyValueRow
+								label="Outstanding balance"
+								value={contractData.outstandingBalance}
 								leftClassName="text-sm text-muted-foreground"
 								rightClassName="text-right"
 							/>

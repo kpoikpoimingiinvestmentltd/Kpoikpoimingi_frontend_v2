@@ -132,6 +132,7 @@ export interface InstallmentPaymentForm {
 	address: string;
 	isDriver?: boolean;
 	nextOfKin: {
+		isNextOfKinSpouse?: boolean;
 		fullName: string;
 		phone: string;
 		relationship: string;

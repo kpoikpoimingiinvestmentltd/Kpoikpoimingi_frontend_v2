@@ -31,6 +31,8 @@ import ReportAnalytics from "../dashboard/ReportAnalytics/ReportAnalytics";
 import Debt from "../dashboard/Debt/Debt";
 import PropertyDetails from "../dashboard/Properties/PropertyDetails";
 import Categories from "../dashboard/Properties/Categories";
+import Purchases from "../dashboard/Properties/Purchases";
+import PurchaseBatchDetails from "../dashboard/Properties/PurchaseBatchDetails";
 import ContractDetails from "../dashboard/Contract/ContractDetails";
 import ProductRequestDetails from "../dashboard/ProductRequest/ProductRequestDetails";
 import SelectPaymentMethod from "../dashboard/Customers/SelectPaymentMethod";
@@ -137,6 +139,14 @@ export const appRouter = createBrowserRouter([
 			{
 				path: _router.dashboard.categories,
 				element: <Categories />,
+			},
+			{
+				path: _router.dashboard.purchases,
+				element: <Purchases />,
+			},
+			{
+				path: _router.dashboard.purchaseBatchDetailsPath,
+				element: <PurchaseBatchDetails />,
 			},
 			{
 				path: _router.dashboard.payment,

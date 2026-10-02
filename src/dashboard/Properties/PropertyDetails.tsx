@@ -10,17 +10,31 @@ import React from "react";
 import PageTitles from "../../components/common/PageTitles";
 import { useParams } from "react-router";
 import { useGetPropertyById, useUpdateProperty } from "@/api/property";
+import { useGetPurchaseByPropertyId, type PurchaseRecord } from "@/api/purchase";
 import { _router } from "../../routes/_router";
 import { RectangleSkeleton } from "@/components/common/Skeleton";
 import type { PropertyData } from "@/types/property";
 import { toast } from "sonner";
+import AcquisitionInfoPanel from "./AcquisitionInfoPanel";
+import EditAcquisitionModal from "./EditAcquisitionModal";
+import AddAcquisitionModal from "./AddAcquisitionModal";
 
 export default function PropertyDetails() {
 	const { id } = useParams<{ id: string }>();
 	const { data: propertyResponse, isLoading, refetch } = useGetPropertyById(id);
 	const property = propertyResponse as PropertyData | undefined;
+	const {
+		data: purchaseData,
+		isLoading: purchaseLoading,
+		isError: purchaseError,
+		error: purchaseErr,
+		refetch: refetchPurchase,
+	} = useGetPurchaseByPropertyId(id);
+	const purchase = (purchaseData as PurchaseRecord | null | undefined) || null;
 
 	const [editOpen, setEditOpen] = React.useState(false);
+	const [acquisitionEditOpen, setAcquisitionEditOpen] = React.useState(false);
+	const [acquisitionAddOpen, setAcquisitionAddOpen] = React.useState(false);
 
 	const updateProperty = useUpdateProperty(
 		() => {
@@ -188,7 +202,11 @@ export default function PropertyDetails() {
 				<section aria-label="property details" className="mt-4 gap-6">
 					<KeyValueRow leftClassName="text-black" label="Property ID" value={property.propertyCode} />
 					<KeyValueRow leftClassName="text-black" label="Property Name" value={property.name} />
-					<KeyValueRow leftClassName="text-black" label="Amount" value={`₦${property.price}`} />
+					<KeyValueRow
+						leftClassName="text-black"
+						label="Selling Price"
+						value={`₦${Number(property.price || 0).toLocaleString()}`}
+					/>
 					<KeyValueRow leftClassName="text-black" label="Quantity" value={property.quantityTotal.toString()} />
 					<KeyValueRow leftClassName="text-black" label="Status" value={property.status.status} />
 					<KeyValueRow leftClassName="text-black" label="Number Assigned" value={property.quantityAssigned.toString()} />
@@ -217,8 +235,62 @@ export default function PropertyDetails() {
 							</div>
 						</>
 					)}
+
+					<div className="border-t my-6 pt-6">
+						<AcquisitionInfoPanel
+							purchase={purchase}
+							loading={purchaseLoading}
+							error={purchaseError}
+							errorMessage={
+								purchaseErr instanceof Error ? purchaseErr.message : undefined
+							}
+							showEditAction={Boolean(purchase)}
+							onEditAcquisition={() => setAcquisitionEditOpen(true)}
+							showAddAction={!purchase && !purchaseLoading && !purchaseError}
+							onAddAcquisition={() => setAcquisitionAddOpen(true)}
+						/>
+						{purchase && (
+							<div className="space-y-3 mt-4">
+								<KeyValueRow
+									leftClassName="text-black"
+									label="Pricing Method"
+									value={
+										property.pricingMethod === "COST_PLUS_MARKUP"
+											? "Cost + Markup"
+											: "Manual selling price"
+									}
+								/>
+								{property.pricingMethod === "COST_PLUS_MARKUP" && property.markupPercentage != null && (
+									<KeyValueRow
+										leftClassName="text-black"
+										label="Markup (%)"
+										value={`${Number(property.markupPercentage)}%`}
+									/>
+								)}
+							</div>
+						)}
+					</div>
 				</section>
 			</CustomCard>
+
+			<EditAcquisitionModal
+				open={acquisitionEditOpen}
+				onOpenChange={setAcquisitionEditOpen}
+				purchase={purchase}
+			/>
+			{id ? (
+				<AddAcquisitionModal
+					open={acquisitionAddOpen}
+					onOpenChange={setAcquisitionAddOpen}
+					propertyId={id}
+					quantityTotal={Number(property?.quantityTotal) || 1}
+					currentListingPrice={property?.price}
+					onAttached={() => {
+						refetch();
+						refetchPurchase();
+					}}
+				/>
+			) : null}
 		</PageWrapper>
 	);
 }
