@@ -45,6 +45,7 @@ export const API_ROUTES = {
 		updateBatch: (batchId: string) => `/purchase/batch/${batchId}`,
 		list: "/purchase",
 		byProperty: (propertyId: string) => `/purchase/property/${propertyId}`,
+		attach: (propertyId: string) => `/purchase/property/${propertyId}/attach`,
 		byId: (id: string) => `/purchase/${id}`,
 		update: (id: string) => `/purchase/${id}`,
 	},

@@ -17,6 +17,7 @@ import type { EditPropertyDetailsModalProps } from "@/types/property";
 import type { PresignUploadResponse } from "@/types/media";
 import AcquisitionInfoPanel from "./AcquisitionInfoPanel";
 import EditAcquisitionModal from "./EditAcquisitionModal";
+import AddAcquisitionModal from "./AddAcquisitionModal";
 import { useGetPurchaseByPropertyId, type PurchaseRecord } from "@/api/purchase";
 
 export default function EditPropertyDetailsModal({ open, onOpenChange, initial, onSave, isLoading }: EditPropertyDetailsModalProps) {
@@ -25,6 +26,7 @@ export default function EditPropertyDetailsModal({ open, onOpenChange, initial, 
 	const [uploadedMediaKeys, setUploadedMediaKeys] = React.useState<string[]>([]);
 	const [isUploadingImages, setIsUploadingImages] = React.useState(false);
 	const [acquisitionEditOpen, setAcquisitionEditOpen] = React.useState(false);
+	const [acquisitionAddOpen, setAcquisitionAddOpen] = React.useState(false);
 
 	const propertyId = open ? initial?.id : undefined;
 	const {
@@ -32,6 +34,7 @@ export default function EditPropertyDetailsModal({ open, onOpenChange, initial, 
 		isLoading: purchaseLoading,
 		isError: purchaseError,
 		error: purchaseErr,
+		refetch: refetchPurchase,
 	} = useGetPurchaseByPropertyId(propertyId);
 	const purchase = (purchaseData as PurchaseRecord | null | undefined) || null;
 
@@ -495,6 +498,8 @@ export default function EditPropertyDetailsModal({ open, onOpenChange, initial, 
 								}
 								showEditAction={Boolean(purchase)}
 								onEditAcquisition={() => setAcquisitionEditOpen(true)}
+								showAddAction={!purchase && !purchaseLoading && !purchaseError}
+								onAddAcquisition={() => setAcquisitionAddOpen(true)}
 								showManagementNote
 							/>
 						</div>
@@ -514,6 +519,18 @@ export default function EditPropertyDetailsModal({ open, onOpenChange, initial, 
 				onOpenChange={setAcquisitionEditOpen}
 				purchase={purchase}
 			/>
+			{propertyId ? (
+				<AddAcquisitionModal
+					open={acquisitionAddOpen}
+					onOpenChange={setAcquisitionAddOpen}
+					propertyId={propertyId}
+					quantityTotal={Number(initial?.quantityTotal) || 1}
+					currentListingPrice={initial?.price}
+					onAttached={() => {
+						refetchPurchase();
+					}}
+				/>
+			) : null}
 		</Dialog>
 	);
 }

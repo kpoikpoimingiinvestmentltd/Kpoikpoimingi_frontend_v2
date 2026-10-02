@@ -17,17 +17,24 @@ import type { PropertyData } from "@/types/property";
 import { toast } from "sonner";
 import AcquisitionInfoPanel from "./AcquisitionInfoPanel";
 import EditAcquisitionModal from "./EditAcquisitionModal";
+import AddAcquisitionModal from "./AddAcquisitionModal";
 
 export default function PropertyDetails() {
 	const { id } = useParams<{ id: string }>();
 	const { data: propertyResponse, isLoading, refetch } = useGetPropertyById(id);
 	const property = propertyResponse as PropertyData | undefined;
-	const { data: purchaseData, isLoading: purchaseLoading, isError: purchaseError, error: purchaseErr } =
-		useGetPurchaseByPropertyId(id);
+	const {
+		data: purchaseData,
+		isLoading: purchaseLoading,
+		isError: purchaseError,
+		error: purchaseErr,
+		refetch: refetchPurchase,
+	} = useGetPurchaseByPropertyId(id);
 	const purchase = (purchaseData as PurchaseRecord | null | undefined) || null;
 
 	const [editOpen, setEditOpen] = React.useState(false);
 	const [acquisitionEditOpen, setAcquisitionEditOpen] = React.useState(false);
+	const [acquisitionAddOpen, setAcquisitionAddOpen] = React.useState(false);
 
 	const updateProperty = useUpdateProperty(
 		() => {
@@ -239,6 +246,8 @@ export default function PropertyDetails() {
 							}
 							showEditAction={Boolean(purchase)}
 							onEditAcquisition={() => setAcquisitionEditOpen(true)}
+							showAddAction={!purchase && !purchaseLoading && !purchaseError}
+							onAddAcquisition={() => setAcquisitionAddOpen(true)}
 						/>
 						{purchase && (
 							<div className="space-y-3 mt-4">
@@ -269,6 +278,19 @@ export default function PropertyDetails() {
 				onOpenChange={setAcquisitionEditOpen}
 				purchase={purchase}
 			/>
+			{id ? (
+				<AddAcquisitionModal
+					open={acquisitionAddOpen}
+					onOpenChange={setAcquisitionAddOpen}
+					propertyId={id}
+					quantityTotal={Number(property?.quantityTotal) || 1}
+					currentListingPrice={property?.price}
+					onAttached={() => {
+						refetch();
+						refetchPurchase();
+					}}
+				/>
+			) : null}
 		</PageWrapper>
 	);
 }

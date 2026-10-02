@@ -48,6 +48,11 @@ type Props = {
 	formatPriceDisplay: (v: string | number) => string;
 	parsePriceValue: (v: string) => string;
 	quantityTotal?: number;
+	/** Limit which acquisition modes are shown (default: all three). */
+	allowedModes?: AcquisitionMode[];
+	/** Override section title / description (e.g. attach to existing property). */
+	title?: string;
+	description?: string;
 };
 
 const today = () => new Date().toISOString().slice(0, 10);
@@ -86,7 +91,12 @@ export default function AcquisitionSection({
 	formatPriceDisplay,
 	parsePriceValue,
 	quantityTotal = 1,
+	allowedModes,
+	title = "Acquisition",
+	description,
 }: Props) {
+	const modes = allowedModes ?? (["individual", "new_batch", "existing_batch"] as AcquisitionMode[]);
+	const showMode = (m: AcquisitionMode) => modes.includes(m);
 	const { data: suppliersRes, refetch: refetchSuppliers, isLoading: suppliersLoading } = useGetSuppliers(1, 200);
 	const suppliers = useMemo(() => {
 		return ((suppliersRes as { data?: Supplier[] })?.data || []) as Supplier[];
@@ -138,7 +148,7 @@ export default function AcquisitionSection({
 					isNew: true,
 					allocatedTransportation: "",
 					allocatedMiscellaneous: "",
-					label: "New property (this form)",
+					label: "This property",
 				},
 			],
 		});
@@ -246,14 +256,16 @@ export default function AcquisitionSection({
 	return (
 		<section className="border-t pt-6 mt-8 space-y-6">
 			<div>
-				<h3 className="font-semibold text-base mb-1">Acquisition</h3>
+				<h3 className="font-semibold text-base mb-1">{title}</h3>
 				<p className="text-sm text-muted-foreground mb-4">
-					Record how this property was bought{optional ? " (optional for this flow)" : ""}.
+					{description ??
+						`Record how this property was bought${optional ? " (optional for this flow)" : ""}.`}
 				</p>
 				<RadioGroup
 					value={value.mode || ""}
 					onValueChange={(val) => set({ mode: val as AcquisitionMode })}
 					className="flex flex-col gap-3">
+					{showMode("individual") && (
 					<label
 						htmlFor="acq-individual"
 						className="flex items-start gap-3 cursor-pointer rounded-md border p-3 has-[[data-state=checked]]:border-primary">
@@ -265,6 +277,8 @@ export default function AcquisitionSection({
 							</span>
 						</span>
 					</label>
+					)}
+					{showMode("new_batch") && (
 					<label
 						htmlFor="acq-new-batch"
 						className="flex items-start gap-3 cursor-pointer rounded-md border p-3 has-[[data-state=checked]]:border-primary">
@@ -276,6 +290,8 @@ export default function AcquisitionSection({
 							</span>
 						</span>
 					</label>
+					)}
+					{showMode("existing_batch") && (
 					<label
 						htmlFor="acq-existing-batch"
 						className="flex items-start gap-3 cursor-pointer rounded-md border p-3 has-[[data-state=checked]]:border-primary">
@@ -287,6 +303,7 @@ export default function AcquisitionSection({
 							</span>
 						</span>
 					</label>
+					)}
 				</RadioGroup>
 			</div>
 
