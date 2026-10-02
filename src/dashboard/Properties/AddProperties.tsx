@@ -39,7 +39,6 @@ export default function AddProperties({ propertyRequestId, onComplete }: { prope
 		formState: { errors, isValid },
 		reset,
 		watch,
-		setValue,
 	} = useForm<PropertyFormData>({
 		defaultValues: {
 			name: "",
