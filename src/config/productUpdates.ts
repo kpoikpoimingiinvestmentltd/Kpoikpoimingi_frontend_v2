@@ -16,7 +16,7 @@ export const PRODUCT_UPDATES: ProductUpdate[] = [
 		date: "2026-10-02",
 		title: "Purchases & acquisition costs",
 		summary:
-			"You can now record how properties were bought — individually or in batches — with clear acquisition costs, and set listing price by selling price or markup.",
+			"You can now record how properties were bought (individually or in batches) with clear acquisition costs, and set listing price by selling price or markup.",
 		bullets: [
 			"Add a property with Individual purchase, Part of a new batch, or Part of an existing batch.",
 			"Track purchase price, transportation, and miscellaneous fees; batch fees can be split equally, by purchase price, or manually.",
