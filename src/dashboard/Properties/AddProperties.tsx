@@ -15,10 +15,19 @@ import { toast } from "sonner";
 import { Spinner } from "@/components/ui/spinner";
 import { useForm, Controller } from "react-hook-form";
 import { useCreateProperty, type PropertyFormData } from "@/api/property";
+import {
+	useAddPropertyToBatch,
+	useCreateBatchPurchase,
+	useCreateIndividualPurchase,
+} from "@/api/purchase";
 import { useGetAllCategories } from "@/api/categories";
 import { useSearchParams } from "react-router";
 import CustomCard from "../../components/base/CustomCard";
 import ActionButton from "../../components/base/ActionButton";
+import AcquisitionSection, {
+	defaultAcquisitionState,
+	type AcquisitionFormState,
+} from "./AcquisitionSection";
 
 export default function AddProperties({ propertyRequestId, onComplete }: { propertyRequestId?: string | null; onComplete?: () => void }) {
 	const [searchParams] = useSearchParams();
@@ -29,6 +38,7 @@ export default function AddProperties({ propertyRequestId, onComplete }: { prope
 		handleSubmit: handleHookFormSubmit,
 		formState: { errors, isValid },
 		reset,
+		watch,
 	} = useForm<PropertyFormData>({
 		defaultValues: {
 			name: "",
@@ -55,6 +65,38 @@ export default function AddProperties({ propertyRequestId, onComplete }: { prope
 	const [uploadedMediaKeys, setUploadedMediaKeys] = useState<string[]>([]);
 	const [isUploadingImage, setIsUploadingImage] = useState(false);
 	const [selectedParentCategoryId, setSelectedParentCategoryId] = useState<string>("");
+	const [acquisition, setAcquisition] = useState<AcquisitionFormState>(() => defaultAcquisitionState());
+
+	const watchedQuantity = watch("quantityTotal");
+	const acquisitionOptional = Boolean(effectivePropertyRequestId);
+
+	const onCreateSuccess = () => {
+		const successMsg = "Property created successfully!";
+		toast.success(successMsg);
+		try {
+			reset();
+		} catch (e) {
+			console.debug("reset failed:", e);
+		}
+		setUploadedImages([]);
+		setUploadedMediaKeys([]);
+		setSelectedParentCategoryId("");
+		setAcquisition(defaultAcquisitionState());
+		if (onComplete) {
+			try {
+				onComplete();
+			} catch (e) {
+				console.debug("onComplete handler threw:", e);
+			}
+		} else {
+			setSuccessOpen(true);
+		}
+	};
+
+	const onCreateError = (error: unknown) => {
+		const err = error as { message?: string };
+		toast.error(err?.message || "Failed to create property");
+	};
 
 	// Fetch categories
 	const { data: categoriesData } = useGetAllCategories(1, 100, true);
@@ -70,36 +112,16 @@ export default function AddProperties({ propertyRequestId, onComplete }: { prope
 		typeof selectedParentCategory.category === "string" &&
 		selectedParentCategory.category.toLowerCase().includes("vehicle");
 
-	const createPropertyMutation = useCreateProperty(
-		() => {
-			const successMsg = "Property created successfully!";
-			toast.success(successMsg);
-			// Clear form state and uploaded images/keys
-			try {
-				reset();
-			} catch (e) {
-				console.debug("reset failed:", e);
-			}
-			setUploadedImages([]);
-			setUploadedMediaKeys([]);
-			setSelectedParentCategoryId("");
-			if (onComplete) {
-				try {
-					onComplete();
-				} catch (e) {
-					// swallow errors from parent handler
-					console.debug("onComplete handler threw:", e);
-				}
-			} else {
-				setSuccessOpen(true);
-			}
-		},
-		(error: unknown) => {
-			const err = error as { message?: string };
-			const errorMsg = err?.message || "Failed to create property";
-			toast.error(errorMsg);
-		},
-	);
+	const createPropertyMutation = useCreateProperty(onCreateSuccess, onCreateError);
+	const createIndividualMutation = useCreateIndividualPurchase(onCreateSuccess, onCreateError);
+	const createBatchMutation = useCreateBatchPurchase(onCreateSuccess, onCreateError);
+	const addToBatchMutation = useAddPropertyToBatch(onCreateSuccess, onCreateError);
+
+	const isSubmitting =
+		createPropertyMutation.isPending ||
+		createIndividualMutation.isPending ||
+		createBatchMutation.isPending ||
+		addToBatchMutation.isPending;
 
 	// Upload a single property image and return mediaKey
 	const handleSingleImageUpload = async (file: File): Promise<string | null> => {
@@ -181,7 +203,6 @@ export default function AddProperties({ propertyRequestId, onComplete }: { prope
 			return;
 		}
 
-		// Convert mediaKeys array to object with image keys
 		const mediaKeysObject = uploadedMediaKeys.reduce(
 			(acc, key, idx) => {
 				acc[`image${idx + 1}`] = key;
@@ -190,11 +211,10 @@ export default function AddProperties({ propertyRequestId, onComplete }: { prope
 			{} as Record<string, string>,
 		);
 
-		// Build the complete property payload
-		const propertyPayload = {
+		const baseProperty = {
 			name: formData.name,
 			categoryId: formData.categoryId,
-			price: Number(formData.price),
+			price: String(formData.price || 0),
 			quantityTotal: Number(formData.quantityTotal),
 			condition: formData.condition,
 			description: formData.description.trim(),
@@ -212,7 +232,117 @@ export default function AddProperties({ propertyRequestId, onComplete }: { prope
 			...(effectivePropertyRequestId ? { propertyRequestId: effectivePropertyRequestId } : {}),
 		};
 
-		await createPropertyMutation.mutateAsync(propertyPayload);
+		// Product-request embed / optional acquisition: plain property create
+		if (!acquisition.mode) {
+			if (!acquisitionOptional) {
+				toast.error("Please select how this property was acquired");
+				return;
+			}
+			if (formData.price == null || Number(formData.price) < 0) {
+				toast.error("Listing price is required when acquisition is skipped");
+				return;
+			}
+			await createPropertyMutation.mutateAsync({
+				...baseProperty,
+				price: Number(formData.price),
+			});
+			return;
+		}
+
+		if (!acquisition.purchasePrice) {
+			toast.error("Purchase price (per unit) is required");
+			return;
+		}
+		if (acquisition.pricingMethod === "COST_PLUS_MARKUP") {
+			if (!acquisition.markupPercentage && acquisition.markupPercentage !== "0") {
+				toast.error("Markup (%) is required");
+				return;
+			}
+		} else if (!acquisition.sellingPrice || Number(acquisition.sellingPrice) < 0) {
+			toast.error("Selling price is required");
+			return;
+		}
+
+		const propertyWithPurchase = {
+			...baseProperty,
+			purchasePrice: acquisition.purchasePrice,
+			pricingMethod: acquisition.pricingMethod,
+			...(acquisition.pricingMethod === "COST_PLUS_MARKUP"
+				? {
+						markupPercentage: acquisition.markupPercentage || "0",
+						price: "0",
+					}
+				: {
+						price: acquisition.sellingPrice,
+						markupPercentage: undefined,
+					}),
+		};
+
+		if (acquisition.mode === "individual") {
+			if (!acquisition.supplierId) {
+				toast.error("Please select a supplier");
+				return;
+			}
+			await createIndividualMutation.mutateAsync({
+				property: propertyWithPurchase,
+				supplierId: acquisition.supplierId,
+				purchaseDate: acquisition.purchaseDate,
+				transportation: acquisition.transportation || "0",
+				miscellaneous: acquisition.miscellaneous || "0",
+				notes: acquisition.notes || undefined,
+			});
+			return;
+		}
+
+		if (acquisition.mode === "new_batch") {
+			if (!acquisition.supplierId) {
+				toast.error("Please select a supplier");
+				return;
+			}
+			const propertyLine = {
+				...propertyWithPurchase,
+				...(acquisition.allocationMethod === "MANUAL"
+					? {
+							allocatedTransportation: acquisition.transportation || "0",
+							allocatedMiscellaneous: acquisition.miscellaneous || "0",
+						}
+					: {}),
+			};
+			await createBatchMutation.mutateAsync({
+				supplierId: acquisition.supplierId,
+				purchaseDate: acquisition.purchaseDate,
+				notes: acquisition.notes || undefined,
+				transportationCost: acquisition.batchTransportation || "0",
+				miscellaneousCost: acquisition.batchMiscellaneous || "0",
+				allocationMethod: acquisition.allocationMethod,
+				properties: [propertyLine],
+			});
+			return;
+		}
+
+		if (acquisition.mode === "existing_batch") {
+			if (!acquisition.batchId) {
+				toast.error("Please select an existing batch");
+				return;
+			}
+			await addToBatchMutation.mutateAsync({
+				batchId: acquisition.batchId,
+				payload: {
+					property: propertyWithPurchase,
+					notes: acquisition.notes || undefined,
+					...(acquisition.manualAllocations.length
+						? {
+								manualAllocations: acquisition.manualAllocations.map((row) => ({
+									purchaseId: row.purchaseId,
+									isNew: row.isNew,
+									allocatedTransportation: row.allocatedTransportation,
+									allocatedMiscellaneous: row.allocatedMiscellaneous,
+								})),
+							}
+						: {}),
+				},
+			});
+		}
 	};
 
 	return (
@@ -353,34 +483,35 @@ export default function AddProperties({ propertyRequestId, onComplete }: { prope
 								/>
 							</div>
 						</div>
-						{/* Price and Quantity */}
+						{/* Quantity — listing price is set in Acquisition (manual or markup), unless acquisition is skipped */}
 						<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-							<div>
-								<Controller
-									name="price"
-									control={control}
-									rules={{ required: "Price is required", min: { value: 0, message: "Price must be greater than 0" } }}
-									render={({ field: { value, onChange, ...field } }) => (
-										<div>
-											<CustomInput
-												{...field}
-												value={formatPriceDisplay(value)}
-												onChange={(e) => {
-													const inputValue = e.target.value;
-													const cleanedValue = parsePriceValue(inputValue);
-													onChange(cleanedValue || "0");
-												}}
-												label="Price*"
-												labelClassName="block text-sm dark:text-gray-300 mb-2"
-												type="text"
-												className={twMerge(inputStyle)}
-												placeholder="0"
-											/>
-											{errors.price && <p className="text-red-500 text-sm mt-1">{errors.price.message}</p>}
-										</div>
-									)}
-								/>
-							</div>
+							{acquisitionOptional && !acquisition.mode && (
+								<div>
+									<Controller
+										name="price"
+										control={control}
+										rules={{ required: "Listing price is required", min: { value: 0, message: "Price must be 0 or greater" } }}
+										render={({ field: { value, onChange, ...field } }) => (
+											<div>
+												<CustomInput
+													{...field}
+													value={formatPriceDisplay(value)}
+													onChange={(e) => {
+														const cleanedValue = parsePriceValue(e.target.value);
+														onChange(cleanedValue || "0");
+													}}
+													label="Listing Price*"
+													labelClassName="block text-sm dark:text-gray-300 mb-2"
+													type="text"
+													className={twMerge(inputStyle)}
+													placeholder="0"
+												/>
+												{errors.price && <p className="text-red-500 text-sm mt-1">{errors.price.message}</p>}
+											</div>
+										)}
+									/>
+								</div>
+							)}
 							<div>
 								<Controller
 									name="quantityTotal"
@@ -589,12 +720,22 @@ export default function AddProperties({ propertyRequestId, onComplete }: { prope
 								/>
 							</div>
 						</div>
+
+						<AcquisitionSection
+							value={acquisition}
+							onChange={setAcquisition}
+							optional={acquisitionOptional}
+							formatPriceDisplay={formatPriceDisplay}
+							parsePriceValue={parsePriceValue}
+							quantityTotal={Number(watchedQuantity) || 1}
+						/>
+
 						<div className="flex justify-center mt-16">
 							<ActionButton
 								type="submit"
-								disabled={createPropertyMutation.isPending || !isValid || uploadedMediaKeys.length === 0}
+								disabled={isSubmitting || !isValid || uploadedMediaKeys.length === 0}
 								className="w-max mx-auto rounded-md py-3 h-auto text-base active-scale disabled:opacity-60">
-								{createPropertyMutation.isPending ? (
+								{isSubmitting ? (
 									<>
 										<Spinner className="size-4 mr-2" />
 										Adding Property...

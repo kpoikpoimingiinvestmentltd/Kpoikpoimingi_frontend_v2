@@ -12,6 +12,20 @@ export type ProductUpdate = {
  */
 export const PRODUCT_UPDATES: ProductUpdate[] = [
 	{
+		id: "2026-10-02-purchase-acquisition",
+		date: "2026-10-02",
+		title: "Purchases & acquisition costs",
+		summary:
+			"You can now record how properties were bought (individually or in batches) with clear acquisition costs, and set listing price by selling price or markup.",
+		bullets: [
+			"Add a property with Individual purchase, Part of a new batch, or Part of an existing batch.",
+			"Track purchase price, transportation, and miscellaneous fees; batch fees can be split equally, by purchase price, or manually.",
+			"Choose Manual selling price or Cost + markup when setting the listing price.",
+			"View acquisition details on the property page, and use Edit Acquisition to correct purchase costs.",
+			"Open Purchases under Properties to browse batches and open batch details (with the usual Go back button).",
+		],
+	},
+	{
 		id: "2026-09-08-staff-codes",
 		date: "2026-09-08",
 		title: "Staff codes on receipts",

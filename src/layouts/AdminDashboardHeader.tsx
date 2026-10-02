@@ -27,6 +27,7 @@ const PAGES_WITH_BACK_BUTTON = [
 	_router.dashboard.receiptDetails,
 	_router.dashboard.userDetailsPath,
 	_router.dashboard.customerDetailsReceipt,
+	_router.dashboard.purchaseBatchDetailsPath,
 ];
 
 interface AdminDashboardHeaderProps {

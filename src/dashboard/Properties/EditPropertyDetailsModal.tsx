@@ -15,12 +15,25 @@ import { toast } from "sonner";
 import { twMerge } from "tailwind-merge";
 import type { EditPropertyDetailsModalProps } from "@/types/property";
 import type { PresignUploadResponse } from "@/types/media";
+import AcquisitionInfoPanel from "./AcquisitionInfoPanel";
+import EditAcquisitionModal from "./EditAcquisitionModal";
+import { useGetPurchaseByPropertyId, type PurchaseRecord } from "@/api/purchase";
 
 export default function EditPropertyDetailsModal({ open, onOpenChange, initial, onSave, isLoading }: EditPropertyDetailsModalProps) {
 	const initialImgs = initial?.media ?? initial?.images ?? [media.images._product1, media.images._product2];
 	const [currentImages, setCurrentImages] = React.useState<string[]>(Array.isArray(initialImgs) ? initialImgs : [initialImgs as string]);
 	const [uploadedMediaKeys, setUploadedMediaKeys] = React.useState<string[]>([]);
 	const [isUploadingImages, setIsUploadingImages] = React.useState(false);
+	const [acquisitionEditOpen, setAcquisitionEditOpen] = React.useState(false);
+
+	const propertyId = open ? initial?.id : undefined;
+	const {
+		data: purchaseData,
+		isLoading: purchaseLoading,
+		isError: purchaseError,
+		error: purchaseErr,
+	} = useGetPurchaseByPropertyId(propertyId);
+	const purchase = (purchaseData as PurchaseRecord | null | undefined) || null;
 
 	const uploadedImages = currentImages.map((src) => ({
 		src,
@@ -200,7 +213,7 @@ export default function EditPropertyDetailsModal({ open, onOpenChange, initial, 
 				...form,
 				images: currentImages,
 				mediaKeys: allMediaKeys,
-				price: Number(form.price),
+				price: Number(parsePriceValue(String(form.price ?? "0"))),
 				quantityTotal: Number(form.quantityTotal),
 				quantityAssigned: Number(form.quantityAssigned),
 			};
@@ -327,23 +340,8 @@ export default function EditPropertyDetailsModal({ open, onOpenChange, initial, 
 							</div>
 						</div>
 
-						{/* Price and Quantity */}
+						{/* Quantity and Selling Price */}
 						<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-							<div>
-								<CustomInput
-									required
-									label="Price"
-									type="text"
-									value={formatPriceDisplay(form.price)}
-									onChange={(e) => {
-										const inputValue = e.target.value;
-										const cleanedValue = parsePriceValue(inputValue);
-										handleChange("price")(cleanedValue || "0");
-									}}
-									placeholder="0"
-									className={twMerge(inputStyle)}
-								/>
-							</div>
 							<div>
 								<CustomInput
 									required
@@ -352,6 +350,15 @@ export default function EditPropertyDetailsModal({ open, onOpenChange, initial, 
 									value={form.quantityTotal}
 									onChange={(e) => handleChange("quantityTotal")(e.target.value)}
 									onWheel={handleNumberInputWheel}
+									className={twMerge(inputStyle)}
+								/>
+							</div>
+							<div>
+								<CustomInput
+									required
+									label="Selling Price"
+									value={formatPriceDisplay(form.price)}
+									onChange={(e) => handleChange("price")(parsePriceValue(e.target.value))}
 									className={twMerge(inputStyle)}
 								/>
 							</div>
@@ -477,6 +484,21 @@ export default function EditPropertyDetailsModal({ open, onOpenChange, initial, 
 							/>
 						</div>
 
+						{/* Acquisition — read-only with controlled edit */}
+						<div className="border-t pt-6">
+							<AcquisitionInfoPanel
+								purchase={purchase}
+								loading={purchaseLoading}
+								error={purchaseError}
+								errorMessage={
+									purchaseErr instanceof Error ? purchaseErr.message : undefined
+								}
+								showEditAction={Boolean(purchase)}
+								onEditAcquisition={() => setAcquisitionEditOpen(true)}
+								showManagementNote
+							/>
+						</div>
+
 						{/* Action Button */}
 						<footer className="mt-4 w-full">
 							<ActionButton variant="primary" onClick={handleSave} disabled={isLoading} className="w-full">
@@ -486,6 +508,12 @@ export default function EditPropertyDetailsModal({ open, onOpenChange, initial, 
 					</div>
 				</div>
 			</DialogContent>
+
+			<EditAcquisitionModal
+				open={acquisitionEditOpen}
+				onOpenChange={setAcquisitionEditOpen}
+				purchase={purchase}
+			/>
 		</Dialog>
 	);
 }

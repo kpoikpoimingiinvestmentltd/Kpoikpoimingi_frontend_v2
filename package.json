@@ -10,6 +10,7 @@
 		"preview": "vite preview",
 		"start": "node scripts/railway-start.mjs",
 		"test:e2e": "playwright test",
+		"test:e2e:purchase": "playwright test e2e/purchase.spec.ts",
 		"test:e2e:ui": "playwright test --ui",
 		"test:e2e:report": "playwright show-report"
 	},
