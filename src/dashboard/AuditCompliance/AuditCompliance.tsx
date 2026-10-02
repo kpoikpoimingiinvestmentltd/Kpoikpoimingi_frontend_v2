@@ -44,24 +44,6 @@ function formatRole(role?: string | null): string {
 	return map[role] || titleCase(role);
 }
 
-function formatArea(entityType?: string | null): string | null {
-	if (!entityType) return null;
-	const map: Record<string, string> = {
-		CUSTOMER: "Customers",
-		CONTRACT: "Contracts",
-		PAYMENT: "Payments",
-		RECEIPT: "Receipts",
-		DEBT: "Debts",
-		NOTIFICATION: "Notifications",
-		AUDIT_LOG: "Audit",
-		PROPERTY: "Properties",
-		PAYMENT_LINK: "Payment links",
-		USER: "Staff accounts",
-		SETTINGS: "Settings",
-	};
-	return map[entityType] || titleCase(entityType);
-}
-
 /**
  * Turn raw audit strings like "CREATED CONTRACT" or
  * "UPDATE CUSTOMER: CUS-001 - Ada" into plain English.
@@ -129,6 +111,16 @@ function explainAction(raw?: string | null): { summary: string; detail?: string;
 		"CATEGORY DELETED": "Deleted a category",
 		"SUBCATEGORY DELETED": "Deleted a subcategory",
 		"CASCADE DELETE": "Deleted a category and its subcategories",
+		"CREATED SUPPLIER": "Created a supplier",
+		"CREATED PURCHASE": "Created a purchase",
+		"CREATED PURCHASE BATCH": "Created a purchase batch",
+		"CREATED INDIVIDUAL PURCHASE": "Created an individual purchase",
+		"ADDED PROPERTY TO BATCH": "Added a property to a batch",
+		"UPDATED PURCHASE": "Updated a purchase",
+		"UPDATED PURCHASE BATCH": "Updated a purchase batch",
+		"CREATED PROPERTY": "Created a property",
+		"UPDATED PROPERTY": "Updated a property",
+		"DELETED PROPERTY": "Deleted a property",
 	};
 
 	if (known[key]) {
@@ -210,7 +202,9 @@ function ActivityRow({ log }: { log: AuditLogItem }) {
 		(!log.staffName && /^(SYSTEM\b|CREATED PAYMENT LINK)/i.test(log.action || ""));
 	const who = log.staffName || (automated ? "System" : "Unknown staff");
 	const role = log.staffName ? formatRole(log.role) : automated ? "Automated" : formatRole(log.role);
-	const area = formatArea(log.entityType);
+	// Labels come from the API (DB entityType) — do not invent them in the UI
+	const subjectLabel = log.subjectLabel || "Details";
+	const area = log.area || null;
 	const when = formatWhen(log.date, log.time);
 
 	return (
@@ -223,7 +217,7 @@ function ActivityRow({ log }: { log: AuditLogItem }) {
 					</p>
 					{detail && (
 						<p className="text-sm text-slate-600 dark:text-slate-300 break-words">
-							<span className="text-muted-foreground">Customer: </span>
+							<span className="text-muted-foreground">{subjectLabel}: </span>
 							{detail}
 						</p>
 					)}

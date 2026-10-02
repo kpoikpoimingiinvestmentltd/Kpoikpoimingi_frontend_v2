@@ -60,25 +60,27 @@ export default function StatCard({
 					{badge ? badge : null}
 				</div>
 
-				<div className="mt-4">
-					<DropdownMenu>
-						<DropdownMenuTrigger asChild>
-							<button className="inline-flex items-center gap-1.5 rounded-md text-sm font-medium text-primary">
-								<span>{period}</span>
-								<IconWrapper>
-									<ChevronDownIcon />
-								</IconWrapper>
-							</button>
-						</DropdownMenuTrigger>
-						<DropdownMenuContent align="start" className="w-40">
-							{periods.map((p) => (
-								<DropdownMenuItem key={p} onSelect={() => handlePeriodChange(p)}>
-									{p}
-								</DropdownMenuItem>
-							))}
-						</DropdownMenuContent>
-					</DropdownMenu>
-				</div>
+				{onPeriodChange ? (
+					<div className="mt-4">
+						<DropdownMenu>
+							<DropdownMenuTrigger asChild>
+								<button className="inline-flex items-center gap-1.5 rounded-md text-sm font-medium text-primary">
+									<span>{period}</span>
+									<IconWrapper>
+										<ChevronDownIcon />
+									</IconWrapper>
+								</button>
+							</DropdownMenuTrigger>
+							<DropdownMenuContent align="start" className="w-40">
+								{periods.map((p) => (
+									<DropdownMenuItem key={p} onSelect={() => handlePeriodChange(p)}>
+										{p}
+									</DropdownMenuItem>
+								))}
+							</DropdownMenuContent>
+						</DropdownMenu>
+					</div>
+				) : null}
 			</>
 		);
 	}

@@ -1,7 +1,7 @@
 import { Page, expect, APIRequestContext } from '@playwright/test';
 
 export const API_BASE =
-  process.env.E2E_API_URL || 'http://localhost:3000/api';
+  process.env.E2E_API_URL || 'http://localhost:3100/api';
 
 export const E2E_ADMIN = {
   email: process.env.E2E_ADMIN_EMAIL || 'e2e.admin@kpoikpoimingi.com',
@@ -26,13 +26,17 @@ export async function loginViaApi(page: Page, request: APIRequestContext) {
   });
   expect(
     res.ok(),
-    `Login failed (${res.status()}). Run backend seed:e2e-admin. ${await res.text()}`,
+    `Login failed (${res.status()}). Run backend seed:e2e-admin against the same DB as E2E_API_URL (${API_BASE}). ${await res.text()}`,
   ).toBeTruthy();
   const body = await res.json();
 
   await page.addInitScript(
-    ({ auth }) => {
+    ({ auth, whatsNewId }) => {
       localStorage.setItem('kkm_auth', JSON.stringify(auth));
+      // Suppress "What's new" modal so it does not block comboboxes / forms in e2e.
+      if (auth?.id && whatsNewId) {
+        localStorage.setItem(`kkm_whats_new_seen:${auth.id}`, whatsNewId);
+      }
     },
     {
       auth: {
@@ -44,12 +48,13 @@ export async function loginViaApi(page: Page, request: APIRequestContext) {
             ? body.expiresIn
             : Date.now() + 60 * 60 * 1000,
       },
+      // Keep in sync with src/config/productUpdates.ts latest id
+      whatsNewId: '2026-10-02-purchase-acquisition',
     },
   );
 }
 
 export async function expectPageLoaded(page: Page) {
   await expect(page.locator('body')).toBeVisible();
-  // Soft check: no full-page crash banner text commonly used
   await expect(page.getByText(/something went wrong/i)).toHaveCount(0);
 }

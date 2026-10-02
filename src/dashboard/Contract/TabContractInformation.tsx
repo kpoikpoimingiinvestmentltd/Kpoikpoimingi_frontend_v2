@@ -53,9 +53,39 @@ export default function TabContractInformation({ contract }: { contract: Record<
 	const hasBreakdown = propertiesBreakdown.length > 0;
 
 	const rawTotalProductAmount = (contract?.totalProductAmount as number) ?? null;
-	const totalProductAmountFormatted = rawTotalProductAmount != null
-		? `₦${rawTotalProductAmount.toLocaleString()}`
-		: `₦${parseFloat(((contract?.property as Record<string, unknown>)?.price as string) || "0").toLocaleString()}`;
+	const productPrice =
+		rawTotalProductAmount != null
+			? rawTotalProductAmount
+			: parseFloat(((contract?.property as Record<string, unknown>)?.price as string) || "0");
+	const totalProductAmountFormatted = `₦${productPrice.toLocaleString()}`;
+
+	const downPaymentNum = parseFloat(String(contract?.downPayment ?? "0")) || 0;
+	const outstandingNum = parseFloat(String(contract?.outStandingBalance ?? "0")) || 0;
+	const durationValue = Number(contract?.durationValue) || 0;
+	const durationUnit = String(
+		((contract?.durationUnit as Record<string, unknown>)?.duration as string) || "",
+	).toUpperCase();
+	const storedRatePct = Number(contract?.interestRate);
+	const rateDecimal = Number.isFinite(storedRatePct) && storedRatePct > 0 ? storedRatePct / 100 : null;
+	const principal = Math.max(productPrice - downPaymentNum, 0);
+	const timeInYears =
+		durationValue > 0
+			? durationUnit === "WEEKS" || durationUnit === "WEEK"
+				? durationValue / 52
+				: durationValue / 12
+			: 0;
+	// Reconstruct original financed total (principal + interest) from rate + duration —
+	// outStandingBalance shrinks after payments and must not be labeled "Total payable".
+	const originalTotalPayable =
+		rateDecimal != null && timeInYears > 0
+			? principal + principal * rateDecimal * timeInYears
+			: (() => {
+					const interestAmt = parseFloat(String(contract?.interest ?? ""));
+					return Number.isFinite(interestAmt) ? principal + interestAmt : null;
+				})();
+
+	const formatNaira = (n: number | null) =>
+		n != null && Number.isFinite(n) ? `₦${Math.round(n).toLocaleString()}` : "N/A";
 
 	const contractData = {
 		customerName: ((contract?.customer as Record<string, unknown>)?.fullName as string) || "N/A",
@@ -71,20 +101,21 @@ export default function TabContractInformation({ contract }: { contract: Record<
 		status: ((contract?.status as Record<string, unknown>)?.status as string) || "N/A",
 		propertyName: ((contract?.property as Record<string, unknown>)?.name as string) || "N/A",
 		paymentType: ((contract?.paymentType as Record<string, unknown>)?.type as string) || "N/A",
-		downPayment: contract?.downPayment ? `₦${parseFloat(contract.downPayment as string).toLocaleString()}` : "N/A",
+		downPayment: contract?.downPayment ? `₦${downPaymentNum.toLocaleString()}` : "N/A",
 		paymentDuration:
 			(contract?.durationValue as number)
 				? `${contract.durationValue} ${((contract?.durationUnit as Record<string, unknown>)?.duration as string) || ""}`
 				: "N/A",
-		totalPayable: contract?.outStandingBalance ? `₦${parseFloat(contract.outStandingBalance as string).toLocaleString()}` : "N/A",
+		totalPayable: formatNaira(originalTotalPayable),
+		outstandingBalance: formatNaira(outstandingNum),
 		totalProductAmount: totalProductAmountFormatted,
 		contractRange:
 			(contract?.startDate as string) && (contract?.endDate as string)
 				? `${new Date(contract.startDate as string).toLocaleDateString()} to ${new Date(contract.endDate as string).toLocaleDateString()}`
 				: "N/A",
 		assignedStaff: ((contract?.createdBy as Record<string, unknown>)?.fullName as string) || "N/A",
-		interest: (contract?.interestRate as number) ? `${contract.interestRate}%` : "N/A",
-		vat: (contract?.vatPercentage as number) ? `${contract.vatPercentage}%` : "N/A",
+		interest: Number.isFinite(storedRatePct) && storedRatePct > 0 ? `${storedRatePct}%` : "N/A",
+		vat: (contract?.vatPercentage as number) ? `${Number(contract.vatPercentage) * 100}%` : "N/A",
 		startDate: (contract?.startDate as string) ? new Date(contract.startDate as string).toLocaleDateString() : "N/A",
 	};
 	return (
@@ -167,6 +198,12 @@ export default function TabContractInformation({ contract }: { contract: Record<
 							<KeyValueRow
 								label="Total payable"
 								value={contractData.totalPayable}
+								leftClassName="text-sm text-muted-foreground"
+								rightClassName="text-right"
+							/>
+							<KeyValueRow
+								label="Outstanding balance"
+								value={contractData.outstandingBalance}
 								leftClassName="text-sm text-muted-foreground"
 								rightClassName="text-right"
 							/>

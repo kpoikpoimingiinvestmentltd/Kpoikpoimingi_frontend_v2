@@ -35,8 +35,14 @@ export default function AdminDashboardSidebar({ onClose }: { onClose?: () => voi
 			return normalized === linkPath || normalized === linkPath.replace(/^\//, "");
 		}
 
-		if (linkPath === propertiesBase) {
-			const children = [_router.dashboard.addProperties, _router.dashboard.manageCategories, propertiesBase];
+			if (linkPath === propertiesBase) {
+			const children = [
+				_router.dashboard.addProperties,
+				_router.dashboard.manageCategories,
+				_router.dashboard.categories,
+				_router.dashboard.purchases,
+				propertiesBase,
+			];
 			return children.some((p) => pathname === p || pathname.startsWith(p + "/"));
 		}
 
@@ -130,6 +136,16 @@ export default function AdminDashboardSidebar({ onClose }: { onClose?: () => voi
 															: ""
 													}`}>
 													Manage Categories
+												</NavLink>
+												<NavLink
+													to={_router.dashboard.purchases}
+													onClick={() => onClose?.()}
+													className={`py-1.5 text-[.9rem] px-3.5 dark:hover:bg-neutral-800 text-white/90 flex rounded ${
+														pathname === _router.dashboard.purchases || pathname.startsWith(_router.dashboard.purchases + "/")
+															? "bg-[#1312120d]"
+															: ""
+													}`}>
+													Purchases
 												</NavLink>
 											</div>
 										</li>

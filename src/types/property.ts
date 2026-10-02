@@ -50,6 +50,8 @@ export type PropertyData = {
 	legacyId?: string | null;
 	name: string;
 	price: string;
+	pricingMethod?: "MANUAL" | "COST_PLUS_MARKUP" | null;
+	markupPercentage?: string | number | null;
 	description: string;
 	isPublic: boolean;
 	quantityTotal: number;
