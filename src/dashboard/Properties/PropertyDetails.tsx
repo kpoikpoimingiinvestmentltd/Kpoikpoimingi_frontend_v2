@@ -4,8 +4,9 @@ import { media } from "@/resources/images";
 import KeyValueRow from "@/components/common/KeyValueRow";
 import PageWrapper from "../../components/common/PageWrapper";
 import ActionButton from "../../components/base/ActionButton";
-import { EditIcon, IconWrapper } from "../../assets/icons";
+import { EditIcon, IconWrapper, MoneyIcon } from "../../assets/icons";
 import EditPropertyDetailsModal from "./EditPropertyDetailsModal";
+import OutrightSaleModal from "./OutrightSaleModal";
 import React from "react";
 import PageTitles from "../../components/common/PageTitles";
 import { useParams } from "react-router";
@@ -33,6 +34,7 @@ export default function PropertyDetails() {
 	const purchase = (purchaseData as PurchaseRecord | null | undefined) || null;
 
 	const [editOpen, setEditOpen] = React.useState(false);
+	const [sellOpen, setSellOpen] = React.useState(false);
 	const [acquisitionEditOpen, setAcquisitionEditOpen] = React.useState(false);
 	const [acquisitionAddOpen, setAcquisitionAddOpen] = React.useState(false);
 
@@ -109,7 +111,21 @@ export default function PropertyDetails() {
 
 			<CustomCard className="p-4 md:px-6">
 				<section aria-label="property media" className="mb-6">
-					<div className="flex justify-end mb-4">
+					<div className="flex justify-end mb-4 gap-4">
+						{property.quantityAvailable > 0 && (
+							<ActionButton
+								variant="ghost"
+								className="text-primary underline underline-offset-4 px-0"
+								aria-label="Sell property"
+								leftIcon={
+									<IconWrapper>
+										<MoneyIcon />
+									</IconWrapper>
+								}
+								onClick={() => setSellOpen(true)}>
+								Sell
+							</ActionButton>
+						)}
 						<ActionButton
 							variant="ghost"
 							className="text-black underline underline-offset-4 px-0"
@@ -291,6 +307,23 @@ export default function PropertyDetails() {
 					}}
 				/>
 			) : null}
+
+			<OutrightSaleModal
+				key={sellOpen ? property.id : "sell-closed"}
+				open={sellOpen}
+				onOpenChange={setSellOpen}
+				properties={[
+					{
+						id: property.id,
+						name: property.name,
+						price: property.price,
+						quantityAvailable: property.quantityAvailable,
+					},
+				]}
+				onSold={() => {
+					refetch();
+				}}
+			/>
 		</PageWrapper>
 	);
 }

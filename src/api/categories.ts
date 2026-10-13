@@ -20,26 +20,47 @@ export async function getAllCategories(page = 1, limit = 10) {
 	return apiGet(url) as Promise<PaginatedResult<unknown>>;
 }
 
-export async function createCategory(payload: { category?: string; description?: string; parentId?: string | null; subcategories?: string[] }) {
+export type CategorySubInput = string | { id?: string; name: string };
+
+function normalizeSubcategories(subcategories?: CategorySubInput[]) {
+	if (!Array.isArray(subcategories)) return undefined;
+	return subcategories
+		.map((sub) => {
+			if (typeof sub === "string") return { name: sub.trim() };
+			return {
+				...(sub.id ? { id: sub.id } : {}),
+				name: String(sub.name ?? "").trim(),
+			};
+		})
+		.filter((sub) => Boolean(sub.name));
+}
+
+export async function createCategory(payload: {
+	category?: string;
+	description?: string;
+	parentId?: string | null;
+	subcategories?: CategorySubInput[];
+}) {
 	const body: Record<string, unknown> = {
 		category: payload.category,
 		description: payload.description,
 	};
-	if (payload.subcategories && Array.isArray(payload.subcategories)) {
-		body.subcategories = payload.subcategories.map((name) => ({ name }));
-	}
+	const subs = normalizeSubcategories(payload.subcategories);
+	if (subs) body.subcategories = subs;
 	if (payload.parentId) body.parentId = payload.parentId;
 	return apiPost(API_ROUTES.propertyCategories.createCategory, body) as Promise<unknown>;
 }
 
-export async function updateCategory(id: string, payload: { category?: string; description?: string; subcategories?: string[] }) {
+export async function updateCategory(
+	id: string,
+	payload: { category?: string; description?: string; subcategories?: CategorySubInput[] },
+) {
 	const body: Record<string, unknown> = {
 		category: payload.category,
 		description: payload.description,
 	};
-	if (payload.subcategories && Array.isArray(payload.subcategories)) {
-		body.subcategories = payload.subcategories.map((name) => ({ name }));
-	}
+	const subs = normalizeSubcategories(payload.subcategories);
+	if (subs) body.subcategories = subs;
 	return apiPatch(API_ROUTES.propertyCategories.updateCategory(id), body) as Promise<unknown>;
 }
 

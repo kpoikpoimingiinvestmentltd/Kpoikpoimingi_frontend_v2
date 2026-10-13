@@ -2,7 +2,7 @@ import React from "react";
 import { _router } from "@/routes/_router";
 import Image from "../base/Image";
 import { media } from "@/resources/images";
-import { NavLink, useLocation } from "react-router";
+import { Link, NavLink, useLocation } from "react-router";
 import {
 	ReceiptIcon,
 	CloseIcon,
@@ -22,31 +22,87 @@ import {
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { Skeleton, Rect } from "@/components/common/Skeleton";
 
+type NavLinkItem = {
+	icon: () => React.ReactNode;
+	linkname: string;
+	path: string;
+	allowedRoles: string[];
+	submenu?: Array<{ label: string; path: string; end?: boolean }>;
+};
+
 export default function AdminDashboardSidebar({ onClose }: { onClose?: () => void; onLogoutOpen?: () => void }) {
 	const location = useLocation();
 	const pathname = location.pathname;
-	const propertiesBase = _router.dashboard.properties; // "/dashboard/properties"
-	const [submenuOpenManual, setSubmenuOpenManual] = React.useState<boolean | null>(null);
+	const propertiesBase = _router.dashboard.properties;
+	const [openMenus, setOpenMenus] = React.useState<Record<string, boolean>>({});
 	const { data: user, isPending } = useCurrentUser();
 
-	const isLinkActive = (linkPath: string) => {
-		if (linkPath === _router.dashboard.index) {
-			const normalized = pathname.replace(/\/+$ /g, "");
-			return normalized === linkPath || normalized === linkPath.replace(/^\//, "");
+	const isExactOrChild = (linkPath: string) =>
+		pathname === linkPath || pathname.startsWith(linkPath + "/");
+
+	const isHirePurchasePath = () =>
+		pathname === _router.dashboard.contract || pathname.startsWith(_router.dashboard.contract + "/");
+
+	const isOutrightSalesPath = () =>
+		pathname === _router.dashboard.outrightSales ||
+		pathname.startsWith(_router.dashboard.outrightSales + "/");
+
+	const isLinkActive = (link: NavLinkItem) => {
+		if (link.linkname === "Dashboard") {
+			const normalized = pathname.replace(/\/+$/g, "");
+			return normalized === link.path || normalized === link.path.replace(/^\//, "");
 		}
 
-			if (linkPath === propertiesBase) {
-			const children = [
-				_router.dashboard.addProperties,
-				_router.dashboard.manageCategories,
-				_router.dashboard.categories,
-				_router.dashboard.purchases,
-				propertiesBase,
-			];
-			return children.some((p) => pathname === p || pathname.startsWith(p + "/"));
+		if (link.linkname === "Sales & Contract") {
+			return isHirePurchasePath() || isOutrightSalesPath();
 		}
 
-		return pathname === linkPath || pathname.startsWith(linkPath + "/");
+		if (link.path === propertiesBase) {
+			return (
+				isExactOrChild(propertiesBase) ||
+				isExactOrChild(_router.dashboard.addProperties) ||
+				isExactOrChild(_router.dashboard.manageCategories) ||
+				isExactOrChild(_router.dashboard.categories) ||
+				isExactOrChild(_router.dashboard.purchases)
+			);
+		}
+
+		if (link.submenu?.length) {
+			return link.submenu.some((item) => isExactOrChild(item.path)) || isExactOrChild(link.path);
+		}
+
+		return isExactOrChild(link.path);
+	};
+
+	const isSubmenuAutoOpen = (link: NavLinkItem) => {
+		if (link.linkname === "Properties") {
+			return isExactOrChild(propertiesBase);
+		}
+		if (link.linkname === "Sales & Contract") {
+			return isHirePurchasePath() || isOutrightSalesPath();
+		}
+		return false;
+	};
+
+	const isSubmenuOpen = (link: NavLinkItem) => {
+		if (Object.prototype.hasOwnProperty.call(openMenus, link.linkname)) {
+			return openMenus[link.linkname];
+		}
+		return isSubmenuAutoOpen(link);
+	};
+
+	const toggleSubmenu = (linkname: string, currentlyOpen: boolean) => {
+		setOpenMenus((prev) => ({ ...prev, [linkname]: !currentlyOpen }));
+	};
+
+	const childIsActive = (item: { path: string; end?: boolean }) => {
+		if (item.path === _router.dashboard.contract) {
+			return isHirePurchasePath();
+		}
+		if (item.end) {
+			return pathname === item.path;
+		}
+		return isExactOrChild(item.path);
 	};
 
 	return (
@@ -80,74 +136,61 @@ export default function AdminDashboardSidebar({ onClose }: { onClose?: () => voi
 						{links
 							.filter((link) => user?.role && link.allowedRoles.includes(user.role.role))
 							.map((link) => {
-								const active = isLinkActive(link.path);
+								const active = isLinkActive(link);
 								const baseLinkClass = `flex w-full items-center text-start before:right-0 before:h-full before:w-0.5 before:content-[''] before:absolute relative gap-x-4 py-2 px-4 rounded-sm rounded-r-none active-scale transition-colors ${
 									active
 										? "bg-white/20 before:bg-white dark:bg-neutral-700/80 dark:hover:bg-neutral-700/90 dark:before:bg-primary"
 										: "text-black before:bg-transparent hover:bg-white/15 dark:hover:bg-neutral-700/60"
 								}`;
 
-								if (link.linkname === "Properties") {
-									const autoOpen = pathname === propertiesBase || pathname.startsWith(propertiesBase + "/");
-									const submenuOpen = submenuOpenManual === null ? autoOpen : submenuOpenManual;
+								if (link.submenu?.length) {
+									const submenuOpen = isSubmenuOpen(link);
 									return (
 										<li key={link.linkname} className="w-full">
 											<div className={`flex items-center justify-between w-full ${baseLinkClass}`}>
-												<NavLink to={propertiesBase} onClick={() => onClose?.()} className="flex items-center gap-x-4 justify-between">
+												<Link
+													to={link.path}
+													onClick={() => {
+														setOpenMenus((prev) => ({ ...prev, [link.linkname]: true }));
+														onClose?.();
+													}}
+													className="flex items-center gap-x-4 text-left flex-1 min-w-0">
 													<IconWrapper className="text-[1.35rem] text-primary p-1.5 rounded-full bg-white dark:bg-neutral-900 border">
 														<link.icon />
 													</IconWrapper>
-													<span className="font-medium text-sm text-white">{link.linkname}</span>
-												</NavLink>
+													<span className="font-medium text-sm text-white truncate">{link.linkname}</span>
+												</Link>
 												<button
 													type="button"
 													aria-expanded={submenuOpen}
+													aria-label={`Toggle ${link.linkname} menu`}
 													onClick={(e) => {
-														e.stopPropagation();
 														e.preventDefault();
-														setSubmenuOpenManual((prev) => (prev === null ? !autoOpen : !prev));
+														e.stopPropagation();
+														toggleSubmenu(link.linkname, submenuOpen);
 													}}
-													className="text-white/90 hover:text-white">
+													className="text-white/90 hover:text-white p-1 shrink-0">
 													<IconWrapper className={`text-xl ${submenuOpen ? "rotate-180" : ""} transition-transform`}>
 														<ChevronDownIcon />
 													</IconWrapper>
 												</button>
 											</div>
 
-											{/* Submenu */}
-											<div
-												className={`bg-white/20 dark:bg-neutral-700/30 flex flex-col gap-y-[3px] w-full p-2.5 rounded-sm mt-1 ${submenuOpen ? "block" : "hidden"}`}>
-												<NavLink
-													to={_router.dashboard.addProperties}
-													onClick={() => onClose?.()}
-													className={`py-1.5 text-[.9rem] px-3.5 dark:hover:bg-neutral-800 text-white/90 flex rounded ${
-														pathname === _router.dashboard.addProperties || pathname.startsWith(_router.dashboard.addProperties + "/")
-															? "bg-[#1312120d]"
-															: ""
-													}`}>
-													Add Properties
-												</NavLink>
-												<NavLink
-													to={_router.dashboard.categories}
-													onClick={() => onClose?.()}
-													className={`py-1.5 text-[.9rem] px-3.5 dark:hover:bg-neutral-800 text-white/90 flex rounded ${
-														pathname === _router.dashboard.categories || pathname.startsWith(_router.dashboard.categories + "/")
-															? "bg-[#1312120d]"
-															: ""
-													}`}>
-													Manage Categories
-												</NavLink>
-												<NavLink
-													to={_router.dashboard.purchases}
-													onClick={() => onClose?.()}
-													className={`py-1.5 text-[.9rem] px-3.5 dark:hover:bg-neutral-800 text-white/90 flex rounded ${
-														pathname === _router.dashboard.purchases || pathname.startsWith(_router.dashboard.purchases + "/")
-															? "bg-[#1312120d]"
-															: ""
-													}`}>
-													Purchases
-												</NavLink>
-											</div>
+											{submenuOpen ? (
+												<div className="bg-white/20 dark:bg-neutral-700/30 flex flex-col gap-y-[3px] w-full p-2.5 rounded-sm mt-1">
+													{link.submenu.map((item) => (
+														<Link
+															key={`${link.linkname}-${item.label}`}
+															to={item.path}
+															onClick={() => onClose?.()}
+															className={`py-1.5 text-[.9rem] px-3.5 dark:hover:bg-neutral-800 text-white/90 flex rounded ${
+																childIsActive(item) ? "bg-[#1312120d]" : ""
+															}`}>
+															{item.label}
+														</Link>
+													))}
+												</div>
+											) : null}
 										</li>
 									);
 								}
@@ -170,7 +213,7 @@ export default function AdminDashboardSidebar({ onClose }: { onClose?: () => voi
 	);
 }
 
-const links = [
+const links: NavLinkItem[] = [
 	{
 		icon: DashboardIcon,
 		linkname: "Dashboard",
@@ -185,15 +228,24 @@ const links = [
 	},
 	{
 		icon: ContractIcon,
-		linkname: "Contract",
+		linkname: "Sales & Contract",
 		path: _router.dashboard.contract,
 		allowedRoles: ["SUPER_ADMIN", "ADMIN", "STAFF"],
+		submenu: [
+			{ label: "Hire Purchase", path: _router.dashboard.contract, end: true },
+			{ label: "Outright Sales", path: _router.dashboard.outrightSales },
+		],
 	},
 	{
 		icon: CartIcon,
 		linkname: "Properties",
 		path: _router.dashboard.properties,
 		allowedRoles: ["SUPER_ADMIN", "ADMIN", "STAFF"],
+		submenu: [
+			{ label: "Add Properties", path: _router.dashboard.addProperties },
+			{ label: "Manage Categories", path: _router.dashboard.categories },
+			{ label: "Purchases", path: _router.dashboard.purchases },
+		],
 	},
 	{
 		icon: UsersIcon,

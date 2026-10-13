@@ -49,7 +49,7 @@ export async function loginViaApi(page: Page, request: APIRequestContext) {
             : Date.now() + 60 * 60 * 1000,
       },
       // Keep in sync with src/config/productUpdates.ts latest id
-      whatsNewId: '2026-10-02-purchase-acquisition',
+      whatsNewId: '2026-10-13-outright-sales-receipts',
     },
   );
 }

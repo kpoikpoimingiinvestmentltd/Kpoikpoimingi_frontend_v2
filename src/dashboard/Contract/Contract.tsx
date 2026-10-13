@@ -4,7 +4,6 @@ import { EditIcon, FilePlusIcon, IconWrapper } from "@/assets/icons";
 import { _router } from "@/routes/_router";
 import Badge from "@/components/base/Badge";
 import PageTitles from "@/components/common/PageTitles";
-import CreateContractModal from "./CreateContractModal";
 import SearchWithFilters from "@/components/common/SearchWithFilters";
 import { Link } from "react-router";
 import CompactPagination from "@/components/ui/compact-pagination";
@@ -17,93 +16,33 @@ import ExportConfirmModal from "@/components/common/ExportConfirmModal";
 import ActionButton from "@/components/base/ActionButton";
 import { toast } from "sonner";
 import { extractErrorMessage } from "@/lib/utils";
-import { useSearchParams } from "react-router";
 import { useCanPerformAction } from "@/hooks/usePermissions";
 
+const CreateContractModal = React.lazy(() => import("./CreateContractModal"));
+
 export default function Contract() {
-	const [searchParams, setSearchParams] = useSearchParams();
 	const canExport = useCanPerformAction("export");
 
-	// Initialize state from URL params
-	const [page, setPage] = React.useState(() => {
-		const pageParam = searchParams.get("page");
-		return pageParam ? parseInt(pageParam, 10) : 1;
-	});
-	const [search, setSearch] = React.useState(() => {
-		return searchParams.get("search") || "";
-	});
-	const [filters, setFilters] = React.useState<Record<string, string>>(() => {
-		const urlFilters: Record<string, string> = {};
-		const sortBy = searchParams.get("sortBy");
-		const sortOrder = searchParams.get("sortOrder");
-		const statusId = searchParams.get("statusId");
-		if (sortBy) urlFilters.sortBy = sortBy;
-		if (sortOrder) urlFilters.sortOrder = sortOrder;
-		if (statusId) urlFilters.statusId = statusId;
-		return urlFilters;
-	});
-
+	const [page, setPage] = React.useState(1);
+	const [search, setSearch] = React.useState("");
+	const [filters, setFilters] = React.useState<Record<string, string>>({});
 	const [createOpen, setCreateOpen] = React.useState(false);
 	const [exportConfirmOpen, setExportConfirmOpen] = React.useState(false);
 
 	const debouncedSearch = useDebounceSearch(search);
-	const [, setIsMounted] = React.useState(false);
-
-	// Sync state with URL params on mount and when URL changes (back/forward navigation)
-	React.useEffect(() => {
-		const pageParam = searchParams.get("page");
-		const newPage = pageParam ? parseInt(pageParam, 10) : 1;
-		setPage(newPage);
-
-		const searchParam = searchParams.get("search") || "";
-		setSearch(searchParam);
-
-		const urlFilters: Record<string, string> = {};
-		const sortBy = searchParams.get("sortBy");
-		const sortOrder = searchParams.get("sortOrder");
-		const statusId = searchParams.get("statusId");
-		if (sortBy) urlFilters.sortBy = sortBy;
-		if (sortOrder) urlFilters.sortOrder = sortOrder;
-		if (statusId) urlFilters.statusId = statusId;
-		setFilters(urlFilters);
-	}, [searchParams]);
-
-	// Initialize URL params on mount if not present
-	React.useEffect(() => {
-		const hasParams =
-			searchParams.has("page") ||
-			searchParams.has("search") ||
-			searchParams.has("sortBy") ||
-			searchParams.has("sortOrder") ||
-			searchParams.has("statusId");
-		if (!hasParams) {
-			const params = new URLSearchParams();
-			params.set("page", "1");
-			params.set("sortBy", "createdAt");
-			params.set("sortOrder", "desc");
-			setSearchParams(params, { replace: true });
-		}
-		setIsMounted(true);
-	}, []);
-
-	// Update URL when state changes
-	React.useEffect(() => {
-		const params = new URLSearchParams(searchParams);
-		params.set("page", page.toString());
-		params.set("search", search);
-		if (filters.sortBy) params.set("sortBy", filters.sortBy);
-		else params.delete("sortBy");
-		if (filters.sortOrder) params.set("sortOrder", filters.sortOrder);
-		else params.delete("sortOrder");
-		if (filters.statusId) params.set("statusId", filters.statusId);
-		else params.delete("statusId");
-		setSearchParams(params, { replace: true });
-	}, [page, search, filters, setSearchParams]);
 
 	const sortBy = (filters.sortBy as string) || "createdAt";
 	const sortOrder = (filters.sortOrder as string) || "desc";
+	const statusId = filters.statusId || undefined;
 
-	const { data = {}, isLoading, isFetching } = useGetAllContracts(page, 10, debouncedSearch, sortBy, sortOrder, filters);
+	const { data = {}, isLoading, isError, error } = useGetAllContracts(
+		page,
+		10,
+		debouncedSearch,
+		sortBy,
+		sortOrder,
+		statusId ? { statusId } : undefined,
+	);
 	const dataTyped = data as Record<string, unknown>;
 	const contracts = Array.isArray(dataTyped?.data) ? (dataTyped?.data as unknown[]) : [];
 	const paginationData = dataTyped?.pagination as Record<string, unknown> | undefined;
@@ -202,7 +141,10 @@ export default function Contract() {
 	return (
 		<div className="flex flex-col gap-y-6">
 			<div className="flex items-center justify-between flex-wrap gap-4 mb-4">
-				<PageTitles title="Contract" description="The contracts transaction between Kpo kpoi mingi investment and it customers" />
+				<PageTitles
+					title="Hire Purchase"
+					description="Hire purchase contracts between Kpoikpoimingi Investment and its customers"
+				/>
 				<div className="flex items-center gap-3">
 					{canExport && (
 						<ActionButton
@@ -226,7 +168,7 @@ export default function Contract() {
 			</div>
 			<CustomCard className="bg-white flex-grow w-full rounded-lg p-4 border border-gray-100">
 				<div className="flex items-center justify-between flex-wrap gap-6">
-					<h2 className="font-medium dark:text-gray-300">All Contracts </h2>
+					<h2 className="font-medium dark:text-gray-300">All Hire Purchase Contracts</h2>
 					<div className="flex items-center gap-2">
 						<SearchWithFilters
 							search={search}
@@ -275,8 +217,12 @@ export default function Contract() {
 					</div>
 				</div>
 				<div className="min-h-80 flex">
-					{isLoading || isFetching ? (
+					{isLoading ? (
 						<TableSkeleton rows={10} cols={8} />
+					) : isError ? (
+						<div className="flex-grow flex items-center justify-center">
+							<EmptyData text={extractErrorMessage(error, "Failed to load contracts")} />
+						</div>
 					) : contracts.length === 0 ? (
 						<div className="flex-grow flex items-center justify-center">
 							<EmptyData text="No Contracts at the moment" />
@@ -339,7 +285,11 @@ export default function Contract() {
 				</div>
 			</CustomCard>
 
-			<CreateContractModal open={createOpen} onOpenChange={setCreateOpen} />
+			{createOpen ? (
+				<React.Suspense fallback={null}>
+					<CreateContractModal open={createOpen} onOpenChange={setCreateOpen} />
+				</React.Suspense>
+			) : null}
 
 			<ExportConfirmModal
 				open={exportConfirmOpen}

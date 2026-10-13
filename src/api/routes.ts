@@ -49,6 +49,12 @@ export const API_ROUTES = {
 		byId: (id: string) => `/purchase/${id}`,
 		update: (id: string) => `/purchase/${id}`,
 	},
+	outrightSale: {
+		create: "/outright-sales",
+		list: "/outright-sales",
+		byId: (id: string) => `/outright-sales/${id}`,
+		update: (id: string) => `/outright-sales/${id}`,
+	},
 	auditLogs: {
 		getAuditLogs: "/audit-logs/grouped",
 		getAuditLogsGrouped: "/audit-logs/grouped",

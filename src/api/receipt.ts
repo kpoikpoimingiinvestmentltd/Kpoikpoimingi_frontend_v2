@@ -3,21 +3,49 @@ import { apiGet, apiPost } from "@/services/apiClient";
 import { API_ROUTES } from "./routes";
 import type { GenerateReceiptPayload } from "@/types/receipt";
 
-export async function getReceipts(page = 1, limit = 10, search?: string, sortBy = "createdAt", sortOrder = "desc") {
+export type ReceiptListFilters = {
+	paymentMethodId?: string;
+	statusId?: string;
+	transactionType?: string;
+	startDate?: string;
+	endDate?: string;
+};
+
+export async function getReceipts(
+	page = 1,
+	limit = 10,
+	search?: string,
+	sortBy = "createdAt",
+	sortOrder = "desc",
+	filters: ReceiptListFilters = {},
+) {
 	const params = new URLSearchParams();
 	params.append("page", String(page));
 	params.append("limit", String(limit));
 	if (search) params.append("search", search);
 	if (sortBy) params.append("sortBy", sortBy);
 	if (sortOrder) params.append("sortOrder", sortOrder);
+	if (filters.paymentMethodId) params.append("paymentMethodId", filters.paymentMethodId);
+	if (filters.statusId) params.append("statusId", filters.statusId);
+	if (filters.transactionType) params.append("transactionType", filters.transactionType);
+	if (filters.startDate) params.append("startDate", filters.startDate);
+	if (filters.endDate) params.append("endDate", filters.endDate);
 	const url = `${API_ROUTES.receipt.getAllReceipts}?${params.toString()}`;
 	return apiGet(url) as Promise<any>;
 }
 
-export function useGetReceipts(page = 1, limit = 10, search?: string, sortBy = "createdAt", sortOrder = "desc", enabled = true) {
+export function useGetReceipts(
+	page = 1,
+	limit = 10,
+	search?: string,
+	sortBy = "createdAt",
+	sortOrder = "desc",
+	enabled = true,
+	filters: ReceiptListFilters = {},
+) {
 	return useQuery({
-		queryKey: ["receipts", page, limit, search, sortBy, sortOrder],
-		queryFn: () => getReceipts(page, limit, search, sortBy, sortOrder),
+		queryKey: ["receipts", page, limit, search, sortBy, sortOrder, filters],
+		queryFn: () => getReceipts(page, limit, search, sortBy, sortOrder, filters),
 		enabled: !!enabled,
 	});
 }

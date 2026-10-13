@@ -60,17 +60,20 @@ export default function ReceiptDetails() {
 	};
 
 	return (
-		<ReceiptWrapper
-			contentRef={receiptRef}
-			emailSubject="Receipt from Kpoikpoimingi"
-			emailBody="Please find attached the receipt."
-			onDownload={handleDownloadPDF}
-			onShare={handleSharePDF}
-			shouldDownload={canDownloadReceipt}
-			shouldShare={canSendEmails}
-			receiptId={id}
-			adminIssuerLabel={formatAdminIssuerLabel(receipt.issuedBy)}>
-			<ReceiptContent receipt={receipt} />
-		</ReceiptWrapper>
+		<div className="flex flex-col gap-y-3">
+			<ReceiptWrapper
+				contentRef={receiptRef}
+				emailSubject="Receipt from Kpoikpoimingi"
+				emailBody="Please find attached the receipt."
+				onDownload={handleDownloadPDF}
+				onShare={handleSharePDF}
+				shouldDownload={canDownloadReceipt}
+				shouldShare={canSendEmails}
+				receiptId={id}
+				receipt={receipt}
+				adminIssuerLabel={formatAdminIssuerLabel(receipt.issuedBy)}>
+				<ReceiptContent receipt={receipt} />
+			</ReceiptWrapper>
+		</div>
 	);
 }

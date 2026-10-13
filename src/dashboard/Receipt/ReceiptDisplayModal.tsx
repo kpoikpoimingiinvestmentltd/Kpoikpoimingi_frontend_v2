@@ -16,10 +16,6 @@ interface ReceiptDisplayModalProps {
 export default function ReceiptDisplayModal({ open, onOpenChange, receipt }: ReceiptDisplayModalProps) {
 	const receiptRef = React.useRef<HTMLDivElement>(null);
 
-	const handlePrint = () => {
-		window.print();
-	};
-
 	const handleDownloadPDF = async () => {
 		if (!receipt) return;
 		await downloadPDF(receiptRef.current!, receipt.receiptNumber || receipt.id, receipt.id);
@@ -43,8 +39,9 @@ export default function ReceiptDisplayModal({ open, onOpenChange, receipt }: Rec
 						emailSubject="Receipt from Kpoikpoimingi"
 						emailBody="Please find attached the receipt."
 						onDownload={handleDownloadPDF}
-						onPrint={handlePrint}
 						onShare={handleSharePDF}
+						receiptId={receipt.id}
+						receipt={receipt}
 						adminIssuerLabel={formatAdminIssuerLabel(receipt.issuedBy)}>
 						<ReceiptContent receipt={receipt} />
 					</ReceiptWrapper>

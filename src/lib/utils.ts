@@ -25,12 +25,18 @@ export function formatPhoneNumber(phone: string): string {
 export function extractErrorMessage(err: unknown, fallback = "An error occurred") {
 	if (err && typeof err === "object") {
 		const e = err as Record<string, unknown>;
-		if (typeof e.message === "string") return e.message;
-		// Some libraries put the message under `error` or `data.message`
+		const normalize = (msg: unknown) => {
+			if (typeof msg === "string") return msg;
+			if (Array.isArray(msg)) return msg.filter((m) => typeof m === "string").join(", ");
+			return null;
+		};
+		const fromMessage = normalize(e.message);
+		if (fromMessage) return fromMessage;
 		if (typeof e.error === "string") return e.error;
 		if (e.data && typeof e.data === "object") {
 			const d = e.data as Record<string, unknown>;
-			if (typeof d.message === "string") return d.message;
+			const fromData = normalize(d.message);
+			if (fromData) return fromData;
 		}
 	}
 	return fallback;

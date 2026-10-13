@@ -65,6 +65,7 @@ export default function CustomerReceipt() {
 				onDownload={handleDownloadPDF}
 				onShare={handleSharePDF}
 				receiptId={receiptId}
+				receipt={receipt}
 				adminIssuerLabel={formatAdminIssuerLabel(receipt.issuedBy)}>
 				<ReceiptContent receipt={receipt} />
 			</ReceiptWrapper>

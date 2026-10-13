@@ -1,5 +1,6 @@
 import CustomCard from "@/components/base/CustomCard";
-import { IconWrapper, ThreeDotsIcon, EditIcon, TrashIcon, CloseIcon, EyeIcon } from "@/assets/icons";
+import { IconWrapper, ThreeDotsIcon, EditIcon, TrashIcon, CloseIcon, EyeIcon, MoneyIcon } from "@/assets/icons";
+import OutrightSaleModal from "./OutrightSaleModal";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import Image from "@/components/base/Image";
 import { media } from "@/resources/images";
@@ -149,6 +150,8 @@ export default function Properties() {
 	const [propertyToDelete, setPropertyToDelete] = React.useState<PropertyData | null>(null);
 	const [editOpen, setEditOpen] = React.useState(false);
 	const [propertyToEdit, setPropertyToEdit] = React.useState<PropertyData | null>(null);
+	const [sellOpen, setSellOpen] = React.useState(false);
+	const [propertiesToSell, setPropertiesToSell] = React.useState<PropertyData[]>([]);
 
 	const updateProperty = useUpdateProperty(
 		() => {
@@ -350,7 +353,7 @@ export default function Properties() {
 						) : (
 							<>
 								{selectedCount > 0 && (
-									<div className="bg-red-50 border border-red-200 rounded-md p-3 mb-4 flex items-center justify-between">
+									<div className="bg-red-50 border border-red-200 rounded-md p-3 mb-4 flex items-center justify-between gap-3 flex-wrap">
 										<div className="flex items-center gap-2">
 											<button
 												type="button"
@@ -362,19 +365,39 @@ export default function Properties() {
 											</button>
 											<div className="text-sm text-red-700">{selectedCount} Items selected</div>
 										</div>
-										<div>
+										<div className="flex items-center gap-2">
 											<button
 												type="button"
 												onClick={() => {
-													setDeleteType("bulk");
-													setConfirmOpen(true);
+													const selectedProps = properties.filter((p) => selected[p.id]);
+													const sellable = selectedProps.filter((p) => p.quantityAvailable > 0);
+													if (!sellable.length) {
+														toast.error("Selected properties have no available stock to sell");
+														return;
+													}
+													setPropertiesToSell(sellable);
+													setSellOpen(true);
 												}}
-												className="bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-md flex items-center gap-1.5 text-sm active-scale">
+												className="bg-primary hover:bg-primary/90 text-white px-3 py-2 rounded-md flex items-center gap-1.5 text-sm active-scale">
 												<IconWrapper>
-													<TrashIcon />
+													<MoneyIcon />
 												</IconWrapper>
-												<span>Delete</span>
+												<span>Sell</span>
 											</button>
+											{canDelete && (
+												<button
+													type="button"
+													onClick={() => {
+														setDeleteType("bulk");
+														setConfirmOpen(true);
+													}}
+													className="bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-md flex items-center gap-1.5 text-sm active-scale">
+													<IconWrapper>
+														<TrashIcon />
+													</IconWrapper>
+													<span>Delete</span>
+												</button>
+											)}
 										</div>
 									</div>
 								)}
@@ -429,6 +452,19 @@ export default function Properties() {
 																		<span>Edit details</span>
 																	</button>
 																</DropdownMenuItem>
+																{prod.quantityAvailable > 0 && (
+																	<DropdownMenuItem
+																		onClick={() => {
+																			setPropertiesToSell([prod]);
+																			setSellOpen(true);
+																		}}
+																		className="flex items-center gap-2 cursor-pointer">
+																		<IconWrapper className="text-base">
+																			<MoneyIcon />
+																		</IconWrapper>
+																		<span>Sell</span>
+																	</DropdownMenuItem>
+																)}
 																{canDelete && (
 																	<DropdownMenuItem
 																		onClick={() => {
@@ -595,6 +631,23 @@ export default function Properties() {
 							}
 						}}
 						isLoading={updateProperty.isPending}
+					/>
+
+					<OutrightSaleModal
+						key={sellOpen ? propertiesToSell.map((p) => p.id).join(",") || "sell" : "sell-closed"}
+						open={sellOpen}
+						onOpenChange={setSellOpen}
+						properties={propertiesToSell.map((p) => ({
+							id: p.id,
+							name: p.name,
+							price: p.price,
+							quantityAvailable: p.quantityAvailable,
+						}))}
+						onSold={() => {
+							setSelected({});
+							setPropertiesToSell([]);
+							refetch();
+						}}
 					/>
 				</CustomCard>
 			</div>

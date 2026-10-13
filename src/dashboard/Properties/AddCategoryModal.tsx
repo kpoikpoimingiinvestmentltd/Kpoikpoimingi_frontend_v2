@@ -7,12 +7,14 @@ import { twMerge } from "tailwind-merge";
 import { inputStyle, modalContentStyle } from "@/components/common/commonStyles";
 import ActionButton from "@/components/base/ActionButton";
 
+export type SubCategoryDraft = { id?: string; name: string };
+
 type Props = {
 	open: boolean;
 	onOpenChange: (open: boolean) => void;
 	mode?: "add" | "edit";
-	initial?: { category?: string; subCategories?: string[] };
-	onSave?: (payload: { category?: string; subCategories: string[] }) => void;
+	initial?: { category?: string; subCategories?: SubCategoryDraft[] };
+	onSave?: (payload: { category?: string; subCategories: SubCategoryDraft[] }) => void;
 	savingStatus?: "idle" | "pending" | "success" | "error";
 };
 
@@ -87,16 +89,17 @@ export default function AddCategoryModal({ open, onOpenChange, mode = "add", ini
 		"Wedding & Events",
 		"Travel & Tourism",
 	];
-	// store subcategories as objects with stable ids to avoid index-based key issues
-	const makeId = () => `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
-	const [subCats, setSubCats] = React.useState<{ id: string; name: string }[]>(() => {
-		// If initial provided (edit mode) use it; otherwise for add mode start with one empty entry
+	const makeLocalKey = () => `local-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+	const [subCats, setSubCats] = React.useState<{ key: string; id?: string; name: string }[]>(() => {
 		const initialArr = initial?.subCategories;
 		if (Array.isArray(initialArr) && initialArr.length > 0) {
-			return initialArr.map((s) => ({ id: makeId(), name: s }));
+			return initialArr.map((s) => ({
+				key: s.id || makeLocalKey(),
+				id: s.id,
+				name: s.name,
+			}));
 		}
-		// For add mode, default to a single empty subcategory input
-		return [{ id: makeId(), name: "" }];
+		return [{ key: makeLocalKey(), name: "" }];
 	});
 
 	React.useEffect(() => {
@@ -104,17 +107,23 @@ export default function AddCategoryModal({ open, onOpenChange, mode = "add", ini
 			setCategory(initial?.category ?? "");
 			const initialArr = initial?.subCategories;
 			if (Array.isArray(initialArr) && initialArr.length > 0) {
-				setSubCats(initialArr.map((s) => ({ id: makeId(), name: s })));
+				setSubCats(
+					initialArr.map((s) => ({
+						key: s.id || makeLocalKey(),
+						id: s.id,
+						name: s.name,
+					})),
+				);
 			} else {
-				// when opening in add mode or no initial subcategories, ensure there's one empty input
-				setSubCats([{ id: makeId(), name: "" }]);
+				setSubCats([{ key: makeLocalKey(), name: "" }]);
 			}
 		}
-	}, [open]);
+	}, [open, initial?.category, initial?.subCategories]);
 
-	const addSub = () => setSubCats((s) => [...s, { id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`, name: "" }]);
-	const updateSub = (id: string, val: string) => setSubCats((s) => s.map((v) => (v.id === id ? { ...v, name: val } : v)));
-	const removeSub = (id: string) => setSubCats((s) => s.filter((v) => v.id !== id));
+	const addSub = () => setSubCats((s) => [...s, { key: makeLocalKey(), name: "" }]);
+	const updateSub = (key: string, val: string) =>
+		setSubCats((s) => s.map((v) => (v.key === key ? { ...v, name: val } : v)));
+	const removeSub = (key: string) => setSubCats((s) => s.filter((v) => v.key !== key));
 
 	const saving = (savingStatus ?? "idle") as "idle" | "pending" | "success" | "error";
 	const isSaveDisabled = saving === "pending" || !String(category).trim();
@@ -130,7 +139,12 @@ export default function AddCategoryModal({ open, onOpenChange, mode = "add", ini
 	}, [categoryFilter]);
 
 	const handleSave = () => {
-		onSave?.({ category, subCategories: subCats.map((s) => s.name) });
+		onSave?.({
+			category,
+			subCategories: subCats
+				.map((s) => ({ ...(s.id ? { id: s.id } : {}), name: s.name.trim() }))
+				.filter((s) => Boolean(s.name)),
+		});
 	};
 
 	// Prevent closing modal while saving
@@ -187,18 +201,18 @@ export default function AddCategoryModal({ open, onOpenChange, mode = "add", ini
 
 					<div className="space-y-3">
 						{subCats.map((s) => (
-							<div key={s.id} className="flex items-stretch gap-3">
+							<div key={s.key} className="flex items-stretch gap-3">
 								<CustomInput
 									className={inputStyle}
 									containerClassName="flex-1"
 									value={s.name}
 									placeholder="Type in subcategory"
-									onChange={(e) => updateSub(s.id, e.target.value)}
+									onChange={(e) => updateSub(s.key, e.target.value)}
 									disabled={saving === "pending"}
 								/>
 								<button
 									type="button"
-									onClick={() => removeSub(s.id)}
+									onClick={() => removeSub(s.key)}
 									className="bg-red-600 text-white px-3 py-2 rounded-md"
 									disabled={saving === "pending"}>
 									<IconWrapper>

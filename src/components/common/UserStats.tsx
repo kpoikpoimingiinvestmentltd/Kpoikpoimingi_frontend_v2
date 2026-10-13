@@ -3,7 +3,7 @@ import StatCard from "@/components/base/StatCard";
 import Badge from "../base/Badge";
 import { Link } from "react-router";
 import { _router } from "../../routes/_router";
-import { useGetAnalyticsOverview } from "@/api/analytics";
+import { useGetAnalyticsOverview, type AnalyticsOverview } from "@/api/analytics";
 import { CardSkeleton } from "@/components/common/Skeleton";
 
 export const UserStats = () => {
@@ -11,22 +11,24 @@ export const UserStats = () => {
 
 	if (isLoading) {
 		return (
-			<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-				{[1, 2, 3].map((i) => (
+			<div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+				{[1, 2, 3, 4].map((i) => (
 					<CardSkeleton key={i} lines={2} />
 				))}
 			</div>
 		);
 	}
 
-	const analyticsTyped = analyticsData as Record<string, unknown> | undefined;
-	const totalPropertyRequests = (analyticsTyped?.totalPropertyRequests as number) ?? 0;
-	const unapprovedRequests = (analyticsTyped?.unapprovedRequests as number) ?? 0;
-	const totalPropertiesSold = (analyticsTyped?.totalPropertiesSold as number) ?? 0;
-	const totalCustomers = (analyticsTyped?.totalCustomers as number) ?? 0;
+	const analytics = analyticsData as AnalyticsOverview | undefined;
+	const totalPropertyRequests = analytics?.totalPropertyRequests ?? 0;
+	const unapprovedRequests = analytics?.unapprovedRequests ?? 0;
+	const totalPropertiesSold = analytics?.totalPropertiesSold ?? 0;
+	const totalCustomers = analytics?.totalCustomers ?? 0;
+	const totalPropertyQuantity = analytics?.totalPropertyQuantity ?? 0;
+	const totalPropertyAssigned = analytics?.totalPropertyAssigned ?? 0;
 
 	return (
-		<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+		<div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
 			<StatCard
 				title="Total Property Request"
 				value={totalPropertyRequests}
@@ -39,6 +41,30 @@ export const UserStats = () => {
 							<EyeIcon />
 						</IconWrapper>
 						<span>View Requests</span>
+					</Link>
+				}
+			/>
+			<StatCard
+				title="Total Property Available"
+				value={totalPropertyQuantity.toLocaleString()}
+				icon={<PropertiesIcon />}
+				iconColor="text-amber-500"
+				badge={
+					totalPropertyAssigned > 0 ? (
+						<Badge
+							label={`Assigned (${totalPropertyAssigned.toLocaleString()})`}
+							className="rounded-full py-0.5 px-2"
+							value="pending"
+							size="sm"
+						/>
+					) : undefined
+				}
+				footer={
+					<Link to={_router.dashboard.properties} className="text-sm text-primary inline-flex items-center gap-2">
+						<IconWrapper>
+							<EyeIcon />
+						</IconWrapper>
+						<span>View Properties</span>
 					</Link>
 				}
 			/>

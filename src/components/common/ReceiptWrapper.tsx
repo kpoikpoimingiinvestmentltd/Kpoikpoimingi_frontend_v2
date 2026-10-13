@@ -1,12 +1,56 @@
-// icons are provided by ReceiptActions
 import CustomCard from "@/components/base/CustomCard";
 import Image from "@/components/base/Image";
 import { media } from "@/resources/images";
 import ReceiptActions from "@/components/common/ReceiptActions";
+import ThermalReceiptContent from "@/components/common/ThermalReceiptContent";
+import type { ReceiptDetail } from "@/types/receipt";
+import { thermalDataFromReceipt } from "@/utils/thermalReceiptData";
 import React, { useCallback, useRef } from "react";
-import { handleSendPDFViaEmail } from "@/utils/pdfUtils";
+import {
+	handleDownloadPDF,
+	handleSendPDFViaEmail,
+	handleSharePDF,
+	type ReceiptPdfFormat,
+} from "@/utils/pdfUtils";
 import { toast } from "sonner";
 import { useReactToPrint } from "react-to-print";
+
+const A4_PAGE_STYLE = `
+	@page {
+		margin: 10mm;
+		size: A4;
+	}
+	body {
+		margin: 0;
+		padding: 0;
+		zoom: 1;
+	}
+`;
+
+const THERMAL_80_PAGE_STYLE = `
+	@page {
+		size: 80mm auto;
+		margin: 0;
+	}
+	html, body {
+		margin: 0 !important;
+		padding: 0 !important;
+		width: 80mm;
+		height: auto !important;
+		background: #fff;
+		-webkit-print-color-adjust: exact;
+		print-color-adjust: exact;
+		overflow: visible !important;
+	}
+	.thermal-receipt {
+		width: 280px !important;
+		max-width: 280px !important;
+		margin: 0 auto !important;
+		box-sizing: border-box !important;
+		overflow: visible !important;
+		height: auto !important;
+	}
+`;
 
 export default function ReceiptWrapper({
 	children,
@@ -19,6 +63,7 @@ export default function ReceiptWrapper({
 	contentRef,
 	receiptId,
 	adminIssuerLabel,
+	receipt,
 }: {
 	children: React.ReactNode;
 	emailSubject?: string;
@@ -32,72 +77,109 @@ export default function ReceiptWrapper({
 	contentRef?: React.Ref<HTMLDivElement>;
 	receiptId?: string;
 	adminIssuerLabel?: string | null;
+	receipt?: ReceiptDetail | null;
 }) {
 	const printRef = useRef<HTMLDivElement>(null);
+	const thermalRef = useRef<HTMLDivElement>(null);
 
-	const handlePrint = useReactToPrint({
+	const handlePrintA4 = useReactToPrint({
 		contentRef: printRef,
 		documentTitle: "Receipt",
-		pageStyle: `
-			@page {
-				margin: 10mm;
-				size: A4;
-			}
-			body {
-				margin: 0;
-				padding: 0;
-				zoom: 1;
-			}
-		`,
+		pageStyle: A4_PAGE_STYLE,
 		onAfterPrint: () => {
-			if (onPrint) {
-				onPrint();
-			}
+			onPrint?.();
 		},
 	});
 
-	const handleEmailSend = useCallback(async () => {
-		if (!receiptId) {
-			toast.error("Receipt ID not available");
-			return;
-		}
+	const handlePrintThermal = useReactToPrint({
+		contentRef: thermalRef,
+		documentTitle: "Receipt-Thermal-80mm",
+		pageStyle: THERMAL_80_PAGE_STYLE,
+		onAfterPrint: () => {
+			onPrint?.();
+		},
+	});
 
+	const resolveA4Element = useCallback(() => {
 		const refContent = contentRef as React.RefObject<HTMLDivElement> | undefined;
-		if (!refContent || !refContent.current) {
-			toast.error("Receipt content not available");
-			return;
-		}
+		return refContent?.current ?? printRef.current;
+	}, [contentRef]);
 
-		// Generate PDF and send via API endpoint
-		const success = await handleSendPDFViaEmail(refContent.current, receiptId);
+	const receiptNumber = receipt?.receiptNumber;
+	const idForPdf = receiptId || receipt?.id;
 
-		if (!success) {
-			// Error toast is already handled in handleSendPDFViaEmail
-			return;
-		}
-	}, [receiptId, contentRef]);
+	const runDownload = useCallback(
+		async (format: ReceiptPdfFormat) => {
+			if (format === "a4" && onDownload) {
+				onDownload();
+				return;
+			}
+
+			const el = format === "thermal" ? thermalRef.current : resolveA4Element();
+			if (!el) {
+				toast.error(format === "thermal" ? "Thermal receipt not available" : "Receipt content not available");
+				return;
+			}
+
+			await handleDownloadPDF(el, receiptNumber, idForPdf, format);
+		},
+		[idForPdf, onDownload, receiptNumber, resolveA4Element],
+	);
+
+	const runDeviceShare = useCallback(
+		async (format: ReceiptPdfFormat) => {
+			if (format === "a4" && onShare && typeof navigator !== "undefined" && "share" in navigator) {
+				try {
+					onShare();
+					return;
+				} catch {
+					/* fall through */
+				}
+			}
+
+			const el = format === "thermal" ? thermalRef.current : resolveA4Element();
+			if (!el) {
+				toast.error(format === "thermal" ? "Thermal receipt not available" : "Receipt content not available");
+				return;
+			}
+
+			await handleSharePDF(el, receiptNumber, idForPdf, format);
+		},
+		[idForPdf, onShare, receiptNumber, resolveA4Element],
+	);
+
+	const runEmailShare = useCallback(
+		async (format: ReceiptPdfFormat) => {
+			if (!idForPdf) {
+				toast.error("Receipt ID not available");
+				return;
+			}
+
+			const el = format === "thermal" ? thermalRef.current : resolveA4Element();
+			if (!el) {
+				toast.error(format === "thermal" ? "Thermal receipt not available" : "Receipt content not available");
+				return;
+			}
+
+			await handleSendPDFViaEmail(el, String(idForPdf), receiptNumber, undefined, format);
+		},
+		[idForPdf, receiptNumber, resolveA4Element],
+	);
+
+	const thermalData = receipt ? thermalDataFromReceipt(receipt) : null;
 
 	const shareItems = [
 		{
 			label: "Email",
 			src: media.images.gmail,
-			onSelect: handleEmailSend,
+			onSelectA4: () => void runEmailShare("a4"),
+			...(thermalData ? { onSelectThermal: () => void runEmailShare("thermal") } : {}),
 		},
 		{
 			label: "Whatsapp",
 			src: media.images.whatsapp,
-			onSelect: () => {
-				if (onShare && typeof navigator !== "undefined" && "share" in navigator) {
-					try {
-						onShare();
-						return;
-					} catch {
-						/* swallow */
-					}
-				}
-				const text = encodeURIComponent("Please find the receipt attached.");
-				window.open(`https://wa.me/?text=${text}`, "_blank");
-			},
+			onSelectA4: () => void runDeviceShare("a4"),
+			...(thermalData ? { onSelectThermal: () => void runDeviceShare("thermal") } : {}),
 		},
 	];
 
@@ -118,10 +200,14 @@ export default function ReceiptWrapper({
 							<div className="receipt-actions flex items-center gap-2">
 								<ReceiptActions
 									showPrint={shouldPrint}
-									onPrint={() => handlePrint()}
+									onPrint={() => handlePrintA4()}
+									onPrintA4={() => handlePrintA4()}
+									onPrintThermal={thermalData ? () => handlePrintThermal() : undefined}
 									showShare={shouldShare}
 									showDownload={shouldDownload}
-									onDownload={() => onDownload && onDownload()}
+									onDownload={() => void runDownload("a4")}
+									onDownloadA4={() => void runDownload("a4")}
+									onDownloadThermal={thermalData ? () => void runDownload("thermal") : undefined}
 									shareItems={shareItems}
 								/>
 							</div>
@@ -136,6 +222,25 @@ export default function ReceiptWrapper({
 					</div>
 				</CustomCard>
 			</div>
+
+			{thermalData ? (
+				<div
+					aria-hidden
+					className="pointer-events-none"
+					style={{
+						position: "fixed",
+						left: 0,
+						top: 0,
+						width: "280px",
+						opacity: 0,
+						zIndex: -1,
+						overflow: "visible",
+					}}>
+					<div ref={thermalRef} style={{ width: "280px", overflow: "visible" }}>
+						<ThermalReceiptContent data={thermalData} paperWidth={80} />
+					</div>
+				</div>
+			) : null}
 		</>
 	);
 }

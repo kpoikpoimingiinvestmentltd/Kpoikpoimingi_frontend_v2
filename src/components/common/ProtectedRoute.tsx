@@ -32,12 +32,15 @@ export default function ProtectedRoute({ allowedRoles, children, fallbackRoute =
 
 // Separated so hooks are only called when we know the token is valid
 function AuthorizedRoute({ allowedRoles, children, fallbackRoute }: ProtectedRouteProps) {
-	const { data: user, isLoading } = useCurrentUser() as {
+	const { data: user, isPending } = useCurrentUser() as {
 		data?: User;
-		isLoading: boolean;
+		isPending: boolean;
 	};
 
-	if (isLoading) return null;
+	// Render immediately when we already know the user (cached). Only wait on first load.
+	if (isPending && !user) {
+		return <div className="p-6 text-sm text-muted-foreground">Loading…</div>;
+	}
 
 	if (!user || !user.role || !allowedRoles.includes(user.role.role)) {
 		return <Navigate to={fallbackRoute!} replace />;

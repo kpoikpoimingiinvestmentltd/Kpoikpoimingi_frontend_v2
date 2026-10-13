@@ -8,8 +8,14 @@ interface ReceiptContentProps {
 }
 
 export default function ReceiptContent({ receipt }: ReceiptContentProps) {
-	const isFullPayment = !receipt.totalInstallments || receipt.totalInstallments === 1;
+	const isOutrightSale =
+		receipt.transactionType === "outright_sale" || Boolean(receipt.outrightSaleId || receipt.outrightSale);
+	const isFullPayment =
+		isOutrightSale || !receipt.totalInstallments || receipt.totalInstallments === 1;
 	const isMigrated = receipt.customer?.isMigrated ?? false;
+	const receiptTitle = isFullPayment
+		? "Full Payment"
+		: "Invoice With Partial Payment";
 
 	const parseInstallmentProgress = (progress?: string) => {
 		if (!progress) return { covered: 0, total: 0 };
@@ -60,7 +66,7 @@ export default function ReceiptContent({ receipt }: ReceiptContentProps) {
 				<ReceiptHeader receiptNumber={receipt.receiptNumber ?? receipt.id} />
 				<main className="flex-grow">
 					<section className="flex flex-col gap-y-1 mb-6 mt-4">
-						<h3 className="text-center text-lg font-medium text-primary mb-4">Invoice With Full Payment</h3>
+						<h3 className="text-center text-lg font-medium text-primary mb-4">{receiptTitle}</h3>
 						<KeyValueRow label="Name" value={receipt.customer?.fullName ?? receipt.id ?? "-"} />
 						<KeyValueRow label="Email" value={receipt.customer?.email ?? "-"} />
 						<KeyValueRow label="Whatsapp number" value={receipt.customer?.phoneNumber ?? "-"} />
@@ -89,7 +95,7 @@ export default function ReceiptContent({ receipt }: ReceiptContentProps) {
 		<section className="mt-4 flex flex-col gap-y-4">
 	<div className="bg-primary/10 dark:bg-primary/50 text-gray-800 dark:text-gray-100 rounded-md flex items-center justify-between px-4 h-10">
 		<span className="text-xs font-medium whitespace-nowrap">Payment Breakdown</span>
-		<span className="text-xs font-medium">Payment duration (One time)</span>
+						<span className="text-xs font-medium whitespace-nowrap">Payment duration (One time)</span>
 	</div>
 				<CustomCard className="grid grid-cols-1 gap-y-1 px-4 py-5 bg-card border-0 dark:border">
 						{propertyRows.length > 0 ? (
@@ -159,7 +165,7 @@ export default function ReceiptContent({ receipt }: ReceiptContentProps) {
 			<ReceiptHeader receiptNumber={receipt.receiptNumber ?? receipt.id} />
 			<main className="flex-grow">
 				<section className="flex flex-col gap-y-3 mb-4 mt-3">
-					<h3 className="text-center text-sm sm:text-lg font-medium text-primary ">Invoice With Partial Payment</h3>
+					<h3 className="text-center text-sm sm:text-lg font-medium text-primary ">{receiptTitle}</h3>
 					<div className="gap-4">
 						<KeyValueRow label="Name" value={receipt.customer?.fullName ?? receipt.id ?? "-"} />
 						<KeyValueRow label="Email" value={receipt.customer?.email ?? "-"} />
@@ -191,7 +197,7 @@ export default function ReceiptContent({ receipt }: ReceiptContentProps) {
 		<div className="bg-primary/10 dark:bg-primary/50 text-gray-800 dark:text-gray-100 rounded-md flex items-center justify-between px-4 h-10">
 			<span className="text-xs font-medium whitespace-nowrap">Payment Breakdown</span>
 			{!isMigrated && (
-				<span className="text-xs font-medium">
+				<span className="text-xs font-medium whitespace-nowrap">
 					Payment duration ({receipt.contract?.durationValue ?? receipt.totalInstallments ?? "-"}{" "}
 					{receipt.contract?.durationUnit?.duration?.toLowerCase() === "weeks" ? "weeks" : "months"})
 				</span>
