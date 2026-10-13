@@ -31,12 +31,19 @@ export default function ReceiptTable() {
 	});
 	const [filters, setFilters] = React.useState<Record<string, string>>(() => {
 		const urlFilters: Record<string, string> = {};
-		const limit = searchParams.get("limit");
-		const sortBy = searchParams.get("sortBy");
-		const sortOrder = searchParams.get("sortOrder");
-		if (limit) urlFilters.limit = limit;
-		if (sortBy) urlFilters.sortBy = sortBy;
-		if (sortOrder) urlFilters.sortOrder = sortOrder;
+		for (const key of [
+			"limit",
+			"sortBy",
+			"sortOrder",
+			"transactionType",
+			"paymentMethodId",
+			"statusId",
+			"startDate",
+			"endDate",
+		]) {
+			const v = searchParams.get(key);
+			if (v) urlFilters[key] = v;
+		}
 		return urlFilters;
 	});
 
@@ -52,12 +59,19 @@ export default function ReceiptTable() {
 		setSearch(searchParam);
 
 		const urlFilters: Record<string, string> = {};
-		const limit = searchParams.get("limit");
-		const sortBy = searchParams.get("sortBy");
-		const sortOrder = searchParams.get("sortOrder");
-		if (limit) urlFilters.limit = limit;
-		if (sortBy) urlFilters.sortBy = sortBy;
-		if (sortOrder) urlFilters.sortOrder = sortOrder;
+		for (const key of [
+			"limit",
+			"sortBy",
+			"sortOrder",
+			"transactionType",
+			"paymentMethodId",
+			"statusId",
+			"startDate",
+			"endDate",
+		]) {
+			const v = searchParams.get(key);
+			if (v) urlFilters[key] = v;
+		}
 		setFilters(urlFilters);
 	}, [searchParams]);
 
@@ -84,20 +98,42 @@ export default function ReceiptTable() {
 		const params = new URLSearchParams(searchParams);
 		params.set("page", page.toString());
 		params.set("search", search);
-		if (filters.limit) params.set("limit", filters.limit);
-		else params.delete("limit");
-		if (filters.sortBy) params.set("sortBy", filters.sortBy);
-		else params.delete("sortBy");
-		if (filters.sortOrder) params.set("sortOrder", filters.sortOrder);
-		else params.delete("sortOrder");
+		for (const key of [
+			"limit",
+			"sortBy",
+			"sortOrder",
+			"transactionType",
+			"paymentMethodId",
+			"statusId",
+			"startDate",
+			"endDate",
+		]) {
+			if (filters[key]) params.set(key, filters[key]);
+			else params.delete(key);
+		}
 		setSearchParams(params, { replace: true });
 	}, [page, search, filters, setSearchParams]);
 
 	const limit = Number((filters.limit as string) || "10");
 	const sortBy = (filters.sortBy as string) || "createdAt";
 	const sortOrder = (filters.sortOrder as string) || "desc";
+	const listFilters = {
+		paymentMethodId: filters.paymentMethodId || undefined,
+		statusId: filters.statusId || undefined,
+		transactionType: filters.transactionType || undefined,
+		startDate: filters.startDate || undefined,
+		endDate: filters.endDate || undefined,
+	};
 
-	const { data, isLoading, isFetching } = useGetReceipts(page, limit, debouncedSearch || undefined, sortBy, sortOrder);
+	const { data, isLoading, isFetching } = useGetReceipts(
+		page,
+		limit,
+		debouncedSearch || undefined,
+		sortBy,
+		sortOrder,
+		true,
+		listFilters,
+	);
 	const { data: selectedReceipt } = useGetReceiptById(selectedReceiptId ?? undefined, selectedReceiptId !== null);
 
 	const handleSearchChange = (value: string) => {
@@ -159,7 +195,7 @@ export default function ReceiptTable() {
 						search={search}
 						onSearchChange={handleSearchChange}
 						setPage={handlePageChange}
-						placeholder="Search by receipt number or customer name"
+						placeholder="Search by receipt number, customer, or reference"
 						fields={
 							[
 								{
@@ -174,6 +210,38 @@ export default function ReceiptTable() {
 									],
 								},
 								{
+									key: "transactionType",
+									label: "Transaction type",
+									type: "select",
+									options: [
+										{ value: "hire_purchase", label: "Hire Purchase" },
+										{ value: "outright_sale", label: "Outright Sale" },
+									],
+								},
+								{
+									key: "paymentMethodId",
+									label: "Payment method",
+									type: "select",
+									options: [
+										{ value: "1", label: "Cash" },
+										{ value: "2", label: "POS" },
+										{ value: "3", label: "Transfer" },
+										{ value: "4", label: "Payment Link" },
+									],
+								},
+								{
+									key: "statusId",
+									label: "Status",
+									type: "select",
+									options: [
+										{ value: "1", label: "Issued" },
+										{ value: "2", label: "Pending" },
+										{ value: "3", label: "Paid" },
+									],
+								},
+								{ key: "startDate", label: "From date", type: "date" },
+								{ key: "endDate", label: "To date", type: "date" },
+								{
 									key: "sortBy",
 									label: "Sort By",
 									type: "sortBy",
@@ -187,7 +255,16 @@ export default function ReceiptTable() {
 								{ key: "sortOrder", label: "Sort Order", type: "sortOrder" },
 							] as FilterField[]
 						}
-						initialValues={{ limit: filters.limit || "10", sortBy: filters.sortBy || "", sortOrder: filters.sortOrder || "" }}
+						initialValues={{
+							limit: filters.limit || "10",
+							sortBy: filters.sortBy || "",
+							sortOrder: filters.sortOrder || "",
+							transactionType: filters.transactionType || "",
+							paymentMethodId: filters.paymentMethodId || "",
+							statusId: filters.statusId || "",
+							startDate: filters.startDate || "",
+							endDate: filters.endDate || "",
+						}}
 						onApply={handleFiltersApply}
 						onReset={handleFiltersReset}
 					/>
@@ -207,8 +284,10 @@ export default function ReceiptTable() {
 									<TableHead>Receipt ID</TableHead>
 									<TableHead>Customer Name</TableHead>
 									<TableHead>Property Name</TableHead>
-									<TableHead>Payment Type</TableHead>
+									<TableHead>Transaction</TableHead>
+									<TableHead>Payment Method</TableHead>
 									<TableHead>Amount Paid</TableHead>
+									<TableHead>Status</TableHead>
 									<TableHead>Date</TableHead>
 									<TableHead className="text-center">Action</TableHead>
 								</TableRow>
@@ -217,10 +296,18 @@ export default function ReceiptTable() {
 								{items.map((it, idx) => (
 									<TableRow key={it.id ?? idx} className="hover:bg-card">
 										<TableCell className="text-sm">{it.receiptNumber ?? it.id}</TableCell>
-										<TableCell className="text-sm">{it.customer?.fullName ?? "-"}</TableCell>
+										<TableCell className="text-sm">
+											{it.customer?.fullName ?? it.outrightSale?.customerName ?? "-"}
+										</TableCell>
 										<TableCell className="text-sm">{it.contract?.property?.name ?? it.propertyName ?? "-"}</TableCell>
+										<TableCell className="text-sm">
+											{it.transactionType === "outright_sale" || it.outrightSaleId
+												? "Outright Sale"
+												: "Hire Purchase"}
+										</TableCell>
 										<TableCell className="text-sm">{formatPaymentMethod(it.paymentMethod as string | { id?: number; method?: string })}</TableCell>
 										<TableCell className="text-sm">{formatCurrency(it.amountPaid ?? it.totalAmount)}</TableCell>
+										<TableCell className="text-sm">{it.status?.status ?? "-"}</TableCell>
 										<TableCell className="text-sm">
 											{it.paymentDate
 												? new Date(it.paymentDate).toLocaleDateString()

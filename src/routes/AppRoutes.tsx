@@ -34,6 +34,8 @@ import Categories from "../dashboard/Properties/Categories";
 import Purchases from "../dashboard/Properties/Purchases";
 import PurchaseBatchDetails from "../dashboard/Properties/PurchaseBatchDetails";
 import ContractDetails from "../dashboard/Contract/ContractDetails";
+import OutrightSales from "../dashboard/OutrightSales/OutrightSales";
+import OutrightSaleDetails from "../dashboard/OutrightSales/OutrightSaleDetails";
 import ProductRequestDetails from "../dashboard/ProductRequest/ProductRequestDetails";
 import SelectPaymentMethod from "../dashboard/Customers/SelectPaymentMethod";
 import DebtDetails from "../dashboard/Debt/DebtDetails";
@@ -105,6 +107,22 @@ export const appRouter = createBrowserRouter([
 				element: (
 					<ProtectedRoute allowedRoles={ROLE_BASED_ACCESS.contract}>
 						<Contract />
+					</ProtectedRoute>
+				),
+			},
+			{
+				path: _router.dashboard.outrightSales,
+				element: (
+					<ProtectedRoute allowedRoles={ROLE_BASED_ACCESS.contract}>
+						<OutrightSales />
+					</ProtectedRoute>
+				),
+			},
+			{
+				path: _router.dashboard.outrightSaleDetailsPath,
+				element: (
+					<ProtectedRoute allowedRoles={ROLE_BASED_ACCESS.contract}>
+						<OutrightSaleDetails />
 					</ProtectedRoute>
 				),
 			},

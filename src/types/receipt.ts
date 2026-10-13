@@ -13,34 +13,44 @@ export type GenerateReceiptPayload = {
 export type ReceiptListItem = {
   id: string;
   receiptNumber?: string;
-  paymentId?: string;
-  customerId?: string;
-  contractId?: string;
+  paymentId?: string | null;
+  customerId?: string | null;
+  contractId?: string | null;
+  outrightSaleId?: string | null;
   propertyName?: string;
   amountPaid?: string | number;
   totalAmount?: string | number;
   paymentDate?: string;
   paymentMethod?: { id?: number; method?: string } | string;
+  status?: { id?: number; status?: string };
+  transactionType?: "hire_purchase" | "outright_sale";
   createdAt?: string;
   updatedAt?: string;
-  customer?: { id?: string; fullName?: string; phoneNumber?: string };
+  customer?: { id?: string; fullName?: string; phoneNumber?: string } | null;
   contract?: {
     id?: string;
     contractCode?: string;
     property?: { name?: string; price?: string };
-  };
+  } | null;
+  outrightSale?: {
+    id?: string;
+    customerName?: string;
+    paymentReference?: string | null;
+  } | null;
 };
 
 export type ReceiptDetail = {
   id: string;
   receiptNumber?: string;
-  paymentId?: string;
-  customerId?: string;
-  contractId?: string;
+  paymentId?: string | null;
+  customerId?: string | null;
+  contractId?: string | null;
+  outrightSaleId?: string | null;
   propertyName?: string;
   amountPaid?: string | number;
   paymentDate?: string;
   paymentMethodId?: number;
+  paymentMethod?: { id?: number; method?: string } | string;
   issuedById?: string;
   issuedBy?: { id?: string; fullName?: string; staffCode?: string };
   vatAmount?: string | number;
@@ -52,6 +62,7 @@ export type ReceiptDetail = {
   updatedAt?: string;
   statusId?: number;
   source?: string;
+  transactionType?: "hire_purchase" | "outright_sale";
   contract?: {
     id?: string;
     contractCode?: string;
@@ -68,7 +79,7 @@ export type ReceiptDetail = {
       customPropertyPrice?: string | null;
       property?: { id?: string; name?: string; price?: string };
     }>;
-  };
+  } | null;
   customer?: {
     id?: string;
     fullName?: string;
@@ -85,7 +96,14 @@ export type ReceiptDetail = {
         businessAddress?: string;
       };
     }>;
-  };
+  } | null;
+  outrightSale?: {
+    id?: string;
+    customerName?: string;
+    customerEmail?: string | null;
+    customerPhone?: string | null;
+    paymentReference?: string | null;
+  } | null;
   installmentProgress?: string;
   totalInstallments?: number;
   propertiesBreakdown?: Array<{
@@ -94,5 +112,5 @@ export type ReceiptDetail = {
     unitPrice: number;
     subtotal: number;
   }>;
-  payment?: { reference?: string };
+  payment?: { reference?: string } | null;
 };

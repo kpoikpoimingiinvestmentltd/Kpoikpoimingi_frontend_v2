@@ -12,6 +12,21 @@ export type ProductUpdate = {
  */
 export const PRODUCT_UPDATES: ProductUpdate[] = [
 	{
+		id: "2026-10-13-outright-sales-receipts",
+		date: "2026-10-13",
+		title: "Outright sales, receipts & inventory snapshot",
+		summary:
+			"Sell properties in-shop with full payment from Properties, keep all payment receipts in one place (including A4 and thermal print), and see available stock quantity on the dashboard.",
+		bullets: [
+			"Use Sell on Properties to record an outright (pay-once) sale for one or more items, with VAT, cash/POS/transfer, or a payment link.",
+			"Sales & Contract now includes Hire Purchase and Outright Sales; paid sales create a formal receipt automatically.",
+			"Open any receipt to Print A4, Print Thermal (80mm), or Download PDF — same transaction data, no duplicate records.",
+			"Receipts list supports search and filters by transaction type, payment method, status, and date; unpaid payment links do not issue a receipt.",
+			"From a paid outright sale (or Hire Purchase payment history), jump straight to View Receipt.",
+			"Dashboard Overview adds a Property Qty Available card (with assigned units), plus a link to Properties.",
+		],
+	},
+	{
 		id: "2026-10-02-purchase-acquisition",
 		date: "2026-10-02",
 		title: "Purchases & acquisition costs",

@@ -44,7 +44,7 @@ export default function VATCollected({ rows, page, pages, onPageChange }: VATCol
 				<Table>
 					<TableHeader className={tableHeaderRowStyle}>
 						<TableRow>
-							<TableHead>Contract Code</TableHead>
+							<TableHead>Reference</TableHead>
 							<TableHead>Customer Name</TableHead>
 							<TableHead>Amount</TableHead>
 							<TableHead>VAT Amount</TableHead>
@@ -53,16 +53,28 @@ export default function VATCollected({ rows, page, pages, onPageChange }: VATCol
 						</TableRow>
 					</TableHeader>
 					<TableBody>
-						{rows.map((row: VATRecord) => (
-							<TableRow key={row.id} className="hover:bg-[#F6FBFF] dark:hover:bg-neutral-900/50">
-								<TableCell className="py-4">{row.contract.contractCode}</TableCell>
-								<TableCell className="py-4">{row.customer.fullName}</TableCell>
-								<TableCell className="py-4">{formatCurrency(row.amount)}</TableCell>
-								<TableCell className="py-4">{formatCurrency(row.vatAmount)}</TableCell>
-								<TableCell className="py-4">{formatPercentage(row.vatRate)}</TableCell>
-								<TableCell className="py-4">{formatDate(row.createdAt)}</TableCell>
-							</TableRow>
-						))}
+						{rows.map((row: VATRecord) => {
+							const reference =
+								row.contract?.contractCode ??
+								(row.outrightSaleId || row.outrightSale
+									? `Outright sale`
+									: "—");
+							const customerName =
+								row.customer?.fullName ??
+								row.outrightSale?.customerName ??
+								"—";
+
+							return (
+								<TableRow key={row.id} className="hover:bg-[#F6FBFF] dark:hover:bg-neutral-900/50">
+									<TableCell className="py-4">{reference}</TableCell>
+									<TableCell className="py-4">{customerName}</TableCell>
+									<TableCell className="py-4">{formatCurrency(row.amount)}</TableCell>
+									<TableCell className="py-4">{formatCurrency(row.vatAmount)}</TableCell>
+									<TableCell className="py-4">{formatPercentage(row.vatRate)}</TableCell>
+									<TableCell className="py-4">{formatDate(row.createdAt)}</TableCell>
+								</TableRow>
+							);
+						})}
 					</TableBody>
 				</Table>
 			</div>

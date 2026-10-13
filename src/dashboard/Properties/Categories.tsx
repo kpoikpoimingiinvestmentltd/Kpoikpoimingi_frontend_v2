@@ -11,7 +11,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useDispatch } from "react-redux";
 import { setCategories as setCategoriesAction } from "@/store/categoriesSlice";
-import AddCategoryModal from "./AddCategoryModal";
+import AddCategoryModal, { type SubCategoryDraft } from "./AddCategoryModal";
 import EmptyData from "../../components/common/EmptyData";
 import ConfirmModal from "@/components/common/ConfirmModal";
 import { TableSkeleton } from "@/components/common/Skeleton";
@@ -84,14 +84,19 @@ export default function Categories() {
 		setSearchParams(params, { replace: true });
 	}, [page, limit, query, categoryFilter, setSearchParams]);
 
-	const createMutation = useMutation<unknown, unknown, { category?: string; subCategories?: string[] }>({
-		mutationFn: (vars: { category?: string; subCategories?: string[] }) =>
+	const createMutation = useMutation<unknown, unknown, { category?: string; subCategories?: SubCategoryDraft[] }>({
+		mutationFn: (vars: { category?: string; subCategories?: SubCategoryDraft[] }) =>
 			createCategory({ category: vars.category, description: "", subcategories: vars.subCategories }),
-		onMutate: async (newCat: { category?: string; subCategories?: string[] }) => {
+		onMutate: async (newCat: { category?: string; subCategories?: SubCategoryDraft[] }) => {
 			await queryClient.cancelQueries({ queryKey: ["categories"] });
 			const prev = categories;
 			const id = (newCat.category || "").toLowerCase().replace(/\s+/g, "-") || `tmp-${Date.now()}`;
-			const optimistic = { id, title: newCat.category || "Untitled", subs: (newCat.subCategories || []).filter((s) => s.trim()), count: 0 };
+			const optimistic = {
+				id,
+				title: newCat.category || "Untitled",
+				subs: (newCat.subCategories || []).filter((s) => s.name.trim()),
+				count: 0,
+			};
 			setCategories((prevState) => {
 				const next = [...prevState, optimistic];
 				dispatch(setCategoriesAction(next));
@@ -111,16 +116,22 @@ export default function Categories() {
 		},
 	});
 
-	const updateMutation = useMutation<unknown, unknown, { id: string; category?: string; subCategories?: string[] }>({
-		mutationFn: (vars: { id: string; category?: string; subCategories?: string[] }) => {
+	const updateMutation = useMutation<unknown, unknown, { id: string; category?: string; subCategories?: SubCategoryDraft[] }>({
+		mutationFn: (vars: { id: string; category?: string; subCategories?: SubCategoryDraft[] }) => {
 			return updateCategory(vars.id, { category: vars.category, description: "", subcategories: vars.subCategories });
 		},
-		onMutate: async ({ id, category, subCategories }: { id: string; category?: string; subCategories?: string[] }) => {
+		onMutate: async ({ id, category, subCategories }: { id: string; category?: string; subCategories?: SubCategoryDraft[] }) => {
 			await queryClient.cancelQueries({ queryKey: ["categories"] });
 			const prev = categories;
 			setCategories((prevState) => {
 				const next = prevState.map((c) =>
-					c.id === id ? { ...c, title: category ?? c.title, subs: (subCategories ?? c.subs).filter((s: string) => s.trim()) } : c,
+					c.id === id
+						? {
+								...c,
+								title: category ?? c.title,
+								subs: (subCategories ?? c.subs).filter((s: SubCategoryDraft) => s.name.trim()),
+							}
+						: c,
 				);
 				dispatch(setCategoriesAction(next));
 				return next;
@@ -148,14 +159,21 @@ export default function Categories() {
 				id: string;
 				category?: string;
 				title?: string;
-				children?: Array<{ category?: string; title?: string }>;
+				children?: Array<{ id?: string; category?: string; title?: string }>;
 				_count?: { properties?: number };
 				count?: number;
 			}>
 		).map((c) => ({
 			id: c.id,
 			title: c.category || c.title || "",
-			subs: Array.isArray(c.children) ? c.children.map((ch) => ch.category || ch.title || "").filter((s) => s) : [],
+			subs: Array.isArray(c.children)
+				? c.children
+						.map((ch) => ({
+							...(ch.id ? { id: ch.id } : {}),
+							name: ch.category || ch.title || "",
+						}))
+						.filter((s) => Boolean(s.name))
+				: [],
 			count: c._count?.properties ?? c.count ?? 0,
 		}));
 		setCategories(mapped);
@@ -164,7 +182,7 @@ export default function Categories() {
 
 	const [modalOpen, setModalOpen] = React.useState(false);
 	const [modalMode, setModalMode] = React.useState<"add" | "edit">("add");
-	const [editing, setEditing] = React.useState<{ id?: string; title?: string; subs?: string[] } | null>(null);
+	const [editing, setEditing] = React.useState<{ id?: string; title?: string; subs?: SubCategoryDraft[] } | null>(null);
 
 	// delete confirmation modal state
 	const [confirmOpen, setConfirmOpen] = React.useState(false);
@@ -330,14 +348,24 @@ export default function Categories() {
 													}
 													if (!q) return true;
 													if ((row.title || "").toLowerCase().includes(q)) return true;
-													if (Array.isArray(row.subs) && row.subs.join(" ").toLowerCase().includes(q)) return true;
+													if (
+														Array.isArray(row.subs) &&
+														row.subs
+															.map((s: SubCategoryDraft) => s.name)
+															.join(" ")
+															.toLowerCase()
+															.includes(q)
+													)
+														return true;
 													return false;
 												});
 												return filtered.map((row) => (
 													<TableRow key={row.id} className="hover:bg-[#F6FBFF] dark:hover:bg-neutral-900/50">
 														<TableCell className="text-[#13121280] align-top capitalize">{row.title}</TableCell>
 														<TableCell className="text-[#13121280] align-top">
-															<div className="text-balance w-80">{row.subs.join(", ")}</div>
+															<div className="text-balance w-80">
+																{row.subs.map((s: SubCategoryDraft) => s.name).join(", ")}
+															</div>
 														</TableCell>
 														<TableCell className="text-[#13121280] align-top">{row.count}</TableCell>
 														<TableCell className="flex items-center gap-1">

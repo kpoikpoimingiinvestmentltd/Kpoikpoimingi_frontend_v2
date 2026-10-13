@@ -16,6 +16,16 @@ export type FilterField =
 	| { key: string; label: string; type: "sortOrder" }
 	| { key: string; label: string; type: "boolean" };
 
+const EMPTY_FILTERS: Record<string, string> = {};
+const EMPTY_FIELDS: FilterField[] = [];
+
+function filtersEqual(a: Record<string, string>, b: Record<string, string>) {
+	const aKeys = Object.keys(a);
+	const bKeys = Object.keys(b);
+	if (aKeys.length !== bKeys.length) return false;
+	return aKeys.every((key) => a[key] === b[key]);
+}
+
 type Props = {
 	search: string;
 	onSearchChange: (v: string) => void;
@@ -34,15 +44,18 @@ export default function SearchWithFilters({
 	setPage,
 	placeholder = "Search...",
 	showFilter = true,
-	fields = [],
-	initialValues = {},
+	fields = EMPTY_FIELDS,
+	initialValues = EMPTY_FILTERS,
 	onApply,
 	onReset,
 }: Props) {
 	const [open, setOpen] = React.useState(false);
-	const [values, setValues] = React.useState<Record<string, string>>(initialValues || {});
+	const [values, setValues] = React.useState<Record<string, string>>(initialValues);
 
-	React.useEffect(() => setValues(initialValues || {}), [initialValues]);
+	// Sync from parent only when filter *values* change — not on new object identity.
+	React.useEffect(() => {
+		setValues((prev) => (filtersEqual(prev, initialValues) ? prev : { ...initialValues }));
+	}, [initialValues]);
 
 	const handleChange = (k: string, v: string) => setValues((s) => ({ ...s, [k]: v }));
 

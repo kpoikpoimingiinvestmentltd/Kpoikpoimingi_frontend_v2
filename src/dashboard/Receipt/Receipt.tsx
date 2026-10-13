@@ -9,7 +9,10 @@ export default function Receipt() {
 	return (
 		<div>
 			<div className="flex items-center justify-between flex-wrap gap-4 mb-4">
-				<PageTitles title="Receipt" description="This contains all the receipt of all payment done for kpoi kpoi mingi product" />
+				<PageTitles
+					title="Receipts"
+					description="Central list of payment receipts for Hire Purchase and completed outright sales. Print A4, thermal, or download PDF from any receipt."
+				/>
 				<div className="flex items-center gap-3">
 					<button
 						type="button"

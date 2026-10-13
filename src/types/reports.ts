@@ -29,10 +29,11 @@ export type PenaltiesResponse = {
 
 export type VATRecord = {
 	id: string;
-	contractId: string;
+	contractId: string | null;
 	paymentId: string | null;
 	receiptId: string | null;
-	customerId: string;
+	customerId: string | null;
+	outrightSaleId?: string | null;
 	amount: string;
 	vatAmount: string;
 	vatRate: string;
@@ -43,10 +44,15 @@ export type VATRecord = {
 	updatedAt: string;
 	contract: {
 		contractCode: string;
-	};
+	} | null;
 	customer: {
 		fullName: string;
-	};
+	} | null;
+	outrightSale?: {
+		id: string;
+		customerName: string;
+		customerEmail?: string | null;
+	} | null;
 };
 
 export type VATTotals = {

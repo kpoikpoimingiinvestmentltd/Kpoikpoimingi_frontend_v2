@@ -11,6 +11,9 @@ export type AnalyticsOverview = {
 	unapprovedRequests: number;
 	totalPropertiesSold: number;
 	totalCustomers: number;
+	totalPropertyQuantity?: number;
+	totalPropertyAssigned?: number;
+	totalPropertySkus?: number;
 	propertyRequestInfo: {
 		approved: number;
 		pending: number;

@@ -57,6 +57,8 @@ export function useGetAllContracts(
 		queryKey: ["contracts", page, limit, search, sortBy, sortOrder, filters],
 		queryFn: () => getAllContracts(page, limit, search, sortBy, sortOrder, filters),
 		enabled,
+		staleTime: 60_000,
+		refetchOnWindowFocus: false,
 	});
 }
 
