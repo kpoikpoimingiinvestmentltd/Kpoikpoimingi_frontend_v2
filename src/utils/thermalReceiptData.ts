@@ -146,7 +146,6 @@ function resolveKind(receipt: ReceiptDetail): ThermalReceiptKind {
 export function thermalDataFromReceipt(receipt: ReceiptDetail): ThermalReceiptData {
 	const kind = resolveKind(receipt);
 	const isOutright = kind === "outright";
-	const isHirePurchase = kind === "hire_purchase";
 
 	const net = toNumber(receipt.amountPaid);
 	const vat = toNumber(receipt.vatAmount);

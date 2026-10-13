@@ -169,7 +169,7 @@ export default function Categories() {
 			subs: Array.isArray(c.children)
 				? c.children
 						.map((ch) => ({
-							id: ch.id,
+							...(ch.id ? { id: ch.id } : {}),
 							name: ch.category || ch.title || "",
 						}))
 						.filter((s) => Boolean(s.name))

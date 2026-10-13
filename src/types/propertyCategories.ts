@@ -1,11 +1,16 @@
 // Types for property categories
 export type CategoryDto = { id: string; name: string };
 
+export type CategorySub = {
+	id?: string;
+	name: string;
+};
+
 export type Category = {
 	id: string;
 	title?: string;
 	name?: string;
-	subs?: string[];
+	subs?: CategorySub[];
 	count?: number;
 	[k: string]: unknown;
 };
