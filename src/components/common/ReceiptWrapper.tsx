@@ -15,6 +15,7 @@ import {
 import { toast } from "sonner";
 import { useReactToPrint } from "react-to-print";
 
+/** A4 print only — never share styles with thermal. */
 const A4_PAGE_STYLE = `
 	@page {
 		margin: 10mm;
@@ -27,6 +28,7 @@ const A4_PAGE_STYLE = `
 	}
 `;
 
+/** Thermal print only (react-to-print pageStyle on thermalRef). */
 const THERMAL_80_PAGE_STYLE = `
 	@page {
 		size: 80mm auto;
@@ -49,6 +51,7 @@ const THERMAL_80_PAGE_STYLE = `
 		box-sizing: border-box !important;
 		overflow: visible !important;
 		height: auto !important;
+		font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important;
 	}
 `;
 
@@ -196,6 +199,7 @@ export default function ReceiptWrapper({
 								/>
 							</div>
 						</header>
+						{/* A4 invoice only — ReceiptContent children; print/download use printRef */}
 						<main className="receipt-main flex justify-center w-full">
 							<CustomCard ref={printRef} className="receipt-content relative shadow-lg isolate py-6 px-4 md:px-8 w-full">
 								<Image src={media.images.verticalCuts} className="w-11/12 mx-auto absolute right-0 left-0 top-0 dark:opacity-10" />
@@ -207,6 +211,7 @@ export default function ReceiptWrapper({
 				</CustomCard>
 			</div>
 
+			{/* Separate 80mm thermal tree — ThermalReceiptContent + thermalPdfUtils; never shares A4 DOM/CSS */}
 			{thermalData ? (
 				<div
 					aria-hidden

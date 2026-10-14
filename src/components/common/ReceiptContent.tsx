@@ -253,14 +253,14 @@ export default function ReceiptContent({ receipt }: ReceiptContentProps) {
 
 				{/* Next Payment Information */}
 				{!isMigrated ? (
-					<section className="md:w-11/12 mx-auto mt-4 text-center py-4 px-4">
+					<section className="receipt-reminder md:w-11/12 mx-auto mt-4 text-center py-4 px-4">
 						{installmentParsed.covered === installmentParsed.total && installmentParsed.total > 0 ? (
-							<p className="text-xs font-normal sm:text-[.9rem] dark:text-gray-100 text-gray-700">
+							<p className="text-xs font-normal sm:text-[.9rem] dark:text-gray-100 text-gray-700 whitespace-normal break-words">
 								Thank you for completing all your installment payments. We appreciate your timely payment and look forward to serving you again in the
 								future.
 							</p>
 						) : (
-							<p className="text-xs font-normal sm:text-[.9rem] dark:text-gray-100 text-gray-700">
+							<p className="text-xs font-normal sm:text-[.9rem] dark:text-gray-100 text-gray-700 whitespace-normal break-words">
 								Next payment is due on the{" "}
 								<span className="font-semibold">{receipt.nextPaymentDate ? new Date(receipt.nextPaymentDate).toLocaleDateString("en-GB") : "-"}</span>
 								. Endeavour to make payment. Failure to make payment attracts an increase in accrued interest
@@ -268,8 +268,8 @@ export default function ReceiptContent({ receipt }: ReceiptContentProps) {
 						)}
 					</section>
 				) : (
-					<section className="md:w-11/12 mx-auto mt-4 text-center py-4 px-4">
-						<p className="text-xs font-normal sm:text-[.9rem] dark:text-gray-100 text-gray-700">
+					<section className="receipt-reminder md:w-11/12 mx-auto mt-4 text-center py-4 px-4">
+						<p className="text-xs font-normal sm:text-[.9rem] dark:text-gray-100 text-gray-700 whitespace-normal break-words">
 							Thank you for your payment. We appreciate your business and look forward to serving you again in the future.
 						</p>
 					</section>
