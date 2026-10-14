@@ -45,30 +45,26 @@ function forceThermalSafeColors(root: HTMLElement) {
 	walk(root);
 }
 
-async function captureElementToCanvas(
+/** A4 capture keeps page styles (matches print). Only thermal strips theme CSS. */
+async function captureThermalElementToCanvas(
 	element: HTMLElement,
 	widthPx: number,
 	onClone?: (clonedDocument: Document, clonedElement: HTMLElement) => void,
-	options?: { placeOnscreen?: boolean },
 ) {
 	const clone = element.cloneNode(true) as HTMLElement;
 
-	// Place on-screen for accurate font metrics. Off-screen (-9999px) captures
-	// often under-measure line boxes with monospace fonts in html2canvas.
 	clone.style.position = "fixed";
-	clone.style.top = options?.placeOnscreen ? "0" : "-9999px";
-	clone.style.left = options?.placeOnscreen ? "0" : "-9999px";
+	clone.style.top = "0";
+	clone.style.left = "0";
 	clone.style.width = `${widthPx}px`;
 	clone.style.minWidth = `${widthPx}px`;
 	clone.style.maxWidth = `${widthPx}px`;
 	clone.style.height = "auto";
 	clone.style.overflow = "visible";
-	clone.style.zIndex = options?.placeOnscreen ? "2147483646" : "-1";
+	clone.style.zIndex = "2147483646";
 	clone.style.pointerEvents = "none";
 	clone.style.backgroundColor = "#ffffff";
-	if (options?.placeOnscreen) {
-		clone.style.opacity = "0.01";
-	}
+	clone.style.opacity = "0.01";
 
 	document.body.appendChild(clone);
 	void clone.offsetWidth;
@@ -109,13 +105,28 @@ async function captureElementToCanvas(
 	}
 }
 
+/** Neutralize oklch/oklab in inline <style> tags without wiping layout CSS (mobile Safari). */
+function sanitizeUnsupportedColorsInStyles(clonedDocument: Document) {
+	clonedDocument.querySelectorAll("style").forEach((styleEl) => {
+		const text = styleEl.textContent || "";
+		if (!/oklch\(|oklab\(|lab\(|lch\(|color-mix\(/i.test(text)) return;
+		styleEl.textContent = text.replace(
+			/(?:oklch|oklab|lab|lch|color-mix)\((?:[^()]|\([^()]*\))*\)/gi,
+			"#1f2937",
+		);
+	});
+}
+
 function applyA4CloneOverrides(clonedDocument: Document, clonedElement: HTMLElement) {
+	sanitizeUnsupportedColorsInStyles(clonedDocument);
+
 	const overrideStyle = clonedDocument.createElement("style");
 	overrideStyle.textContent = `
 		* {
 			color: #1f2937 !important;
 			border-color: #d1d5db !important;
-			font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+			-webkit-print-color-adjust: exact !important;
+			print-color-adjust: exact !important;
 		}
 		*:not(img):not(svg):not([class*="bg-primary"]):not([class*="bg-card"]) {
 			background-color: transparent !important;
@@ -162,6 +173,17 @@ function applyA4CloneOverrides(clonedDocument: Document, clonedElement: HTMLElem
 				"position:absolute;right:16px;top:0;height:40px;line-height:40px;font-size:12px;font-weight:500;color:#1f2937;";
 		}
 	});
+}
+
+function a4CaptureScale() {
+	// Lower scale on small/mobile viewports to avoid Safari memory kills.
+	if (typeof window === "undefined") return 2;
+	const narrow = window.innerWidth < 768;
+	const lowMem = "deviceMemory" in navigator && Number((navigator as Navigator & { deviceMemory?: number }).deviceMemory) > 0
+		? Number((navigator as Navigator & { deviceMemory?: number }).deviceMemory) <= 4
+		: false;
+	if (narrow || lowMem) return 1.5;
+	return 2;
 }
 
 function applyThermalCloneOverrides(clonedDocument: Document, clonedElement: HTMLElement) {
@@ -218,11 +240,60 @@ function finishPdf(
 	return null;
 }
 
+/** A4 download/share — same visual path as print; mobile-safe on-screen capture. */
 export const generatePDF = async (element: HTMLElement, filename: string, isForSharing = false) => {
 	if (!element) return null;
 
+	const clone = element.cloneNode(true) as HTMLElement;
+	// On-screen (not -9999px): iOS Safari under-measures / drops styles off-screen.
+	clone.style.position = "fixed";
+	clone.style.top = "0";
+	clone.style.left = "0";
+	clone.style.width = `${A4_WIDTH_PX}px`;
+	clone.style.minWidth = `${A4_WIDTH_PX}px`;
+	clone.style.maxWidth = `${A4_WIDTH_PX}px`;
+	clone.style.height = "auto";
+	clone.style.overflow = "visible";
+	clone.style.zIndex = "2147483646";
+	clone.style.pointerEvents = "none";
+	clone.style.backgroundColor = "#ffffff";
+	clone.style.opacity = "0.01";
+
+	document.body.appendChild(clone);
+	void clone.offsetWidth;
+	await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
+
+	const captureHeight = Math.max(clone.scrollHeight, clone.offsetHeight, 1);
+
 	try {
-		const canvas = await captureElementToCanvas(element, A4_WIDTH_PX, applyA4CloneOverrides);
+		const canvas = await html2canvas(clone, {
+			useCORS: true,
+			allowTaint: true,
+			scale: a4CaptureScale(),
+			backgroundColor: "#ffffff",
+			logging: false,
+			windowWidth: A4_WIDTH_PX,
+			windowHeight: captureHeight,
+			width: A4_WIDTH_PX,
+			height: captureHeight,
+			scrollX: 0,
+			scrollY: 0,
+			x: 0,
+			y: 0,
+			onclone: (clonedDocument, clonedElement) => {
+				clonedElement.style.position = "static";
+				clonedElement.style.opacity = "1";
+				clonedElement.style.width = `${A4_WIDTH_PX}px`;
+				clonedElement.style.minWidth = `${A4_WIDTH_PX}px`;
+				clonedElement.style.maxWidth = `${A4_WIDTH_PX}px`;
+				clonedElement.style.boxSizing = "border-box";
+				clonedElement.style.overflow = "visible";
+				clonedElement.style.backgroundColor = "#ffffff";
+				clonedElement.style.color = "#1f2937";
+				applyA4CloneOverrides(clonedDocument, clonedElement);
+			},
+		});
+
 		const pdf = new jsPDF("p", "mm", "a4", true);
 		const pdfWidth = pdf.internal.pageSize.getWidth();
 		const margin = 10;
@@ -236,6 +307,8 @@ export const generatePDF = async (element: HTMLElement, filename: string, isForS
 		console.error("PDF generation failed:", errMsg, err);
 		toast.error(`Failed to generate PDF: ${errMsg}`);
 		return null;
+	} finally {
+		document.body.removeChild(clone);
 	}
 };
 
@@ -252,11 +325,10 @@ export const generateThermalPDF = async (
 			(element.classList?.contains("thermal-receipt")
 				? element
 				: element.querySelector<HTMLElement>(".thermal-receipt")) || element;
-		const canvas = await captureElementToCanvas(
+		const canvas = await captureThermalElementToCanvas(
 			target,
 			THERMAL_80_CONTENT_WIDTH_PX,
 			applyThermalCloneOverrides,
-			{ placeOnscreen: true },
 		);
 		const sideMargin = 3;
 		const topMargin = 2;
@@ -294,7 +366,7 @@ async function generateByFormat(
 	return generatePDF(element, filename, isForSharing);
 }
 
-function pdfFilename(receiptNumber?: string | number, receiptId?: string | number, _format: ReceiptPdfFormat = "a4") {
+function pdfFilename(receiptNumber?: string | number, receiptId?: string | number) {
 	const base = `receipt-${receiptNumber || receiptId || "unknown"}`;
 	return `${base}.pdf`;
 }
@@ -305,7 +377,7 @@ export const handleDownloadPDF = async (
 	receiptId?: string | number,
 	format: ReceiptPdfFormat = "a4",
 ) => {
-	const filename = pdfFilename(receiptNumber, receiptId, format);
+	const filename = pdfFilename(receiptNumber, receiptId);
 	await generateByFormat(element, filename, format, false);
 
 	if (receiptId) {
@@ -328,7 +400,7 @@ export const handleSharePDF = async (
 		return;
 	}
 
-	const filename = pdfFilename(receiptNumber, receiptId, format);
+	const filename = pdfFilename(receiptNumber, receiptId);
 	const file = await generateByFormat(element, filename, format, true);
 
 	if (file) {
@@ -359,7 +431,7 @@ export const handleSendPDFViaEmail = async (
 
 	try {
 		const loadingToastId = toast.loading("Generating and sending receipt...");
-		const filename = pdfFilename(receiptNumber, receiptId, format);
+		const filename = pdfFilename(receiptNumber, receiptId);
 		const pdfFile = await generateByFormat(element, filename, format, true);
 
 		if (!pdfFile) {

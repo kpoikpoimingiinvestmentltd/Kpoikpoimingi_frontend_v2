@@ -57,9 +57,7 @@ export default function ReceiptWrapper({
 	shouldPrint = true,
 	shouldShare = true,
 	shouldDownload = true,
-	onDownload,
 	onPrint,
-	onShare,
 	contentRef,
 	receiptId,
 	adminIssuerLabel,
@@ -71,8 +69,10 @@ export default function ReceiptWrapper({
 	shouldPrint?: boolean;
 	shouldShare?: boolean;
 	shouldDownload?: boolean;
+	/** @deprecated A4 download now uses the same printRef as Print A4. */
 	onDownload?: () => void;
 	onPrint?: () => void;
+	/** @deprecated A4 share now uses the same printRef as Print A4. */
 	onShare?: () => void;
 	contentRef?: React.Ref<HTMLDivElement>;
 	receiptId?: string;
@@ -100,21 +100,14 @@ export default function ReceiptWrapper({
 		},
 	});
 
-	const resolveA4Element = useCallback(() => {
-		const refContent = contentRef as React.RefObject<HTMLDivElement> | undefined;
-		return refContent?.current ?? printRef.current;
-	}, [contentRef]);
-
 	const receiptNumber = receipt?.receiptNumber;
 	const idForPdf = receiptId || receipt?.id;
 
+	/** Same DOM node as Print A4 — keeps download identical to print. */
+	const resolveA4Element = useCallback(() => printRef.current, []);
+
 	const runDownload = useCallback(
 		async (format: ReceiptPdfFormat) => {
-			if (format === "a4" && onDownload) {
-				onDownload();
-				return;
-			}
-
 			const el = format === "thermal" ? thermalRef.current : resolveA4Element();
 			if (!el) {
 				toast.error(format === "thermal" ? "Thermal receipt not available" : "Receipt content not available");
@@ -123,20 +116,11 @@ export default function ReceiptWrapper({
 
 			await handleDownloadPDF(el, receiptNumber, idForPdf, format);
 		},
-		[idForPdf, onDownload, receiptNumber, resolveA4Element],
+		[idForPdf, receiptNumber, resolveA4Element],
 	);
 
 	const runDeviceShare = useCallback(
 		async (format: ReceiptPdfFormat) => {
-			if (format === "a4" && onShare && typeof navigator !== "undefined" && "share" in navigator) {
-				try {
-					onShare();
-					return;
-				} catch {
-					/* fall through */
-				}
-			}
-
 			const el = format === "thermal" ? thermalRef.current : resolveA4Element();
 			if (!el) {
 				toast.error(format === "thermal" ? "Thermal receipt not available" : "Receipt content not available");
@@ -145,7 +129,7 @@ export default function ReceiptWrapper({
 
 			await handleSharePDF(el, receiptNumber, idForPdf, format);
 		},
-		[idForPdf, onShare, receiptNumber, resolveA4Element],
+		[idForPdf, receiptNumber, resolveA4Element],
 	);
 
 	const runEmailShare = useCallback(
