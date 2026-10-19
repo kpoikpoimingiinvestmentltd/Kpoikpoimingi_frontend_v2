@@ -6,7 +6,7 @@ import { inputStyle, tableHeaderRowStyle } from "@/components/common/commonStyle
 import CustomInput from "@/components/base/CustomInput";
 import CompactPagination from "@/components/ui/compact-pagination";
 import React from "react";
-import { useGetPurchaseBatches } from "@/api/purchase";
+import { useGetPurchases } from "@/api/purchase";
 import EmptyData from "@/components/common/EmptyData";
 import { TableSkeleton } from "@/components/common/Skeleton";
 import { twMerge } from "tailwind-merge";
@@ -38,6 +38,20 @@ function formatDate(value: string | Date | undefined | null) {
 	});
 }
 
+type PurchaseRow = {
+	id: string;
+	reference?: string;
+	purchaseDate?: string;
+	purchasePrice?: string | number;
+	quantity?: number;
+	allocatedTransportation?: string | number;
+	allocatedMiscellaneous?: string | number;
+	totalAcquisitionCost?: string | number;
+	supplier?: { name?: string } | null;
+	batch?: { id?: string; reference?: string } | null;
+	property?: { id?: string; name?: string; propertyCode?: string } | null;
+};
+
 export default function Purchases() {
 	const [searchParams, setSearchParams] = useSearchParams();
 	const [page, setPage] = React.useState(() => {
@@ -48,27 +62,27 @@ export default function Purchases() {
 	const limit = 10;
 	const debouncedQuery = useDebounceSearch(query, 400);
 
-	const { data, isLoading, isFetching, isError } = useGetPurchaseBatches(
+	const { data, isLoading, isFetching, isError } = useGetPurchases(
 		page,
 		limit,
 		debouncedQuery || undefined,
 	);
 	const response = data as {
-		data?: Array<Record<string, unknown>>;
+		data?: PurchaseRow[];
 		pagination?: { totalPages?: number; total?: number };
 		summary?: {
-			batchCount?: number;
+			purchaseCount?: number;
 			totalPurchasePrice?: string;
 			totalTransportation?: string;
 			totalMiscellaneous?: string;
 			totalAcquisitionCost?: string;
 		};
 	};
-	const batches = response?.data || [];
+	const purchases = response?.data || [];
 	const summary = response?.summary;
 	const totalPages = response?.pagination?.totalPages || 1;
-	const totalItems = response?.pagination?.total ?? batches.length;
-	const isEmpty = !isLoading && !isFetching && !isError && batches.length === 0;
+	const totalItems = response?.pagination?.total ?? purchases.length;
+	const isEmpty = !isLoading && !isFetching && !isError && purchases.length === 0;
 	const statsLoading = isLoading || (isFetching && !summary);
 
 	const stats = [
@@ -105,7 +119,10 @@ export default function Purchases() {
 	return (
 		<div className="flex flex-col gap-y-6">
 			<div className="flex items-center justify-between flex-wrap gap-4 mb-4">
-				<PageTitles title="Purchases" description="View purchase batches and procurement costs" />
+				<PageTitles
+					title="Purchases"
+					description="Individual and batch procurement costs for all properties"
+				/>
 			</div>
 
 			<CustomCard className="flex min-h-96 flex-col gap-y-6 md:p-8">
@@ -131,7 +148,7 @@ export default function Purchases() {
 						<div className="flex items-center justify-end">
 							<div className="relative md:w-80">
 								<CustomInput
-									placeholder="Search by reference or supplier"
+									placeholder="Search by reference, supplier, or property"
 									aria-label="Search purchases"
 									className={twMerge(inputStyle, "max-w-[320px] h-10 pl-9")}
 									iconLeft={<SearchIcon />}
@@ -146,7 +163,7 @@ export default function Purchases() {
 
 						{isLoading || isFetching ? (
 							<CustomCard className="mt-4 bg-card p-3">
-								<TableSkeleton rows={10} cols={8} />
+								<TableSkeleton rows={10} cols={9} />
 							</CustomCard>
 						) : isEmpty ? (
 							<div className="py-8">
@@ -158,46 +175,99 @@ export default function Purchases() {
 									<Table>
 										<TableHeader className={tableHeaderRowStyle}>
 											<TableRow className="bg-[#EAF6FF] dark:bg-neutral-900/80 h-12 overflow-hidden py-4 rounded-lg">
-												<TableHead>Batch Reference</TableHead>
+												<TableHead>Reference</TableHead>
+												<TableHead>Type</TableHead>
+												<TableHead>Property</TableHead>
 												<TableHead>Supplier</TableHead>
 												<TableHead>Purchase Date</TableHead>
-												<TableHead>Properties</TableHead>
 												<TableHead>Purchase Amount</TableHead>
-												<TableHead>Transportation Fee</TableHead>
-												<TableHead>Miscellaneous Fee</TableHead>
+												<TableHead>Transportation</TableHead>
+												<TableHead>Miscellaneous</TableHead>
 												<TableHead>Total Acquisition</TableHead>
 											</TableRow>
 										</TableHeader>
 										<TableBody>
-											{batches.map((batch) => {
-												const supplier = batch.supplier as { name?: string } | undefined;
+											{purchases.map((purchase) => {
+												const lineAmount =
+													Number(purchase.purchasePrice ?? 0) * Number(purchase.quantity ?? 1);
+												const isBatch = Boolean(purchase.batch?.id);
+												const propertyLink = purchase.property?.id
+													? _router.dashboard.propertiesDetails(purchase.property.id)
+													: null;
+												const batchLink = purchase.batch?.id
+													? _router.dashboard.purchaseBatchDetails(purchase.batch.id)
+													: null;
+
 												return (
 													<TableRow
-														key={batch.id as string}
+														key={purchase.id}
 														className="hover:bg-[#F6FBFF] dark:hover:bg-neutral-900/50">
 														<TableCell className="py-4">
-															<Link
-																to={_router.dashboard.purchaseBatchDetails(batch.id as string)}
-																className="text-primary underline underline-offset-2 font-medium">
-																{batch.reference as string}
-															</Link>
-														</TableCell>
-														<TableCell className="py-4">{supplier?.name || "—"}</TableCell>
-														<TableCell className="py-4">
-															{formatDate(batch.purchaseDate as string)}
-														</TableCell>
-														<TableCell className="py-4">{String(batch.propertyCount ?? 0)}</TableCell>
-														<TableCell className="py-4">
-															{formatMoney(batch.purchaseAmount as string)}
-														</TableCell>
-														<TableCell className="py-4">
-															{formatMoney(batch.transportationCost as string)}
-														</TableCell>
-														<TableCell className="py-4">
-															{formatMoney(batch.miscellaneousCost as string)}
+															{batchLink ? (
+																<Link
+																	to={batchLink}
+																	className="text-primary underline underline-offset-2 font-medium">
+																	{purchase.reference}
+																</Link>
+															) : propertyLink ? (
+																<Link
+																	to={propertyLink}
+																	className="text-primary underline underline-offset-2 font-medium">
+																	{purchase.reference}
+																</Link>
+															) : (
+																<span className="font-medium">{purchase.reference}</span>
+															)}
 														</TableCell>
 														<TableCell className="py-4">
-															{formatMoney(batch.totalAcquisitionCost as string)}
+															{isBatch ? (
+																<span className="text-sm">
+																	Batch
+																	{purchase.batch?.reference ? (
+																		<>
+																			{" "}
+																			(
+																			{batchLink ? (
+																				<Link
+																					to={batchLink}
+																					className="text-primary underline underline-offset-2">
+																					{purchase.batch.reference}
+																				</Link>
+																			) : (
+																				purchase.batch.reference
+																			)}
+																			)
+																		</>
+																	) : null}
+																</span>
+															) : (
+																<span className="text-sm">Individual</span>
+															)}
+														</TableCell>
+														<TableCell className="py-4">
+															{propertyLink ? (
+																<Link
+																	to={propertyLink}
+																	className="text-primary underline underline-offset-2">
+																	{purchase.property?.name ||
+																		purchase.property?.propertyCode ||
+																		"—"}
+																</Link>
+															) : (
+																"—"
+															)}
+														</TableCell>
+														<TableCell className="py-4">{purchase.supplier?.name || "—"}</TableCell>
+														<TableCell className="py-4">{formatDate(purchase.purchaseDate)}</TableCell>
+														<TableCell className="py-4">{formatMoney(lineAmount)}</TableCell>
+														<TableCell className="py-4">
+															{formatMoney(purchase.allocatedTransportation)}
+														</TableCell>
+														<TableCell className="py-4">
+															{formatMoney(purchase.allocatedMiscellaneous)}
+														</TableCell>
+														<TableCell className="py-4">
+															{formatMoney(purchase.totalAcquisitionCost)}
 														</TableCell>
 													</TableRow>
 												);
