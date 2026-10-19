@@ -24,7 +24,10 @@ export type MonthlyIncomeData = {
 
 export type IncomeAnalytics = {
 	totalIncome: number;
+	/** @deprecated Prefer outrightSale — same value (paid outright + legacy full-payment contracts) */
 	fullPayment: number;
+	/** Confirmed paid outright sales (+ legacy Full Payment contract receipts) */
+	outrightSale?: number;
 	hirePurchase: number;
 	unpaidDebt: number;
 	monthlyIncomeData: MonthlyIncomeData[];

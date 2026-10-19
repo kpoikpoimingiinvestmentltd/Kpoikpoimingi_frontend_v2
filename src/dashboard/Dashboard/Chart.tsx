@@ -84,7 +84,7 @@ export function IndexPieChart() {
 
 	const pieData = useMemo(
 		() => [
-			{ name: "Full Payment", value: incomeData?.fullPayment ?? 0, color: PIE_COLORS[0] },
+			{ name: "Outright sale", value: incomeData?.outrightSale ?? incomeData?.fullPayment ?? 0, color: PIE_COLORS[0] },
 			{ name: "Hire Purchase", value: incomeData?.hirePurchase ?? 0, color: PIE_COLORS[1] },
 		],
 		[incomeData],

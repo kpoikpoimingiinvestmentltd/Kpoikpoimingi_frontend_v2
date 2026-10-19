@@ -316,18 +316,18 @@ export default function EditAcquisitionModal({ open, onOpenChange, purchase }: P
 
 						<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 							<CustomInput
-								required
 								label={isBatch ? "Batch Transportation (shared)" : "Transportation"}
 								value={transportation}
 								onChange={(e) => setTransportation(e.target.value.replace(/[^\d.]/g, ""))}
 								className={twMerge(inputStyle)}
+								placeholder="0"
 							/>
 							<CustomInput
-								required
 								label={isBatch ? "Batch Miscellaneous (shared)" : "Miscellaneous"}
 								value={miscellaneous}
 								onChange={(e) => setMiscellaneous(e.target.value.replace(/[^\d.]/g, ""))}
 								className={twMerge(inputStyle)}
+								placeholder="0"
 							/>
 						</div>
 

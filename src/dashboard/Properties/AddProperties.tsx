@@ -68,7 +68,9 @@ export default function AddProperties({ propertyRequestId, onComplete }: { prope
 	const [acquisition, setAcquisition] = useState<AcquisitionFormState>(() => defaultAcquisitionState());
 
 	const watchedQuantity = watch("quantityTotal");
-	const acquisitionOptional = Boolean(effectivePropertyRequestId);
+	// Acquisition is optional for all creates (esp. existing stock / edits without purchase records).
+	// Product-request embed keeps the same optional path.
+	const acquisitionOptional = true;
 
 	const onCreateSuccess = () => {
 		const successMsg = "Property created successfully!";

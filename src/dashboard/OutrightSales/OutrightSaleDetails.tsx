@@ -1,20 +1,30 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import CustomCard from "@/components/base/CustomCard";
 import PageTitles from "@/components/common/PageTitles";
 import KeyValueRow from "@/components/common/KeyValueRow";
 import Badge from "@/components/base/Badge";
 import ActionButton from "@/components/base/ActionButton";
 import Image from "@/components/base/Image";
+import ConfirmModal from "@/components/common/ConfirmModal";
 import ThermalReceiptContent from "@/components/common/ThermalReceiptContent";
 import { RectangleSkeleton } from "@/components/common/Skeleton";
-import { useGetOutrightSaleById, type OutrightSaleProperty } from "@/api/outrightSale";
+import {
+	useCancelOutrightSaleReservation,
+	useGetOutrightSaleById,
+	type OutrightSaleProperty,
+} from "@/api/outrightSale";
 import { _router } from "@/routes/_router";
 import { media } from "@/resources/images";
-import { isOutrightSalePaid, thermalDataFromOutrightSale } from "@/utils/thermalReceiptData";
+import {
+	getOutrightSaleStatusBadge,
+	isOutrightSalePaid,
+	thermalDataFromOutrightSale,
+} from "@/utils/thermalReceiptData";
 import { Link, useParams } from "react-router";
 import { toast } from "sonner";
 import { useReactToPrint } from "react-to-print";
 import { IconWrapper, PrinterIcon } from "@/assets/icons";
+import { extractErrorMessage } from "@/lib/utils";
 
 function formatMoney(value?: string | number | null) {
 	const n = Number(value ?? 0);
@@ -83,12 +93,26 @@ const THERMAL_80_PAGE_STYLE = `
 export default function OutrightSaleDetails() {
 	const { id } = useParams<{ id: string }>();
 	const { data: sale, isLoading } = useGetOutrightSaleById(id);
+	const [releaseConfirmOpen, setReleaseConfirmOpen] = useState(false);
 	const paymentLink = sale?.paymentLink?.trim() || "";
 	const paid = sale ? isOutrightSalePaid(sale) : false;
+	const canRelease =
+		Boolean(sale) &&
+		!paid &&
+		sale?.inventoryState !== "RELEASED" &&
+		(sale?.inventoryState === "RESERVED" || Boolean(paymentLink));
 	const thermalRef = useRef<HTMLDivElement>(null);
 	const qrSrc = paymentLink
 		? `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(paymentLink)}`
 		: "";
+
+	const cancelReservation = useCancelOutrightSaleReservation(
+		() => {
+			setReleaseConfirmOpen(false);
+			toast.success("Reservation cancelled — property stock is available again");
+		},
+		(err) => toast.error(extractErrorMessage(err, "Failed to cancel reservation")),
+	);
 
 	const handlePrintThermal = useReactToPrint({
 		contentRef: thermalRef,
@@ -156,10 +180,18 @@ export default function OutrightSaleDetails() {
 							</span>
 						</ActionButton>
 					) : null}
+					{canRelease ? (
+						<ActionButton
+							variant="outline"
+							className="w-max"
+							type="button"
+							onClick={() => setReleaseConfirmOpen(true)}
+							disabled={cancelReservation.isPending}>
+							Cancel reservation
+						</ActionButton>
+					) : null}
 					<Badge
-						value={paid ? "paid" : "pending"}
-						label={paid ? "Paid" : "Awaiting payment"}
-						status={paid ? "paid" : "pending"}
+						{...getOutrightSaleStatusBadge(sale)}
 						size="sm"
 					/>
 				</div>
@@ -283,6 +315,31 @@ export default function OutrightSaleDetails() {
 					</div>
 				</div>
 			) : null}
+
+			<ConfirmModal
+				open={releaseConfirmOpen}
+				onOpenChange={setReleaseConfirmOpen}
+				title="Cancel reservation"
+				subtitle="This will cancel the payment-link hold. The property stock will become available again, and the customer will no longer be able to complete this sale with the current link."
+				footerAlign="center"
+				actions={[
+					{
+						label: "Keep reservation",
+						onClick: () => true,
+						variant: "ghost",
+					},
+					{
+						label: cancelReservation.isPending ? "Cancelling..." : "Cancel reservation",
+						loading: cancelReservation.isPending,
+						variant: "destructive",
+						onClick: async () => {
+							if (!sale?.id) return false;
+							await cancelReservation.mutateAsync(sale.id);
+							return true;
+						},
+					},
+				]}
+			/>
 		</div>
 	);
 }

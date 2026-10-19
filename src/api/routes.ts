@@ -54,6 +54,7 @@ export const API_ROUTES = {
 		list: "/outright-sales",
 		byId: (id: string) => `/outright-sales/${id}`,
 		update: (id: string) => `/outright-sales/${id}`,
+		cancel: (id: string) => `/outright-sales/cancel/${id}`,
 	},
 	auditLogs: {
 		getAuditLogs: "/audit-logs/grouped",

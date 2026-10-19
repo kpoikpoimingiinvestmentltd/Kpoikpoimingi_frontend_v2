@@ -259,12 +259,29 @@ export default function AcquisitionSection({
 				<h3 className="font-semibold text-base mb-1">{title}</h3>
 				<p className="text-sm text-muted-foreground mb-4">
 					{description ??
-						`Record how this property was bought${optional ? " (optional for this flow)" : ""}.`}
+						(optional
+							? "Optional — skip if this is existing stock without a purchase record. You can add acquisition later from property details."
+							: "Record how this property was bought.")}
 				</p>
 				<RadioGroup
-					value={value.mode || ""}
-					onValueChange={(val) => set({ mode: val as AcquisitionMode })}
+					value={value.mode || (optional ? "__skip__" : "")}
+					onValueChange={(val) =>
+						set({ mode: val === "__skip__" ? "" : (val as AcquisitionMode) })
+					}
 					className="flex flex-col gap-3">
+					{optional && (
+						<label
+							htmlFor="acq-skip"
+							className="flex items-start gap-3 cursor-pointer rounded-md border p-3 has-[[data-state=checked]]:border-primary">
+							<RadioGroupItem value="__skip__" id="acq-skip" className={twMerge(radioStyle, "mt-0.5")} />
+							<span>
+								<span className="block text-sm font-medium">Skip acquisition</span>
+								<span className="block text-xs text-muted-foreground mt-0.5">
+									Listing only — no supplier or purchase costs. Add acquisition later if needed.
+								</span>
+							</span>
+						</label>
+					)}
 					{showMode("individual") && (
 					<label
 						htmlFor="acq-individual"

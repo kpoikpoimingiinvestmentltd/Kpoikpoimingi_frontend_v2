@@ -241,7 +241,23 @@ export function thermalDataFromOutrightSale(sale: OutrightSaleResponse): Thermal
 }
 
 export function isOutrightSalePaid(sale: OutrightSaleResponse): boolean {
+	if (sale.inventoryState === "RELEASED" || sale.cancelledAt) return false;
 	if (sale.paidAt) return true;
 	const link = sale.paymentLink?.trim();
 	return !link;
+}
+
+/** Display status for list/detail badges. */
+export function getOutrightSaleStatusBadge(sale: OutrightSaleResponse): {
+	value: string;
+	label: string;
+	status: "cancelled" | "paid" | "pending";
+} {
+	if (sale.inventoryState === "RELEASED" || sale.cancelledAt) {
+		return { value: "cancelled", label: "Cancelled", status: "cancelled" };
+	}
+	if (isOutrightSalePaid(sale)) {
+		return { value: "paid", label: "Paid", status: "paid" };
+	}
+	return { value: "pending", label: "Awaiting payment", status: "pending" };
 }

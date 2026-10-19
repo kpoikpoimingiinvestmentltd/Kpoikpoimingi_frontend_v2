@@ -458,15 +458,13 @@ export default function OutrightSaleModal({ open, onOpenChange, properties, onSo
 									<span className="font-medium text-foreground">{formatMoney(totalWithVat)}</span>.
 									Email is required.
 								</p>
-								{!customerEmail.trim() && (
-									<CustomInput
-										label="Customer email*"
-										type="email"
-										value={customerEmail}
-										onChange={(e) => setCustomerEmail(e.target.value)}
-										className={inputStyle}
-									/>
-								)}
+								<CustomInput
+									label="Customer email*"
+									type="email"
+									value={customerEmail}
+									onChange={(e) => setCustomerEmail(e.target.value)}
+									className={inputStyle}
+								/>
 							</div>
 						)}
 
