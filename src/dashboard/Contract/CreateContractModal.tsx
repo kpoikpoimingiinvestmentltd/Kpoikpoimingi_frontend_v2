@@ -50,6 +50,21 @@ import { extractErrorMessage } from "@/lib/utils";
 import type { Registration } from "@/types/customerRegistration";
 import type { ContractPayload } from "@/types/contracts";
 
+function registrationCustomerName(registration: any): string {
+  return String(
+    registration?.customer?.fullName ||
+      registration?.fullName ||
+      registration?.customer?.name ||
+      "",
+  ).trim();
+}
+
+function registrationCustomerId(registration: any): string {
+  return String(
+    registration?.customer?.id || registration?.customerId || "",
+  ).trim();
+}
+
 export default function CreateContractModal({
   open,
   onOpenChange,
@@ -63,12 +78,20 @@ export default function CreateContractModal({
   const [selectedCustomerData, setSelectedCustomerData] =
     React.useState<Registration | null>(null);
   const [searchQuery, setSearchQuery] = React.useState("");
+  const [debouncedSearch, setDebouncedSearch] = React.useState("");
   const [customerOpen, setCustomerOpen] = React.useState(false);
 
+  React.useEffect(() => {
+    const t = window.setTimeout(() => setDebouncedSearch(searchQuery.trim()), 250);
+    return () => window.clearTimeout(t);
+  }, [searchQuery]);
+
+  // Load the full eligible list once the modal is open; filter locally by search.
+  // (Passing every keystroke to the API made it feel like names "only show when you type".)
   const registrationsQuery = useGetApprovedRegistrations(
     1,
     1000,
-    searchQuery,
+    undefined,
     undefined,
     undefined,
     open,
@@ -79,16 +102,20 @@ export default function CreateContractModal({
   const filteredRegistrations = React.useMemo<any[]>(() => {
     if (!registrations) return [];
     const list = ((registrations as any)?.data || []).filter(
-      (registration: any) => Number(registration?.paymentType?.id) === 1,
+      (registration: any) =>
+        Number(registration?.paymentType?.id ?? registration?.paymentTypeId) ===
+        1,
     );
 
-    if (!searchQuery.trim()) return list;
-    return list.filter((registration: any) =>
-      String(registration.customer?.fullName || "")
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase()),
-    );
-  }, [registrations, searchQuery]);
+    if (!debouncedSearch) return list;
+    const q = debouncedSearch.toLowerCase();
+    return list.filter((registration: any) => {
+      const name = registrationCustomerName(registration).toLowerCase();
+      const email = String(registration?.email || registration?.customer?.email || "").toLowerCase();
+      const code = String(registration?.registrationCode || "").toLowerCase();
+      return name.includes(q) || email.includes(q) || code.includes(q);
+    });
+  }, [registrations, debouncedSearch]);
 
   React.useEffect(() => {
     if (!open) {
@@ -128,14 +155,9 @@ export default function CreateContractModal({
 
     const registration = selectedCustomerData as any;
     const propertyInterest = registration?.propertyInterestRequest?.[0];
-    const customer = registration?.customer;
-
-    console.log("Selected registration:", registration);
-    console.log("Customer:", customer);
-    console.log("Property interest:", propertyInterest);
 
     return {
-      customerId: customer?.id || "",
+      customerId: registrationCustomerId(registration),
       propertyId: propertyInterest?.propertyId || "",
       // Contracts are hire-purchase only; full payment is handled via Outright Sale
       paymentTypeId: "1",
@@ -205,9 +227,7 @@ export default function CreateContractModal({
   }, [open, setValue]);
 
   React.useEffect(() => {
-    const defaults = getDefaultValues();
-    console.log("Resetting form with defaults:", defaults);
-    reset(defaults);
+    reset(getDefaultValues());
   }, [selectedCustomerData, reset]);
 
   const [previewPayload, setPreviewPayload] =
@@ -393,11 +413,10 @@ export default function CreateContractModal({
                             )}
                           >
                             <span className="truncate text-sm">
-                              {(
-                                selectedCustomerData as {
-                                  customer?: { fullName?: string };
-                                } | null
-                              )?.customer?.fullName ?? "Search customer"}
+                              {selectedCustomerData
+                                ? registrationCustomerName(selectedCustomerData) ||
+                                  "Selected customer"
+                                : "Search customer"}
                             </span>
                             <ChevronDownIcon className="size-4 shrink-0 opacity-50" />
                           </button>
@@ -425,7 +444,7 @@ export default function CreateContractModal({
                             className="min-h-0 flex-1 p-1 my-2"
                             style={{ WebkitOverflowScrolling: "touch" }}
                           >
-                            {registrationsQuery.isFetching ? (
+                            {registrationsQuery.isLoading ? (
                               <div className="space-y-2 p-2">
                                 {[...Array(6)].map((_, i) => (
                                   <div key={i} className="px-2">
@@ -433,35 +452,33 @@ export default function CreateContractModal({
                                   </div>
                                 ))}
                               </div>
-                            ) : filteredRegistrations &&
-                              filteredRegistrations.length > 0 ? (
+                            ) : filteredRegistrations.length > 0 ? (
                               filteredRegistrations.map((registration: any) => {
-                                const cid = registration.customer?.id;
+                                const cid = registrationCustomerId(registration);
+                                const name = registrationCustomerName(registration);
                                 return (
                                   <button
                                     type="button"
                                     key={String(registration.id)}
                                     className="w-full text-left px-2 py-1.5 text-sm rounded-sm hover:bg-accent/30"
+                                    disabled={!cid}
                                     onClick={() => {
-                                      field.onChange(cid ?? "");
+                                      if (!cid) return;
+                                      field.onChange(cid);
                                       setSelectedCustomerData(registration);
                                       setCustomerOpen(false);
                                       setSearchQuery("");
                                     }}
                                   >
-                                    {String(
-                                      registration.customer?.fullName ?? "",
-                                    )}
+                                    {name || "Unnamed customer"}
                                   </button>
                                 );
                               })
-                            ) : searchQuery ? (
-                              <div className="p-3 text-center text-sm text-muted-foreground">
-                                No customers found
-                              </div>
                             ) : (
                               <div className="p-3 text-center text-sm text-muted-foreground">
-                                Type to search customers
+                                {searchQuery.trim()
+                                  ? "No matching customers"
+                                  : "No eligible Hire Purchase customers. They must be approved, current, and not already on an active contract."}
                               </div>
                             )}
                           </div>
