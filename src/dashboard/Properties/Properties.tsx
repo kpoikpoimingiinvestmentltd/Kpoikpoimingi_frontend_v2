@@ -220,7 +220,8 @@ export default function Properties() {
 		return properties.filter((prod: PropertyData) => {
 			switch (activeTab) {
 				case "available":
-					return true;
+					// Exclude fully reserved / zero sellable stock (still status AVAILABLE)
+					return prod.quantityAvailable > 0;
 				case "low":
 					return prod.quantityAvailable > 0 && prod.quantityAvailable <= 10;
 				case "out":

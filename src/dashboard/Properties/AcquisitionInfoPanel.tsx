@@ -73,7 +73,8 @@ export default function AcquisitionInfoPanel({
 					<div>
 						<h3 className="font-semibold text-base">Acquisition Information</h3>
 						<p className="text-sm text-muted-foreground mt-1">
-							No acquisition has been recorded for this property yet.
+							No acquisition has been recorded for this property yet. This is optional — you can save listing
+							details without it, or add acquisition when you have purchase costs.
 						</p>
 					</div>
 					{showAddAction && onAddAcquisition ? (

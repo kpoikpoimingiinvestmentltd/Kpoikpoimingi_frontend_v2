@@ -12,6 +12,7 @@ import SearchWithFilters from "@/components/common/SearchWithFilters";
 import Badge from "@/components/base/Badge";
 import CompactPagination from "@/components/ui/compact-pagination";
 import { useDebounceSearch } from "@/hooks/useDebounceSearch";
+import { getOutrightSaleStatusBadge } from "@/utils/thermalReceiptData";
 
 function formatMoney(value?: string | number | null) {
 	const n = Number(value ?? 0);
@@ -95,7 +96,7 @@ export default function OutrightSales() {
 								</TableHeader>
 								<TableBody>
 									{sales.map((sale) => {
-										const paid = Boolean(sale.paidAt) || !sale.paymentLink;
+										const statusBadge = getOutrightSaleStatusBadge(sale);
 										return (
 											<TableRow key={sale.id} className="hover:bg-[#F6FBFF] dark:hover:bg-neutral-900/50">
 												<TableCell>
@@ -119,12 +120,7 @@ export default function OutrightSales() {
 												</TableCell>
 												<TableCell>{sale.paymentMethod?.method || "-"}</TableCell>
 												<TableCell>
-													<Badge
-														value={paid ? "paid" : "pending"}
-														label={paid ? "Paid" : "Awaiting payment"}
-														status={paid ? "paid" : "pending"}
-														size="sm"
-													/>
+													<Badge {...statusBadge} size="sm" />
 												</TableCell>
 												<TableCell>{formatDate(sale.createdAt)}</TableCell>
 												<TableCell className="text-right">

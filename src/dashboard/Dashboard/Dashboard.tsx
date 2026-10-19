@@ -57,7 +57,7 @@ const PieLegend = () => {
 	const isSuperAdmin = currentUser?.role?.role === "SUPER_ADMIN";
 
 	const items: Array<{ color: string; label: string; value: number }> = [
-		{ color: "#751BE3", label: "Full Payment", value: (incomeData as IncomeAnalytics | undefined)?.fullPayment ?? 0 },
+		{ color: "#751BE3", label: "Outright sale", value: (incomeData as IncomeAnalytics | undefined)?.outrightSale ?? (incomeData as IncomeAnalytics | undefined)?.fullPayment ?? 0 },
 		{ color: "#E3901B", label: "Hire purchase", value: (incomeData as IncomeAnalytics | undefined)?.hirePurchase ?? 0 },
 		{ color: "#F3E9FF", label: "Unpaid debt", value: (incomeData as IncomeAnalytics | undefined)?.unpaidDebt ?? 0 },
 	];

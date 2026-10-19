@@ -78,7 +78,9 @@ export default function CreateContractModal({
 
   const filteredRegistrations = React.useMemo<any[]>(() => {
     if (!registrations) return [];
-    const list = (registrations as any)?.data || [];
+    const list = ((registrations as any)?.data || []).filter(
+      (registration: any) => Number(registration?.paymentType?.id) === 1,
+    );
 
     if (!searchQuery.trim()) return list;
     return list.filter((registration: any) =>
@@ -135,7 +137,8 @@ export default function CreateContractModal({
     return {
       customerId: customer?.id || "",
       propertyId: propertyInterest?.propertyId || "",
-      paymentTypeId: String(registration?.paymentType?.id || 1),
+      // Contracts are hire-purchase only; full payment is handled via Outright Sale
+      paymentTypeId: "1",
       quantity: propertyInterest?.quantity || 1,
       downPayment: Number(propertyInterest?.downPayment || 0),
       intervalId: String(propertyInterest?.paymentIntervalId || ""),
@@ -160,7 +163,6 @@ export default function CreateContractModal({
 
   const queryClient = useQueryClient();
 
-  const paymentTypeId = watch("paymentTypeId");
   const watchedIntervalId = watch("intervalId");
 
   // Watch important fields to compute whether form is ready to submit
@@ -173,29 +175,20 @@ export default function CreateContractModal({
   const canCreate = React.useMemo(() => {
     const hasCustomer =
       typeof watchedCustomerId === "string" && watchedCustomerId.trim() !== "";
-    const hasPaymentType =
-      paymentTypeId != null && String(paymentTypeId) !== "";
     const hasStartDate =
       typeof watchedStartDate === "string" && watchedStartDate.trim() !== "";
     const hasPaymentMethod =
       typeof watchedPaymentMethod === "string" &&
       watchedPaymentMethod.trim() !== "";
-    const isHire = String(paymentTypeId) === "1";
     const hireFieldsOk =
-      !isHire ||
-      (String(watchedIntervalId) !== "" &&
-        watchedDurationValue != null &&
-        String(watchedDurationUnitId) !== "");
+      String(watchedIntervalId) !== "" &&
+      watchedDurationValue != null &&
+      String(watchedDurationUnitId) !== "";
     return Boolean(
-      hasCustomer &&
-      hasPaymentType &&
-      hasStartDate &&
-      hireFieldsOk &&
-      hasPaymentMethod,
+      hasCustomer && hasStartDate && hireFieldsOk && hasPaymentMethod,
     );
   }, [
     watchedCustomerId,
-    paymentTypeId,
     watchedStartDate,
     watchedIntervalId,
     watchedDurationValue,
@@ -216,41 +209,6 @@ export default function CreateContractModal({
     console.log("Resetting form with defaults:", defaults);
     reset(defaults);
   }, [selectedCustomerData, reset]);
-
-  React.useEffect(() => {
-    if (paymentTypeId === "2" && selectedCustomerData) {
-      const registration = selectedCustomerData as any;
-      const propertyInterest = registration?.propertyInterestRequest?.[0] as
-        | Record<string, unknown>
-        | undefined;
-
-      if (propertyInterest) {
-        let propertyPrice = 0;
-
-        if (
-          propertyInterest.isCustomProperty &&
-          propertyInterest.customPropertyPrice
-        ) {
-          propertyPrice = Number(propertyInterest.customPropertyPrice);
-        } else {
-          const propObj = propertyInterest.property as
-            | Record<string, unknown>
-            | undefined;
-          if (propObj?.price) {
-            propertyPrice = Number(propObj.price);
-          }
-        }
-
-        if (propertyPrice > 0) {
-          const quantity = propertyInterest.quantity
-            ? Number(propertyInterest.quantity)
-            : 1;
-          const amountPaid = propertyPrice * quantity;
-          setValue("downPayment", amountPaid);
-        }
-      }
-    }
-  }, [paymentTypeId, selectedCustomerData, setValue]);
 
   const [previewPayload, setPreviewPayload] =
     React.useState<ContractPayload | null>(null);
@@ -310,7 +268,7 @@ export default function CreateContractModal({
         typeof values.customerId === "string" ? values.customerId : undefined,
       propertyId:
         typeof values.propertyId === "string" ? values.propertyId : undefined,
-      paymentTypeId: Number(values.paymentTypeId),
+      paymentTypeId: 1,
       quantity: Number(values.quantity) || 1,
       downPayment: Number(values.downPayment) || 0,
       intervalId:
@@ -340,25 +298,18 @@ export default function CreateContractModal({
       isPaymentLink: values.paymentMethod === "link",
     };
 
-    const resolvedPaymentType = Number(values.paymentTypeId);
-    if (resolvedPaymentType === 1) {
-      const missing: string[] = [];
-      if (!payload.intervalId) missing.push("payment interval");
-      if (!payload.durationValue && payload.durationValue !== 0)
-        missing.push("duration value");
-      if (!payload.durationUnitId) missing.push("duration unit");
-      if (!payload.startDate) missing.push("start date");
+    const missing: string[] = [];
+    if (!payload.intervalId) missing.push("payment interval");
+    if (!payload.durationValue && payload.durationValue !== 0)
+      missing.push("duration value");
+    if (!payload.durationUnitId) missing.push("duration unit");
+    if (!payload.startDate) missing.push("start date");
 
-      if (missing.length > 0) {
-        toast.error(
-          `Missing required fields for Hire Purchase: ${missing.join(", ")}`,
-        );
-        console.debug(
-          "Contract payload blocked due to missing fields:",
-          payload,
-        );
-        return;
-      }
+    if (missing.length > 0) {
+      toast.error(
+        `Missing required fields for Hire Purchase: ${missing.join(", ")}`,
+      );
+      return;
     }
 
     console.debug("Contract payload preview:", payload);
@@ -520,325 +471,203 @@ export default function CreateContractModal({
                   />
                 </div>
 
-                {/* Payment Type */}
+                {/* Hire Purchase fields (full payment is via Outright Sale) */}
+                <Controller
+                  control={control}
+                  name="quantity"
+                  render={({ field }) => (
+                    <CustomInput
+                      label="Quantity"
+                      type="number"
+                      min="1"
+                      value={String(field.value)}
+                      onChange={(e) => field.onChange(Number(e.target.value))}
+                    />
+                  )}
+                />
+
                 <div>
-                  <Label className={labelStyle()}>Payment Type*</Label>
+                  <Label className={labelStyle()}>Payment Interval*</Label>
                   <Controller
                     control={control}
-                    name="paymentTypeId"
+                    name="intervalId"
                     render={({ field }) => (
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value}
-                      >
-                        <SelectTrigger className={selectTriggerStyle("w-full")}>
-                          <SelectValue placeholder="Select payment type" />
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <SelectTrigger className={selectTriggerStyle()}>
+                          <SelectValue placeholder="Select interval" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="1">Hire Purchase</SelectItem>
-                          <SelectItem value="2">Full Payment</SelectItem>
+                          {refLoading ? (
+                            <div className="p-3 text-center">
+                              <Spinner className="size-4" />
+                            </div>
+                          ) : intervalCandidates.length === 0 ? (
+                            <>
+                              <SelectItem value="2">Monthly</SelectItem>
+                              <SelectItem value="1">Weekly</SelectItem>
+                            </>
+                          ) : (
+                            intervalCandidates.map((it) => (
+                              <SelectItem key={it.key} value={it.key}>
+                                {it.value}
+                              </SelectItem>
+                            ))
+                          )}
                         </SelectContent>
                       </Select>
                     )}
                   />
                 </div>
 
-                {/* Hire Purchase Fields */}
-                {paymentTypeId === "1" && (
-                  <>
-                    {/* Quantity */}
-                    <Controller
-                      control={control}
-                      name="quantity"
-                      render={({ field }) => (
-                        <CustomInput
-                          label="Quantity"
-                          type="number"
-                          min="1"
-                          value={String(field.value)}
-                          onChange={(e) =>
-                            field.onChange(Number(e.target.value))
-                          }
-                        />
-                      )}
+                <div>
+                  <Label className={labelStyle()}>Duration Unit*</Label>
+                  <Controller
+                    control={control}
+                    name="durationUnitId"
+                    render={({ field }) => (
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <SelectTrigger className={selectTriggerStyle()}>
+                          <SelectValue placeholder="Select unit" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {refLoading ? (
+                            <div className="p-3 text-center">
+                              <Spinner className="size-4" />
+                            </div>
+                          ) : durationCandidates.length === 0 ? (
+                            <SelectItem value="3">Months</SelectItem>
+                          ) : (
+                            durationCandidates.map((it) => (
+                              <SelectItem key={it.key} value={it.key}>
+                                {it.value}
+                              </SelectItem>
+                            ))
+                          )}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                </div>
+
+                <div>
+                  <Label className={labelStyle("text-nowrap")}>
+                    {(() => {
+                      const sel = intervalCandidates.find(
+                        (it) => String(it.key) === String(watchedIntervalId),
+                      );
+                      const weekly = Boolean(
+                        sel && String(sel.value).toUpperCase().includes("WEEK"),
+                      );
+                      return weekly
+                        ? "For How Many Weeks*"
+                        : "For How Many Months*";
+                    })()}
+                  </Label>
+                  <Controller
+                    control={control}
+                    name="durationValue"
+                    render={({ field }) => (
+                      <Select
+                        onValueChange={(v) => field.onChange(Number(v))}
+                        value={field.value != null ? String(field.value) : ""}
+                      >
+                        <SelectTrigger className={selectTriggerStyle()}>
+                          <SelectValue placeholder="Select duration" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {(() => {
+                            const sel = intervalCandidates.find(
+                              (it) =>
+                                String(it.key) === String(watchedIntervalId),
+                            );
+                            const weekly = Boolean(
+                              sel &&
+                                String(sel.value).toUpperCase().includes("WEEK"),
+                            );
+                            const maxWeekly = 260;
+                            const maxMonthly = 60;
+                            const opts = weekly
+                              ? Array.from({ length: maxWeekly }, (_, i) => i + 1)
+                              : Array.from({ length: maxMonthly }, (_, i) => i + 1);
+                            return opts.map((n) => (
+                              <SelectItem key={n} value={String(n)}>
+                                {n}{" "}
+                                {weekly
+                                  ? n !== 1
+                                    ? "weeks"
+                                    : "week"
+                                  : `month${n !== 1 ? "s" : ""}`}
+                              </SelectItem>
+                            ));
+                          })()}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                </div>
+
+                <Controller
+                  control={control}
+                  name="downPayment"
+                  render={({ field }) => (
+                    <CustomInput
+                      label="Amount available for down payment"
+                      type="number"
+                      min="0"
+                      value={String(field.value)}
+                      onChange={(e) => field.onChange(Number(e.target.value))}
                     />
+                  )}
+                />
 
-                    {/* Payment Interval */}
-                    <div>
-                      <Label className={labelStyle()}>Payment Interval*</Label>
-                      <Controller
-                        control={control}
-                        name="intervalId"
-                        render={({ field }) => (
-                          <Select
-                            onValueChange={field.onChange}
-                            value={field.value}
+                <div className="col-span-2 my-2">
+                  <Label className={labelStyle()}>Payment Method*</Label>
+                  <Controller
+                    control={control}
+                    name="paymentMethod"
+                    render={({ field }) => (
+                      <RadioGroup
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        className="flex items-center gap-6 mt-2"
+                      >
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem
+                            value="link"
+                            id="link"
+                            className={radioStyle}
+                          />
+                          <Label
+                            htmlFor="link"
+                            className="text-[.8rem] sm:text-sm cursor-pointer"
                           >
-                            <SelectTrigger className={selectTriggerStyle()}>
-                              <SelectValue placeholder="Select interval" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {refLoading ? (
-                                <div className="p-3 text-center">
-                                  <Spinner className="size-4" />
-                                </div>
-                              ) : intervalCandidates.length === 0 ? (
-                                <>
-                                  <SelectItem value="2">Monthly</SelectItem>
-                                  <SelectItem value="1">Weekly</SelectItem>
-                                </>
-                              ) : (
-                                intervalCandidates.map((it) => (
-                                  <SelectItem key={it.key} value={it.key}>
-                                    {it.value}
-                                  </SelectItem>
-                                ))
-                              )}
-                            </SelectContent>
-                          </Select>
-                        )}
-                      />
-                    </div>
-
-                    {/* Duration Unit */}
-                    <div>
-                      <Label className={labelStyle()}>Duration Unit*</Label>
-                      <Controller
-                        control={control}
-                        name="durationUnitId"
-                        render={({ field }) => (
-                          <Select
-                            onValueChange={field.onChange}
-                            value={field.value}
+                            Generate Payment Link
+                          </Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem
+                            value="cash"
+                            id="cash"
+                            className={radioStyle}
+                          />
+                          <Label
+                            htmlFor="cash"
+                            className="text-[.8rem] sm:text-sm cursor-pointer"
                           >
-                            <SelectTrigger className={selectTriggerStyle()}>
-                              <SelectValue placeholder="Select unit" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {refLoading ? (
-                                <div className="p-3 text-center">
-                                  <Spinner className="size-4" />
-                                </div>
-                              ) : durationCandidates.length === 0 ? (
-                                <SelectItem value="3">Months</SelectItem>
-                              ) : (
-                                durationCandidates.map((it) => (
-                                  <SelectItem key={it.key} value={it.key}>
-                                    {it.value}
-                                  </SelectItem>
-                                ))
-                              )}
-                            </SelectContent>
-                          </Select>
-                        )}
-                      />
-                    </div>
+                            Cash Payment
+                          </Label>
+                        </div>
+                      </RadioGroup>
+                    )}
+                  />
+                </div>
 
-                    {/* Duration Value */}
-                    <div>
-                      <Label className={labelStyle("text-nowrap")}>
-                        {(() => {
-                          const sel = intervalCandidates.find(
-                            (it) =>
-                              String(it.key) === String(watchedIntervalId),
-                          );
-                          const weekly = Boolean(
-                            sel &&
-                            String(sel.value).toUpperCase().includes("WEEK"),
-                          );
-                          return weekly
-                            ? "For How Many Weeks*"
-                            : "For How Many Months*";
-                        })()}
-                      </Label>
-                      <Controller
-                        control={control}
-                        name="durationValue"
-                        render={({ field }) => (
-                          <Select
-                            onValueChange={(v) => field.onChange(Number(v))}
-                            value={
-                              field.value != null ? String(field.value) : ""
-                            }
-                          >
-                            <SelectTrigger className={selectTriggerStyle()}>
-                              <SelectValue placeholder="Select duration" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {(() => {
-                                const sel = intervalCandidates.find(
-                                  (it) =>
-                                    String(it.key) ===
-                                    String(watchedIntervalId),
-                                );
-                                const weekly = Boolean(
-                                  sel &&
-                                  String(sel.value)
-                                    .toUpperCase()
-                                    .includes("WEEK"),
-                                );
-                                const maxWeekly = 260;
-                                const maxMonthly = 60;
-                                const opts = weekly
-                                  ? Array.from(
-                                      { length: maxWeekly },
-                                      (_, i) => i + 1,
-                                    )
-                                  : Array.from(
-                                      { length: maxMonthly },
-                                      (_, i) => i + 1,
-                                    );
-                                return opts.map((n) => (
-                                  <SelectItem key={n} value={String(n)}>
-                                    {n}{" "}
-                                    {weekly
-                                      ? n !== 1
-                                        ? "weeks"
-                                        : "week"
-                                      : `month${n !== 1 ? "s" : ""}`}
-                                  </SelectItem>
-                                ));
-                              })()}
-                            </SelectContent>
-                          </Select>
-                        )}
-                      />
-                    </div>
-
-                    {/* Down Payment */}
-                    <Controller
-                      control={control}
-                      name="downPayment"
-                      render={({ field }) => (
-                        <CustomInput
-                          label="Amount available for down payment"
-                          type="number"
-                          min="0"
-                          value={String(field.value)}
-                          onChange={(e) =>
-                            field.onChange(Number(e.target.value))
-                          }
-                        />
-                      )}
-                    />
-
-                    {/* Payment Method */}
-                    <div className="col-span-2 my-2">
-                      <Label className={labelStyle()}>Payment Method*</Label>
-                      <Controller
-                        control={control}
-                        name="paymentMethod"
-                        render={({ field }) => (
-                          <RadioGroup
-                            value={field.value}
-                            onValueChange={field.onChange}
-                            className="flex items-center gap-6 mt-2"
-                          >
-                            <div className="flex items-center space-x-2">
-                              <RadioGroupItem
-                                value="link"
-                                id="link"
-                                className={radioStyle}
-                              />
-                              <Label
-                                htmlFor="link"
-                                className="text-[.8rem] sm:text-sm cursor-pointer"
-                              >
-                                Generate Payment Link
-                              </Label>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <RadioGroupItem
-                                value="cash"
-                                id="cash"
-                                className={radioStyle}
-                              />
-                              <Label
-                                htmlFor="cash"
-                                className="text-[.8rem] sm:text-sm cursor-pointer"
-                              >
-                                Cash Payment
-                              </Label>
-                            </div>
-                          </RadioGroup>
-                        )}
-                      />
-                    </div>
-                  </>
-                )}
-
-                {/* Full Payment Fields */}
-                {paymentTypeId === "2" && (
-                  <>
-                    {/* Down Payment for Full Payment */}
-                    <Controller
-                      control={control}
-                      name="downPayment"
-                      render={({ field }) => (
-                        <CustomInput
-                          label="Amount Paid"
-                          type="number"
-                          value={String(field.value)}
-                          onChange={(e) =>
-                            field.onChange(Number(e.target.value))
-                          }
-                        />
-                      )}
-                    />
-
-                    {/* Payment Method */}
-                    <div className="col-span-2">
-                      <Label className={labelStyle()}>Payment Method*</Label>
-                      <Controller
-                        control={control}
-                        name="paymentMethod"
-                        render={({ field }) => (
-                          <RadioGroup
-                            value={field.value}
-                            onValueChange={field.onChange}
-                            className="flex items-center gap-6 mt-2"
-                          >
-                            <div className="flex items-center space-x-2">
-                              <RadioGroupItem
-                                value="link"
-                                id="link-full"
-                                className={radioStyle}
-                              />
-                              <Label
-                                htmlFor="link-full"
-                                className="text-sm cursor-pointer"
-                              >
-                                Generate Payment Link
-                              </Label>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <RadioGroupItem
-                                value="cash"
-                                id="cash-full"
-                                className={radioStyle}
-                              />
-                              <Label
-                                htmlFor="cash-full"
-                                className="text-sm cursor-pointer"
-                              >
-                                Cash Payment
-                              </Label>
-                            </div>
-                          </RadioGroup>
-                        )}
-                      />
-                    </div>
-                  </>
-                )}
-
-                {/* Start Date - Common to both */}
                 <Controller
                   control={control}
                   name="startDate"
                   render={({ field }) => (
                     <CustomInput
                       type="date"
-                      // iconRight={<CalendarIcon />}
                       label="Start Date"
                       value={field.value}
                       onChange={field.onChange}

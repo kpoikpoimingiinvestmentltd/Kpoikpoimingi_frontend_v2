@@ -50,6 +50,10 @@ export type OutrightSaleResponse = {
 	paymentLink?: string | null;
 	paymentReference?: string | null;
 	paidAt?: string | null;
+	/** RESERVED = awaiting payment link; COMMITTED = paid; RELEASED = cancelled/expired */
+	inventoryState?: "RESERVED" | "COMMITTED" | "RELEASED" | string | null;
+	reservedUntil?: string | null;
+	cancelledAt?: string | null;
 	createdAt?: string;
 	customerName: string;
 	customerEmail?: string | null;
@@ -104,6 +108,11 @@ export async function getOutrightSaleById(id: string) {
 	return unwrapSale(raw);
 }
 
+export async function cancelOutrightSaleReservation(id: string) {
+	const raw = await apiPost(API_ROUTES.outrightSale.cancel(id), {});
+	return unwrapSale(raw);
+}
+
 export function useGetOutrightSales(page = 1, limit = 10, search = "", enabled = true) {
 	return useQuery({
 		queryKey: ["outright-sales", page, limit, search],
@@ -136,6 +145,25 @@ export function useCreateOutrightSale(
 			qc.invalidateQueries({ queryKey: ["properties"] });
 			qc.invalidateQueries({ queryKey: ["property"] });
 			qc.invalidateQueries({ queryKey: ["outright-sales"] });
+			onSuccess?.(data);
+		},
+		onError,
+	});
+}
+
+export function useCancelOutrightSaleReservation(
+	onSuccess?: (data: OutrightSaleResponse) => void,
+	onError?: (error: unknown) => void,
+) {
+	const qc = useQueryClient();
+	return useMutation({
+		mutationFn: cancelOutrightSaleReservation,
+		onSuccess: (data) => {
+			qc.setQueryData(["outright-sale", data.id], data);
+			qc.invalidateQueries({ queryKey: ["properties"] });
+			qc.invalidateQueries({ queryKey: ["property"] });
+			qc.invalidateQueries({ queryKey: ["outright-sales"] });
+			qc.invalidateQueries({ queryKey: ["outright-sale", data.id] });
 			onSuccess?.(data);
 		},
 		onError,
