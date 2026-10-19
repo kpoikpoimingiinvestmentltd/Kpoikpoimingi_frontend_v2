@@ -161,6 +161,20 @@ export function useGetPurchaseBatches(page = 1, limit = 10, search?: string) {
 	});
 }
 
+export async function getPurchases(page = 1, limit = 10, search?: string) {
+	const qs = new URLSearchParams({ page: String(page), limit: String(limit) });
+	if (search) qs.append("search", search);
+	return apiGet(`${API_ROUTES.purchase.list}?${qs.toString()}`);
+}
+
+export function useGetPurchases(page = 1, limit = 10, search?: string) {
+	return useQuery({
+		queryKey: ["purchases", page, limit, search || ""],
+		queryFn: () => getPurchases(page, limit, search),
+		staleTime: 30_000,
+	});
+}
+
 export async function getPurchaseBatchById(id: string) {
 	return apiGet(API_ROUTES.purchase.batchById(id));
 }
