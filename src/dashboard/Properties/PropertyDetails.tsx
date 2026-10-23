@@ -12,7 +12,6 @@ import PageTitles from "../../components/common/PageTitles";
 import { useParams } from "react-router";
 import { useGetPropertyById, useUpdateProperty } from "@/api/property";
 import { useGetPurchaseByPropertyId, type PurchaseRecord } from "@/api/purchase";
-import { _router } from "../../routes/_router";
 import { RectangleSkeleton } from "@/components/common/Skeleton";
 import type { PropertyData } from "@/types/property";
 import { toast } from "sonner";
