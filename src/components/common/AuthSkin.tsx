@@ -10,7 +10,7 @@ type Props = {
 export default function AuthSkin({ children, title, subtitle }: Props) {
 	return (
 		<>
-			<Image src={media.logos.logo} className="w-28 md:w-36 mx-auto" />
+			<Image src={media.logos.logo} className="h-11 w-52 md:h-12 md:w-60 mx-auto" alt="Kpoi Kpoi Mingi" objectFit="contain" />
 			<section className="mt-4 flex flex-col gap-y-10 max-w-sm mx-auto">
 				<header className="text-center flex flex-col items-center gap-y-2">
 					<h3 className="text-2xl dark:text-black font-semibold">{title}</h3>

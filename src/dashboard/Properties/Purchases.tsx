@@ -117,40 +117,41 @@ export default function Purchases() {
 	}, [page, debouncedQuery, setSearchParams]);
 
 	return (
-		<div className="flex flex-col gap-y-6">
-			<div className="flex items-center justify-between flex-wrap gap-4 mb-4">
+		<div className="flex min-w-0 flex-col gap-y-6">
+			<div className="mb-4 flex flex-wrap items-center justify-between gap-4">
 				<PageTitles
 					title="Purchases"
 					description="Individual and batch procurement costs for all properties"
 				/>
 			</div>
 
-			<CustomCard className="flex min-h-96 flex-col gap-y-6 md:p-8">
-				{isError ? (
+			{isError ? (
+				<CustomCard className="flex min-h-96 flex-col">
 					<EmptyData text="Failed to load purchases" />
-				) : (
-					<div className="flex flex-col gap-y-6">
-						<CustomCard className="p-0 border-0 bg-card">
-							<div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-								{stats.map((s) => (
-									<StatCard
-										key={s.id}
-										title={s.title}
-										value={s.value}
-										currency="NGN"
-										variant="income"
-										loading={statsLoading}
-									/>
-								))}
-							</div>
-						</CustomCard>
+				</CustomCard>
+			) : (
+				<div className="flex min-w-0 flex-col gap-y-6">
+					<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+						{stats.map((s) => (
+							<StatCard
+								key={s.id}
+								title={s.title}
+								value={s.value}
+								currency="NGN"
+								variant="income"
+								loading={statsLoading}
+								className="min-w-0"
+							/>
+						))}
+					</div>
 
-						<div className="flex items-center justify-end">
-							<div className="relative md:w-80">
+					<CustomCard className="min-w-0 p-3 md:p-4">
+						<div className="mb-4 flex justify-end">
+							<div className="relative w-full max-w-80">
 								<CustomInput
 									placeholder="Search by reference, supplier, or property"
 									aria-label="Search purchases"
-									className={twMerge(inputStyle, "max-w-[320px] h-10 pl-9")}
+									className={twMerge(inputStyle, "h-10 w-full pl-9")}
 									iconLeft={<SearchIcon />}
 									value={query}
 									onChange={(e) => {
@@ -162,28 +163,26 @@ export default function Purchases() {
 						</div>
 
 						{isLoading || isFetching ? (
-							<CustomCard className="mt-4 bg-card p-3">
-								<TableSkeleton rows={10} cols={9} />
-							</CustomCard>
+							<TableSkeleton rows={10} cols={7} />
 						) : isEmpty ? (
 							<div className="py-8">
 								<EmptyData text={query ? "No purchases match your search" : "No purchases at the moment"} />
 							</div>
 						) : (
-							<CustomCard className="mt-4 bg-card p-3">
-								<div className="w-full overflow-x-auto">
-									<Table>
+							<>
+								<div className="w-full min-w-0 overflow-x-auto">
+									<Table className="min-w-[720px]">
 										<TableHeader className={tableHeaderRowStyle}>
-											<TableRow className="bg-[#EAF6FF] dark:bg-neutral-900/80 h-12 overflow-hidden py-4 rounded-lg">
+											<TableRow className="h-12 overflow-hidden rounded-lg bg-[#EAF6FF] py-4 dark:bg-neutral-900/80">
 												<TableHead>Reference</TableHead>
 												<TableHead>Type</TableHead>
 												<TableHead>Property</TableHead>
 												<TableHead>Supplier</TableHead>
-												<TableHead>Purchase Date</TableHead>
-												<TableHead>Purchase Amount</TableHead>
-												<TableHead>Transportation</TableHead>
-												<TableHead>Miscellaneous</TableHead>
-												<TableHead>Total Acquisition</TableHead>
+												<TableHead>Date</TableHead>
+												<TableHead>Purchase</TableHead>
+												<TableHead>Transport</TableHead>
+												<TableHead>Misc</TableHead>
+												<TableHead>Total</TableHead>
 											</TableRow>
 										</TableHeader>
 										<TableBody>
@@ -197,31 +196,27 @@ export default function Purchases() {
 												const batchLink = purchase.batch?.id
 													? _router.dashboard.purchaseBatchDetails(purchase.batch.id)
 													: null;
+												const propertyLabel =
+													purchase.property?.name || purchase.property?.propertyCode || "—";
 
 												return (
 													<TableRow
 														key={purchase.id}
 														className="hover:bg-[#F6FBFF] dark:hover:bg-neutral-900/50">
-														<TableCell className="py-4">
-															{batchLink ? (
+														<TableCell className="max-w-none py-3 font-medium">
+															{batchLink || propertyLink ? (
 																<Link
-																	to={batchLink}
-																	className="text-primary underline underline-offset-2 font-medium">
-																	{purchase.reference}
-																</Link>
-															) : propertyLink ? (
-																<Link
-																	to={propertyLink}
-																	className="text-primary underline underline-offset-2 font-medium">
+																	to={(batchLink || propertyLink)!}
+																	className="text-primary underline underline-offset-2">
 																	{purchase.reference}
 																</Link>
 															) : (
-																<span className="font-medium">{purchase.reference}</span>
+																purchase.reference
 															)}
 														</TableCell>
-														<TableCell className="py-4">
+														<TableCell className="max-w-none py-3 text-sm">
 															{isBatch ? (
-																<span className="text-sm">
+																<span>
 																	Batch
 																	{purchase.batch?.reference ? (
 																		<>
@@ -241,32 +236,38 @@ export default function Purchases() {
 																	) : null}
 																</span>
 															) : (
-																<span className="text-sm">Individual</span>
+																"Individual"
 															)}
 														</TableCell>
-														<TableCell className="py-4">
+														<TableCell className="max-w-40 py-3" title={propertyLabel}>
 															{propertyLink ? (
 																<Link
 																	to={propertyLink}
 																	className="text-primary underline underline-offset-2">
-																	{purchase.property?.name ||
-																		purchase.property?.propertyCode ||
-																		"—"}
+																	{propertyLabel}
 																</Link>
 															) : (
-																"—"
+																propertyLabel
 															)}
 														</TableCell>
-														<TableCell className="py-4">{purchase.supplier?.name || "—"}</TableCell>
-														<TableCell className="py-4">{formatDate(purchase.purchaseDate)}</TableCell>
-														<TableCell className="py-4">{formatMoney(lineAmount)}</TableCell>
-														<TableCell className="py-4">
+														<TableCell
+															className="max-w-36 py-3"
+															title={purchase.supplier?.name || undefined}>
+															{purchase.supplier?.name || "—"}
+														</TableCell>
+														<TableCell className="max-w-none py-3 whitespace-nowrap">
+															{formatDate(purchase.purchaseDate)}
+														</TableCell>
+														<TableCell className="max-w-none py-3 whitespace-nowrap">
+															{formatMoney(lineAmount)}
+														</TableCell>
+														<TableCell className="max-w-none py-3 whitespace-nowrap">
 															{formatMoney(purchase.allocatedTransportation)}
 														</TableCell>
-														<TableCell className="py-4">
+														<TableCell className="max-w-none py-3 whitespace-nowrap">
 															{formatMoney(purchase.allocatedMiscellaneous)}
 														</TableCell>
-														<TableCell className="py-4">
+														<TableCell className="max-w-none py-3 font-medium whitespace-nowrap">
 															{formatMoney(purchase.totalAcquisitionCost)}
 														</TableCell>
 													</TableRow>
@@ -285,11 +286,11 @@ export default function Purchases() {
 										perPage={limit}
 									/>
 								</div>
-							</CustomCard>
+							</>
 						)}
-					</div>
-				)}
-			</CustomCard>
+					</CustomCard>
+				</div>
+			)}
 		</div>
 	);
 }

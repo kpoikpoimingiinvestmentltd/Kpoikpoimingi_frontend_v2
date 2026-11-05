@@ -117,7 +117,7 @@ export default function AdminDashboardSidebar({ onClose }: { onClose?: () => voi
 						<CloseIcon />
 					</IconWrapper>
 				</button>
-				<Image src={media.logos.logo} className="relative w-40 -mt-4" />
+				<Image src={media.logos.logo} className="relative h-9 w-44" alt="Kpoi Kpoi Mingi" objectFit="contain" />
 			</header>
 			<div className="overflow-y-auto relative flex flex-col gap-y-4 mt-6 sidebar-links-container">
 				{isPending ? (

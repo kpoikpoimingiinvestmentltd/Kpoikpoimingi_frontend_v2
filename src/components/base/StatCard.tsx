@@ -87,7 +87,10 @@ export default function StatCard({
 
 	return (
 		<div
-			className={`bg-white w-full dark:bg-neutral-800 border border-gray-100 dark:border-neutral-700 rounded-lg p-4 flex flex-col justify-between min-w-[180px] min-h-32 ${className}`}>
+			className={twMerge(
+				"bg-white w-full dark:bg-neutral-800 border border-gray-100 dark:border-neutral-700 rounded-lg p-4 flex flex-col justify-between min-w-0 min-h-32",
+				className,
+			)}>
 			<div className="flex items-center justify-between">
 				<h3 className="text-gray-500 dark:text-gray-300 text-[.95rem] mb-1">{title}</h3>
 			</div>
